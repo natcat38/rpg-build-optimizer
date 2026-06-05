@@ -25,6 +25,7 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
 
   const out: Artifact[] = [];
   for (const raw of obj.artifacts as GoodArtifact[]) {
+    if (typeof raw !== 'object' || raw === null) continue; // tolerate malformed array elements
     const slot = SLOT_MAP[raw.slotKey];
     const mainStat = STAT_MAP[raw.mainStatKey];
     if (!slot || !mainStat) continue; // skip unrecognised entries rather than throwing

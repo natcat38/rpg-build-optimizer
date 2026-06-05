@@ -15,6 +15,12 @@ describe('parseGOOD', () => {
     expect(parseGOOD({ foo: 1 })).toEqual({ error: 'BAD_FORMAT' });
   });
 
+  it('skips malformed (null) array elements without throwing', () => {
+    const out = parseGOOD({ format: 'GOOD', artifacts: [null, goodFile.artifacts[0]] });
+    expect(Array.isArray(out)).toBe(true);
+    expect((out as unknown[]).length).toBe(1);
+  });
+
   it('maps a GOOD artifact to our Artifact shape', () => {
     const out = parseGOOD(goodFile);
     expect(Array.isArray(out)).toBe(true);
