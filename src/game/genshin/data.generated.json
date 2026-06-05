@@ -11112,6 +11112,13 @@
       }
     },
     {
+      "key": "archaic_petra",
+      "name": "Archaic Petra",
+      "twoPiece": {
+        "elemental_dmg": 15
+      }
+    },
+    {
       "key": "berserker",
       "name": "Berserker",
       "twoPiece": {
@@ -11256,6 +11263,13 @@
       "name": "Ocean-Hued Clam",
       "twoPiece": {
         "healing": 15
+      }
+    },
+    {
+      "key": "pale_flame",
+      "name": "Pale Flame",
+      "twoPiece": {
+        "physical_dmg": 25
       }
     },
     {

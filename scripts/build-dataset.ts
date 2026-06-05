@@ -14,6 +14,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
@@ -99,14 +100,23 @@ function r2(v: number): number {
 function parse2pc(text: string): Record<string, number> | null {
   if (!text) return null;
 
-  // Elemental DMG +15% (e.g. "Pyro DMG Bonus +15%")
+  // Elemental DMG +15% — value AFTER the element (e.g. "Pyro DMG Bonus +15%")
   const eleDmgMatch = text.match(
     /(?:Pyro|Hydro|Electro|Cryo|Anemo|Geo|Dendro)\s+DMG\s+Bonus\s+\+(\d+(?:\.\d+)?)%/i,
   );
   if (eleDmgMatch) return { elemental_dmg: parseFloat(eleDmgMatch[1]) };
 
-  // Physical DMG (e.g. "Physical DMG +25%")
-  const physMatch = text.match(/Physical\s+DMG\s+(?:Bonus\s+)?\+(\d+(?:\.\d+)?)%/i);
+  // Elemental DMG — value BEFORE the element (e.g. Archaic Petra: "Gain a 15% Geo DMG Bonus.")
+  const eleDmgMatchValueFirst = text.match(
+    /(\d+(?:\.\d+)?)%\s+(?:Pyro|Hydro|Electro|Cryo|Anemo|Geo|Dendro)\s+DMG\s+Bonus/i,
+  );
+  if (eleDmgMatchValueFirst) return { elemental_dmg: parseFloat(eleDmgMatchValueFirst[1]) };
+
+  // Physical DMG — handles "Physical DMG +25%", "Physical DMG Bonus +25%",
+  // and "Physical DMG is increased by 25%" (Pale Flame).
+  const physMatch = text.match(
+    /Physical\s+DMG\s+(?:(?:Bonus\s+)?\+|is\s+increased\s+by\s+)(\d+(?:\.\d+)?)%/i,
+  );
   if (physMatch) return { physical_dmg: parseFloat(physMatch[1]) };
 
   // ATK +18% (percentage)
@@ -361,8 +371,12 @@ function buildSets() {
     const twoPiece = parse2pc(a['2pc']);
     const fourPiece = parse4pcStatOnly();
 
-    // Only include if we recognise the 2pc bonus as a stat
-    if (!twoPiece) continue;
+    // Only include if we recognise the 2pc bonus as a stat. Warn (don't silently
+    // drop) so a parser gap on a stat-granting set is visible at build time.
+    if (!twoPiece) {
+      console.warn(`  ⚠ dropped set "${name}" — unparsed 2pc: ${JSON.stringify(a['2pc'])}`);
+      continue;
+    }
 
     const key = name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_']/g, '').toLowerCase();
 
@@ -407,7 +421,7 @@ function main() {
   };
 
   const outPath = path.join(
-    path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1')),
+    path.dirname(fileURLToPath(import.meta.url)),
     '../src/game/genshin/data.generated.json',
   );
 
