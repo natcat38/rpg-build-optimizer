@@ -26,9 +26,13 @@ const genshindb: any = require('genshin-db');
 // ---------------------------------------------------------------------------
 
 const SUBSTAT_TO_KEY: Record<string, string> = {
-  HP: 'hp',
-  ATK: 'atk',
-  DEF: 'def',
+  // Weapon secondary stats: genshin-db always returns 'ATK', 'HP', 'DEF' as
+  // fractional values (0..1), meaning these are always PERCENTAGE secondaries
+  // (e.g. ATK secondary = ATK%, not flat ATK). Map accordingly so base ATK
+  // is never overwritten and pctToPercent() is applied correctly.
+  HP: 'hp_pct',
+  ATK: 'atk_pct',
+  DEF: 'def_pct',
   'HP%': 'hp_pct',
   'ATK%': 'atk_pct',
   'DEF%': 'def_pct',
