@@ -19,8 +19,13 @@ export interface ArtifactSetMeta {
   fourPiece?: StatVec;
 }
 
+/**
+ * The extension seam (ADR-0008). The optimiser depends only on this interface,
+ * never on genshin/* imports, so a second game can slot in by providing another
+ * adapter. `id` is `string` (not a literal) so other adapters can implement it.
+ */
 export interface GameAdapter {
-  id: 'genshin';
+  id: string;
   slots: Slot[];
   statKeys: StatKey[];
   characters(): CharacterMeta[];

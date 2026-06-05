@@ -1,16 +1,15 @@
 export type Slot = 'flower' | 'plume' | 'sands' | 'goblet' | 'circlet';
 export const SLOTS: Slot[] = ['flower', 'plume', 'sands', 'goblet', 'circlet'];
 
-export type StatKey =
-  | 'hp' | 'hp_pct' | 'atk' | 'atk_pct' | 'def' | 'def_pct'
-  | 'em' | 'er_pct' | 'crit_rate' | 'crit_dmg'
-  | 'elemental_dmg' | 'physical_dmg' | 'healing';
-
-const STAT_KEYS: readonly StatKey[] = [
+// STAT_KEYS is the single source of truth; StatKey is derived from it so the
+// runtime guard (isStatKey) and the compile-time union can never drift apart.
+const STAT_KEYS = [
   'hp', 'hp_pct', 'atk', 'atk_pct', 'def', 'def_pct',
   'em', 'er_pct', 'crit_rate', 'crit_dmg',
   'elemental_dmg', 'physical_dmg', 'healing',
-];
+] as const;
+
+export type StatKey = (typeof STAT_KEYS)[number];
 
 export function isStatKey(x: unknown): x is StatKey {
   return typeof x === 'string' && (STAT_KEYS as readonly string[]).includes(x);
@@ -71,7 +70,9 @@ export interface OptimizeContext {
 }
 
 export interface BuildDiagnostics {
+  /** human-readable binding constraints, e.g. "Energy Recharge >= 160%". */
   bindingConstraints: string[];
+  /** per slot: the objective drop if that slot's piece were removed. */
   marginalBySlot: Partial<Record<Slot, number>>;
   explored: number;
   pruned: number;

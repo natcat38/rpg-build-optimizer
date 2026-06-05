@@ -10,4 +10,11 @@ describe('domain types', () => {
     expect(isStatKey('crit_dmg')).toBe(true);
     expect(isStatKey('nonsense')).toBe(false);
   });
+
+  it('rejects non-string inputs at the runtime boundary', () => {
+    expect(isStatKey(null)).toBe(false);
+    expect(isStatKey(undefined)).toBe(false);
+    expect(isStatKey(42)).toBe(false);
+    expect(isStatKey({})).toBe(false);
+  });
 });
