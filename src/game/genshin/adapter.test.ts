@@ -60,7 +60,7 @@ describe('genshinAdapter', () => {
   // Pale Flame's 2pc is "Physical DMG is increased by 25%." which lacks the
   // literal "+" the old physMatch regex required, so the set was dropped.
   it('parses Pale Flame 2pc as physical_dmg: 25', () => {
-    const set = data.sets.find((s) => s.key === 'pale_flame');
+    const set = data.sets.find((s) => s.key === 'PaleFlame');
     expect(set).toBeDefined();
     expect(set?.twoPiece).toEqual({ physical_dmg: 25 });
   });
@@ -69,8 +69,19 @@ describe('genshinAdapter', () => {
   // Archaic Petra's 2pc is "Gain a 15% Geo DMG Bonus." (value precedes the
   // element name), so the old element regex didn't match and the set was dropped.
   it('parses Archaic Petra 2pc as elemental_dmg: 15', () => {
-    const set = data.sets.find((s) => s.key === 'archaic_petra');
+    const set = data.sets.find((s) => s.key === 'ArchaicPetra');
     expect(set).toBeDefined();
     expect(set?.twoPiece).toEqual({ elemental_dmg: 15 });
+  });
+
+  // Set keys MUST be GOOD-standard PascalCase so that GOOD-imported artifacts
+  // (which use these keys) match the adapter's set-bonus keys and set-requirement
+  // constraints. A regression to slug keys would silently break all set matching.
+  it('uses GOOD-standard set keys (e.g. EmblemOfSeveredFate, GladiatorsFinale)', () => {
+    const keys = genshinAdapter.sets().map((s) => s.key);
+    expect(keys).toContain('EmblemOfSeveredFate');
+    expect(keys).toContain('GladiatorsFinale');
+    // No slug-style keys (lowercase / underscores) should remain.
+    expect(keys.every((k) => /^[A-Za-z0-9]+$/.test(k))).toBe(true);
   });
 });

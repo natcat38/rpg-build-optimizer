@@ -88,6 +88,22 @@ function r2(v: number): number {
   return Math.round(v * 100) / 100;
 }
 
+/**
+ * Canonical "GOOD"-format key from an English name (the de-facto community
+ * standard used by GOOD inventory exports, e.g. "Emblem of Severed Fate" ->
+ * "EmblemOfSeveredFate", "Gladiator's Finale" -> "GladiatorsFinale").
+ * Artifact set keys MUST use this format so imported (GOOD) artifacts match the
+ * adapter's set-bonus keys and set-requirement constraints (ADR-0006 import path).
+ */
+function goodKey(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((w) => w.replace(/[^a-zA-Z0-9]/g, ''))
+    .filter((w) => w.length > 0)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join('');
+}
+
 // ---------------------------------------------------------------------------
 // Parse 2pc bonus text → StatKey + value (ADR-0003)
 // ---------------------------------------------------------------------------
@@ -378,7 +394,7 @@ function buildSets() {
       continue;
     }
 
-    const key = name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_']/g, '').toLowerCase();
+    const key = goodKey(name); // GOOD-standard set key so imported artifacts match
 
     const entry: {
       key: string;

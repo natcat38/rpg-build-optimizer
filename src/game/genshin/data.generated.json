@@ -11105,245 +11105,245 @@
   ],
   "sets": [
     {
-      "key": "adventurer",
+      "key": "Adventurer",
       "name": "Adventurer",
       "twoPiece": {
         "hp": 1000
       }
     },
     {
-      "key": "archaic_petra",
+      "key": "ArchaicPetra",
       "name": "Archaic Petra",
       "twoPiece": {
         "elemental_dmg": 15
       }
     },
     {
-      "key": "berserker",
+      "key": "Berserker",
       "name": "Berserker",
       "twoPiece": {
         "crit_rate": 12
       }
     },
     {
-      "key": "blizzard_strayer",
+      "key": "BlizzardStrayer",
       "name": "Blizzard Strayer",
       "twoPiece": {
         "elemental_dmg": 15
       }
     },
     {
-      "key": "bloodstained_chivalry",
+      "key": "BloodstainedChivalry",
       "name": "Bloodstained Chivalry",
       "twoPiece": {
         "physical_dmg": 25
       }
     },
     {
-      "key": "brave_heart",
+      "key": "BraveHeart",
       "name": "Brave Heart",
       "twoPiece": {
         "atk_pct": 18
       }
     },
     {
-      "key": "crimson_witch_of_flames",
+      "key": "CrimsonWitchOfFlames",
       "name": "Crimson Witch of Flames",
       "twoPiece": {
         "elemental_dmg": 15
       }
     },
     {
-      "key": "deepwood_memories",
+      "key": "DeepwoodMemories",
       "name": "Deepwood Memories",
       "twoPiece": {
         "elemental_dmg": 15
       }
     },
     {
-      "key": "defender's_will",
+      "key": "DefendersWill",
       "name": "Defender's Will",
       "twoPiece": {
         "def_pct": 30
       }
     },
     {
-      "key": "desert_pavilion_chronicle",
+      "key": "DesertPavilionChronicle",
       "name": "Desert Pavilion Chronicle",
       "twoPiece": {
         "elemental_dmg": 15
       }
     },
     {
-      "key": "echoes_of_an_offering",
+      "key": "EchoesOfAnOffering",
       "name": "Echoes of an Offering",
       "twoPiece": {
         "atk_pct": 18
       }
     },
     {
-      "key": "emblem_of_severed_fate",
+      "key": "EmblemOfSeveredFate",
       "name": "Emblem of Severed Fate",
       "twoPiece": {
         "er_pct": 20
       }
     },
     {
-      "key": "flower_of_paradise_lost",
+      "key": "FlowerOfParadiseLost",
       "name": "Flower of Paradise Lost",
       "twoPiece": {
         "em": 80
       }
     },
     {
-      "key": "gilded_dreams",
+      "key": "GildedDreams",
       "name": "Gilded Dreams",
       "twoPiece": {
         "em": 80
       }
     },
     {
-      "key": "gladiator's_finale",
+      "key": "GladiatorsFinale",
       "name": "Gladiator's Finale",
       "twoPiece": {
         "atk_pct": 18
       }
     },
     {
-      "key": "heart_of_depth",
+      "key": "HeartOfDepth",
       "name": "Heart of Depth",
       "twoPiece": {
         "elemental_dmg": 15
       }
     },
     {
-      "key": "husk_of_opulent_dreams",
+      "key": "HuskOfOpulentDreams",
       "name": "Husk of Opulent Dreams",
       "twoPiece": {
         "def_pct": 30
       }
     },
     {
-      "key": "instructor",
+      "key": "Instructor",
       "name": "Instructor",
       "twoPiece": {
         "em": 80
       }
     },
     {
-      "key": "lucky_dog",
+      "key": "LuckyDog",
       "name": "Lucky Dog",
       "twoPiece": {
         "def": 100
       }
     },
     {
-      "key": "maiden_beloved",
+      "key": "MaidenBeloved",
       "name": "Maiden Beloved",
       "twoPiece": {
         "healing": 15
       }
     },
     {
-      "key": "nighttime_whispers_in_the_echoing_woods",
+      "key": "NighttimeWhispersInTheEchoingWoods",
       "name": "Nighttime Whispers in the Echoing Woods",
       "twoPiece": {
         "atk_pct": 18
       }
     },
     {
-      "key": "nymph's_dream",
+      "key": "NymphsDream",
       "name": "Nymph's Dream",
       "twoPiece": {
         "elemental_dmg": 15
       }
     },
     {
-      "key": "oceanhued_clam",
+      "key": "OceanHuedClam",
       "name": "Ocean-Hued Clam",
       "twoPiece": {
         "healing": 15
       }
     },
     {
-      "key": "pale_flame",
+      "key": "PaleFlame",
       "name": "Pale Flame",
       "twoPiece": {
         "physical_dmg": 25
       }
     },
     {
-      "key": "resolution_of_sojourner",
+      "key": "ResolutionOfSojourner",
       "name": "Resolution of Sojourner",
       "twoPiece": {
         "atk_pct": 18
       }
     },
     {
-      "key": "scholar",
+      "key": "Scholar",
       "name": "Scholar",
       "twoPiece": {
         "er_pct": 20
       }
     },
     {
-      "key": "shimenawa's_reminiscence",
+      "key": "ShimenawasReminiscence",
       "name": "Shimenawa's Reminiscence",
       "twoPiece": {
         "atk_pct": 18
       }
     },
     {
-      "key": "song_of_days_past",
+      "key": "SongOfDaysPast",
       "name": "Song of Days Past",
       "twoPiece": {
         "healing": 15
       }
     },
     {
-      "key": "tenacity_of_the_millelith",
+      "key": "TenacityOfTheMillelith",
       "name": "Tenacity of the Millelith",
       "twoPiece": {
         "hp_pct": 20
       }
     },
     {
-      "key": "the_exile",
+      "key": "TheExile",
       "name": "The Exile",
       "twoPiece": {
         "er_pct": 20
       }
     },
     {
-      "key": "thundering_fury",
+      "key": "ThunderingFury",
       "name": "Thundering Fury",
       "twoPiece": {
         "elemental_dmg": 15
       }
     },
     {
-      "key": "vermillion_hereafter",
+      "key": "VermillionHereafter",
       "name": "Vermillion Hereafter",
       "twoPiece": {
         "atk_pct": 18
       }
     },
     {
-      "key": "viridescent_venerer",
+      "key": "ViridescentVenerer",
       "name": "Viridescent Venerer",
       "twoPiece": {
         "elemental_dmg": 15
       }
     },
     {
-      "key": "vourukasha's_glow",
+      "key": "VourukashasGlow",
       "name": "Vourukasha's Glow",
       "twoPiece": {
         "hp_pct": 20
       }
     },
     {
-      "key": "wanderer's_troupe",
+      "key": "WanderersTroupe",
       "name": "Wanderer's Troupe",
       "twoPiece": {
         "em": 80
