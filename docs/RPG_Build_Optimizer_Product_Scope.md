@@ -6,6 +6,19 @@
 
 ---
 
+## 0. Resolved design decisions (2026-06-06)
+
+A design grill refined this scope. Canonical decisions live in `docs/adr/` and the glossary in `CONTEXT.md`; this list is the product-facing summary.
+
+- **No damage engine — stat-only model** ([ADR-0003](docs/adr/0003-stat-only-model-no-damage-engine.md)). Weapon **passives are not modelled**. Set bonuses: **2-piece flat stats are scored** (plus the rare flat-stat 4pc); **conditional/non-stat 4-piece effects are honoured as a constraint but not scored**. `Elemental DMG` resolves to the character's element. This limitation is stated openly in the UI.
+- **Build level is a user input** ([ADR-0006](docs/adr/0006-inventory-import-and-build-level-model.md)): one ascension-breakpoint dropdown (default 90) driving **both** character and weapon, encoded in the share link. Artifacts are evaluated at their **current owned level** in v1.0 (a "treat all as +20" toggle is v1.1).
+- **Import:** GOOD file is the **primary** path (full inventory); UID via **Enka.Network** is a **convenience/demo** (showcased characters only).
+- **Optimiser is exact, always** ([ADR-0004](docs/adr/0004-exact-branch-and-bound-optimisation.md)) — never a capped approximation; robustness via worker progress + cancel. Results are top-K with a **light anti-clone cap** so the list isn't near-identical builds.
+- **Share links are self-contained and view-first** ([ADR-0005](docs/adr/0005-self-contained-share-links.md)) — the five artifacts are embedded; the inventory is not. Recipients view the build, then "load your own gear to optimise".
+- **Gap analysis is the v1.1 centerpiece** ([ADR-0007](docs/adr/0007-gap-analysis-with-frozen-meta-snapshot.md)) — see §6. This supersedes the originally-deferred "team-composition" framing as the *next* headline feature; team composition remains a later phase.
+
+---
+
 ## 1. Background & Problem Statement
 
 In gacha RPGs like **Genshin Impact**, a character's strength comes mostly from their five **artifacts** — gear pieces, each with one main stat and up to four random sub-stats, drawn from a large pool. A serious player accumulates **hundreds** of artifacts. Finding the *best* five-piece combination for a given character — one that respects the bonuses you want (e.g. a 4-piece set effect), clears a needed **Energy Recharge** threshold, and then maximises damage-relevant stats like **Crit Value** — is a genuine **combinatorial optimisation problem**. Done by hand it is slow, error-prone, and most players just guess.
@@ -143,9 +156,20 @@ UI states:
 
 ---
 
-## 6. Team-Composition Optimizer *(Phase 2 — deferred)*
+## 6. Gap Analysis *(v1.1 — the next headline feature)*
 
-A later phase that optimises **multi-character teams** rather than a single character's gear. Out of scope for the end-June launch; captured here so the roadmap is explicit. Detailed product behaviour to be scoped when Phase 1 has shipped and seen real use.
+The pure optimizer answers *"what's the best build from the artifacts I already own?"* Gap analysis answers the question the owner actually cares about: *"what am I missing, and what should I farm to reach the ideal?"* It is the **centerpiece of the v1.1 depth layer** (full design: `docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md`; decision: [ADR-0007](docs/adr/0007-gap-analysis-with-frozen-meta-snapshot.md)).
+
+- **Meta target.** A frozen, bundled **build-recipe** per character (recommended set(s), main stat per slot, ER target, crit-ratio target), sourced from **KQM** and labeled "Meta data: patch X.Y". One click pre-fills the constraint/target builder; **every field is overridable**. It is a build *recipe*, not a tier ranking. Fully client-side — no live data.
+- **What it reports (no random-roll guessing):**
+  - *Feasibility gaps* — "You own no ATK% Sands," "Only 2 Emblem pieces — can't make 4pc."
+  - *Numeric shortfall* — "Best build hits ER 152% vs. your 160% target."
+  - *One grounded action* — "Your Goblet contributes least; replacing it helps most."
+- **Out of scope for gap analysis:** simulated "perfect build" ceilings and random substat-roll modelling (avoids false precision).
+
+## 6b. Team-Composition Optimizer *(later phase — deferred)*
+
+A still-later phase that optimises **multi-character teams** rather than a single character's gear. Out of scope for the end-June launch and for v1.1. Detailed product behaviour to be scoped after gap analysis has shipped and seen real use.
 
 ---
 

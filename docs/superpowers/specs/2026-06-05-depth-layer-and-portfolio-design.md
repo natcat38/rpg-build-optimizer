@@ -1,143 +1,129 @@
 # RPG Build Optimizer — v1.1 Depth Layer & Portfolio Design
 
 > **Audience:** the builder (you) + future reviewers of the repo.
-> **Status:** approved design, pre-build.
+> **Status:** approved design, pre-build. Refined 2026-06-06 by a design grill — see `docs/adr/` for the resulting decision records and `CONTEXT.md` for the glossary.
 > **Companion docs:** `docs/RPG_Build_Optimizer_Product_Scope.md`, `docs/RPG_Build_Optimizer_Tech_Scope.md`.
-> **Date:** 2026-06-05.
+> **Date:** 2026-06-05 (refined 2026-06-06).
 
 ---
 
 ## 1. Purpose
 
-The product and tech scopes already define a lean, shippable **Phase 1 Artifact Optimizer**. This document does not change that scope. It defines a deliberately-planned **depth layer (v1.1)** that deepens the project *after* the lean version ships, and frames the whole project as a portfolio showpiece for a **mixed audience** (product/frontend, algorithms/backend, and general software-engineering reviewers).
+The product and tech scopes define a lean, shippable **Phase 1 Artifact Optimizer**. This document defines a deliberately-planned **depth layer (v1.1)** built *after* the lean version ships, and frames the whole project as a portfolio showpiece for a **mixed audience** (product/frontend, algorithms/backend, and general software-engineering reviewers).
 
-The guiding decisions behind this design:
+Guiding decisions:
 
-- **Audience:** mixed — the project must read well to three different reviewer types at once.
-- **Effort posture:** *phase it.* Ship the lean ~11-day Phase 1 by end-June 2026, then build the depth layer as a clearly-planned v1.1. The deadline is protected; depth never competes with it.
-- **Emphasis:** craftsmanship (Approach C) + instant playability (Approach B), plus the *written/tested* proof of the algorithm (the overlap between "show off the brain" and "craftsmanship"). The purely-visual live search animation is an explicit stretch item.
+- **Audience:** mixed — must read well to three reviewer types at once.
+- **Effort posture:** *phase it.* Ship the lean Phase 1 by end-June 2026, then build the depth layer as a clearly-planned v1.1. The deadline is protected.
+- **Emphasis:** craftsmanship + instant playability, plus the *written/tested* proof of the algorithm. The purely-visual live search animation is an explicit stretch item.
+- **v1.1 centerpiece:** **gap analysis** — "what should I farm to reach a meta build" — the feature the owner personally wants. See [ADR-0007](../../adr/0007-gap-analysis-with-frozen-meta-snapshot.md).
+
+This refinement folds the earlier standalone "explain this result" panel **into gap analysis** (it is the same machinery surfaced), and adds the artifact **"+20 projection" toggle** as a v1.1 item.
 
 ---
 
 ## 2. Two-tier release shape
 
 ### v1.0 — "It works and it's shipped" (by end-June 2026)
-The existing Phase 1 scope, unchanged: import gear (UID / GOOD file / manual) → pick character + weapon → define constraints + a target stat → get top builds → share any build via link. Lean and complete. **No new scope is added here — this tier exists to protect the deadline.**
+The existing Phase 1 scope: import gear (GOOD file primary; UID via Enka.Network as convenience) → pick character + weapon + **build level** → define constraints + a target stat → get top builds (exact, anti-clone capped) → share any build via a self-contained link. **No new scope here — this tier protects the deadline.** Note: the v1.0 optimiser must already emit **per-build diagnostics** ([ADR-0004](../../adr/0004-exact-branch-and-bound-optimisation.md)) so v1.1 gap analysis is a presentation layer, not an engine rewrite.
 
-### v1.1 — "The depth layer" (planned now, built after v1.0 ships)
-Three bundles plus one stretch item, detailed in §3–§5.
+### v1.1 — "The depth layer"
 
 | Bundle | Items |
 |---|---|
-| **B — Instantly playable** | "Try with example gear" button · "Explain this result" panel |
-| **C — Professionally built** | Decision notes (ADRs) + glossary (CONTEXT.md) · Speed report · Correctness check · End-to-end test robot + quality badges · Extensibility proof |
-| **A-overlap — Written proof of the brain** | Speed report + correctness check (listed under C; they are the written/tested half of "show off the brain") |
+| **★ Gap analysis (centerpiece)** | Meta-target snapshot + overridable prefill · gap report (Levels 1+2+light-3) · absorbs the "explain this result" panel |
+| **B — Instantly playable** | "Try with example gear" sample inventory · artifact "+20 projection" toggle |
+| **C — Professionally built** | ADRs + glossary (done as of this grill) · speed report · correctness check · E2E test robot + quality badges · extensibility proof |
 | **Stretch** | Live "watch it search" animation |
 
-> Note: the "speed report" and "correctness check" satisfy both the algorithm story (Approach A) and the craftsmanship story (Approach C). They are documented once, under Bundle C (§4), and counted as the realized portion of Approach A.
+> The **speed report** and **correctness check** are the written/tested half of the "show off the brain" angle — counted under Bundle C.
 
 ---
 
-## 3. Bundle B — Instantly playable (user-facing)
+## 3. Gap analysis (the centerpiece)
 
-### 3.1 "Try with example gear" button
-On the empty starting screen, alongside the existing import options, a button such as *"No gear handy? Try a sample inventory."* One click loads a realistic pre-made set (~150 artifacts) with a character already selected, landing the visitor directly on a results screen.
+See [ADR-0007](../../adr/0007-gap-analysis-with-frozen-meta-snapshot.md). Compares the best **owned** build against a **meta target** and tells the player what's blocking them and what to chase.
 
-- **Why:** today a stranger must own the game and export a file before seeing anything. This removes that wall — the difference between "looks interesting" and "I see what it does." It gates the value of every other feature.
-- **Build:** a bundled sample data file + a loader button. Low effort, high payoff.
-- **Acceptance:** clicking the button with an empty inventory populates a known sample, selects a character, and shows ranked results without any further input.
+**Meta target.** A frozen, bundled **build-recipe snapshot** (per character: recommended set(s), main stat per slot, ER target, crit-ratio target), extracted from **KQM** (primary, attributed), labeled "Meta data: patch X.Y". It is a **one-click default that pre-fills the constraint/target builder**; every field is **user-overridable**. It is a build *recipe*, not a tier list. 100% client-side — no live API.
 
-### 3.2 "Explain this result" panel
-On any result build, an expandable panel that states, in plain language, why the build ranked where it did. Examples of the lines it surfaces:
+**Gap report depth (Levels 1 + 2 + light 3; no roll simulation):**
+1. **Feasibility gaps** — *"You own no ATK% Sands,"* *"Only 2 Emblem pieces — can't make 4pc."*
+2. **Numeric shortfall** — *"Best build hits ER 152% vs. your 160% target — short by 8%."*
+3. **One grounded action** — *"Your Goblet contributes least; replacing it helps most."* Based on provable facts (missing main stat, weakest equipped piece), **never** on simulating random substat rolls.
 
-- Which constraint was binding — *"Required Energy Recharge ≥ 160% — this build reaches 162%."*
-- Which piece matters most — *"Swapping the Sands piece would lose the most Crit Value."*
-- Search effort — *"3 constraints active; 1,240 of ~3.4 million combinations were actually checked."*
+**Explicitly excluded:** Level-4 "simulated perfect build" ceiling and any random-roll modelling (false precision).
 
-- **Why:** turns a black box into a tool that teaches the player; reads as product maturity.
-- **Build:** moderate. The optimizer already computes these numbers; this surfaces them in friendly language. Requires the optimizer to expose per-build diagnostics (binding constraints, marginal contribution per slot, explored/pruned counts).
-- **Acceptance:** every returned build can show at least the binding-constraint line, the most-impactful-piece line, and the explored/pruned counts.
+**Acceptance:** with a meta target selected, the report shows (a) every infeasible constraint with its cause, (b) numeric shortfall vs. each target for feasible builds, and (c) the single highest-impact grounded action.
 
 ---
 
-## 4. Bundle C — Professionally built (craftsmanship + written proof)
+## 4. Bundle B — Instantly playable
 
-### 4.1 Decision notes (ADRs) + glossary (CONTEXT.md)
-Use the repo's existing conventions: `docs/adr/` for decision records and `CONTEXT.md` for the domain glossary.
+### 4.1 "Try with example gear"
+A button on the empty screen — *"No gear handy? Try a sample inventory."* — loads a realistic ~150-artifact bundled set with a character pre-selected, landing the visitor on results in one click. Removes the import wall for strangers/recruiters. Low effort, high payoff.
+- **Acceptance:** one click on an empty inventory populates the sample, selects a character, and shows ranked results with no further input.
 
-- **ADRs** covering at least: smart-skip (branch-and-bound) search vs. exhaustive brute force; client-only / no-backend architecture; link-based sharing vs. accounts; the `GameAdapter` seam for multi-game support.
-- **Glossary** defining the domain language: artifact, slot (flower/plume/sands/goblet/circlet), main stat, sub-stat, set bonus (2pc/4pc), Energy Recharge, Crit Value, objective, constraint.
-- **Why:** demonstrates deliberate, explainable decisions and a shared vocabulary — what interviewers probe for.
-- **Build:** low effort, pure writing.
-- **Acceptance:** at least 4 ADRs exist; CONTEXT.md defines every domain term used in the UI.
-
-### 4.2 Speed report (written half of "show off the brain")
-A short documented report (e.g. `docs/benchmarks.md` plus a script that generates the numbers) with a table proving the search is fast across inventory sizes — naïve combination count vs. combinations actually explored vs. wall-clock time.
-
-- **Why:** the headline technical proof. "Fast" claimed is nothing; "fast" with a reproducible table is credible.
-- **Build:** a script that runs the optimizer at several inventory sizes and records counts + timings; results written into the report.
-- **Acceptance:** a single command regenerates the table; the report shows at least 3 inventory sizes with naïve count, explored count, and timing.
-
-### 4.3 Correctness check
-An automated test that runs an exhaustive (slow, guaranteed-correct) search on small inputs and asserts the smart-skip search returns the *identical* best build(s).
-
-- **Why:** preempts the obvious technical question — "how do you know skipping never discards the real winner?"
-- **Build:** modest; lives with the normal test suite. Random small inventories compared against brute force.
-- **Acceptance:** a test compares smart-skip vs. brute force across many randomized small inventories and passes in CI.
-
-### 4.4 End-to-end test robot + quality badges
-One automated end-to-end test that drives the app like a real user: load sample gear → optimize → copy share link → reopen the link → confirm the same build appears. Plus README badges (passing tests; a speed/accessibility score such as Lighthouse).
-
-- **Why:** proves the whole flow works start-to-finish, not just in isolated units; badges give an at-a-glance "ships real software" signal.
-- **Build:** moderate. E2E via a browser-driving test tool; badges wired to CI.
-- **Acceptance:** the E2E test passes in CI; README shows a passing-tests badge and a quality/score badge.
-
-### 4.5 Extensibility proof
-The architecture separates Genshin-specific data from the game-agnostic optimizer via the `GameAdapter` seam. To *demonstrate* (not merely claim) the seam, add a tiny stub second-game adapter used only in tests, showing the optimizer runs unchanged against different game data.
-
-- **Why:** "designed for extension" is a common claim; demonstrating it is rare and convincing.
-- **Build:** small, test-only.
-- **Acceptance:** a test instantiates a stub non-Genshin adapter and runs the optimizer against it with no changes to optimizer code.
+### 4.2 Artifact "+20 projection" toggle
+A toggle that evaluates all artifacts as if maxed to +20 (vs. their current owned level, which is the v1.0 default — see [ADR-0006](../../adr/0006-inventory-import-and-build-level-model.md)). Answers "what's my *potential*" vs. "what can I equip *now*," and enriches gap analysis.
+- **Acceptance:** toggling recomputes results using +20 stat values; off by default.
 
 ---
 
-## 5. Stretch — Live "watch it search" animation
+## 5. Bundle C — Professionally built
 
-While the optimizer runs, instead of a plain progress bar, visualize the search: a fast-climbing counter of combinations checked vs. skipped, and a small visual of builds being tested and discarded as a better one is found. **Built last, only if v1.1 time allows.**
+### 5.1 ADRs + glossary — **done (this grill)**
+`docs/adr/0001–0008` and `CONTEXT.md` now exist. Keep them current as the build proceeds.
 
-- **Why:** the single most memorable feature — makes invisible cleverness visible; pleases product and technical reviewers simultaneously.
-- **Build:** the most frontend-heavy item here, which is why it is the final, optional item. Requires the worker to stream progress events (explored/pruned counts, current best) to the UI at a throttled rate.
-- **Acceptance (if built):** during a run the UI shows live explored/pruned counts and the current best build updating, without blocking the main thread.
+### 5.2 Speed report
+A documented report + a script that runs the optimiser across inventory sizes, recording naïve count vs. explored count vs. wall-clock time. The headline technical proof.
+- **Acceptance:** one command regenerates a table of ≥3 inventory sizes with naïve/explored/timing.
 
----
+### 5.3 Correctness check
+A test that runs exhaustive brute force on randomised small inventories and asserts branch-and-bound returns the identical optimum. Proves the pruning never discards the true best ([ADR-0004](../../adr/0004-exact-branch-and-bound-optimisation.md)).
+- **Acceptance:** passes in CI across many randomised inputs.
 
-## 6. How the finished project reads to each reviewer
+### 5.4 E2E test robot + quality badges
+One end-to-end test: load sample gear → optimise → copy share link → reopen → confirm same build. Plus README badges (passing tests; Lighthouse/quality score).
+- **Acceptance:** E2E passes in CI; README shows both badges.
 
-- **Product / frontend reviewer:** opens the live link, clicks *"Try with example gear,"* sees ranked builds in ~5 seconds, expands *"explain this result,"* and (if built) watches the search animate. → *builds things people enjoy using.*
-- **Algorithms / backend reviewer:** finds the speed report with real numbers and the correctness check proving the shortcut is safe. → *did real CS work and proved it.*
-- **General-craftsmanship reviewer:** sees ADRs, glossary, the E2E test robot, green badges, and the demonstrated extensibility seam. → *ships professional, maintainable software.*
-
-Underneath all three: a clean commit history and a visible *scoped → shipped → deliberately deepened* roadmap.
-
----
-
-## 7. Out of scope (unchanged from the product scope)
-
-- User accounts / server-side storage.
-- A damage-formula / DPS engine.
-- A public build gallery.
-- Wuthering Waves as a *shipped* game (the seam is proven in tests only; no full second-game dataset).
-- Team-composition optimization (Phase 2).
+### 5.5 Extensibility proof
+A stub second-game adapter used in tests, showing the optimiser runs unchanged on different game data ([ADR-0008](../../adr/0008-gameadapter-seam-for-multi-game.md)).
+- **Acceptance:** a test runs the optimiser against a non-Genshin stub adapter with no optimiser changes.
 
 ---
 
-## 8. Build order within v1.1
+## 6. Stretch — Live "watch it search" animation
 
-1. **Decision notes + glossary** (§4.1) — cheap, and clarifies vocabulary for everything after.
-2. **"Try with example gear"** (§3.1) — small, unlocks the demo experience.
-3. **Correctness check** (§4.3) — locks in algorithm trust before building on it.
-4. **Speed report** (§4.2) — the headline technical proof.
-5. **Extensibility proof** (§4.5) — small, test-only.
-6. **"Explain this result" panel** (§3.2) — needs optimizer diagnostics exposed.
-7. **E2E test robot + badges** (§4.4) — validates the full flow once features exist.
-8. **Stretch: live search animation** (§5) — only if time remains.
+During a run, visualise the search: a fast-climbing explored-vs-pruned counter and a small visual of builds being tested/discarded as a better one is found. The worker streams throttled progress events. Built last, only if time allows.
+- **Acceptance (if built):** live explored/pruned counts and current-best update during a run without blocking the main thread.
+
+---
+
+## 7. How the finished project reads to each reviewer
+
+- **Product / frontend:** clicks *"Try with example gear,"* sees ranked builds in ~5s, reads the gap report ("here's what to farm"), maybe watches the search animate.
+- **Algorithms / backend:** finds the speed report with real numbers and the correctness check proving the shortcut is safe — *provably optimal, and proven.*
+- **General-craftsmanship:** sees ADRs, glossary, the E2E robot, green badges, the demonstrated extensibility seam.
+
+Underneath all three: clean commit history and a visible *scoped → shipped → deliberately deepened* roadmap.
+
+---
+
+## 8. Out of scope (unchanged)
+
+User accounts / server storage · a damage/DPS engine · weapon-passive & conditional-4pc modelling · a public build gallery · Wuthering Waves as a *shipped* game (seam proven in tests only) · team-composition optimisation (Phase 2) · live meta data · random-roll simulation.
+
+---
+
+## 9. Build order within v1.1
+
+1. **Speed report + correctness check** (§5.2–5.3) — locks in the algorithm story first.
+2. **"Try with example gear"** (§4.1) — small, unlocks the demo experience.
+3. **Meta-target snapshot + prefill** (§3) — data + constraint-builder integration.
+4. **Gap report** (§3) — presentation over the v1.0 diagnostics.
+5. **"+20 projection" toggle** (§4.2) — feeds richer gap analysis.
+6. **Extensibility proof** (§5.5) — small, test-only.
+7. **E2E test robot + badges** (§5.4) — validates the full flow once features exist.
+8. **Stretch: live search animation** (§6) — only if time remains.
+
+(ADRs + glossary, §5.1, are already done.)

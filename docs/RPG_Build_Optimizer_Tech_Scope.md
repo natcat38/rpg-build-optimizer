@@ -6,6 +6,21 @@
 
 ---
 
+## 0. Resolved design decisions (2026-06-06)
+
+A design grill refined this scope. Canonical decisions are in `docs/adr/`; glossary in `CONTEXT.md`. Engineering-relevant deltas:
+
+- **Reference data** ([ADR-0002](docs/adr/0002-frozen-bundled-reference-dataset.md)): source is **`genshin-db`**; a one-time **build script** extracts a compact, **frozen bundled JSON** snapshot (patch-labeled, attributed in `DATA_LICENSE`). Only ascension-breakpoint stat values are extracted (no curve interpolation).
+- **Build level** ([ADR-0006](docs/adr/0006-inventory-import-and-build-level-model.md)): a single ascension-breakpoint value (default 90) on the request, driving character **and** weapon; part of the encoded share state. Artifacts use **current owned level** in v1.0 (a "+20 projection" flag is v1.1).
+- **Stat model** ([ADR-0003](docs/adr/0003-stat-only-model-no-damage-engine.md)): weapon main + secondary line only (**no passives**); score **2pc flat stats** (+ rare flat-stat 4pc); **conditional/non-stat 4pc unscored but enforced as a constraint**; `elemental_dmg` resolves to the character's element.
+- **Optimiser** ([ADR-0004](docs/adr/0004-exact-branch-and-bound-optimisation.md)): **exact always** (no cap/approximation); admissible upper bound **must include set-bonus objective contributions**; results are top-K with a **light anti-clone cap**; the result carries **per-build diagnostics** (binding constraints, per-slot marginal contribution, explored/pruned counts) from day one.
+- **Import** ([ADR-0006](docs/adr/0006-inventory-import-and-build-level-model.md)): **GOOD file primary**; **UID via Enka.Network** as guarded convenience (CORS-friendly, showcased-only).
+- **Sharing** ([ADR-0005](docs/adr/0005-self-contained-share-links.md)): the five artifacts' **full stats** are embedded (not inventory indices); view-first.
+- **Extensibility** ([ADR-0008](docs/adr/0008-gameadapter-seam-for-multi-game.md)): a stub second-game adapter proves the `GameAdapter` seam in tests.
+- **v1.1 gap analysis** ([ADR-0007](docs/adr/0007-gap-analysis-with-frozen-meta-snapshot.md)): presentation layer over the optimiser diagnostics + a frozen KQM meta snapshot. Designed for now so the v1.0 result type carries the needed diagnostics.
+
+---
+
 ## 1. Overview
 
 > **Phase 1 — Artifact Optimizer (end-June ship).** Dependency note: **Task 2 (data layer) must land before Tasks 4–7** — the importer, optimiser, and UI all consume `GameAdapter` types. The optimiser (Task 5) can be built and unit-tested against fixture data before the import UI (Task 4) is done.
@@ -55,6 +70,8 @@ interface Artifact {
 interface OptimizeRequest {
   characterKey: string;
   weaponKey: string;
+  buildLevel: 1 | 20 | 40 | 50 | 60 | 70 | 80 | 90; // ascension-breakpoint; drives character + weapon (ADR-0006)
+  artifactLevelMode?: 'current' | 'plus20';          // v1.0 default 'current'; 'plus20' is the v1.1 toggle
   constraints: {
     setRequirement?:                       // any ONE of:
       | { kind: '4pc'; setKey: string }
@@ -69,7 +86,7 @@ interface OptimizeRequest {
 ```
 
 ### 2.3 Derived stats (objective + constraint evaluation)
-Total stats = character base (at level/ascension) + weapon main+passive (stat parts only) + Σ artifact main stats + Σ artifact sub-stats + set-bonus stat effects (the **stat-granting** parts of 2pc/4pc only — non-stat effects are ignored, consistent with "no damage engine").
+Total stats = character base (at `buildLevel`) + weapon main + secondary stat line (**no passives** — ADR-0003) + Σ artifact main stats + Σ artifact sub-stats + scored set bonuses (the flat-stat portion of **2-piece** bonuses, plus the rare flat-stat 4pc; **conditional/non-stat 4pc effects are not scored** but are enforced as constraints). `elemental_dmg` resolves to the character's element; only element-matching elemental bonuses count toward it.
 
 ```
 total[stat] = base[stat] + Σ contributions[stat]
@@ -98,10 +115,13 @@ optimize(req, inventory):
       recurse(slotIndex+1, chosen+artifact, runningContribution+contribution(artifact))
 ```
 
-- **`maxRemaining`** = sum of the best possible objective contribution still achievable from the remaining slots' pools (precompute per slot). Gives an admissible upper bound for pruning.
+- **`maxRemaining`** = sum of the best possible objective contribution still achievable from the remaining slots' pools (precompute per slot). Gives an admissible upper bound for pruning. ⚠️ **The bound must also include the maximum set-bonus contribution to the objective** still reachable — otherwise a completion that gains objective from a set bonus could be wrongly pruned. (ADR-0004 / ADR-0003.)
 - **Set-requirement pruning:** also prune branches that can no longer reach the required set count given remaining slots.
-- Return the **top K** builds (K configurable, default 10).
+- **Exact always** — no combination/time cap. Slow searches are handled by the worker's progress + cancel (ADR-0004), never by approximating.
+- Return the **top K** builds (K configurable, default 10), with a **light anti-clone cap**: drop exact stat-duplicates and limit how many results share the same 4-piece core (full diversity clustering is v1.1).
+- The result carries **per-build diagnostics**: which constraints are binding, each slot's marginal contribution to the objective, and explored/pruned counts. (Feeds the v1.1 gap-analysis presentation layer and the optional live search animation.)
 - **Infeasible** → empty result with reason `NO_FEASIBLE_BUILD`.
+- **Correctness:** a test compares branch-and-bound against exhaustive brute force on randomised small inventories (pruning must never change the optimum).
 
 ### 2.5 Worked example (pruning intuition)
 | Inventory size/slot | Naïve combinations | After main-stat locks (sands/goblet/circlet) | With branch-and-bound pruning |
@@ -113,7 +133,7 @@ Locks + bounding turn an intractable brute force into something that finishes in
 
 ### 2.6 Import mapping
 - **GOOD format** (`{ format: "GOOD", artifacts: [...] }`) → map each entry to `Artifact`. GOOD is the de-facto community export (produced by inventory scanners). Mapping is a pure function; version-guard on `version`/`source`.
-- **UID import** → fetch showcase JSON for the UID, read equipped artifacts off showcased characters, map to `Artifact`. Only showcased characters are exposed (small set) — surface this in the UI (Product Scope §4.1).
+- **UID import** → fetch showcase JSON from **Enka.Network** (CORS-friendly, no key; respect its cache/rate limits), read equipped artifacts off showcased characters, map to `Artifact`. Only showcased characters are exposed (~40 artifacts max) — surface this in the UI (Product Scope §4.1). Guard against outage/empty-showcase so it can never crash the app. **GOOD file is the primary path for real optimisation; UID is convenience/demo** (ADR-0006).
 
 ### 2.7 URL build-encoding
 ```ts
