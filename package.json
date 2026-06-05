@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint . --ext ts,tsx",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "build:data": "tsx scripts/build-dataset.ts"
   },
