@@ -22,8 +22,14 @@ export function ArtifactForm({ onDone }: { onDone?: () => void }) {
     setError(err);
     if (err) return;
     const a: Artifact = {
-      id: crypto.randomUUID(), setKey, slot, rarity: 5, level, mainStat,
-      mainStatValue: genshinAdapter.mainStatValue(mainStat, 5, level), subStats,
+      id: crypto.randomUUID(),
+      setKey,
+      slot,
+      rarity: 5,
+      level,
+      mainStat,
+      mainStatValue: genshinAdapter.mainStatValue(mainStat, 5, level),
+      subStats,
     };
     add(a);
     onDone?.();
@@ -31,22 +37,50 @@ export function ArtifactForm({ onDone }: { onDone?: () => void }) {
 
   return (
     <div className="space-y-2 p-4 border rounded">
-      <label className="block">Set
-        <select className="ml-2 border" value={setKey} onChange={(e) => setSetKey(e.target.value)}>
-          {genshinAdapter.sets().map((s) => <option key={s.key} value={s.key}>{s.name}</option>)}
+      <label className="block">
+        Set
+        <select
+          className="ml-2 border"
+          value={setKey}
+          onChange={(e) => setSetKey(e.target.value)}
+        >
+          {genshinAdapter.sets().map((s) => (
+            <option key={s.key} value={s.key}>
+              {s.name}
+            </option>
+          ))}
         </select>
       </label>
-      <label className="block">Slot
-        <select className="ml-2 border" value={slot} onChange={(e) => setSlot(e.target.value as Slot)}>
-          {SLOTS.map((s) => <option key={s} value={s}>{s}</option>)}
+      <label className="block">
+        Slot
+        <select
+          className="ml-2 border"
+          value={slot}
+          onChange={(e) => setSlot(e.target.value as Slot)}
+        >
+          {SLOTS.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
         </select>
       </label>
-      <label className="block">Main stat
-        <select className="ml-2 border" value={mainStat} onChange={(e) => setMainStat(e.target.value as StatKey)}>
-          {STAT_OPTIONS.map((k) => <option key={k} value={k}>{k}</option>)}
+      <label className="block">
+        Main stat
+        <select
+          className="ml-2 border"
+          value={mainStat}
+          onChange={(e) => setMainStat(e.target.value as StatKey)}
+        >
+          {STAT_OPTIONS.map((k) => (
+            <option key={k} value={k}>
+              {k}
+            </option>
+          ))}
         </select>
       </label>
-      <label className="block">Level
+      <label className="block">
+        Level
         <input
           id="level-input"
           className="ml-2 border w-16"
@@ -55,8 +89,17 @@ export function ArtifactForm({ onDone }: { onDone?: () => void }) {
           onChange={(e) => setLevel(Number(e.target.value))}
         />
       </label>
-      {error && <p role="alert" className="text-red-600 text-sm">{error}</p>}
-      <button className="px-3 py-1 bg-blue-600 text-white rounded" onClick={submit}>Add artifact</button>
+      {error && (
+        <p role="alert" className="text-red-600 text-sm">
+          {error}
+        </p>
+      )}
+      <button
+        className="px-3 py-1 bg-blue-600 text-white rounded"
+        onClick={submit}
+      >
+        Add artifact
+      </button>
     </div>
   );
 }

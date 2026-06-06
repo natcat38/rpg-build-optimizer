@@ -1,22 +1,47 @@
 import { describe, it, expect } from 'vitest';
 import { optimize, bruteForce } from './search';
-import type { Artifact, OptimizeContext, OptimizeRequest, Slot } from '../game/types';
+import type {
+  Artifact,
+  OptimizeContext,
+  OptimizeRequest,
+  Slot,
+} from '../game/types';
 import { SLOTS } from '../game/types';
 
-const ctx: OptimizeContext = { base: { crit_rate: 5, crit_dmg: 50 }, setBonuses: {} };
+const ctx: OptimizeContext = {
+  base: { crit_rate: 5, crit_dmg: 50 },
+  setBonuses: {},
+};
 
 let counter = 0;
 function mk(slot: Slot, cr = 0, cd = 0, setKey = 'A'): Artifact {
-  return { id: `id${counter++}`, setKey, slot, rarity: 5, level: 20, mainStat: 'crit_rate', mainStatValue: cr, subStats: cd ? [{ key: 'crit_dmg', value: cd }] : [] };
+  return {
+    id: `id${counter++}`,
+    setKey,
+    slot,
+    rarity: 5,
+    level: 20,
+    mainStat: 'crit_rate',
+    mainStatValue: cr,
+    subStats: cd ? [{ key: 'crit_dmg', value: cd }] : [],
+  };
 }
 
 function inventory(perSlot: number): Artifact[] {
   const arr: Artifact[] = [];
-  for (const slot of SLOTS) for (let i = 0; i < perSlot; i++) arr.push(mk(slot, i, i * 2));
+  for (const slot of SLOTS)
+    for (let i = 0; i < perSlot; i++) arr.push(mk(slot, i, i * 2));
   return arr;
 }
 
-const req: OptimizeRequest = { characterKey: 'c', weaponKey: 'w', buildLevel: 90, constraints: {}, objective: 'crit_value', topK: 5 };
+const req: OptimizeRequest = {
+  characterKey: 'c',
+  weaponKey: 'w',
+  buildLevel: 90,
+  constraints: {},
+  objective: 'crit_value',
+  topK: 5,
+};
 
 describe('optimize', () => {
   it('returns NO_FEASIBLE_BUILD when a slot pool is empty', () => {
@@ -39,7 +64,11 @@ describe('optimize', () => {
   it('honours a minStats constraint (infeasible)', () => {
     counter = 0;
     const inv = inventory(3);
-    const r = optimize({ ...req, constraints: { minStats: { crit_dmg: 1000 } } }, inv, ctx);
+    const r = optimize(
+      { ...req, constraints: { minStats: { crit_dmg: 1000 } } },
+      inv,
+      ctx,
+    );
     expect(r.reason).toBe('NO_FEASIBLE_BUILD');
   });
 
@@ -62,10 +91,18 @@ describe('optimize', () => {
       setBonuses: { A: { two: { er_pct: 20 } }, B: { two: { er_pct: 20 } } },
     };
     const reqEr: OptimizeRequest = {
-      characterKey: 'c', weaponKey: 'w', buildLevel: 90, constraints: {}, objective: 'er_pct', topK: 5,
+      characterKey: 'c',
+      weaponKey: 'w',
+      buildLevel: 90,
+      constraints: {},
+      objective: 'er_pct',
+      topK: 5,
     };
     let n = 0;
-    const rnd = () => { n = (n * 1103515245 + 12345) & 0x7fffffff; return n; };
+    const rnd = () => {
+      n = (n * 1103515245 + 12345) & 0x7fffffff;
+      return n;
+    };
     for (let seed = 0; seed < 30; seed++) {
       n = seed * 7919 + 1;
       let id = 0;
@@ -74,7 +111,16 @@ describe('optimize', () => {
         for (let i = 0; i < 3; i++) {
           const setKey = rnd() % 2 === 0 ? 'A' : 'B';
           const er = rnd() % 15; // er_pct sub 0..14
-          inv.push({ id: `e${id++}`, setKey, slot, rarity: 5, level: 20, mainStat: 'er_pct', mainStatValue: er, subStats: [] });
+          inv.push({
+            id: `e${id++}`,
+            setKey,
+            slot,
+            rarity: 5,
+            level: 20,
+            mainStat: 'er_pct',
+            mainStatValue: er,
+            subStats: [],
+          });
         }
       }
       const bnb = optimize(reqEr, inv, ctxSets);
@@ -87,7 +133,11 @@ describe('optimize', () => {
     counter = 0;
     const inv = inventory(4);
     const r = optimize({ ...req, topK: 5 }, inv, ctx);
-    const cores = r.builds.map((b) => SLOTS.slice(0, 4).map((s) => b.artifactIds[s]).join(','));
+    const cores = r.builds.map((b) =>
+      SLOTS.slice(0, 4)
+        .map((s) => b.artifactIds[s])
+        .join(','),
+    );
     expect(new Set(cores).size).toBeGreaterThan(1);
   });
 

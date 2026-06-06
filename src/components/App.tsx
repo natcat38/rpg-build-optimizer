@@ -12,14 +12,19 @@ export function App() {
   const artifacts = useInventory((s) => s.artifacts);
   const [result, setResult] = useState<OptimizeResult | null>(null);
   const [request, setRequest] = useState<OptimizeRequest | null>(null);
-  const [sharedArtifacts, setSharedArtifacts] = useState<Artifact[] | null>(null);
+  const [sharedArtifacts, setSharedArtifacts] = useState<Artifact[] | null>(
+    null,
+  );
   const [sharedError, setSharedError] = useState(false);
 
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get('b');
     if (!param) return;
     const out = decodeBuild(param);
-    if ('error' in out) { setSharedError(true); return; }
+    if ('error' in out) {
+      setSharedError(true);
+      return;
+    }
     setRequest(out.request);
     setResult({ builds: [out.build], explored: 0, pruned: 0 });
     setSharedArtifacts(out.artifacts);
@@ -42,24 +47,43 @@ export function App() {
       </header>
 
       {sharedError && (
-        <p role="alert" className="text-amber-700">{"This shared build couldn't be read — it may be from a newer version."}</p>
+        <p role="alert" className="text-amber-700">
+          {
+            "This shared build couldn't be read — it may be from a newer version."
+          }
+        </p>
       )}
 
       <section>
         <h2 className="font-semibold mb-2">1. Load your artifacts</h2>
         <ImportPanel />
-        <details className="mt-2"><summary className="cursor-pointer text-sm">Or add one manually</summary><ArtifactForm /></details>
+        <details className="mt-2">
+          <summary className="cursor-pointer text-sm">
+            Or add one manually
+          </summary>
+          <ArtifactForm />
+        </details>
       </section>
 
       <section>
         <h2 className="font-semibold mb-2">2. Optimise</h2>
-        <OptimizePanel onResult={(r, req) => { setSharedArtifacts(null); setResult(r); setRequest(req); }} />
+        <OptimizePanel
+          onResult={(r, req) => {
+            setSharedArtifacts(null);
+            setResult(r);
+            setRequest(req);
+          }}
+        />
       </section>
 
       {result && request && (
         <section>
           <h2 className="font-semibold mb-2">3. Results</h2>
-          <Results result={result} request={request} artifactsById={artifactsById} />
+          <Results
+            result={result}
+            request={request}
+            artifactsById={artifactsById}
+          />
         </section>
       )}
     </div>

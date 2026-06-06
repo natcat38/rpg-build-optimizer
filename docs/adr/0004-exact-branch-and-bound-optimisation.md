@@ -5,7 +5,7 @@
 
 ## Context
 
-Brute force over five slots explodes for large inventories. We need it fast, but the project's headline technical story is *"finds the provably best build."* A cap-and-approximate fallback would make searches always fast but would forfeit that claim.
+Brute force over five slots explodes for large inventories. We need it fast, but the project's headline technical story is _"finds the provably best build."_ A cap-and-approximate fallback would make searches always fast but would forfeit that claim.
 
 ## Decision
 

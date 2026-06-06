@@ -19,6 +19,8 @@ describe('ArtifactForm', () => {
     await userEvent.clear(level);
     await userEvent.type(level, '25');
     await userEvent.click(screen.getByText('Add artifact'));
-    expect(screen.getByRole('alert')).toHaveTextContent('Level must be between 0 and 20.');
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Level must be between 0 and 20.',
+    );
   });
 });

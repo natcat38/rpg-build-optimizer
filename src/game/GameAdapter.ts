@@ -3,7 +3,15 @@ import type { Slot, StatKey, StatVec, BuildLevel } from './types';
 export interface CharacterMeta {
   key: string;
   name: string;
-  element: 'pyro' | 'hydro' | 'electro' | 'cryo' | 'anemo' | 'geo' | 'dendro' | 'physical';
+  element:
+    | 'pyro'
+    | 'hydro'
+    | 'electro'
+    | 'cryo'
+    | 'anemo'
+    | 'geo'
+    | 'dendro'
+    | 'physical';
 }
 
 export interface WeaponMeta {
@@ -31,6 +39,10 @@ export interface GameAdapter {
   characters(): CharacterMeta[];
   weapons(): WeaponMeta[];
   sets(): ArtifactSetMeta[];
-  baseStats(characterKey: string, weaponKey: string, level: BuildLevel): StatVec;
+  baseStats(
+    characterKey: string,
+    weaponKey: string,
+    level: BuildLevel,
+  ): StatVec;
   mainStatValue(mainStat: StatKey, rarity: number, level: number): number;
 }

@@ -4,9 +4,19 @@ export const SLOTS: Slot[] = ['flower', 'plume', 'sands', 'goblet', 'circlet'];
 // STAT_KEYS is the single source of truth; StatKey is derived from it so the
 // runtime guard (isStatKey) and the compile-time union can never drift apart.
 const STAT_KEYS = [
-  'hp', 'hp_pct', 'atk', 'atk_pct', 'def', 'def_pct',
-  'em', 'er_pct', 'crit_rate', 'crit_dmg',
-  'elemental_dmg', 'physical_dmg', 'healing',
+  'hp',
+  'hp_pct',
+  'atk',
+  'atk_pct',
+  'def',
+  'def_pct',
+  'em',
+  'er_pct',
+  'crit_rate',
+  'crit_dmg',
+  'elemental_dmg',
+  'physical_dmg',
+  'healing',
 ] as const;
 
 export type StatKey = (typeof STAT_KEYS)[number];
@@ -30,11 +40,11 @@ export interface Artifact {
   id: string;
   setKey: string;
   slot: Slot;
-  rarity: number;          // 4 or 5
-  level: number;           // 0..20
+  rarity: number; // 4 or 5
+  level: number; // 0..20
   mainStat: StatKey;
-  mainStatValue: number;   // resolved from rarity+level tables at creation/import time
-  subStats: SubStat[];     // <=4, none equal to mainStat
+  mainStatValue: number; // resolved from rarity+level tables at creation/import time
+  subStats: SubStat[]; // <=4, none equal to mainStat
 }
 
 export type SetRequirement =
@@ -54,10 +64,10 @@ export type Objective = StatKey | 'crit_value';
 export interface OptimizeRequest {
   characterKey: string;
   weaponKey: string;
-  buildLevel: BuildLevel;          // drives character + weapon (ADR-0006)
+  buildLevel: BuildLevel; // drives character + weapon (ADR-0006)
   constraints: OptimizeConstraints;
   objective: Objective;
-  topK?: number;                   // default 10
+  topK?: number; // default 10
   // artifactLevelMode: reserved for v1.1 "+20 projection"; v1.0 always uses current level.
 }
 
@@ -82,7 +92,7 @@ export interface BuildResult {
   artifactIds: Record<Slot, string>;
   totals: StatVec;
   objectiveValue: number;
-  score: number;                 // objectiveValue - critRatioPenalty
+  score: number; // objectiveValue - critRatioPenalty
   diagnostics: BuildDiagnostics;
 }
 

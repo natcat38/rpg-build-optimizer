@@ -1,7 +1,11 @@
 import { optimize } from '../optimizer/search';
 import type { Artifact, OptimizeContext, OptimizeRequest } from '../game/types';
 
-export interface WorkerRequest { req: OptimizeRequest; inventory: Artifact[]; ctx: OptimizeContext; }
+export interface WorkerRequest {
+  req: OptimizeRequest;
+  inventory: Artifact[];
+  ctx: OptimizeContext;
+}
 
 (self as unknown as Worker).onmessage = (e: MessageEvent<WorkerRequest>) => {
   try {

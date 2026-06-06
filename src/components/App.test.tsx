@@ -18,7 +18,9 @@ describe('App shell', () => {
   it('shows a friendly fallback for an unreadable shared link', () => {
     window.history.pushState({}, '', '/?b=garbage!!');
     render(<App />);
-    expect(screen.getByText(/This shared build couldn't be read/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/This shared build couldn't be read/i),
+    ).toBeInTheDocument();
     window.history.pushState({}, '', '/');
   });
 });

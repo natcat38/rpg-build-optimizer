@@ -7,7 +7,13 @@ const data = rawData as unknown as Snapshot;
 
 describe('genshinAdapter', () => {
   it('exposes the five slots', () => {
-    expect(genshinAdapter.slots).toEqual(['flower', 'plume', 'sands', 'goblet', 'circlet']);
+    expect(genshinAdapter.slots).toEqual([
+      'flower',
+      'plume',
+      'sands',
+      'goblet',
+      'circlet',
+    ]);
   });
   it('returns a non-empty character list', () => {
     expect(genshinAdapter.characters().length).toBeGreaterThan(0);
@@ -16,7 +22,7 @@ describe('genshinAdapter', () => {
     const chars = genshinAdapter.characters();
     const weapons = genshinAdapter.weapons();
     const base = genshinAdapter.baseStats(chars[0].key, weapons[0].key, 90);
-    expect((base.atk ?? 0)).toBeGreaterThan(0);
+    expect(base.atk ?? 0).toBeGreaterThan(0);
   });
   it('resolves a 5-star ATK% main stat value at +20 to a known ~46.6%', () => {
     const v = genshinAdapter.mainStatValue('atk_pct', 5, 20);
@@ -48,13 +54,15 @@ describe('genshinAdapter', () => {
     // Wolf's Gravestone ATK% secondary at 90 should be ~49.6, not ~0.5
     const wolfStats = data.weapons.find((w) => w.key === "wolf's_gravestone");
     const atk_pct = wolfStats?.byLevel['90']?.atk_pct ?? 0;
-    expect(atk_pct).toBeGreaterThan(10);   // definitely not a 0..1 fraction
-    expect(atk_pct).toBeLessThan(100);     // and not unreasonably large
+    expect(atk_pct).toBeGreaterThan(10); // definitely not a 0..1 fraction
+    expect(atk_pct).toBeLessThan(100); // and not unreasonably large
   });
 
   it('every weapon with a level-90 entry has base ATK > 300', () => {
     const broken = data.weapons.filter(
-      (w) => w.byLevel['90'] !== undefined && (w.byLevel['90'] as Record<string, number>).atk <= 300,
+      (w) =>
+        w.byLevel['90'] !== undefined &&
+        (w.byLevel['90'] as Record<string, number>).atk <= 300,
     );
     expect(broken.map((w) => w.key)).toEqual([]);
   });

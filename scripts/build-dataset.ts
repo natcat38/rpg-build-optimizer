@@ -126,7 +126,8 @@ function parse2pc(text: string): Record<string, number> | null {
   const eleDmgMatchValueFirst = text.match(
     /(\d+(?:\.\d+)?)%\s+(?:Pyro|Hydro|Electro|Cryo|Anemo|Geo|Dendro)\s+DMG\s+Bonus/i,
   );
-  if (eleDmgMatchValueFirst) return { elemental_dmg: parseFloat(eleDmgMatchValueFirst[1]) };
+  if (eleDmgMatchValueFirst)
+    return { elemental_dmg: parseFloat(eleDmgMatchValueFirst[1]) };
 
   // Physical DMG — handles "Physical DMG +25%", "Physical DMG Bonus +25%",
   // and "Physical DMG is increased by 25%" (Pale Flame).
@@ -168,15 +169,21 @@ function parse2pc(text: string): Record<string, number> | null {
   if (emMatch2) return { em: parseFloat(emMatch2[1]) };
 
   // Healing Bonus +15% / Healing Effectiveness +15%
-  const healMatch = text.match(/Heal(?:ing)?\s+(?:Bonus|Effectiveness)\s+\+(\d+(?:\.\d+)?)%/i);
+  const healMatch = text.match(
+    /Heal(?:ing)?\s+(?:Bonus|Effectiveness)\s+\+(\d+(?:\.\d+)?)%/i,
+  );
   if (healMatch) return { healing: parseFloat(healMatch[1]) };
 
   // Flat HP: "Max HP increased by 1000" or "HP increased by..."
-  const hpFlatMatch = text.match(/(?:Max\s+)?HP\s+(?:increased\s+by|by)\s+(\d+(?:\.\d+)?)\b/i);
+  const hpFlatMatch = text.match(
+    /(?:Max\s+)?HP\s+(?:increased\s+by|by)\s+(\d+(?:\.\d+)?)\b/i,
+  );
   if (hpFlatMatch) return { hp: parseFloat(hpFlatMatch[1]) };
 
   // DEF flat: "DEF +100" (no %)
-  const defFlatMatch = text.match(/^DEF\s+(?:increased\s+by\s+|\+)(\d+(?:\.\d+)?)(?!\s*%)/i);
+  const defFlatMatch = text.match(
+    /^DEF\s+(?:increased\s+by\s+|\+)(\d+(?:\.\d+)?)(?!\s*%)/i,
+  );
   if (defFlatMatch) return { def: parseFloat(defFlatMatch[1]) };
 
   return null;
@@ -270,7 +277,9 @@ const MAIN_STAT_VALUES: Record<string, Record<string, number[]>> = {
 // ---------------------------------------------------------------------------
 
 function buildCharacters() {
-  const names: string[] = genshindb.characters('names', { matchCategories: true });
+  const names: string[] = genshindb.characters('names', {
+    matchCategories: true,
+  });
   const result = [];
 
   for (const name of names) {
@@ -291,7 +300,11 @@ function buildCharacters() {
         def: r2(s.defense),
       };
       // Add ascension stat (specialized) if it maps to a stat key
-      if (substattKey && s.specialized !== undefined && s.specialized !== null) {
+      if (
+        substattKey &&
+        s.specialized !== undefined &&
+        s.specialized !== null
+      ) {
         // specialized for flat stats (hp, atk, def, em) is an absolute value
         // for percentage stats it's 0..1 range → convert to %
         const flatStats = new Set(['hp', 'atk', 'def', 'em']);
@@ -304,7 +317,10 @@ function buildCharacters() {
     }
 
     // Generate a slug key from name
-    const key = name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_']/g, '').toLowerCase();
+    const key = name
+      .replace(/\s+/g, '_')
+      .replace(/[^a-zA-Z0-9_']/g, '')
+      .toLowerCase();
 
     result.push({
       key,
@@ -356,7 +372,10 @@ function buildWeapons() {
     // Skip weapons with no valid stats at any level (shouldn't happen, guard anyway)
     if (Object.keys(byLevel).length === 0) continue;
 
-    const key = name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_']/g, '').toLowerCase();
+    const key = name
+      .replace(/\s+/g, '_')
+      .replace(/[^a-zA-Z0-9_']/g, '')
+      .toLowerCase();
 
     result.push({
       key,
@@ -374,7 +393,9 @@ function buildWeapons() {
 // ---------------------------------------------------------------------------
 
 function buildSets() {
-  const names: string[] = genshindb.artifacts('names', { matchCategories: true });
+  const names: string[] = genshindb.artifacts('names', {
+    matchCategories: true,
+  });
   const result = [];
 
   for (const name of names) {
@@ -390,7 +411,9 @@ function buildSets() {
     // Only include if we recognise the 2pc bonus as a stat. Warn (don't silently
     // drop) so a parser gap on a stat-granting set is visible at build time.
     if (!twoPiece) {
-      console.warn(`  ⚠ dropped set "${name}" — unparsed 2pc: ${JSON.stringify(a['2pc'])}`);
+      console.warn(
+        `  ⚠ dropped set "${name}" — unparsed 2pc: ${JSON.stringify(a['2pc'])}`,
+      );
       continue;
     }
 
@@ -422,12 +445,17 @@ function buildSets() {
 // ---------------------------------------------------------------------------
 
 /** Keep the first entry per key; warn on collisions (e.g. quest weapons that share a name). */
-function dedupeByKey<T extends { key: string; name: string }>(items: T[], kind: string): T[] {
+function dedupeByKey<T extends { key: string; name: string }>(
+  items: T[],
+  kind: string,
+): T[] {
   const seen = new Set<string>();
   const out: T[] = [];
   for (const item of items) {
     if (seen.has(item.key)) {
-      console.warn(`  ⚠ dropped duplicate ${kind} key "${item.key}" ("${item.name}")`);
+      console.warn(
+        `  ⚠ dropped duplicate ${kind} key "${item.key}" ("${item.name}")`,
+      );
       continue;
     }
     seen.add(item.key);

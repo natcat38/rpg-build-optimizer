@@ -1,7 +1,15 @@
-import type { Artifact, OptimizeContext, OptimizeConstraints, Objective, StatVec, StatKey } from '../game/types';
+import type {
+  Artifact,
+  OptimizeContext,
+  OptimizeConstraints,
+  Objective,
+  StatVec,
+  StatKey,
+} from '../game/types';
 
 export function addInto(acc: StatVec, v: StatVec): void {
-  for (const k of Object.keys(v) as StatKey[]) acc[k] = (acc[k] ?? 0) + (v[k] ?? 0);
+  for (const k of Object.keys(v) as StatKey[])
+    acc[k] = (acc[k] ?? 0) + (v[k] ?? 0);
 }
 
 export function countSets(build: Artifact[]): Record<string, number> {
@@ -33,11 +41,15 @@ export function totals(ctx: OptimizeContext, build: Artifact[]): StatVec {
 }
 
 export function objectiveValue(t: StatVec, objective: Objective): number {
-  if (objective === 'crit_value') return (t.crit_rate ?? 0) * 2 + (t.crit_dmg ?? 0);
+  if (objective === 'crit_value')
+    return (t.crit_rate ?? 0) * 2 + (t.crit_dmg ?? 0);
   return t[objective] ?? 0;
 }
 
-function meetsSetRequirement(build: Artifact[], req: NonNullable<OptimizeConstraints['setRequirement']>): boolean {
+function meetsSetRequirement(
+  build: Artifact[],
+  req: NonNullable<OptimizeConstraints['setRequirement']>,
+): boolean {
   const c = countSets(build);
   if (req.kind === '4pc') return (c[req.setKey] ?? 0) >= 4;
   if (req.kind === '2pc') return (c[req.setKey] ?? 0) >= 2;
@@ -45,8 +57,16 @@ function meetsSetRequirement(build: Artifact[], req: NonNullable<OptimizeConstra
   return (c[a] ?? 0) >= 2 && (c[b] ?? 0) >= 2;
 }
 
-export function satisfies(constraints: OptimizeConstraints, build: Artifact[], t: StatVec): boolean {
-  if (constraints.setRequirement && !meetsSetRequirement(build, constraints.setRequirement)) return false;
+export function satisfies(
+  constraints: OptimizeConstraints,
+  build: Artifact[],
+  t: StatVec,
+): boolean {
+  if (
+    constraints.setRequirement &&
+    !meetsSetRequirement(build, constraints.setRequirement)
+  )
+    return false;
   if (constraints.minStats) {
     for (const k of Object.keys(constraints.minStats) as StatKey[]) {
       if ((t[k] ?? 0) < (constraints.minStats[k] ?? 0)) return false;

@@ -1,4 +1,9 @@
-import type { GameAdapter, CharacterMeta, WeaponMeta, ArtifactSetMeta } from '../GameAdapter';
+import type {
+  GameAdapter,
+  CharacterMeta,
+  WeaponMeta,
+  ArtifactSetMeta,
+} from '../GameAdapter';
 import type { StatKey, StatVec, BuildLevel } from '../types';
 import { SLOTS } from '../types';
 import type { Snapshot } from './snapshot';
@@ -58,7 +63,11 @@ export const genshinAdapter: GameAdapter = {
     }));
   },
 
-  baseStats(characterKey: string, weaponKey: string, level: BuildLevel): StatVec {
+  baseStats(
+    characterKey: string,
+    weaponKey: string,
+    level: BuildLevel,
+  ): StatVec {
     const c = data.characters.find((x) => x.key === characterKey);
     const w = data.weapons.find((x) => x.key === weaponKey);
     const out: StatVec = {};

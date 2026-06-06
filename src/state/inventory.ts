@@ -16,10 +16,16 @@ export const useInventory = create<InventoryState>()(
     (set) => ({
       artifacts: [],
       add: (a) => set((s) => ({ artifacts: [...s.artifacts, a] })),
-      addMany: (items) => set((s) => ({ artifacts: [...s.artifacts, ...items] })),
+      addMany: (items) =>
+        set((s) => ({ artifacts: [...s.artifacts, ...items] })),
       update: (id, patch) =>
-        set((s) => ({ artifacts: s.artifacts.map((a) => (a.id === id ? { ...a, ...patch } : a)) })),
-      remove: (id) => set((s) => ({ artifacts: s.artifacts.filter((a) => a.id !== id) })),
+        set((s) => ({
+          artifacts: s.artifacts.map((a) =>
+            a.id === id ? { ...a, ...patch } : a,
+          ),
+        })),
+      remove: (id) =>
+        set((s) => ({ artifacts: s.artifacts.filter((a) => a.id !== id) })),
       clear: () => set({ artifacts: [] }),
     }),
     { name: 'rpg-build-optimizer/inventory' },

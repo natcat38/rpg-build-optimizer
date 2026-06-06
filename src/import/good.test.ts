@@ -2,11 +2,21 @@ import { describe, it, expect } from 'vitest';
 import { parseGOOD } from './good';
 
 const goodFile = {
-  format: 'GOOD', version: 2, source: 'test',
+  format: 'GOOD',
+  version: 2,
+  source: 'test',
   artifacts: [
-    { setKey: 'EmblemOfSeveredFate', slotKey: 'sands', rarity: 5, level: 20, mainStatKey: 'atk_', substats: [
-      { key: 'critDMG_', value: 14 }, { key: 'critRate_', value: 7 },
-    ] },
+    {
+      setKey: 'EmblemOfSeveredFate',
+      slotKey: 'sands',
+      rarity: 5,
+      level: 20,
+      mainStatKey: 'atk_',
+      substats: [
+        { key: 'critDMG_', value: 14 },
+        { key: 'critRate_', value: 7 },
+      ],
+    },
   ],
 };
 
@@ -16,7 +26,10 @@ describe('parseGOOD', () => {
   });
 
   it('skips malformed (null) array elements without throwing', () => {
-    const out = parseGOOD({ format: 'GOOD', artifacts: [null, goodFile.artifacts[0]] });
+    const out = parseGOOD({
+      format: 'GOOD',
+      artifacts: [null, goodFile.artifacts[0]],
+    });
     expect(Array.isArray(out)).toBe(true);
     expect((out as unknown[]).length).toBe(1);
   });

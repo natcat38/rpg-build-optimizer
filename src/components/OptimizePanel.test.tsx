@@ -9,11 +9,22 @@ describe('OptimizePanel', () => {
   it('disables Optimise with a hint when no artifacts exist', () => {
     render(<OptimizePanel onResult={() => {}} />);
     expect(screen.getByRole('button', { name: /Optimise/i })).toBeDisabled();
-    expect(screen.getByText(/Add or import artifacts before optimising\./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Add or import artifacts before optimising\./i),
+    ).toBeInTheDocument();
   });
 
   it('enables Optimise once a character is chosen and artifacts exist', () => {
-    useInventory.getState().add({ id: 'a', setKey: 'A', slot: 'flower', rarity: 5, level: 20, mainStat: 'hp', mainStatValue: 1, subStats: [] });
+    useInventory.getState().add({
+      id: 'a',
+      setKey: 'A',
+      slot: 'flower',
+      rarity: 5,
+      level: 20,
+      mainStat: 'hp',
+      mainStatValue: 1,
+      subStats: [],
+    });
     render(<OptimizePanel onResult={() => {}} />);
     expect(screen.getByRole('button', { name: /Optimise/i })).toBeEnabled();
   });

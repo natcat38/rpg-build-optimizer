@@ -29,12 +29,15 @@ export function encodeBuild(snapshot: BuildSnapshot): string {
   return toBase64Url(deflate(json));
 }
 
-export function decodeBuild(param: string): BuildSnapshot | { error: 'UNREADABLE' } {
+export function decodeBuild(
+  param: string,
+): BuildSnapshot | { error: 'UNREADABLE' } {
   try {
     if (!param) return { error: 'UNREADABLE' };
     const json = inflate(fromBase64Url(param), { to: 'string' });
     const parsed = JSON.parse(json) as BuildSnapshot;
-    if (!parsed.request || !parsed.build || !Array.isArray(parsed.artifacts)) return { error: 'UNREADABLE' };
+    if (!parsed.request || !parsed.build || !Array.isArray(parsed.artifacts))
+      return { error: 'UNREADABLE' };
     return parsed;
   } catch {
     return { error: 'UNREADABLE' };
