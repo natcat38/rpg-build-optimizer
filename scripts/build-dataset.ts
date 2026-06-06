@@ -421,12 +421,27 @@ function buildSets() {
 // Main
 // ---------------------------------------------------------------------------
 
+/** Keep the first entry per key; warn on collisions (e.g. quest weapons that share a name). */
+function dedupeByKey<T extends { key: string; name: string }>(items: T[], kind: string): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const item of items) {
+    if (seen.has(item.key)) {
+      console.warn(`  ⚠ dropped duplicate ${kind} key "${item.key}" ("${item.name}")`);
+      continue;
+    }
+    seen.add(item.key);
+    out.push(item);
+  }
+  return out;
+}
+
 function main() {
   console.log('Building Genshin Impact dataset...');
 
-  const characters = buildCharacters();
-  const weapons = buildWeapons();
-  const sets = buildSets();
+  const characters = dedupeByKey(buildCharacters(), 'character');
+  const weapons = dedupeByKey(buildWeapons(), 'weapon');
+  const sets = dedupeByKey(buildSets(), 'set');
 
   const snapshot = {
     patch: '4.3',
