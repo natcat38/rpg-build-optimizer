@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { genshinAdapter } from './adapter';
-import data from './data.generated.json';
+import type { Snapshot } from './snapshot';
+import rawData from './data.generated.json';
+
+const data = rawData as unknown as Snapshot;
 
 describe('genshinAdapter', () => {
   it('exposes the five slots', () => {

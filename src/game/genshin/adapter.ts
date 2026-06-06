@@ -1,7 +1,10 @@
 import type { GameAdapter, CharacterMeta, WeaponMeta, ArtifactSetMeta } from '../GameAdapter';
 import type { StatKey, StatVec, BuildLevel } from '../types';
 import { SLOTS } from '../types';
-import data from './data.generated.json';
+import type { Snapshot } from './snapshot';
+import rawData from './data.generated.json';
+
+const data = rawData as unknown as Snapshot;
 
 const STAT_KEYS: StatKey[] = [
   'hp',
@@ -71,9 +74,7 @@ export const genshinAdapter: GameAdapter = {
   },
 
   mainStatValue(mainStat: StatKey, rarity: number, level: number): number {
-    const byStat = (data.mainStatValues as Record<string, Record<string, number[]>>)[
-      String(rarity)
-    ];
+    const byStat = data.mainStatValues[String(rarity)];
     const arr = byStat?.[mainStat];
     if (!arr) return 0;
     return arr[Math.max(0, Math.min(level, arr.length - 1))] ?? 0;
