@@ -4,6 +4,7 @@ import { SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { validateArtifactDraft } from '../state/artifactValidation';
 import { useInventory } from '../state/inventory';
+import { formatSetName, SLOT_LABELS, statLabel } from '../ui/labels';
 
 const STAT_OPTIONS: StatKey[] = genshinAdapter.statKeys;
 
@@ -36,68 +37,70 @@ export function ArtifactForm({ onDone }: { onDone?: () => void }) {
   }
 
   return (
-    <div className="space-y-2 p-4 border rounded">
-      <label className="block">
-        Set
-        <select
-          className="ml-2 border"
-          value={setKey}
-          onChange={(e) => setSetKey(e.target.value)}
-        >
-          {genshinAdapter.sets().map((s) => (
-            <option key={s.key} value={s.key}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block">
-        Slot
-        <select
-          className="ml-2 border"
-          value={slot}
-          onChange={(e) => setSlot(e.target.value as Slot)}
-        >
-          {SLOTS.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block">
-        Main stat
-        <select
-          className="ml-2 border"
-          value={mainStat}
-          onChange={(e) => setMainStat(e.target.value as StatKey)}
-        >
-          {STAT_OPTIONS.map((k) => (
-            <option key={k} value={k}>
-              {k}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block">
-        Level
-        <input
-          id="level-input"
-          className="ml-2 border w-16"
-          type="number"
-          value={level}
-          onChange={(e) => setLevel(Number(e.target.value))}
-        />
-      </label>
+    <div className="panel space-y-4 p-5">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          <span className="field-label">Set</span>
+          <select
+            className="field"
+            value={setKey}
+            onChange={(e) => setSetKey(e.target.value)}
+          >
+            {genshinAdapter.sets().map((s) => (
+              <option key={s.key} value={s.key}>
+                {formatSetName(s.name)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="field-label">Slot</span>
+          <select
+            className="field"
+            value={slot}
+            onChange={(e) => setSlot(e.target.value as Slot)}
+          >
+            {SLOTS.map((s) => (
+              <option key={s} value={s}>
+                {SLOT_LABELS[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="field-label">Main stat</span>
+          <select
+            className="field"
+            value={mainStat}
+            onChange={(e) => setMainStat(e.target.value as StatKey)}
+          >
+            {STAT_OPTIONS.map((k) => (
+              <option key={k} value={k}>
+                {statLabel(k)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="field-label">Level</span>
+          <input
+            id="level-input"
+            className="field"
+            type="number"
+            value={level}
+            onChange={(e) => setLevel(Number(e.target.value))}
+          />
+        </label>
+      </div>
       {error && (
-        <p role="alert" className="text-red-600 text-sm">
+        <p
+          role="alert"
+          className="rounded-lg border border-rose/30 bg-rose/10 px-3 py-2 text-sm text-rose"
+        >
           {error}
         </p>
       )}
-      <button
-        className="px-3 py-1 bg-blue-600 text-white rounded"
-        onClick={submit}
-      >
+      <button className="btn-primary" onClick={submit}>
         Add artifact
       </button>
     </div>

@@ -103,5 +103,7 @@ it('renders one card per build with its objective value and pieces', () => {
   };
   render(<Results result={r} request={req} artifactsById={artifactsById} />);
   expect(screen.getByText(/240/)).toBeInTheDocument();
-  expect(screen.getAllByText(/EmblemOfSeveredFate/).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/Emblem of Severed Fate/i).length).toBeGreaterThan(
+    0,
+  );
 });

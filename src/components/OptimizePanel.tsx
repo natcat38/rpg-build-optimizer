@@ -6,6 +6,7 @@ import { buildContext } from '../optimizer/context';
 import { runOptimize } from '../workers/optimizeClient';
 import { useInventory } from '../state/inventory';
 import type { OptimizeResult } from '../game/types';
+import { objectiveLabel } from '../ui/labels';
 
 const OBJECTIVES: Objective[] = [
   'crit_value',
@@ -62,81 +63,98 @@ export function OptimizePanel({
   }
 
   return (
-    <div className="space-y-3 p-4 border rounded">
-      <label className="block">
-        Character
-        <select
-          className="ml-2 border"
-          value={characterKey}
-          onChange={(e) => setCharacterKey(e.target.value)}
+    <div className="panel space-y-5">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          <span className="field-label">Character</span>
+          <select
+            className="field"
+            value={characterKey}
+            onChange={(e) => setCharacterKey(e.target.value)}
+          >
+            {chars.map((c) => (
+              <option key={c.key} value={c.key}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="field-label">Weapon</span>
+          <select
+            className="field"
+            value={weaponKey}
+            onChange={(e) => setWeaponKey(e.target.value)}
+          >
+            {weapons.map((w) => (
+              <option key={w.key} value={w.key}>
+                {w.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="field-label">Build level</span>
+          <select
+            className="field"
+            value={buildLevel}
+            onChange={(e) =>
+              setBuildLevel(Number(e.target.value) as BuildLevel)
+            }
+          >
+            {BUILD_LEVELS.map((l) => (
+              <option key={l} value={l}>
+                Lv. {l}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="field-label">Maximise</span>
+          <select
+            className="field"
+            value={objective}
+            onChange={(e) => setObjective(e.target.value as Objective)}
+          >
+            {OBJECTIVES.map((o) => (
+              <option key={o} value={o}>
+                {objectiveLabel(o)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="field-label">Minimum Energy Recharge %</span>
+          <input
+            className="field"
+            type="number"
+            value={minER}
+            onChange={(e) => setMinER(e.target.value)}
+            placeholder="Optional — e.g. 160"
+          />
+        </label>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
+        {hint ? (
+          <p className="text-sm text-muted">{hint}</p>
+        ) : (
+          <p className="text-sm text-muted">
+            Searching{' '}
+            <span className="font-semibold text-parchment">
+              {artifacts.length}
+            </span>{' '}
+            artifacts for the exact optimum.
+          </p>
+        )}
+        <button
+          className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
+          disabled={!canRun || running}
+          onClick={run}
         >
-          {chars.map((c) => (
-            <option key={c.key} value={c.key}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block">
-        Weapon
-        <select
-          className="ml-2 border"
-          value={weaponKey}
-          onChange={(e) => setWeaponKey(e.target.value)}
-        >
-          {weapons.map((w) => (
-            <option key={w.key} value={w.key}>
-              {w.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block">
-        Build level
-        <select
-          className="ml-2 border"
-          value={buildLevel}
-          onChange={(e) => setBuildLevel(Number(e.target.value) as BuildLevel)}
-        >
-          {BUILD_LEVELS.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block">
-        Maximise
-        <select
-          className="ml-2 border"
-          value={objective}
-          onChange={(e) => setObjective(e.target.value as Objective)}
-        >
-          {OBJECTIVES.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block">
-        Min Energy Recharge %
-        <input
-          className="ml-2 border w-24"
-          type="number"
-          value={minER}
-          onChange={(e) => setMinER(e.target.value)}
-          placeholder="e.g. 160"
-        />
-      </label>
-      {hint && <p className="text-sm text-gray-600">{hint}</p>}
-      <button
-        className="px-4 py-2 bg-emerald-600 text-white rounded disabled:opacity-50"
-        disabled={!canRun || running}
-        onClick={run}
-      >
-        {running ? 'Searching…' : 'Optimise'}
-      </button>
+          {running ? 'Searching…' : 'Optimise'}
+        </button>
+      </div>
     </div>
   );
 }
