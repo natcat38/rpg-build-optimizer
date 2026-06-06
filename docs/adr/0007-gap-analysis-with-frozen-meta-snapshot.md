@@ -11,7 +11,7 @@ Beyond "best build from what I own," the owner wants "what am I missing, and wha
 
 **Gap analysis is the v1.1 centerpiece** (it supersedes the standalone "explain this result" panel, which becomes part of it). It compares the best **owned** build against a **target**.
 
-The target is a **meta build recipe** (recommended set(s), main stat per slot, ER target, crit-ratio target), supplied as a **frozen, bundled snapshot** extracted from a public authoritative source — **KQM primary** — labeled **"Meta data: patch X.Y"**, attributed in `DATA_LICENSE`. The meta recipe is a **one-click default that pre-fills the constraint/target builder**; every field is **user-overridable**. It is the *build recipe*, not a tier ranking.
+The target is a **meta build recipe** (recommended set(s), main stat per slot, ER target, crit-ratio target), supplied as a **frozen, bundled snapshot** extracted from a public authoritative source — **KQM primary** — labeled **"Meta data: patch X.Y"**, attributed in `DATA_LICENSE`. The meta recipe is a **one-click default that pre-fills the constraint/target builder**; every field is **user-overridable**. It is the _build recipe_, not a tier ranking.
 
 Depth is **Levels 1 + 2 + light 3**:
 

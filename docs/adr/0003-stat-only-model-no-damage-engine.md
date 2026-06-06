@@ -26,5 +26,5 @@ Modelling rules:
 ## Consequences
 
 - Fast, correct for every character, zero per-character maintenance.
-- A direct, documented limitation: two builds both satisfying "4pc Emblem" are ranked purely by stats — the 4pc's damage *effect* does not move the score. This is stated openly in the UI and docs; being explicit about the model's edges is a strength.
+- A direct, documented limitation: two builds both satisfying "4pc Emblem" are ranked purely by stats — the 4pc's damage _effect_ does not move the score. This is stated openly in the UI and docs; being explicit about the model's edges is a strength.
 - A damage engine, weapon-passive modelling, and 4pc-effect modelling are all explicitly out of scope (possible far-future phase).

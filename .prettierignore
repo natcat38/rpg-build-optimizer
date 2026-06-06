@@ -1,0 +1,12 @@
+# Generated dataset (built by scripts/build-dataset.ts)
+src/game/genshin/data.generated.json
+
+# Lockfile
+package-lock.json
+
+# Build output / coverage
+dist/
+coverage/
+
+# Vendored static assets
+*.svg
