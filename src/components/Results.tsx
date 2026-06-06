@@ -10,6 +10,7 @@ export function Results({ result, request, artifactsById }: {
   artifactsById: Record<string, Artifact>;
 }) {
   const [copied, setCopied] = useState<number | null>(null);
+  const [copyFailed, setCopyFailed] = useState(false);
 
   if (result.reason === 'NO_FEASIBLE_BUILD' || result.builds.length === 0) {
     return (
@@ -35,13 +36,20 @@ export function Results({ result, request, artifactsById }: {
             artifacts={arts}
             onShare={async () => {
               const url = `${location.origin}${location.pathname}?b=${encodeBuild({ request, build: b, artifacts: arts })}`;
-              await navigator.clipboard.writeText(url);
-              setCopied(i);
+              try {
+                await navigator.clipboard.writeText(url);
+                setCopyFailed(false);
+                setCopied(i);
+              } catch {
+                setCopied(null);
+                setCopyFailed(true);
+              }
             }}
           />
         );
       })}
       {copied !== null && <p role="status" className="text-green-700 text-sm">Share link copied.</p>}
+      {copyFailed && <p role="alert" className="text-red-600 text-sm">Couldn’t copy automatically — copy the link from your browser’s address bar.</p>}
     </div>
   );
 }

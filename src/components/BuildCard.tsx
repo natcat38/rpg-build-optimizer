@@ -7,7 +7,7 @@ export function BuildCard({ build, request, artifacts, onShare }: {
   build: BuildResult;
   request: OptimizeRequest;
   artifacts: Artifact[];
-  onShare?: () => void;
+  onShare?: () => void | Promise<void>;
 }) {
   const bySlot = new Map(artifacts.map((a) => [a.slot, a]));
   return (
