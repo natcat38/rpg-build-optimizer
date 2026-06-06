@@ -61,7 +61,12 @@ export function satisfies(constraints: OptimizeConstraints, build: Artifact[], t
   return true;
 }
 
-/** Soft tiebreak: penalise distance of crit_rate/(crit_rate+crit_dmg) from target. */
+/**
+ * Soft tiebreak: penalise distance of crit_rate/(crit_rate+crit_dmg) from `target`.
+ * The target is that ratio, NOT the CR:CD ratio: target 0.5 => CR==CD (1:1); the
+ * conventional Genshin 1:2 CR:CD corresponds to target ≈ 0.333. Returns 0 when
+ * target is undefined (the v1.0 UI does not expose this control).
+ */
 export function critRatioPenalty(t: StatVec, target?: number): number {
   if (target === undefined) return 0;
   const cr = t.crit_rate ?? 0;
