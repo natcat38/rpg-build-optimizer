@@ -53,6 +53,36 @@ describe('optimize', () => {
     }
   });
 
+  it('matches brute force with set bonuses active (2+2 ceiling admissibility)', () => {
+    // Two sets each grant +20 er_pct at 2pc. For an er_pct objective a 2+2 build
+    // activates BOTH (+40), which exceeds any single set's bonus. The pruning
+    // ceiling must account for this or it could prune the true optimum.
+    const ctxSets: OptimizeContext = {
+      base: { er_pct: 100 },
+      setBonuses: { A: { two: { er_pct: 20 } }, B: { two: { er_pct: 20 } } },
+    };
+    const reqEr: OptimizeRequest = {
+      characterKey: 'c', weaponKey: 'w', buildLevel: 90, constraints: {}, objective: 'er_pct', topK: 5,
+    };
+    let n = 0;
+    const rnd = () => { n = (n * 1103515245 + 12345) & 0x7fffffff; return n; };
+    for (let seed = 0; seed < 30; seed++) {
+      n = seed * 7919 + 1;
+      let id = 0;
+      const inv: Artifact[] = [];
+      for (const slot of SLOTS) {
+        for (let i = 0; i < 3; i++) {
+          const setKey = rnd() % 2 === 0 ? 'A' : 'B';
+          const er = rnd() % 15; // er_pct sub 0..14
+          inv.push({ id: `e${id++}`, setKey, slot, rarity: 5, level: 20, mainStat: 'er_pct', mainStatValue: er, subStats: [] });
+        }
+      }
+      const bnb = optimize(reqEr, inv, ctxSets);
+      const bf = bruteForce(reqEr, inv, ctxSets);
+      expect(bnb.builds[0]?.objectiveValue).toBe(bf.builds[0]?.objectiveValue);
+    }
+  });
+
   it('applies an anti-clone cap so top results are not all identical cores', () => {
     counter = 0;
     const inv = inventory(4);

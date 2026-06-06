@@ -27,16 +27,27 @@ function objectiveContribution(a: Artifact, objective: OptimizeRequest['objectiv
   return v;
 }
 
-/** Max objective gain any single set bonus could grant (admissible over-estimate, ADR-0004). */
+/**
+ * Admissible over-estimate of the objective gain any reachable set-bonus layout
+ * can grant (ADR-0004). With 5 slots the only bonus-bearing layouts are:
+ *   - {4,1} or {5}: a single set's (2pc + 4pc)  -> max over sets of (two+four)
+ *   - {2,2,1}:      two different sets' 2pc each -> sum of the two largest 2pc
+ * The ceiling is the max of those, so it never underestimates (e.g. two
+ * ER-bonus sets in a 2+2 build for an er_pct objective).
+ */
 function maxSetBonusObjective(ctx: OptimizeContext, objective: OptimizeRequest['objective']): number {
-  let best = 0;
+  let bestSingle = 0; // best (two + four) from one set, for {4,1}/{5}
+  const twoValues: number[] = [];
   for (const key of Object.keys(ctx.setBonuses)) {
     const b = ctx.setBonuses[key];
     const two = b.two ? objectiveValue(b.two, objective) : 0;
     const four = b.four ? objectiveValue(b.four, objective) : 0;
-    best = Math.max(best, two + four);
+    bestSingle = Math.max(bestSingle, two + four);
+    twoValues.push(two);
   }
-  return best;
+  twoValues.sort((a, b) => b - a);
+  const bestTwoPlusTwo = (twoValues[0] ?? 0) + (twoValues[1] ?? 0); // two distinct sets' 2pc
+  return Math.max(bestSingle, bestTwoPlusTwo);
 }
 
 function makeBuildResult(ctx: OptimizeContext, req: OptimizeRequest, chosen: Artifact[]): BuildResult {
@@ -72,9 +83,13 @@ export function optimize(req: OptimizeRequest, inventory: Artifact[], ctx: Optim
     return kept.length >= k ? kept[k - 1].score : -Infinity;
   }
   function offer(b: BuildResult) {
+    // v1.0: a full sort of up to k*6 entries on every feasible leaf. Negligible for
+    // small inventories with heavy pruning; swap for a min-heap in the v1.1 speed report.
     kept.push(b);
     kept.sort((x, y) => y.score - x.score);
-    if (kept.length > k * 6) kept.length = k * 6; // keep margin for anti-clone filtering
+    // k*6 margin: the anti-clone filter may return fewer than k builds if the top
+    // candidates share a 4-piece core. A larger/exact margin would need full tracking.
+    if (kept.length > k * 6) kept.length = k * 6;
   }
 
   function recurse(slotIndex: number, runningObjective: number) {
