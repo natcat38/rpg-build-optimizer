@@ -13,6 +13,7 @@ export function runOptimize(
     worker.onmessage = (e: MessageEvent) => {
       if (e.data.type === 'done') { resolve(e.data.result as OptimizeResult); worker.terminate(); }
       else if (e.data.type === 'error') { reject(new Error(e.data.message)); worker.terminate(); }
+      else { reject(new Error(`Unexpected worker message: ${String(e.data?.type)}`)); worker.terminate(); }
     };
     worker.onerror = (e) => { reject(new Error(e.message)); worker.terminate(); };
     worker.postMessage({ req, inventory, ctx });

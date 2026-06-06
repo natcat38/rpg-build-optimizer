@@ -9,6 +9,7 @@ export interface WorkerRequest { req: OptimizeRequest; inventory: Artifact[]; ct
     const result = optimize(req, inventory, ctx);
     (self as unknown as Worker).postMessage({ type: 'done', result });
   } catch (err) {
-    (self as unknown as Worker).postMessage({ type: 'error', message: (err as Error).message });
+    const message = err instanceof Error ? err.message : String(err);
+    (self as unknown as Worker).postMessage({ type: 'error', message });
   }
 };
