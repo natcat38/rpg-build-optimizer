@@ -12,18 +12,19 @@
 
 ## File Map
 
-| Action | Path | Responsibility |
-|---|---|---|
-| Create | `src/components/ui/Combobox.tsx` | Reusable filtered-dropdown component |
-| Create | `src/components/ui/Combobox.test.tsx` | Unit tests for Combobox |
-| Modify | `src/components/OptimizePanel.tsx` | Replace Character and Weapon `<select>` |
-| Modify | `src/components/ArtifactForm.tsx` | Replace Artifact Set `<select>` |
+| Action | Path                                  | Responsibility                          |
+| ------ | ------------------------------------- | --------------------------------------- |
+| Create | `src/components/ui/Combobox.tsx`      | Reusable filtered-dropdown component    |
+| Create | `src/components/ui/Combobox.test.tsx` | Unit tests for Combobox                 |
+| Modify | `src/components/OptimizePanel.tsx`    | Replace Character and Weapon `<select>` |
+| Modify | `src/components/ArtifactForm.tsx`     | Replace Artifact Set `<select>`         |
 
 ---
 
 ## Task 1: Build the Combobox component (TDD)
 
 **Files:**
+
 - Create: `src/components/ui/Combobox.test.tsx`
 - Create: `src/components/ui/Combobox.tsx`
 
@@ -133,14 +134,20 @@ interface ComboboxProps {
   placeholder?: string;
 }
 
-export function Combobox({ options, value, onChange, placeholder }: ComboboxProps) {
+export function Combobox({
+  options,
+  value,
+  onChange,
+  placeholder,
+}: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const selectedLabel = options.find((o) => o.value === value)?.label ?? placeholder ?? '';
+  const selectedLabel =
+    options.find((o) => o.value === value)?.label ?? placeholder ?? '';
 
   const filtered = query
     ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
@@ -278,6 +285,7 @@ git commit -m "feat(ui): add searchable Combobox component"
 ## Task 2: Wire Combobox into OptimizePanel
 
 **Files:**
+
 - Modify: `src/components/OptimizePanel.tsx:68-95`
 
 ---
@@ -342,6 +350,7 @@ git commit -m "feat(ui): replace character and weapon selects with Combobox"
 ## Task 3: Wire Combobox into ArtifactForm
 
 **Files:**
+
 - Modify: `src/components/ArtifactForm.tsx:42-55`
 
 ---
@@ -360,7 +369,9 @@ Replace the Set `<label>` block (currently lines 42–55):
 <div className="block">
   <span className="field-label">Set</span>
   <Combobox
-    options={genshinAdapter.sets().map((s) => ({ value: s.key, label: formatSetName(s.name) }))}
+    options={genshinAdapter
+      .sets()
+      .map((s) => ({ value: s.key, label: formatSetName(s.name) }))}
     value={setKey}
     onChange={setSetKey}
   />

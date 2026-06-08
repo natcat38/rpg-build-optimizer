@@ -43,7 +43,9 @@ export function ArtifactForm({ onDone }: { onDone?: () => void }) {
         <div className="block">
           <span className="field-label">Set</span>
           <Combobox
-            options={genshinAdapter.sets().map((s) => ({ value: s.key, label: formatSetName(s.name) }))}
+            options={genshinAdapter
+              .sets()
+              .map((s) => ({ value: s.key, label: formatSetName(s.name) }))}
             value={setKey}
             onChange={setSetKey}
           />

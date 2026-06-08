@@ -12,14 +12,20 @@ interface ComboboxProps {
   placeholder?: string;
 }
 
-export function Combobox({ options, value, onChange, placeholder }: ComboboxProps) {
+export function Combobox({
+  options,
+  value,
+  onChange,
+  placeholder,
+}: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const selectedLabel = options.find((o) => o.value === value)?.label ?? placeholder ?? '';
+  const selectedLabel =
+    options.find((o) => o.value === value)?.label ?? placeholder ?? '';
 
   const filtered = query
     ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
@@ -104,13 +110,9 @@ export function Combobox({ options, value, onChange, placeholder }: ComboboxProp
         </button>
       )}
       {open && (
-        <ul
-          className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-abyss-900 shadow-lg"
-        >
+        <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-abyss-900 shadow-lg">
           {filtered.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-muted">
-              No results
-            </li>
+            <li className="px-3 py-2 text-sm text-muted">No results</li>
           ) : (
             filtered.map((opt, i) => (
               <li
