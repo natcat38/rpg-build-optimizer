@@ -1,5 +1,11 @@
-import type { Artifact, Slot, StatKey, SubStat } from '../game/types';
-import type { Objective, OptimizeRequest } from '../game/types';
+import type {
+  Artifact,
+  Objective,
+  OptimizeRequest,
+  Slot,
+  StatKey,
+  SubStat,
+} from '../game/types';
 import { SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { buildContext } from './context';
@@ -143,6 +149,8 @@ export interface BenchRow {
 /** Fixed seed so the committed report's deterministic columns reproduce. */
 export const DEFAULT_SEED = 20260609;
 
+// Each slot always has >=1 artifact when built via makeInventory(size>=5), so
+// the product is never 0; optimize() guards the empty-slot case independently.
 function naiveCount(inv: Artifact[]): number {
   return SLOTS.map((s) => inv.filter((a) => a.slot === s).length).reduce(
     (p, n) => p * n,
