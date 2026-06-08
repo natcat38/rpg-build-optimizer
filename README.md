@@ -9,7 +9,7 @@ Find the **best five-piece artifact build** for a Genshin Impact character from 
 
 <!-- If your Vercel production domain differs, replace the URL above. -->
 
-<!-- TODO: add a screenshot or GIF of an optimisation run here, e.g. ![demo](docs/demo.gif) -->
+![RPG Build Optimizer — import your artifacts, pick a character, and optimise](docs/screenshot.png)
 
 ---
 
