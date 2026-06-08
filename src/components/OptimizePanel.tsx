@@ -7,6 +7,7 @@ import { runOptimize } from '../workers/optimizeClient';
 import { useInventory } from '../state/inventory';
 import type { OptimizeResult } from '../game/types';
 import { objectiveLabel } from '../ui/labels';
+import { Combobox } from './ui/Combobox';
 
 const OBJECTIVES: Objective[] = [
   'crit_value',
@@ -65,34 +66,22 @@ export function OptimizePanel({
   return (
     <div className="panel space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
+        <div className="block">
           <span className="field-label">Character</span>
-          <select
-            className="field"
+          <Combobox
+            options={chars.map((c) => ({ value: c.key, label: c.name }))}
             value={characterKey}
-            onChange={(e) => setCharacterKey(e.target.value)}
-          >
-            {chars.map((c) => (
-              <option key={c.key} value={c.key}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
+            onChange={setCharacterKey}
+          />
+        </div>
+        <div className="block">
           <span className="field-label">Weapon</span>
-          <select
-            className="field"
+          <Combobox
+            options={weapons.map((w) => ({ value: w.key, label: w.name }))}
             value={weaponKey}
-            onChange={(e) => setWeaponKey(e.target.value)}
-          >
-            {weapons.map((w) => (
-              <option key={w.key} value={w.key}>
-                {w.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={setWeaponKey}
+          />
+        </div>
         <label className="block">
           <span className="field-label">Build level</span>
           <select
