@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { makeInventory } from './benchmark';
+import { runBenchmark } from './benchmark';
 import { SLOTS } from '../game/types';
 
 describe('makeInventory', () => {
@@ -56,5 +57,34 @@ describe('makeInventory', () => {
     expect(count('sands')).toBe(1);
     expect(count('goblet')).toBe(1);
     expect(count('circlet')).toBe(1);
+  });
+});
+
+describe('runBenchmark', () => {
+  it('reports naive as the product of per-slot pool sizes', () => {
+    // size 30 distributes to 6 per slot -> 6^5 = 7776 naive builds.
+    const rows = runBenchmark([30], [{ label: 'cv', objective: 'crit_value' }]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].naive).toBe(6 ** 5);
+  });
+
+  it('explores no more than the naive space and yields a >=1 reduction', () => {
+    const rows = runBenchmark([30], [{ label: 'cv', objective: 'crit_value' }]);
+    const r = rows[0];
+    expect(r.explored).toBeGreaterThan(0);
+    expect(r.explored).toBeLessThanOrEqual(r.naive);
+    expect(r.reductionFactor).toBeGreaterThanOrEqual(1);
+    expect(typeof r.ms).toBe('number');
+  });
+
+  it('produces one row per (size, scenario)', () => {
+    const rows = runBenchmark(
+      [30, 40],
+      [
+        { label: 'cv', objective: 'crit_value' },
+        { label: 'er', objective: 'er_pct' },
+      ],
+    );
+    expect(rows).toHaveLength(4);
   });
 });

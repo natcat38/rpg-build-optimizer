@@ -1,6 +1,9 @@
 import type { Artifact, Slot, StatKey, SubStat } from '../game/types';
+import type { Objective, OptimizeRequest } from '../game/types';
 import { SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
+import { buildContext } from './context';
+import { optimize } from './search';
 
 /** Deterministic PRNG so committed benchmark numbers reproduce anywhere. */
 function mulberry32(seed: number): () => number {
@@ -120,4 +123,80 @@ export function makeInventory(size: number, seed: number): Artifact[] {
     }
   });
   return inv;
+}
+
+export interface Scenario {
+  label: string;
+  objective: Objective;
+}
+
+export interface BenchRow {
+  size: number;
+  scenario: string;
+  naive: number;
+  explored: number;
+  pruned: number;
+  reductionFactor: number;
+  ms: number;
+}
+
+/** Fixed seed so the committed report's deterministic columns reproduce. */
+export const DEFAULT_SEED = 20260609;
+
+function naiveCount(inv: Artifact[]): number {
+  return SLOTS.map((s) => inv.filter((a) => a.slot === s).length).reduce(
+    (p, n) => p * n,
+    1,
+  );
+}
+
+/**
+ * Times `optimize()` across inventory sizes and objective scenarios.
+ * `naive`/`explored`/`pruned`/`reductionFactor` are deterministic for a seed;
+ * `ms` is the median of 3 runs and varies by machine.
+ */
+export function runBenchmark(
+  sizes: number[],
+  scenarios: Scenario[],
+  seed: number = DEFAULT_SEED,
+): BenchRow[] {
+  const characterKey = genshinAdapter.characters()[0].key;
+  const weaponKey = genshinAdapter.weapons()[0].key;
+  const rows: BenchRow[] = [];
+  for (const size of sizes) {
+    const inv = makeInventory(size, seed);
+    const naive = naiveCount(inv);
+    for (const sc of scenarios) {
+      const req: OptimizeRequest = {
+        characterKey,
+        weaponKey,
+        buildLevel: 90,
+        constraints: {},
+        objective: sc.objective,
+        topK: 10,
+      };
+      const ctx = buildContext(genshinAdapter, req);
+      const times: number[] = [];
+      let explored = 0;
+      let pruned = 0;
+      for (let run = 0; run < 3; run++) {
+        const t0 = performance.now();
+        const res = optimize(req, inv, ctx);
+        times.push(performance.now() - t0);
+        explored = res.explored;
+        pruned = res.pruned;
+      }
+      times.sort((a, b) => a - b);
+      rows.push({
+        size,
+        scenario: sc.label,
+        naive,
+        explored,
+        pruned,
+        reductionFactor: explored > 0 ? naive / explored : 0,
+        ms: times[1],
+      });
+    }
+  }
+  return rows;
 }
