@@ -5,6 +5,7 @@ import { genshinAdapter } from '../game/genshin/adapter';
 import { validateArtifactDraft } from '../state/artifactValidation';
 import { useInventory } from '../state/inventory';
 import { formatSetName, SLOT_LABELS, statLabel } from '../ui/labels';
+import { Combobox } from './ui/Combobox';
 
 const STAT_OPTIONS: StatKey[] = genshinAdapter.statKeys;
 
@@ -39,20 +40,14 @@ export function ArtifactForm({ onDone }: { onDone?: () => void }) {
   return (
     <div className="panel space-y-4 p-5">
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
+        <div className="block">
           <span className="field-label">Set</span>
-          <select
-            className="field"
+          <Combobox
+            options={genshinAdapter.sets().map((s) => ({ value: s.key, label: formatSetName(s.name) }))}
             value={setKey}
-            onChange={(e) => setSetKey(e.target.value)}
-          >
-            {genshinAdapter.sets().map((s) => (
-              <option key={s.key} value={s.key}>
-                {formatSetName(s.name)}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={setSetKey}
+          />
+        </div>
         <label className="block">
           <span className="field-label">Slot</span>
           <select
