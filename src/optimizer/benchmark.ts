@@ -52,7 +52,7 @@ const SUBSTAT_POOL: StatKey[] = [
 
 const round1 = (x: number): number => Math.round(x * 10) / 10;
 
-/** Plausible single-artifact substat magnitudes; realism affects which build wins, not the proof. */
+/** Plausible single-artifact substat magnitudes; realism affects which build wins, not whether the benchmark runs. */
 function subValue(stat: StatKey, rng: () => number): number {
   switch (stat) {
     case 'crit_rate':
@@ -97,15 +97,18 @@ function distribute(size: number): number[] {
 export function makeInventory(size: number, seed: number): Artifact[] {
   const rng = mulberry32(seed);
   const sets = genshinAdapter.sets();
+  if (sets.length === 0)
+    throw new Error('benchmark: genshinAdapter returned no artifact sets');
   const counts = distribute(size);
   const inv: Artifact[] = [];
+  let seq = 0;
   SLOTS.forEach((slot, si) => {
     for (let i = 0; i < counts[si]; i++) {
       const set = sets[Math.floor(rng() * sets.length)];
       const mainPool = MAIN_BY_SLOT[slot];
       const mainStat = mainPool[Math.floor(rng() * mainPool.length)];
       inv.push({
-        id: `${slot}-${i}`,
+        id: `bench-${seq++}`,
         setKey: set.key,
         slot,
         rarity: 5,

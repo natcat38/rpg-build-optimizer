@@ -45,4 +45,16 @@ describe('makeInventory', () => {
       expect(keys).not.toContain(a.mainStat);
     }
   });
+
+  it('distributes a remainder to the leading slots when size is not a multiple of 5', () => {
+    const inv = makeInventory(7, 1);
+    expect(inv).toHaveLength(7);
+    const count = (slot: string) => inv.filter((a) => a.slot === slot).length;
+    // distribute(7) = base 1 + remainder 2 to the first two slots
+    expect(count('flower')).toBe(2);
+    expect(count('plume')).toBe(2);
+    expect(count('sands')).toBe(1);
+    expect(count('goblet')).toBe(1);
+    expect(count('circlet')).toBe(1);
+  });
 });
