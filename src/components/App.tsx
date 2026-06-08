@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ImportPanel } from './ImportPanel';
 import { ArtifactForm } from './ArtifactForm';
 import { OptimizePanel } from './OptimizePanel';
@@ -7,6 +7,37 @@ import { decodeBuild } from '../share/url';
 import { PATCH } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
+
+function Section({
+  n,
+  title,
+  hint,
+  delay,
+  children,
+}: {
+  n: number;
+  title: string;
+  hint?: string;
+  delay: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="animate-fade-up" style={{ animationDelay: delay }}>
+      <div className="mb-3 flex items-center gap-3">
+        <span className="section-badge">
+          <span>{n}</span>
+        </span>
+        <div>
+          <h2 className="font-display text-lg font-bold tracking-wide text-parchment">
+            {title}
+          </h2>
+          {hint && <p className="text-xs text-muted">{hint}</p>}
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
 
 export function App() {
   const artifacts = useInventory((s) => s.artifacts);
@@ -40,52 +71,86 @@ export function App() {
   }, [sharedArtifacts, artifacts]);
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
-      <header className="flex justify-between items-baseline">
-        <h1 className="text-2xl font-bold">RPG Build Optimizer</h1>
-        <span className="text-xs text-gray-500">Data: patch {PATCH}</span>
+    <div className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
+      <header className="mb-12 animate-fade-up">
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <p className="eyebrow">Teyvat Artifact Forge</p>
+          <span className="chip">
+            <span className="h-1.5 w-1.5 rounded-full bg-jade" />
+            genshin-db · patch {PATCH}
+          </span>
+        </div>
+        <h1 className="font-display text-4xl font-black leading-tight sm:text-5xl">
+          <span className="bg-gradient-to-br from-mora-bright via-mora to-mora-deep bg-clip-text text-transparent">
+            RPG Build Optimizer
+          </span>
+        </h1>
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
+          Find the mathematically optimal artifact build for any character.
+          Exact branch-and-bound search over your inventory — computed entirely
+          in your browser, no account required.
+        </p>
       </header>
 
       {sharedError && (
-        <p role="alert" className="text-amber-700">
-          {
-            "This shared build couldn't be read — it may be from a newer version."
-          }
-        </p>
+        <div
+          role="alert"
+          className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
+        >
+          This shared build couldn&apos;t be read — it may be from a newer
+          version.
+        </div>
       )}
 
-      <section>
-        <h2 className="font-semibold mb-2">1. Load your artifacts</h2>
-        <ImportPanel />
-        <details className="mt-2">
-          <summary className="cursor-pointer text-sm">
-            Or add one manually
-          </summary>
-          <ArtifactForm />
-        </details>
-      </section>
+      <div className="space-y-10">
+        <Section
+          n={1}
+          title="Load your artifacts"
+          hint="Import a full inventory, fetch from a UID, or add pieces by hand."
+          delay="0.05s"
+        >
+          <ImportPanel />
+          <details className="group mt-3">
+            <summary className="inline-flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-teal-bright transition hover:text-teal">
+              <span className="text-xs transition group-open:rotate-90">▶</span>
+              Or add one manually
+            </summary>
+            <div className="mt-3">
+              <ArtifactForm />
+            </div>
+          </details>
+        </Section>
 
-      <section>
-        <h2 className="font-semibold mb-2">2. Optimise</h2>
-        <OptimizePanel
-          onResult={(r, req) => {
-            setSharedArtifacts(null);
-            setResult(r);
-            setRequest(req);
-          }}
-        />
-      </section>
-
-      {result && request && (
-        <section>
-          <h2 className="font-semibold mb-2">3. Results</h2>
-          <Results
-            result={result}
-            request={request}
-            artifactsById={artifactsById}
+        <Section
+          n={2}
+          title="Optimise"
+          hint="Choose a character, weapon, and what to maximise."
+          delay="0.1s"
+        >
+          <OptimizePanel
+            onResult={(r, req) => {
+              setSharedArtifacts(null);
+              setResult(r);
+              setRequest(req);
+            }}
           />
-        </section>
-      )}
+        </Section>
+
+        {result && request && (
+          <Section n={3} title="Results" delay="0s">
+            <Results
+              result={result}
+              request={request}
+              artifactsById={artifactsById}
+            />
+          </Section>
+        )}
+      </div>
+
+      <footer className="mt-16 border-t border-white/5 pt-6 text-center text-xs text-muted/70">
+        Built with branch-and-bound optimization in a Web Worker · Data from
+        genshin-db (patch {PATCH}) · Not affiliated with HoYoverse.
+      </footer>
     </div>
   );
 }
