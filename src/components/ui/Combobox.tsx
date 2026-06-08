@@ -52,6 +52,12 @@ export function Combobox({ options, value, onChange, placeholder }: ComboboxProp
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Escape') {
+      setOpen(false);
+      setQuery('');
+      return;
+    }
+    if (filtered.length === 0) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
@@ -61,9 +67,6 @@ export function Combobox({ options, value, onChange, placeholder }: ComboboxProp
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (filtered[activeIndex]) handleSelect(filtered[activeIndex]);
-    } else if (e.key === 'Escape') {
-      setOpen(false);
-      setQuery('');
     }
   }
 
@@ -102,18 +105,16 @@ export function Combobox({ options, value, onChange, placeholder }: ComboboxProp
       )}
       {open && (
         <ul
-          role="list"
           className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-abyss-900 shadow-lg"
         >
           {filtered.length === 0 ? (
-            <li role="listitem" className="px-3 py-2 text-sm text-muted">
+            <li className="px-3 py-2 text-sm text-muted">
               No results
             </li>
           ) : (
             filtered.map((opt, i) => (
               <li
                 key={opt.value}
-                role="listitem"
                 className={[
                   'cursor-pointer px-3 py-2 text-sm',
                   opt.value === value ? 'text-mora' : 'text-parchment',
