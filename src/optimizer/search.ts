@@ -105,6 +105,17 @@ export function optimize(
     return { builds: [], explored: 0, pruned: 0, reason: 'NO_FEASIBLE_BUILD' };
   }
 
+  // Surface high-contribution pieces first so the kept list fills with strong
+  // builds early and the admissible bound tightens sooner. Iteration order only —
+  // the returned optimum is unchanged (covered by the brute-force equivalence test).
+  for (const s of SLOTS) {
+    pools[s].sort(
+      (a, b) =>
+        objectiveContribution(b, req.objective) -
+        objectiveContribution(a, req.objective),
+    );
+  }
+
   const maxBySlot = SLOTS.map((s) =>
     Math.max(...pools[s].map((a) => objectiveContribution(a, req.objective))),
   );

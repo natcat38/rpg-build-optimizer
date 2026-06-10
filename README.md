@@ -78,6 +78,17 @@ docs/
   superpowers/ # design spec + implementation plan
 ```
 
+## Performance
+
+The optimiser is an exact branch-and-bound search: it returns the provably optimal
+build while evaluating only a sliver of the brute-force space. On a synthetic
+800-artifact inventory it explores roughly **1 in 89,043** of the ~105 billion possible
+crit-value builds — and a randomised correctness test confirms the pruning never
+drops the true optimum.
+
+See [docs/speed-report.md](docs/speed-report.md) for the full numbers, regenerated
+any time with `npm run bench`.
+
 ## Roadmap
 
 v1.0 (this release) ships the lean optimiser. A planned **v1.1 depth layer** adds:
