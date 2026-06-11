@@ -28,6 +28,7 @@ This tool does one thing well: _given the artifacts you own, what's the best bui
 - **Define what "best" means** — pick a character, weapon, and build level; set constraints (minimum Energy Recharge, etc.); choose one stat to **maximise** (Crit Value, Elemental Mastery, ATK%, …).
 - **Provably optimal results** — an exact search returns the genuine top builds (not a heuristic guess), each with its full resulting stat sheet.
 - **Shareable links** — every build encodes into a self-contained URL. Open the link and you see the exact build — no account, nothing stored server-side.
+- **Try with example gear** — no inventory? One click loads a curated sample inventory, picks a character + a representative constraint, and runs the optimiser, landing you straight on ranked results.
 
 ## How it works
 
@@ -58,6 +59,7 @@ npm run typecheck  # tsc -b (strict, project references)
 npm run lint
 npm run build      # production build -> dist/
 npm run build:data # regenerate the frozen genshin-db snapshot (build-time only)
+npm run bench      # regenerate docs/speed-report.md from the benchmark harness
 ```
 
 ## Project structure
@@ -91,11 +93,12 @@ any time with `npm run bench`.
 
 ## Roadmap
 
-v1.0 (this release) ships the lean optimiser. A planned **v1.1 depth layer** adds:
+v1.0 shipped the lean optimiser. The **v1.1 depth layer** is landing incrementally:
 
-- **Gap analysis** — compare your best owned build against a meta target and tell you _what to farm_ to close the gap (the centrepiece).
-- A one-click **"Try with example gear"** sample inventory.
-- A **benchmark/speed report**, an end-to-end test, and a live "watch it search" visualisation.
+- ✅ **"Try with example gear"** — one-click sample builds that load a curated inventory and auto-run the optimiser (no import required).
+- ✅ **Benchmark / speed report** — a committed, reproducible report (`npm run bench`) proving how little of the brute-force space the search explores.
+- **Gap analysis** _(planned)_ — compare your best owned build against a meta target and tell you _what to farm_ to close the gap (the centrepiece).
+- _(planned)_ an end-to-end test and a live "watch it search" visualisation.
 
 See [`docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md`](./docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md).
 

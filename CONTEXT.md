@@ -18,7 +18,7 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 - **Set bonus** — the effect from wearing 2 (**2pc**) or 4 (**4pc**) of a set. Only the **flat-stat** portion of 2pc (and rare flat-stat 4pc) is **scored**; conditional/non-stat 4pc effects are honoured as a **constraint** but not scored. See [ADR-0003](docs/adr/0003-stat-only-model-no-damage-engine.md).
 - **2+2** — a build satisfying two different 2-piece set bonuses simultaneously.
 - **Stat keys** — `hp, hp_pct, atk, atk_pct, def, def_pct, em, er_pct, crit_rate, crit_dmg, elemental_dmg, physical_dmg, healing`.
-- **Energy Recharge (ER)** — `er_pct`; commonly a minimum constraint (e.g. ≥160%).
+- **Energy Recharge (ER)** — `er_pct`; commonly a minimum constraint (e.g. ≥160%). Every character starts from a **universal 100% base ER**; this game-wide baseline is supplied by the `GameAdapter`, not the reference snapshot. See [ADR-0009](docs/adr/0009-adapter-owns-universal-game-baselines.md).
 - **Elemental Mastery (EM)** — `em`.
 - **Crit Value (CV)** — `crit_rate * 2 + crit_dmg`. A common **objective**.
 - **Crit ratio** — the balance of crit rate to crit DMG (healthy ≈ 1:2). Used as a **soft tiebreak**, never a hard constraint.
@@ -43,4 +43,7 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 
 - **Gap analysis** — the v1.1 centerpiece: compares the best **owned** build against a **meta target** and reports feasibility gaps, numeric shortfalls, and one grounded action. No random-roll simulation. See [ADR-0007](docs/adr/0007-gap-analysis-with-frozen-meta-snapshot.md).
 - **Meta target / meta recipe** — recommended set(s), main stats per slot, ER target, crit-ratio target, from a frozen KQM-sourced snapshot. Pre-fills the constraint builder; fully **overridable**. It is a build _recipe_, not a tier ranking.
-- **Sample inventory** — the bundled "Try with example gear" dataset for instant, import-free demo (v1.1).
+- **Sample inventory** — the bundled, deterministic "Try with example gear" dataset (artifacts keyed `sample-…`) for instant, import-free demo (v1.1).
+- **Sample preset** (a.k.a. **Sample build**) — one curated "Try with example gear" entry: a character plus a representative **constraint**, that loads the **sample inventory** and auto-runs the **optimiser**. Each preset demonstrates a different constraint mechanism (min stats, set requirement, main-stat lock).
+- **Sample mode** — the app state where "Try with example gear" presets are offered: an empty inventory, or one containing only `sample-` artifacts. Importing real gear leaves sample mode, so a preset click can never overwrite owned artifacts.
+- **Speed report** — the committed, reproducible benchmark (`docs/speed-report.md`, regenerated via `npm run bench`) showing how small a fraction of the brute-force build space the **optimiser** explores while still returning the exact optimum. See [ADR-0004](docs/adr/0004-exact-branch-and-bound-optimisation.md).
