@@ -1,4 +1,5 @@
 import type { Artifact, Slot, StatKey, SubStat } from '../game/types';
+import { SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 
 // Featured sets present in the snapshot. GladiatorsFinale appears in every slot
@@ -20,10 +21,10 @@ const SLOT_MAINS: Record<Slot, StatKey[]> = {
   circlet: ['crit_rate', 'crit_dmg', 'atk_pct', 'em'],
 };
 
-const SLOTS_ORDER: Slot[] = ['flower', 'plume', 'sands', 'goblet', 'circlet'];
-
 // Crit-first substat priority; er_pct kept high enough that an ER build can reach
-// 200% (base 100 + ER sands 51.8 + ~3 ER subs). em high so EM floors are reachable.
+// 200% (base 100 + ER sands 51.8 + ~3 ER subs). em is deliberately a single low
+// roll (16) so Nahida's 550 EM floor (base ~380 + 5×16 = 460 < 550) stays binding,
+// forcing an EM sands/goblet main rather than being met by substats alone.
 const SUB_PRIORITY: StatKey[] = [
   'crit_rate',
   'crit_dmg',
@@ -36,7 +37,7 @@ const SUB_VALUE: Record<string, number> = {
   crit_rate: 6.2,
   crit_dmg: 12.4,
   er_pct: 16.2,
-  em: 40,
+  em: 16,
   atk_pct: 9.3,
   hp_pct: 9.3,
 };
@@ -45,14 +46,14 @@ const SUB_VALUE: Record<string, number> = {
 function subsFor(main: StatKey): SubStat[] {
   return SUB_PRIORITY.filter((s) => s !== main)
     .slice(0, 4)
-    .map((key) => ({ key, value: SUB_VALUE[key] ?? 6 }));
+    .map((key) => ({ key, value: SUB_VALUE[key] ?? 0 }));
 }
 
 function build(): Artifact[] {
   const inv: Artifact[] = [];
   let n = 0;
   for (const setKey of FEATURED_SETS) {
-    for (const slot of SLOTS_ORDER) {
+    for (const slot of SLOTS) {
       for (const mainStat of SLOT_MAINS[slot]) {
         inv.push({
           id: `sample-${n++}`,

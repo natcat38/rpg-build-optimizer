@@ -5,7 +5,7 @@ import { SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { buildContext } from '../optimizer/context';
 import { optimize } from '../optimizer/search';
-import type { OptimizeRequest } from '../game/types';
+import type { OptimizeRequest, Slot } from '../game/types';
 
 describe('SAMPLE_INVENTORY', () => {
   it('is non-empty, sample-prefixed, with a piece in every slot', () => {
@@ -49,6 +49,23 @@ describe('SAMPLE_INVENTORY', () => {
         expect(top.totals.em ?? 0).toBeGreaterThanOrEqual(
           p.constraints.minStats.em,
         );
+      }
+      if (p.constraints.setRequirement?.kind === '4pc') {
+        const setKey = p.constraints.setRequirement.setKey;
+        const ids = Object.values(top.artifactIds);
+        const count = SAMPLE_INVENTORY.filter(
+          (a) => ids.includes(a.id) && a.setKey === setKey,
+        ).length;
+        expect(count, `${p.label} 4pc ${setKey}`).toBeGreaterThanOrEqual(4);
+      }
+      if (p.constraints.mainStatLocks) {
+        for (const [slot, locked] of Object.entries(
+          p.constraints.mainStatLocks,
+        )) {
+          const id = top.artifactIds[slot as Slot];
+          const piece = SAMPLE_INVENTORY.find((a) => a.id === id);
+          expect(piece?.mainStat, `${p.label} ${slot} lock`).toBe(locked);
+        }
       }
     }
   });
