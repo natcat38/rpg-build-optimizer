@@ -18,12 +18,16 @@ All keys verified present in the frozen snapshot. Each preset demonstrates a **d
 
 | Preset character | key           | Weapon (signature)           | Constraint demoed                            | `constraints` value                                               |
 | ---------------- | ------------- | ---------------------------- | -------------------------------------------- | ----------------------------------------------------------------- |
-| **Furina**       | `furina`      | `aquila_favonia`             | Energy Recharge floor (`minStats`)           | `{ minStats: { er_pct: 160 } }`                                   |
-| **Nahida**       | `nahida`      | `a_thousand_floating_dreams` | Elemental Mastery floor (`minStats`, non-ER) | `{ minStats: { em: 250 } }`                                       |
+| **Furina**       | `furina`      | `aquila_favonia`             | Energy Recharge floor (`minStats`)           | `{ minStats: { er_pct: 200 } }`                                   |
+| **Nahida**       | `nahida`      | `a_thousand_floating_dreams` | Elemental Mastery floor (`minStats`, non-ER) | `{ minStats: { em: 550 } }`                                       |
 | **Navia**        | `navia`       | `beacon_of_the_reed_sea`     | Required 4-piece set (`setRequirement`)      | `{ setRequirement: { kind: '4pc', setKey: 'GladiatorsFinale' } }` |
 | **Neuvillette**  | `neuvillette` | `cashflow_supervision`       | Locked goblet main stat (`mainStatLocks`)    | `{ mainStatLocks: { goblet: 'elemental_dmg' } }`                  |
 
 All presets: `buildLevel: 90`, `topK: 10`, `objective: 'crit_value'`.
+
+### 2.1 Base Energy Recharge correction (prerequisite)
+
+The frozen snapshot has **no base Energy Recharge** (`baseStats(...).er_pct === 0` for every character), but in Genshin **every character has a universal 100% base ER**. Without it, ER totals are ~100% too low and any ER constraint is misleading/infeasible. Fix this app-wide in the adapter: `genshinAdapter.baseStats()` adds `er_pct: 100` to its result (with a regression test). This makes the Furina `ER ≥ 200` floor realistic and feasible, and corrects ER everywhere in the app (e.g. the panel's "Minimum Energy Recharge %" field). Nahida's base EM is already ~379, so her floor is set to **550** to remain a binding constraint.
 
 ---
 
@@ -36,8 +40,8 @@ A single deterministic fixture (~90–120 artifacts) built by a curated builder,
 - **Construction:** for each featured set, lay down ~2 pieces per slot with slot-legal main stats and Crit-heavy substats; reuse the `subValue` magnitude helper and the seeded PRNG from `src/optimizer/benchmark.ts` (export them if not already exported) with a fixed seed, but with **controlled** set/main distribution (not the random benchmark distribution).
 - **Featured sets:** `GladiatorsFinale`, `GildedDreams`, `EmblemOfSeveredFate`, plus filler `CrimsonWitchOfFlames` and `HuskOfOpulentDreams` for realism and anti-clone variety.
 - **Feasibility guarantees (the builder MUST satisfy these, asserted in tests):**
-  - **Furina ER ≥ 160:** include Emblem ER% sands options and ER substats so ≥160 ER is reachable.
-  - **Nahida EM ≥ 250:** include EM sands and EM goblet options (187 each at +20) plus EM substats, so ≥250 EM is reachable alongside a Crit circlet.
+  - **Furina ER ≥ 200:** with the +100 base ER (§2.1), include an ER% sands and generous ER substats (each non-sands slot can carry an ER sub) so 200% ER is reachable — forcing a real crit-vs-ER tradeoff.
+  - **Nahida EM ≥ 550:** base EM is ~379; include EM sands and EM goblet options (187 each at +20) so ≥550 EM is reachable alongside a Crit circlet.
   - **Navia 4pc Gladiator's:** include ≥1 `GladiatorsFinale` piece in **every** slot (provide 2 where possible) so a 4-piece is always formable.
   - **Neuvillette goblet lock = `elemental_dmg`:** include ≥2 goblets with `mainStat: 'elemental_dmg'` (Crit substats), so the locked pool is non-empty.
   - Every slot has ≥1 piece overall (no empty-pool infeasibility).
@@ -79,7 +83,7 @@ Data flow: `SampleGear` → request store + inventory store → `runCurrent()` (
 
 1. On the empty state, a "Sample builds" card shows four preset buttons (Furina, Nahida, Navia, Neuvillette).
 2. Clicking any preset lands on ranked results with **no further input**, with the optimise panel reflecting that preset's character/weapon/objective/constraint.
-3. Each preset yields a feasible, coherent top build (no `NO_FEASIBLE_BUILD`); the constraint is visibly honoured (ER ≥ 160 / EM ≥ 250 / all-Gladiator's 4pc / goblet = Hydro DMG).
+3. Each preset yields a feasible, coherent top build (no `NO_FEASIBLE_BUILD`); the constraint is visibly honoured (ER ≥ 200 / EM ≥ 550 / all-Gladiator's 4pc / goblet = Hydro DMG).
 4. Flipping between presets re-optimises the same sample inventory.
 5. The card is hidden once the user has their own (non-sample) gear; presets never overwrite real inventory.
 6. `npm run typecheck`, `lint`, `test`, `build` all pass.
