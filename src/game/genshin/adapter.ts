@@ -79,6 +79,10 @@ export const genshinAdapter: GameAdapter = {
     };
     add(c?.baseByLevel[String(level)]);
     add(w?.byLevel[String(level)]);
+    // Every Genshin character has a universal 100% base Energy Recharge that the
+    // frozen snapshot does not capture. Add it so ER totals and ER constraints
+    // are correct across the app.
+    out.er_pct = (out.er_pct ?? 0) + 100;
     return out;
   },
 
