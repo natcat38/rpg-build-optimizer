@@ -6,6 +6,8 @@ import { Results } from './Results';
 import { decodeBuild } from '../share/url';
 import { PATCH } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
+import { useOptimizeRequest, currentRequest } from '../state/optimizeRequest';
+import { optimizeFor } from '../workers/optimizeClient';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 
 function Section({
@@ -70,6 +72,23 @@ export function App() {
     return m;
   }, [sharedArtifacts, artifacts]);
 
+  const [running, setRunning] = useState(false);
+
+  async function runCurrent() {
+    const req = currentRequest(useOptimizeRequest.getState());
+    const inv = useInventory.getState().artifacts;
+    if (inv.length === 0 || !req.characterKey) return;
+    setRunning(true);
+    try {
+      const r = await optimizeFor(req, inv);
+      setSharedArtifacts(null);
+      setResult(r);
+      setRequest(req);
+    } finally {
+      setRunning(false);
+    }
+  }
+
   return (
     <div className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
       <header className="mb-12 animate-fade-up">
@@ -127,23 +146,19 @@ export function App() {
           hint="Choose a character, weapon, and what to maximise."
           delay="0.1s"
         >
-          <OptimizePanel
-            onResult={(r, req) => {
-              setSharedArtifacts(null);
-              setResult(r);
-              setRequest(req);
-            }}
-          />
+          <OptimizePanel onRun={runCurrent} running={running} />
         </Section>
 
         {result && request && (
-          <Section n={3} title="Results" delay="0s">
-            <Results
-              result={result}
-              request={request}
-              artifactsById={artifactsById}
-            />
-          </Section>
+          <div id="results-section">
+            <Section n={3} title="Results" delay="0s">
+              <Results
+                result={result}
+                request={request}
+                artifactsById={artifactsById}
+              />
+            </Section>
+          </div>
         )}
       </div>
 

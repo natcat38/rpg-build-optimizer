@@ -1,11 +1,9 @@
-import { useMemo, useState } from 'react';
-import type { BuildLevel, Objective, OptimizeRequest } from '../game/types';
+import { useMemo } from 'react';
+import type { BuildLevel, Objective } from '../game/types';
 import { BUILD_LEVELS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
-import { buildContext } from '../optimizer/context';
-import { runOptimize } from '../workers/optimizeClient';
 import { useInventory } from '../state/inventory';
-import type { OptimizeResult } from '../game/types';
+import { useOptimizeRequest } from '../state/optimizeRequest';
 import { objectiveLabel } from '../ui/labels';
 import { Combobox } from './ui/Combobox';
 
@@ -19,19 +17,26 @@ const OBJECTIVES: Objective[] = [
 ];
 
 export function OptimizePanel({
-  onResult,
+  onRun,
+  running,
 }: {
-  onResult: (r: OptimizeResult, req: OptimizeRequest) => void;
+  onRun: () => void | Promise<void>;
+  running: boolean;
 }) {
   const artifacts = useInventory((s) => s.artifacts);
   const chars = useMemo(() => genshinAdapter.characters(), []);
   const weapons = useMemo(() => genshinAdapter.weapons(), []);
-  const [characterKey, setCharacterKey] = useState(chars[0]?.key ?? '');
-  const [weaponKey, setWeaponKey] = useState(weapons[0]?.key ?? '');
-  const [buildLevel, setBuildLevel] = useState<BuildLevel>(90);
-  const [objective, setObjective] = useState<Objective>('crit_value');
-  const [minER, setMinER] = useState('');
-  const [running, setRunning] = useState(false);
+
+  const characterKey = useOptimizeRequest((s) => s.characterKey);
+  const weaponKey = useOptimizeRequest((s) => s.weaponKey);
+  const buildLevel = useOptimizeRequest((s) => s.buildLevel);
+  const objective = useOptimizeRequest((s) => s.objective);
+  const minER = useOptimizeRequest((s) => s.minER);
+  const setCharacterKey = useOptimizeRequest((s) => s.setCharacterKey);
+  const setWeaponKey = useOptimizeRequest((s) => s.setWeaponKey);
+  const setBuildLevel = useOptimizeRequest((s) => s.setBuildLevel);
+  const setObjective = useOptimizeRequest((s) => s.setObjective);
+  const setMinER = useOptimizeRequest((s) => s.setMinER);
 
   const hasArtifacts = artifacts.length > 0;
   const canRun = hasArtifacts && !!characterKey;
@@ -40,28 +45,6 @@ export function OptimizePanel({
     : !characterKey
       ? 'Pick a character to start.'
       : null;
-
-  async function run() {
-    if (!canRun) return;
-    setRunning(true);
-    try {
-      const constraints: OptimizeRequest['constraints'] = {};
-      if (minER) constraints.minStats = { er_pct: Number(minER) };
-      const req: OptimizeRequest = {
-        characterKey,
-        weaponKey,
-        buildLevel,
-        constraints,
-        objective,
-        topK: 10,
-      };
-      const ctx = buildContext(genshinAdapter, req);
-      const result = await runOptimize(req, artifacts, ctx);
-      onResult(result, req);
-    } finally {
-      setRunning(false);
-    }
-  }
 
   return (
     <div className="panel space-y-5">
@@ -119,7 +102,7 @@ export function OptimizePanel({
             type="number"
             value={minER}
             onChange={(e) => setMinER(e.target.value)}
-            placeholder="Optional — e.g. 160"
+            placeholder="Optional — e.g. 200"
           />
         </label>
       </div>
@@ -139,7 +122,7 @@ export function OptimizePanel({
         <button
           className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
           disabled={!canRun || running}
-          onClick={run}
+          onClick={() => onRun()}
         >
           {running ? 'Searching…' : 'Optimise'}
         </button>
