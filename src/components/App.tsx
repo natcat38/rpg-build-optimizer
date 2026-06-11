@@ -3,6 +3,7 @@ import { ImportPanel } from './ImportPanel';
 import { ArtifactForm } from './ArtifactForm';
 import { OptimizePanel } from './OptimizePanel';
 import { Results } from './Results';
+import { SampleGear } from './SampleGear';
 import { decodeBuild } from '../share/url';
 import { PATCH } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
@@ -43,6 +44,9 @@ function Section({
 
 export function App() {
   const artifacts = useInventory((s) => s.artifacts);
+  const sampleMode =
+    artifacts.length === 0 ||
+    artifacts.every((a) => a.id.startsWith('sample-'));
   const [result, setResult] = useState<OptimizeResult | null>(null);
   const [request, setRequest] = useState<OptimizeRequest | null>(null);
   const [sharedArtifacts, setSharedArtifacts] = useState<Artifact[] | null>(
@@ -122,6 +126,11 @@ export function App() {
       )}
 
       <div className="space-y-10">
+        {sampleMode && (
+          <div className="animate-fade-up">
+            <SampleGear onRun={runCurrent} />
+          </div>
+        )}
         <Section
           n={1}
           title="Load your artifacts"
