@@ -20,9 +20,6 @@ export function SampleGear({ onRun }: { onRun: () => void | Promise<void> }) {
     } finally {
       setBusy(null);
     }
-    document
-      .getElementById('results-section')
-      ?.scrollIntoView({ behavior: 'smooth' });
   }
 
   return (
@@ -42,6 +39,7 @@ export function SampleGear({ onRun }: { onRun: () => void | Promise<void> }) {
             key={p.label}
             className="btn-ghost"
             disabled={busy !== null}
+            aria-busy={busy === p.label}
             onClick={() => load(p)}
           >
             {busy === p.label ? 'Optimising…' : p.label}

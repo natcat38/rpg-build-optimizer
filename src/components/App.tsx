@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ImportPanel } from './ImportPanel';
 import { ArtifactForm } from './ArtifactForm';
 import { OptimizePanel } from './OptimizePanel';
@@ -92,6 +92,16 @@ export function App() {
       setRunning(false);
     }
   }
+
+  const lastScrolled = useRef<OptimizeResult | null>(null);
+  useEffect(() => {
+    if (result && result !== lastScrolled.current) {
+      lastScrolled.current = result;
+      document
+        .getElementById('results-section')
+        ?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [result]);
 
   return (
     <div className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
