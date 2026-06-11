@@ -96,3 +96,13 @@ describe('genshinAdapter', () => {
     expect(keys.every((k) => /^[A-Za-z0-9]+$/.test(k))).toBe(true);
   });
 });
+
+describe('baseStats base Energy Recharge', () => {
+  it('includes the universal 100% base ER for every character', () => {
+    const anyWeapon = genshinAdapter.weapons()[0].key;
+    for (const c of genshinAdapter.characters().slice(0, 10)) {
+      const base = genshinAdapter.baseStats(c.key, anyWeapon, 90);
+      expect(base.er_pct ?? 0).toBeGreaterThanOrEqual(100);
+    }
+  });
+});

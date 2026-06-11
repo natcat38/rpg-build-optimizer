@@ -4,6 +4,8 @@ import type {
   OptimizeRequest,
   OptimizeResult,
 } from '../game/types';
+import { genshinAdapter } from '../game/genshin/adapter';
+import { buildContext } from '../optimizer/context';
 import { optimize } from '../optimizer/search';
 
 export function runOptimize(
@@ -38,4 +40,13 @@ export function runOptimize(
     };
     worker.postMessage({ req, inventory, ctx });
   });
+}
+
+/** Build the context and run the optimiser for a request over an inventory. */
+export function optimizeFor(
+  req: OptimizeRequest,
+  inventory: Artifact[],
+): Promise<OptimizeResult> {
+  const ctx = buildContext(genshinAdapter, req);
+  return runOptimize(req, inventory, ctx);
 }

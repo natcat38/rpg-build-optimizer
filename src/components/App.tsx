@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ImportPanel } from './ImportPanel';
 import { ArtifactForm } from './ArtifactForm';
 import { OptimizePanel } from './OptimizePanel';
 import { Results } from './Results';
+import { SampleGear } from './SampleGear';
 import { decodeBuild } from '../share/url';
 import { PATCH } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
+import { useOptimizeRequest, currentRequest } from '../state/optimizeRequest';
+import { optimizeFor } from '../workers/optimizeClient';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 
 function Section({
@@ -41,6 +44,9 @@ function Section({
 
 export function App() {
   const artifacts = useInventory((s) => s.artifacts);
+  const sampleMode =
+    artifacts.length === 0 ||
+    artifacts.every((a) => a.id.startsWith('sample-'));
   const [result, setResult] = useState<OptimizeResult | null>(null);
   const [request, setRequest] = useState<OptimizeRequest | null>(null);
   const [sharedArtifacts, setSharedArtifacts] = useState<Artifact[] | null>(
@@ -69,6 +75,33 @@ export function App() {
     for (const a of src) m[a.id] = a;
     return m;
   }, [sharedArtifacts, artifacts]);
+
+  const [running, setRunning] = useState(false);
+
+  async function runCurrent() {
+    const req = currentRequest(useOptimizeRequest.getState());
+    const inv = useInventory.getState().artifacts;
+    if (inv.length === 0 || !req.characterKey) return;
+    setRunning(true);
+    try {
+      const r = await optimizeFor(req, inv);
+      setSharedArtifacts(null);
+      setResult(r);
+      setRequest(req);
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  const lastScrolled = useRef<OptimizeResult | null>(null);
+  useEffect(() => {
+    if (result && result !== lastScrolled.current) {
+      lastScrolled.current = result;
+      document
+        .getElementById('results-section')
+        ?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [result]);
 
   return (
     <div className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
@@ -103,6 +136,11 @@ export function App() {
       )}
 
       <div className="space-y-10">
+        {sampleMode && (
+          <div className="animate-fade-up">
+            <SampleGear onRun={runCurrent} />
+          </div>
+        )}
         <Section
           n={1}
           title="Load your artifacts"
@@ -127,23 +165,19 @@ export function App() {
           hint="Choose a character, weapon, and what to maximise."
           delay="0.1s"
         >
-          <OptimizePanel
-            onResult={(r, req) => {
-              setSharedArtifacts(null);
-              setResult(r);
-              setRequest(req);
-            }}
-          />
+          <OptimizePanel onRun={runCurrent} running={running} />
         </Section>
 
         {result && request && (
-          <Section n={3} title="Results" delay="0s">
-            <Results
-              result={result}
-              request={request}
-              artifactsById={artifactsById}
-            />
-          </Section>
+          <div id="results-section">
+            <Section n={3} title="Results" delay="0s">
+              <Results
+                result={result}
+                request={request}
+                artifactsById={artifactsById}
+              />
+            </Section>
+          </div>
         )}
       </div>
 
