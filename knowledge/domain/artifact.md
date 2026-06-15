@@ -18,7 +18,7 @@ timestamp: 2026-06-15T00:00:00Z
   Only the flat-stat portion of `2pc` (and rare flat-stat `4pc`) is **scored**;
   conditional `4pc` effects are honoured as a [constraint](/domain/constraint.md), not scored.
 - **Stat keys** — `hp, hp_pct, atk, atk_pct, def, def_pct, em, er_pct, crit_rate,
-  crit_dmg, elemental_dmg, physical_dmg, healing`.
+crit_dmg, elemental_dmg, physical_dmg, healing`.
 
 # Citations
 
