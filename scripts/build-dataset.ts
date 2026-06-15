@@ -405,16 +405,14 @@ function buildSets() {
     // Skip prayer sets (1pc only, no 2pc bonus)
     if (!a['2pc']) continue;
 
-    const twoPiece = parse2pc(a['2pc']);
+    // Retain every set. Flat-stat 2pc bonuses are scored; conditional/non-stat
+    // 2pc bonuses (e.g. Golden Troupe, Marechaussee Hunter) are kept with an empty
+    // bonus so the set is still requirable as a constraint (ADR-0003) — it just
+    // contributes 0 to stat scoring.
+    const twoPiece = parse2pc(a['2pc']) ?? {};
     const fourPiece = parse4pcStatOnly();
-
-    // Only include if we recognise the 2pc bonus as a stat. Warn (don't silently
-    // drop) so a parser gap on a stat-granting set is visible at build time.
-    if (!twoPiece) {
-      console.warn(
-        `  ⚠ dropped set "${name}" — unparsed 2pc: ${JSON.stringify(a['2pc'])}`,
-      );
-      continue;
+    if (Object.keys(twoPiece).length === 0) {
+      console.log(`  · retained set "${name}" with no scored 2pc bonus`);
     }
 
     const key = goodKey(name); // GOOD-standard set key so imported artifacts match

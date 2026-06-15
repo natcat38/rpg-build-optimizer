@@ -106,3 +106,18 @@ describe('baseStats base Energy Recharge', () => {
     }
   });
 });
+
+describe('artifact set snapshot', () => {
+  it('retains conditional-2pc meta sets (Golden Troupe, Marechaussee Hunter)', () => {
+    const keys = new Set(genshinAdapter.sets().map((s) => s.key));
+    expect(keys.has('GoldenTroupe')).toBe(true);
+    expect(keys.has('MarechausseeHunter')).toBe(true);
+  });
+
+  it('still scores a flat-stat 2pc bonus (Emblem Energy Recharge)', () => {
+    const emblem = genshinAdapter
+      .sets()
+      .find((s) => s.key === 'EmblemOfSeveredFate');
+    expect(emblem?.twoPiece?.er_pct).toBeGreaterThan(0);
+  });
+});
