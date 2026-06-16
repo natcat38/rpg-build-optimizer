@@ -6,6 +6,7 @@ import { useInventory } from '../state/inventory';
 import { useOptimizeRequest } from '../state/optimizeRequest';
 import { objectiveLabel } from '../ui/labels';
 import { Combobox } from './ui/Combobox';
+import { META_TARGETS, metaToConstraints } from '../meta/metaTargets';
 
 const OBJECTIVES: Objective[] = [
   'crit_value',
@@ -37,6 +38,7 @@ export function OptimizePanel({
   const setBuildLevel = useOptimizeRequest((s) => s.setBuildLevel);
   const setObjective = useOptimizeRequest((s) => s.setObjective);
   const setMinER = useOptimizeRequest((s) => s.setMinER);
+  const applyPreset = useOptimizeRequest((s) => s.applyPreset);
 
   const hasArtifacts = artifacts.length > 0;
   const canRun = hasArtifacts && !!characterKey;
@@ -45,6 +47,7 @@ export function OptimizePanel({
     : !characterKey
       ? 'Pick a character to start.'
       : null;
+  const meta = META_TARGETS[characterKey];
 
   return (
     <div className="panel space-y-5">
@@ -119,13 +122,32 @@ export function OptimizePanel({
             artifacts for the exact optimum.
           </p>
         )}
-        <button
-          className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
-          disabled={!canRun || running}
-          onClick={() => onRun()}
-        >
-          {running ? 'Searching…' : 'Optimise'}
-        </button>
+        <div className="flex gap-2">
+          {meta && (
+            <button
+              className="btn-ghost"
+              disabled={!canRun || running}
+              onClick={() => {
+                applyPreset({
+                  characterKey,
+                  weaponKey,
+                  objective: meta.objective,
+                  constraints: metaToConstraints(meta),
+                });
+                onRun();
+              }}
+            >
+              Use meta build
+            </button>
+          )}
+          <button
+            className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
+            disabled={!canRun || running}
+            onClick={() => onRun()}
+          >
+            {running ? 'Searching…' : 'Optimise'}
+          </button>
+        </div>
       </div>
     </div>
   );

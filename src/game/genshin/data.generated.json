@@ -11118,6 +11118,11 @@
       }
     },
     {
+      "key": "Gambler",
+      "name": "Gambler",
+      "twoPiece": {}
+    },
+    {
       "key": "GildedDreams",
       "name": "Gilded Dreams",
       "twoPiece": {
@@ -11130,6 +11135,11 @@
       "twoPiece": {
         "atk_pct": 18
       }
+    },
+    {
+      "key": "GoldenTroupe",
+      "name": "Golden Troupe",
+      "twoPiece": {}
     },
     {
       "key": "HeartOfDepth",
@@ -11153,6 +11163,11 @@
       }
     },
     {
+      "key": "Lavawalker",
+      "name": "Lavawalker",
+      "twoPiece": {}
+    },
+    {
       "key": "LuckyDog",
       "name": "Lucky Dog",
       "twoPiece": {
@@ -11167,11 +11182,26 @@
       }
     },
     {
+      "key": "MarechausseeHunter",
+      "name": "Marechaussee Hunter",
+      "twoPiece": {}
+    },
+    {
+      "key": "MartialArtist",
+      "name": "Martial Artist",
+      "twoPiece": {}
+    },
+    {
       "key": "NighttimeWhispersInTheEchoingWoods",
       "name": "Nighttime Whispers in the Echoing Woods",
       "twoPiece": {
         "atk_pct": 18
       }
+    },
+    {
+      "key": "NoblesseOblige",
+      "name": "Noblesse Oblige",
+      "twoPiece": {}
     },
     {
       "key": "NymphsDream",
@@ -11200,6 +11230,11 @@
       "twoPiece": {
         "atk_pct": 18
       }
+    },
+    {
+      "key": "RetracingBolide",
+      "name": "Retracing Bolide",
+      "twoPiece": {}
     },
     {
       "key": "Scholar",
@@ -11242,6 +11277,21 @@
       "twoPiece": {
         "elemental_dmg": 15
       }
+    },
+    {
+      "key": "Thundersoother",
+      "name": "Thundersoother",
+      "twoPiece": {}
+    },
+    {
+      "key": "TinyMiracle",
+      "name": "Tiny Miracle",
+      "twoPiece": {}
+    },
+    {
+      "key": "TravelingDoctor",
+      "name": "Traveling Doctor",
+      "twoPiece": {}
     },
     {
       "key": "VermillionHereafter",
