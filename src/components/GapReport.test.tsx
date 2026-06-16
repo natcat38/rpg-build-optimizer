@@ -32,4 +32,22 @@ describe('GapReport', () => {
     );
     expect(screen.getByText(/already build the meta/i)).toBeInTheDocument();
   });
+
+  it('folds the upgrade hint into the all-met state (no separate Next box)', () => {
+    render(
+      <GapReport
+        report={{
+          characterKey: 'x',
+          feasibility: [],
+          shortfalls: [],
+          action: 'Upgrade your Goblet',
+        }}
+      />,
+    );
+    expect(screen.getByText(/already build the meta/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/push further: Upgrade your Goblet/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/^Next:/)).toBeNull();
+  });
 });

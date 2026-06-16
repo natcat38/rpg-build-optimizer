@@ -71,7 +71,7 @@ export function computeGapReport(
   const mg = mainGaps(meta, inventory);
   for (const g of mg)
     feasibility.push(
-      `You own no ${statLabel(g.want)} ${SLOT_LABELS[g.slot]} (meta wants ${statLabel(g.want)} ${SLOT_LABELS[g.slot]}).`,
+      `You own no ${statLabel(g.want)} ${SLOT_LABELS[g.slot]} — the meta build needs it.`,
     );
 
   // Level 2 — numeric shortfall (best build vs targets)
