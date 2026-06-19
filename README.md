@@ -97,7 +97,8 @@ v1.0 shipped the lean optimiser. The **v1.1 depth layer** is landing incremental
 
 - ✅ **"Try with example gear"** — one-click sample builds that load a curated inventory and auto-run the optimiser (no import required).
 - ✅ **Benchmark / speed report** — a committed, reproducible report (`npm run bench`) proving how little of the brute-force space the search explores.
-- **Gap analysis** _(planned)_ — compare your best owned build against a meta target and tell you _what to farm_ to close the gap (the centrepiece).
+- ✅ **Gap analysis** — compare your best owned build against a meta target and tell you _what to farm_ to close the gap (the centrepiece).
+- ✅ **AI: Explain this build** — an optional Claude-powered plain-English explanation of the optimised build (see below).
 - _(planned)_ an end-to-end test and a live "watch it search" visualisation.
 
 See [`docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md`](./docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md).
