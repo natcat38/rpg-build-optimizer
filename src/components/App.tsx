@@ -12,7 +12,7 @@ import { decodeBuild } from '../share/url';
 import { PATCH } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest, currentRequest } from '../state/optimizeRequest';
-import { optimizeFor } from '../workers/optimizeClient';
+import { optimize } from '../workers/optimizeClient';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 
 function Section({
@@ -88,7 +88,7 @@ export function App() {
     if (inv.length === 0 || !req.characterKey) return;
     setRunning(true);
     try {
-      const r = await optimizeFor(req, inv);
+      const r = await optimize(req, inv);
       setSharedArtifacts(null);
       setResult(r);
       setRequest(req);
