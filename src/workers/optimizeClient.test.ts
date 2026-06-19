@@ -30,6 +30,8 @@ describe('optimize (deep entry, sync fallback)', () => {
       objective: 'crit_value',
       topK: 3,
     };
+    // Worker is undefined in the Vitest/Node environment, so this exercises the
+    // synchronous fallback path (buildContext -> searchBuilds) end to end.
     const r = await optimize(req, inv);
     expect(r.builds.length).toBeGreaterThan(0);
   });
