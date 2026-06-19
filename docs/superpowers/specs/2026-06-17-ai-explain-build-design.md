@@ -41,13 +41,13 @@ modules, matching the codebase's existing pattern (`gap.ts`, `score.ts`).
 
 ```ts
 interface ExplainPayload {
-  characterKey: string;        // e.g. "furina"
-  objective: Objective;        // existing union
+  characterKey: string; // e.g. "furina"
+  objective: Objective; // existing union
   totals: Partial<Record<StatKey, number>>; // subset of the build's stat sheet
   gap: {
-    feasibility: string[];     // GapReport.feasibility
-    shortfalls: string[];      // GapReport.shortfalls
-    action: string | null;     // GapReport.action
+    feasibility: string[]; // GapReport.feasibility
+    shortfalls: string[]; // GapReport.shortfalls
+    action: string | null; // GapReport.action
   };
 }
 ```
@@ -60,13 +60,13 @@ the upstream error or any key material.
 
 ## Components
 
-| Unit | Purpose | Tested by |
-|---|---|---|
-| `src/ai/explainPayload.ts` | `ExplainPayload` type + `parseExplainPayload(unknown): ExplainPayload \| null` — strict validation (see below) | unit |
-| `src/ai/explainPrompt.ts` | Pure `buildExplainPrompt(payload) → { system: string; user: string }` | unit |
-| `src/ai/explainClient.ts` | `explainBuild(payload): Promise<string>` — `fetch('/api/explain')`, throws on non-200 | mocked in component test |
-| `api/explain.ts` | Vercel Node function: read `ANTHROPIC_API_KEY` → `parseExplainPayload` → `buildExplainPrompt` → Anthropic SDK → `{ explanation }`; generic 500 on any error | thin glue (manual smoke) |
-| `src/components/ExplainBuild.tsx` | Button + loading + result card + inline error; gated by `VITE_AI_ENABLED` | component |
+| Unit                              | Purpose                                                                                                                                                     | Tested by                |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `src/ai/explainPayload.ts`        | `ExplainPayload` type + `parseExplainPayload(unknown): ExplainPayload \| null` — strict validation (see below)                                              | unit                     |
+| `src/ai/explainPrompt.ts`         | Pure `buildExplainPrompt(payload) → { system: string; user: string }`                                                                                       | unit                     |
+| `src/ai/explainClient.ts`         | `explainBuild(payload): Promise<string>` — `fetch('/api/explain')`, throws on non-200                                                                       | mocked in component test |
+| `api/explain.ts`                  | Vercel Node function: read `ANTHROPIC_API_KEY` → `parseExplainPayload` → `buildExplainPrompt` → Anthropic SDK → `{ explanation }`; generic 500 on any error | thin glue (manual smoke) |
+| `src/components/ExplainBuild.tsx` | Button + loading + result card + inline error; gated by `VITE_AI_ENABLED`                                                                                   | component                |
 
 ### `parseExplainPayload` validation rules (the cost/abuse guard)
 
@@ -177,4 +177,7 @@ Documented in README.
   optimise run. No server cache.
 - **Model `claude-haiku-4-5`** — cheapest, fast, more than adequate for a 2–3 sentence
   grounded summary; central to the Lightweight cost guard.
+
+```
+
 ```

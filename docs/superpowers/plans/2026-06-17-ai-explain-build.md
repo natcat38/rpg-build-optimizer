@@ -17,6 +17,7 @@
 ### Task 1: ExplainPayload type + strict validator
 
 **Files:**
+
 - Create: `src/ai/explainPayload.ts`
 - Test: `src/ai/explainPayload.test.ts`
 
@@ -55,18 +56,14 @@ describe('parseExplainPayload', () => {
   });
 
   it('rejects an unknown stat key in totals', () => {
-    expect(
-      parseExplainPayload({ ...valid(), totals: { luck: 5 } }),
-    ).toBeNull();
+    expect(parseExplainPayload({ ...valid(), totals: { luck: 5 } })).toBeNull();
   });
 
   it('rejects a non-finite or out-of-bounds stat value', () => {
     expect(
       parseExplainPayload({ ...valid(), totals: { hp: Infinity } }),
     ).toBeNull();
-    expect(
-      parseExplainPayload({ ...valid(), totals: { hp: 1e9 } }),
-    ).toBeNull();
+    expect(parseExplainPayload({ ...valid(), totals: { hp: 1e9 } })).toBeNull();
   });
 
   it('rejects oversized gap arrays and strings', () => {
@@ -94,7 +91,11 @@ describe('parseExplainPayload', () => {
   });
 
   it('accepts a null action and empty totals (infeasible build)', () => {
-    const p = { ...valid(), totals: {}, gap: { feasibility: [], shortfalls: [], action: null } };
+    const p = {
+      ...valid(),
+      totals: {},
+      gap: { feasibility: [], shortfalls: [], action: null },
+    };
     expect(parseExplainPayload(p)).toEqual(p);
   });
 });
@@ -219,6 +220,7 @@ git commit -m "feat(ai): ExplainPayload type + strict validator"
 ### Task 2: buildExplainPrompt (pure)
 
 **Files:**
+
 - Create: `src/ai/explainPrompt.ts`
 - Test: `src/ai/explainPrompt.test.ts`
 
@@ -341,6 +343,7 @@ git commit -m "feat(ai): pure buildExplainPrompt"
 ### Task 3: explainClient (browser fetch wrapper)
 
 **Files:**
+
 - Create: `src/ai/explainClient.ts`
 - Test: `src/ai/explainClient.test.ts`
 
@@ -441,6 +444,7 @@ git commit -m "feat(ai): explainBuild client wrapper"
 ### Task 4: Serverless function + server toolchain
 
 **Files:**
+
 - Create: `api/explain.ts`
 - Create: `tsconfig.api.json`
 - Modify: `package.json` (deps + `typecheck` script)
@@ -507,7 +511,7 @@ to:
 "typecheck": "tsc -b && tsc --noEmit -p tsconfig.api.json",
 ```
 
-- [ ] **Step 5: Give `api/**` Node globals in eslint**
+- [ ] **Step 5: Give `api/**` Node globals in eslint\*\*
 
 In `eslint.config.js`, add a new config object as the LAST argument to `tseslint.config(...)` (after the existing main config object, before the closing `)`):
 
@@ -599,6 +603,7 @@ git commit -m "feat(ai): serverless /api/explain proxy + toolchain"
 ### Task 5: ExplainBuild component
 
 **Files:**
+
 - Create: `src/components/ExplainBuild.tsx`
 - Test: `src/components/ExplainBuild.test.tsx`
 - Modify: `src/vite-env.d.ts` (type the flag)
@@ -798,6 +803,7 @@ git commit -m "feat(ai): ExplainBuild button + graceful degradation"
 ### Task 6: Wire ExplainBuild into the Results gap-report block
 
 **Files:**
+
 - Modify: `src/components/App.tsx`
 
 The gap report renders inside `{!sharedArtifacts && META_TARGETS[request.characterKey] && (...)}`. We compute the report once, render `GapReport` with it, then render `ExplainBuild` directly below it with the same report.
@@ -815,42 +821,46 @@ import { ExplainBuild } from './ExplainBuild';
 Find this block in the Results section:
 
 ```tsx
-              {!sharedArtifacts && META_TARGETS[request.characterKey] && (
-                <div className="mb-4">
-                  <GapReport
-                    report={computeGapReport(
-                      META_TARGETS[request.characterKey],
-                      artifacts,
-                      result.builds[0] ?? null,
-                    )}
-                  />
-                </div>
-              )}
+{
+  !sharedArtifacts && META_TARGETS[request.characterKey] && (
+    <div className="mb-4">
+      <GapReport
+        report={computeGapReport(
+          META_TARGETS[request.characterKey],
+          artifacts,
+          result.builds[0] ?? null,
+        )}
+      />
+    </div>
+  );
+}
 ```
 
 Replace it with (computes the report once, passes it to both):
 
 ```tsx
-              {!sharedArtifacts &&
-                META_TARGETS[request.characterKey] &&
-                (() => {
-                  const report = computeGapReport(
-                    META_TARGETS[request.characterKey],
-                    artifacts,
-                    result.builds[0] ?? null,
-                  );
-                  return (
-                    <div className="mb-4">
-                      <GapReport report={report} />
-                      <ExplainBuild
-                        characterKey={request.characterKey}
-                        objective={request.objective}
-                        totals={result.builds[0]?.totals ?? {}}
-                        report={report}
-                      />
-                    </div>
-                  );
-                })()}
+{
+  !sharedArtifacts &&
+    META_TARGETS[request.characterKey] &&
+    (() => {
+      const report = computeGapReport(
+        META_TARGETS[request.characterKey],
+        artifacts,
+        result.builds[0] ?? null,
+      );
+      return (
+        <div className="mb-4">
+          <GapReport report={report} />
+          <ExplainBuild
+            characterKey={request.characterKey}
+            objective={request.objective}
+            totals={result.builds[0]?.totals ?? {}}
+            report={report}
+          />
+        </div>
+      );
+    })();
+}
 ```
 
 - [ ] **Step 3: Verify the full suite + typecheck**
@@ -874,6 +884,7 @@ git commit -m "feat(ai): render ExplainBuild below the gap report"
 ### Task 7: ADR-0010 + README documentation
 
 **Files:**
+
 - Create: `docs/adr/0010-serverless-proxy-for-ai-explain.md`
 - Modify: `README.md`
 
@@ -885,9 +896,11 @@ Create `docs/adr/0010-serverless-proxy-for-ai-explain.md` (match the heading sty
 # ADR-0010: Serverless proxy for the AI "Explain this build" feature
 
 ## Status
+
 Accepted (2026-06-17)
 
 ## Context
+
 The "Explain this build" feature calls the Anthropic API to turn the optimiser's
 output + gap report into a short natural-language explanation. The app is a
 static, client-side SPA (ADR-0001) deployed on Vercel. An API key must never
@@ -895,6 +908,7 @@ ship to the browser: any `VITE_`-prefixed variable is inlined into the public
 bundle by Vite, which would leak the key to every visitor.
 
 ## Decision
+
 - Add a single Vercel serverless function, `api/explain.ts`, that reads
   `ANTHROPIC_API_KEY` from server-side env and proxies the call. The key never
   reaches the client.
@@ -912,11 +926,13 @@ bundle by Vite, which would leak the key to every visitor.
   inline retry message.
 
 ## Consequences
+
 - Local AI testing requires `vercel dev` (plain Vite does not serve `/api`).
 - The hard cost ceiling depends on the manually-set console spend cap.
 - `vercel.json` excludes `/api` from the SPA rewrite so the function is reachable.
 
 ## Rejected alternatives
+
 - **`VITE_ANTHROPIC_API_KEY` in the client** — leaks the key in the public
   bundle. Non-starter.
 - **IP rate limiting via Vercel KV** — more robust but adds infrastructure;
@@ -941,6 +957,7 @@ personal data is sent (no UID, no inventory).
 [ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md).
 
 ### Setup / local testing
+
 - Set `ANTHROPIC_API_KEY` as a Vercel project environment variable (server-side).
 - Set `VITE_AI_ENABLED=true` to render the button (build-time flag — keep it off
   until the key is deployed).
@@ -976,4 +993,7 @@ git commit -m "docs: ADR-0010 + README for AI explain feature"
 - [ ] Manual smoke (optional, needs a key): `vercel dev`, set `VITE_AI_ENABLED=true` + `ANTHROPIC_API_KEY`, optimise Furina with sample gear, click "Explain this build", confirm a 2–3 sentence response renders.
 
 Then use **superpowers:finishing-a-development-branch** to push + open the PR.
+
+```
+
 ```
