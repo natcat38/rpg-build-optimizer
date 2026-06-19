@@ -94,7 +94,7 @@ function makeBuildResult(
   };
 }
 
-export function optimize(
+export function searchBuilds(
   req: OptimizeRequest,
   inventory: Artifact[],
   ctx: OptimizeContext,

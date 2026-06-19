@@ -6,7 +6,7 @@ import type {
 } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { buildContext } from '../optimizer/context';
-import { optimize } from '../optimizer/search';
+import { searchBuilds } from '../optimizer/search';
 
 export function runOptimize(
   req: OptimizeRequest,
@@ -15,7 +15,7 @@ export function runOptimize(
 ): Promise<OptimizeResult> {
   // Fallback for environments without Worker (tests, SSR): run synchronously.
   if (typeof Worker === 'undefined') {
-    return Promise.resolve(optimize(req, inventory, ctx));
+    return Promise.resolve(searchBuilds(req, inventory, ctx));
   }
   return new Promise((resolve, reject) => {
     const worker = new Worker(

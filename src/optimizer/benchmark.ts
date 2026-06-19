@@ -9,7 +9,7 @@ import type {
 import { SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { buildContext } from './context';
-import { optimize } from './search';
+import { searchBuilds } from './search';
 
 /** Deterministic PRNG so committed benchmark numbers reproduce anywhere. */
 function mulberry32(seed: number): () => number {
@@ -189,7 +189,7 @@ export function runBenchmark(
       let pruned = 0;
       for (let run = 0; run < 3; run++) {
         const t0 = performance.now();
-        const res = optimize(req, inv, ctx);
+        const res = searchBuilds(req, inv, ctx);
         times.push(performance.now() - t0);
         explored = res.explored;
         pruned = res.pruned;
