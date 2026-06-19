@@ -150,7 +150,7 @@ export interface BenchRow {
 export const DEFAULT_SEED = 20260609;
 
 // Each slot always has >=1 artifact when built via makeInventory(size>=5), so
-// the product is never 0; optimize() guards the empty-slot case independently.
+// the product is never 0; searchBuilds() guards the empty-slot case independently.
 function naiveCount(inv: Artifact[]): number {
   return SLOTS.map((s) => inv.filter((a) => a.slot === s).length).reduce(
     (p, n) => p * n,
@@ -159,7 +159,7 @@ function naiveCount(inv: Artifact[]): number {
 }
 
 /**
- * Times `optimize()` across inventory sizes and objective scenarios.
+ * Times `searchBuilds()` across inventory sizes and objective scenarios.
  * `naive`/`explored`/`pruned`/`reductionFactor` are deterministic for a seed;
  * `ms` is the median of 3 runs and varies by machine.
  */
