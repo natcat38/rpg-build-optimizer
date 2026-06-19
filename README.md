@@ -102,6 +102,26 @@ v1.0 shipped the lean optimiser. The **v1.1 depth layer** is landing incremental
 
 See [`docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md`](./docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md).
 
+## AI: Explain this build
+
+For supported meta characters, an optional **"Explain this build"** button sits
+below the gap report. It sends the best build's stats and the gap report to a
+Vercel serverless function (`api/explain.ts`), which calls Claude
+(`claude-haiku-4-5`) and returns a 2–3 sentence plain-English explanation. No
+personal data is sent (no UID, no inventory).
+
+**Why a serverless proxy?** The Anthropic API key stays server-side. A
+`VITE_`-prefixed key would be inlined into the public bundle and leak — see
+[ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md).
+
+### Setup / local testing
+
+- Set `ANTHROPIC_API_KEY` as a Vercel project environment variable (server-side).
+- Set `VITE_AI_ENABLED=true` to render the button (build-time flag — keep it off
+  until the key is deployed).
+- Set a spend cap in the Anthropic console (the feature's hard cost ceiling).
+- Locally, run `vercel dev` (not `npm run dev`) to serve the `/api` function.
+
 ## Data & attribution
 
 Game reference data is derived at build time from the [genshin-db](https://github.com/theBowja/genshin-db) project and bundled as a frozen snapshot. Genshin Impact and all related data are property of HoYoverse; this project bundles only numeric stat/reference data and ships no game assets. See [`DATA_LICENSE`](./DATA_LICENSE).
