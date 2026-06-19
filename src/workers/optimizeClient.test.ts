@@ -1,12 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { runOptimize } from './optimizeClient';
-import type { Artifact, OptimizeContext, OptimizeRequest } from '../game/types';
+import { optimize } from './optimizeClient';
+import { genshinAdapter } from '../game/genshin/adapter';
+import type { Artifact, OptimizeRequest } from '../game/types';
 import { SLOTS } from '../game/types';
 
-const ctx: OptimizeContext = {
-  base: { crit_rate: 5, crit_dmg: 50 },
-  setBonuses: {},
-};
 let c = 0;
 const inv: Artifact[] = SLOTS.flatMap((slot) =>
   [0, 1].map((i) => ({
@@ -20,18 +17,20 @@ const inv: Artifact[] = SLOTS.flatMap((slot) =>
     subStats: [],
   })),
 );
-const req: OptimizeRequest = {
-  characterKey: 'c',
-  weaponKey: 'w',
-  buildLevel: 90,
-  constraints: {},
-  objective: 'crit_value',
-  topK: 3,
-};
 
-describe('runOptimize (sync fallback)', () => {
-  it('resolves with builds when Worker is unavailable', async () => {
-    const r = await runOptimize(req, inv, ctx);
+describe('optimize (deep entry, sync fallback)', () => {
+  it('builds context from the adapter and resolves with builds', async () => {
+    const chars = genshinAdapter.characters();
+    const weapons = genshinAdapter.weapons();
+    const req: OptimizeRequest = {
+      characterKey: chars[0].key,
+      weaponKey: weapons[0].key,
+      buildLevel: 90,
+      constraints: {},
+      objective: 'crit_value',
+      topK: 3,
+    };
+    const r = await optimize(req, inv);
     expect(r.builds.length).toBeGreaterThan(0);
   });
 });
