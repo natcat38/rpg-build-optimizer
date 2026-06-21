@@ -22,3 +22,18 @@ The optimiser's result carries **per-build diagnostics** (binding constraints, p
 - Preserves the "provably optimal + correctness proof" portfolio story.
 - The correctness test and a benchmark/speed report become first-class deliverables.
 - A hard combination/time cap is a v2 idea only if real benchmark numbers ever demand it.
+
+## Amendment (2026-06-21): bound–score admissibility invariant
+
+This refines the decision above; it does not supersede it. Status remains Accepted.
+
+The pruning upper bound is `baseObjective + runningObjective + suffixMax[slot] + setBonusCeiling` (`src/optimizer/search.ts`, in `recurse`). It is admissible **only because** `objectiveContribution(a)` (`src/optimizer/search.ts`) is the exact per-artifact additive term of `objectiveValue(totals)` (`src/optimizer/score.ts`): for `crit_value` both are `cr*2 + cd`; for a single-stat objective both are the summed stat. The two formulas are **duplicated and must stay in lockstep**.
+
+- **Why duplicated, not shared:** `objectiveValue` operates on a summed `StatTotals` object, while `objectiveContribution` operates on one artifact's main + sub-stats and runs in the hot recursion path. Unifying them would force materialising per-artifact totals on every step — the duplication is deliberate, not an oversight.
+- **Dropping the penalty is safe:** the bound omits `critRatioPenalty`. Because that penalty is always `≥ 0`, omitting it can only _raise_ the bound, so admissibility is preserved.
+- **Danger:** making the objective non-linear, or editing one formula without the other, turns the bound into an underestimate — pruning could then discard the true optimum and silently return a wrong-but-confident result. This is guarded by the brute-force equivalence test named above; no additional guard is introduced.
+
+**Supporting performance notes (correctness-neutral):**
+
+- _Sort-before-search_ (`src/optimizer/search.ts`) orders each slot pool by descending objective contribution so the kept list fills with strong builds early and the bound tightens sooner. This is iteration order only — the returned optimum is unchanged (covered by the equivalence test).
+- _k×6 kept margin_ (`src/optimizer/search.ts`) retains `k * 6` candidates during the search so the anti-clone cap can still return `k` builds when the strongest candidates share a 4-piece core.
