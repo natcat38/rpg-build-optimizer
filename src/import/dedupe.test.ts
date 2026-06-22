@@ -39,7 +39,10 @@ describe('mergeNew', () => {
 
   it('is independent of the order of existing', () => {
     const a2: Artifact = { ...base, id: 'a2', slot: 'circlet' };
-    const incoming = [{ ...base, id: 'dup' }, { ...a2, id: 'dup2' }];
+    const incoming = [
+      { ...base, id: 'dup' },
+      { ...a2, id: 'dup2' },
+    ];
     expect(mergeNew([base, a2], incoming)).toEqual([]);
     expect(mergeNew([a2, base], incoming)).toEqual([]);
   });
