@@ -14,7 +14,8 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc -b && tsc --noEmit -p tsconfig.api.json",
     "build:data": "tsx scripts/build-dataset.ts",
-    "bench": "tsx scripts/benchmark.ts"
+    "bench": "tsx scripts/benchmark.ts",
+    "docs:check": "tsx scripts/check-docs.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",
