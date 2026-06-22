@@ -156,4 +156,15 @@ describe('toExplainPayload', () => {
     });
     expect(parseExplainPayload(payload)).toEqual(payload);
   });
+
+  it('uses the explicit characterKey arg, not report.characterKey', () => {
+    const report: GapReport = {
+      characterKey: 'someone-else',
+      feasibility: [],
+      shortfalls: [],
+      action: null,
+    };
+    const payload = toExplainPayload('furina', 'crit_value', {}, report);
+    expect(payload.characterKey).toBe('furina');
+  });
 });

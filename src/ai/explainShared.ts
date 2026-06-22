@@ -141,6 +141,10 @@ export function buildExplainPrompt(p: ExplainPayload): {
  * Assemble the AI payload from a build + its gap report. Single source of truth
  * for the shape, so ExplainBuild no longer hand-mirrors GapReport fields
  * (which silently drifts when GapReport gains one).
+ *
+ * `characterKey` is taken from the explicit arg (the request character), not
+ * `report.characterKey`. Caller is responsible for a bounds-valid `totals` —
+ * `parseExplainPayload` at the API boundary is the authoritative guard.
  */
 export function toExplainPayload(
   characterKey: string,
