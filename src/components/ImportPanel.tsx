@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { type ChangeEvent } from 'react';
 import { parseGOOD } from '../import/good';
 import { fetchUidArtifacts } from '../import/uid';
-import { artifactHash } from '../import/hash';
+import { mergeNew } from '../import/dedupe';
 import { useInventory } from '../state/inventory';
 import type { Artifact } from '../game/types';
 
@@ -14,8 +14,7 @@ export function ImportPanel() {
   const [busy, setBusy] = useState(false);
 
   function mergeDedupe(incoming: Artifact[]) {
-    const seen = new Set(artifacts.map(artifactHash));
-    const fresh = incoming.filter((a) => !seen.has(artifactHash(a)));
+    const fresh = mergeNew(artifacts, incoming);
     addMany(fresh);
     setErr(null);
     setMsg(`Imported ${fresh.length} artifacts.`);
