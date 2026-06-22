@@ -229,7 +229,7 @@ src/optimizer/score.ts
   critValue(cr: number, cd: number): number   // cr*2 + cd
 ```
 
-Both call it. ADR-0004 stays satisfied — we share the *formula*, not the bound's
+Both call it. ADR-0004 stays satisfied — we share the _formula_, not the bound's
 admissible optimism.
 
 **Tests.** `(a)` covered by existing adapter tests; `(b)` adjust import paths, add a

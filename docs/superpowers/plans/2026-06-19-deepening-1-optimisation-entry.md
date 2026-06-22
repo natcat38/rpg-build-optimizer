@@ -19,6 +19,7 @@
 The pure branch-and-bound search is currently exported as `optimize`, colliding with the two wiring functions. Rename it to `searchBuilds`. It has three importers: `search.test.ts`, `benchmark.ts`, `optimize.worker.ts`. `bruteForce` is untouched.
 
 **Files:**
+
 - Modify: `src/optimizer/search.ts:97`
 - Modify: `src/optimizer/search.test.ts:2,46,49,57,67,79,135,147` (import, `describe` label, all call sites)
 - Modify: `src/optimizer/benchmark.ts:12,192`
@@ -39,6 +40,7 @@ describe('searchBuilds', () => {
 ```
 
 Replace every `optimize(` call in this file with `searchBuilds(`. There are seven, in these tests:
+
 - `returns NO_FEASIBLE_BUILD when a slot pool is empty` → `const r = searchBuilds(req, inv, ctx);`
 - `finds the maximum crit_value build` → `const r = searchBuilds(req, inv, ctx);`
 - `honours a minStats constraint (infeasible)` → `const r = searchBuilds({ ...req, constraints: { minStats: { crit_dmg: 1000 } } }, inv, ctx);`
@@ -77,7 +79,7 @@ import { searchBuilds } from '../optimizer/search';
 and line 13:
 
 ```ts
-    const result = searchBuilds(req, inventory, ctx);
+const result = searchBuilds(req, inventory, ctx);
 ```
 
 In `src/optimizer/benchmark.ts` line 12:
@@ -89,7 +91,7 @@ import { searchBuilds } from './search';
 and line 192:
 
 ```ts
-        const res = searchBuilds(req, inv, ctx);
+const res = searchBuilds(req, inv, ctx);
 ```
 
 - [ ] **Step 5: Verify no stale `optimize` import from `./search` remains**
@@ -116,6 +118,7 @@ git commit -m "refactor: rename pure search optimize -> searchBuilds"
 Replace `runOptimize(req, inv, ctx)` + `optimizeFor(req, inv)` with one public `optimize(request, inventory, adapter = genshinAdapter)`. The worker dispatch/fallback moves into a private `dispatch` helper; `optimize` builds the context then calls it. Type the worker message with the shared `WorkerRequest`.
 
 **Files:**
+
 - Modify (rewrite): `src/workers/optimizeClient.ts`
 - Modify (rewrite): `src/workers/optimizeClient.test.ts`
 
@@ -197,9 +200,12 @@ function dispatch(
     return Promise.resolve(searchBuilds(req, inventory, ctx));
   }
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL('./optimize.worker.ts', import.meta.url), {
-      type: 'module',
-    });
+    const worker = new Worker(
+      new URL('./optimize.worker.ts', import.meta.url),
+      {
+        type: 'module',
+      },
+    );
     worker.onmessage = (e: MessageEvent) => {
       if (e.data.type === 'done') {
         resolve(e.data.result as OptimizeResult);
@@ -256,6 +262,7 @@ git commit -m "refactor: single deep optimize() entry owning context + dispatch"
 `App.tsx` is the only consumer of the old `optimizeFor`. Point it at the new `optimize`.
 
 **Files:**
+
 - Modify: `src/components/App.tsx:15,91`
 
 - [ ] **Step 1: Confirm App is the only remaining consumer**
@@ -276,7 +283,7 @@ import { optimize } from '../workers/optimizeClient';
 In `src/components/App.tsx` line 91, change:
 
 ```ts
-      const r = await optimize(req, inv);
+const r = await optimize(req, inv);
 ```
 
 - [ ] **Step 4: Verify the rename is complete**
@@ -343,6 +350,7 @@ git commit -m "style: prettier formatting"
 ## Self-Review
 
 **Spec coverage (section #1):**
+
 - One public deep entry `optimize(request, inventory, adapter=genshinAdapter)` → Task 2. ✓
 - Inner search renamed `optimize`→`searchBuilds`, kept for benchmark + oracle → Task 1. ✓
 - `buildContext` stays, private to the optimiser, no caller wires it → Tasks 2 (it's called inside `optimize`) + 3 (App stops wiring). `context.ts` and `context.test.ts` unchanged — `buildContext` remains exported for its own unit test (internal-seam test). ✓

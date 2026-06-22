@@ -21,9 +21,12 @@ function dispatch(
     return Promise.resolve(searchBuilds(req, inventory, ctx));
   }
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL('./optimize.worker.ts', import.meta.url), {
-      type: 'module',
-    });
+    const worker = new Worker(
+      new URL('./optimize.worker.ts', import.meta.url),
+      {
+        type: 'module',
+      },
+    );
     worker.onmessage = (e: MessageEvent) => {
       if (e.data.type === 'done') {
         resolve(e.data.result as OptimizeResult);
