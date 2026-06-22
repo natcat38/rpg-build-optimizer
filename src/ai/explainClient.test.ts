@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { explainBuild } from './explainClient';
-import type { ExplainPayload } from './explainPayload';
+import type { ExplainPayload } from './explainShared';
 
 const payload: ExplainPayload = {
   characterKey: 'furina',
