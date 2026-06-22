@@ -17,6 +17,7 @@
 ### Task 1: Create the `GapSection` component (TDD)
 
 **Files:**
+
 - Create: `src/components/GapSection.tsx`
 - Test: `src/components/GapSection.test.tsx`
 
@@ -153,6 +154,7 @@ git commit -m "feat: GapSection module owning the gap-analysis gate + assembly"
 ### Task 2: Wire `GapSection` into App and remove the IIFE
 
 **Files:**
+
 - Modify: `src/components/App.tsx` (imports near lines 7–10; the IIFE at lines 178–197)
 
 - [ ] **Step 1: Replace the four now-unused imports with the GapSection import**
@@ -179,37 +181,39 @@ import { GapSection } from './GapSection';
 In `src/components/App.tsx`, replace this block:
 
 ```tsx
-              {!sharedArtifacts &&
-                META_TARGETS[request.characterKey] &&
-                (() => {
-                  const report = computeGapReport(
-                    META_TARGETS[request.characterKey],
-                    artifacts,
-                    result.builds[0] ?? null,
-                  );
-                  return (
-                    <div className="mb-4">
-                      <GapReport report={report} />
-                      <ExplainBuild
-                        characterKey={request.characterKey}
-                        objective={request.objective}
-                        totals={result.builds[0]?.totals ?? {}}
-                        report={report}
-                      />
-                    </div>
-                  );
-                })()}
+{
+  !sharedArtifacts &&
+    META_TARGETS[request.characterKey] &&
+    (() => {
+      const report = computeGapReport(
+        META_TARGETS[request.characterKey],
+        artifacts,
+        result.builds[0] ?? null,
+      );
+      return (
+        <div className="mb-4">
+          <GapReport report={report} />
+          <ExplainBuild
+            characterKey={request.characterKey}
+            objective={request.objective}
+            totals={result.builds[0]?.totals ?? {}}
+            report={report}
+          />
+        </div>
+      );
+    })();
+}
 ```
 
 with:
 
 ```tsx
-              <GapSection
-                result={result}
-                request={request}
-                artifacts={artifacts}
-                sharedArtifacts={sharedArtifacts}
-              />
+<GapSection
+  result={result}
+  request={request}
+  artifacts={artifacts}
+  sharedArtifacts={sharedArtifacts}
+/>
 ```
 
 (This sits inside the existing `{result && request && ( … <Section n={3}> … )}` block, so `result` and `request` are non-null here. `GapSection` owns the `sharedArtifacts`/meta gate, so the old `!sharedArtifacts && META_TARGETS[...]` guard is no longer needed in App.)
@@ -276,6 +280,7 @@ git commit -m "style: prettier formatting"
 ## Self-Review
 
 **Spec coverage (section #2):**
+
 - `src/components/GapSection.tsx` taking `result`/`request`/`artifacts`/`sharedArtifacts` → Task 1. ✓
 - Owns the gate (`sharedArtifacts` + `META_TARGETS` lookup → null if N/A) → Task 1 component body. ✓
 - Owns `computeGapReport` and renders `<GapReport>` + `<ExplainBuild>` → Task 1. ✓
