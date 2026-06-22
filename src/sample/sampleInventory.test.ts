@@ -4,7 +4,7 @@ import { SAMPLE_PRESETS } from './presets';
 import { SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { buildContext } from '../optimizer/context';
-import { optimize } from '../optimizer/search';
+import { searchBuilds } from '../optimizer/search';
 import type { OptimizeRequest, Slot } from '../game/types';
 
 describe('SAMPLE_INVENTORY', () => {
@@ -34,7 +34,7 @@ describe('SAMPLE_INVENTORY', () => {
         topK: 10,
       };
       const ctx = buildContext(genshinAdapter, req);
-      const res = optimize(req, SAMPLE_INVENTORY, ctx);
+      const res = searchBuilds(req, SAMPLE_INVENTORY, ctx);
       expect(res.reason, `${p.label} should be feasible`).not.toBe(
         'NO_FEASIBLE_BUILD',
       );

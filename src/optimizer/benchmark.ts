@@ -9,7 +9,7 @@ import type {
 import { SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { buildContext } from './context';
-import { optimize } from './search';
+import { searchBuilds } from './search';
 
 /** Deterministic PRNG so committed benchmark numbers reproduce anywhere. */
 function mulberry32(seed: number): () => number {
@@ -150,7 +150,7 @@ export interface BenchRow {
 export const DEFAULT_SEED = 20260609;
 
 // Each slot always has >=1 artifact when built via makeInventory(size>=5), so
-// the product is never 0; optimize() guards the empty-slot case independently.
+// the product is never 0; searchBuilds() guards the empty-slot case independently.
 function naiveCount(inv: Artifact[]): number {
   return SLOTS.map((s) => inv.filter((a) => a.slot === s).length).reduce(
     (p, n) => p * n,
@@ -159,7 +159,7 @@ function naiveCount(inv: Artifact[]): number {
 }
 
 /**
- * Times `optimize()` across inventory sizes and objective scenarios.
+ * Times `searchBuilds()` across inventory sizes and objective scenarios.
  * `naive`/`explored`/`pruned`/`reductionFactor` are deterministic for a seed;
  * `ms` is the median of 3 runs and varies by machine.
  */
@@ -189,7 +189,7 @@ export function runBenchmark(
       let pruned = 0;
       for (let run = 0; run < 3; run++) {
         const t0 = performance.now();
-        const res = optimize(req, inv, ctx);
+        const res = searchBuilds(req, inv, ctx);
         times.push(performance.now() - t0);
         explored = res.explored;
         pruned = res.pruned;

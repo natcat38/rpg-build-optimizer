@@ -38,3 +38,5 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0007 — gap analysis with frozen meta snapshot](../docs/adr/0007-gap-analysis-with-frozen-meta-snapshot.md)
 - [ADR-0008 — GameAdapter seam for multi-game](../docs/adr/0008-gameadapter-seam-for-multi-game.md)
 - [ADR-0009 — adapter owns universal game baselines](../docs/adr/0009-adapter-owns-universal-game-baselines.md)
+- [ADR-0010 — serverless proxy for AI explain](../docs/adr/0010-serverless-proxy-for-ai-explain.md)
+- [ADR-0011 — elemental DMG as single fungible stat](../docs/adr/0011-elemental-dmg-as-single-fungible-stat.md)

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { optimize, bruteForce } from './search';
+import { searchBuilds, bruteForce } from './search';
 import type {
   Artifact,
   OptimizeContext,
@@ -43,10 +43,10 @@ const req: OptimizeRequest = {
   topK: 5,
 };
 
-describe('optimize', () => {
+describe('searchBuilds', () => {
   it('returns NO_FEASIBLE_BUILD when a slot pool is empty', () => {
     const inv = inventory(2).filter((a) => a.slot !== 'circlet');
-    const r = optimize(req, inv, ctx);
+    const r = searchBuilds(req, inv, ctx);
     expect(r.reason).toBe('NO_FEASIBLE_BUILD');
     expect(r.builds).toHaveLength(0);
   });
@@ -54,7 +54,7 @@ describe('optimize', () => {
   it('finds the maximum crit_value build', () => {
     counter = 0;
     const inv = inventory(3);
-    const r = optimize(req, inv, ctx);
+    const r = searchBuilds(req, inv, ctx);
     expect(r.builds.length).toBeGreaterThan(0);
     // best picks the highest cr/cd in every slot: cr main=2 each (5 slots), cd sub=4 each
     // totals: crit_rate = 5 + 5*2 = 15 ; crit_dmg = 50 + 5*4 = 70 ; cv = 15*2 + 70 = 100
@@ -64,7 +64,7 @@ describe('optimize', () => {
   it('honours a minStats constraint (infeasible)', () => {
     counter = 0;
     const inv = inventory(3);
-    const r = optimize(
+    const r = searchBuilds(
       { ...req, constraints: { minStats: { crit_dmg: 1000 } } },
       inv,
       ctx,
@@ -76,7 +76,7 @@ describe('optimize', () => {
     for (let seed = 0; seed < 20; seed++) {
       counter = seed * 1000;
       const inv = inventory(3);
-      const bnb = optimize(req, inv, ctx);
+      const bnb = searchBuilds(req, inv, ctx);
       const bf = bruteForce(req, inv, ctx);
       expect(bnb.builds[0]?.objectiveValue).toBe(bf.builds[0]?.objectiveValue);
     }
@@ -123,7 +123,7 @@ describe('optimize', () => {
           });
         }
       }
-      const bnb = optimize(reqEr, inv, ctxSets);
+      const bnb = searchBuilds(reqEr, inv, ctxSets);
       const bf = bruteForce(reqEr, inv, ctxSets);
       expect(bnb.builds[0]?.objectiveValue).toBe(bf.builds[0]?.objectiveValue);
     }
@@ -132,7 +132,7 @@ describe('optimize', () => {
   it('applies an anti-clone cap so top results are not all identical cores', () => {
     counter = 0;
     const inv = inventory(4);
-    const r = optimize({ ...req, topK: 5 }, inv, ctx);
+    const r = searchBuilds({ ...req, topK: 5 }, inv, ctx);
     const cores = r.builds.map((b) =>
       SLOTS.slice(0, 4)
         .map((s) => b.artifactIds[s])
@@ -144,7 +144,7 @@ describe('optimize', () => {
   it('emits explored/pruned counts and per-build diagnostics', () => {
     counter = 0;
     const inv = inventory(3);
-    const r = optimize(req, inv, ctx);
+    const r = searchBuilds(req, inv, ctx);
     expect(r.explored).toBeGreaterThan(0);
     expect(r.builds[0].diagnostics.marginalBySlot).toBeTruthy();
     expect(typeof r.builds[0].diagnostics.explored).toBe('number');
