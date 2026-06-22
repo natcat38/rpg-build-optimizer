@@ -4,10 +4,7 @@ import { ArtifactForm } from './ArtifactForm';
 import { OptimizePanel } from './OptimizePanel';
 import { Results } from './Results';
 import { SampleGear } from './SampleGear';
-import { GapReport } from './GapReport';
-import { ExplainBuild } from './ExplainBuild';
-import { META_TARGETS } from '../meta/metaTargets';
-import { computeGapReport } from '../meta/gap';
+import { GapSection } from './GapSection';
 import { decodeBuild } from '../share/url';
 import { PATCH } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
@@ -175,26 +172,12 @@ export function App() {
         {result && request && (
           <div id="results-section">
             <Section n={3} title="Results" delay="0s">
-              {!sharedArtifacts &&
-                META_TARGETS[request.characterKey] &&
-                (() => {
-                  const report = computeGapReport(
-                    META_TARGETS[request.characterKey],
-                    artifacts,
-                    result.builds[0] ?? null,
-                  );
-                  return (
-                    <div className="mb-4">
-                      <GapReport report={report} />
-                      <ExplainBuild
-                        characterKey={request.characterKey}
-                        objective={request.objective}
-                        totals={result.builds[0]?.totals ?? {}}
-                        report={report}
-                      />
-                    </div>
-                  );
-                })()}
+              <GapSection
+                result={result}
+                request={request}
+                artifacts={artifacts}
+                sharedArtifacts={sharedArtifacts}
+              />
               <Results
                 result={result}
                 request={request}
