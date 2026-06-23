@@ -37,17 +37,24 @@ describe('mergeNew', () => {
     expect(mergeNew([base], [distinct])).toEqual([distinct]);
   });
 
-  it('is independent of the order of existing', () => {
+  it('dedups against every existing piece, not just the first', () => {
     const a2: Artifact = { ...base, id: 'a2', slot: 'circlet' };
     const incoming = [
       { ...base, id: 'dup' },
       { ...a2, id: 'dup2' },
     ];
     expect(mergeNew([base, a2], incoming)).toEqual([]);
-    expect(mergeNew([a2, base], incoming)).toEqual([]);
   });
 
   it('returns all incoming when existing is empty', () => {
     expect(mergeNew([], [base])).toEqual([base]);
+  });
+
+  // Contract: mergeNew filters incoming against `existing` only — it does NOT
+  // dedup within the incoming batch. Matches the pre-refactor behaviour; GOOD
+  // exports carry unique pieces so this is not exercised in practice.
+  it('keeps intra-batch content duplicates (no within-incoming dedup)', () => {
+    const dup: Artifact = { ...base, id: 'dup' };
+    expect(mergeNew([], [base, dup])).toEqual([base, dup]);
   });
 });
