@@ -9,17 +9,7 @@ import type {
 } from '../game/types';
 import { SLOTS } from '../game/types';
 import { totals, objectiveValue } from './score';
-
-const STAT_LABEL: Partial<Record<StatKey, string>> = {
-  er_pct: 'Energy Recharge',
-  crit_rate: 'Crit Rate',
-  crit_dmg: 'Crit DMG',
-  em: 'Elemental Mastery',
-  atk_pct: 'ATK%',
-  hp_pct: 'HP%',
-  def_pct: 'DEF%',
-  elemental_dmg: 'Elemental DMG',
-};
+import { statLabel } from '../labels';
 
 /** A minStat is "binding" when the build clears it by less than this fraction of the target. */
 const BINDING_MARGIN = 0.05;
@@ -41,9 +31,7 @@ export function buildDiagnostics(
     const need = req.constraints.minStats![k] ?? 0;
     const have = b.totals[k] ?? 0;
     if (have - need < need * BINDING_MARGIN)
-      binding.push(
-        `${STAT_LABEL[k] ?? k} ≥ ${need} (build has ${have.toFixed(1)})`,
-      );
+      binding.push(`${statLabel(k)} ≥ ${need} (build has ${have.toFixed(1)})`);
   }
 
   const byId = new Map(inventory.map((a) => [a.id, a]));

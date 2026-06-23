@@ -1,6 +1,6 @@
 import type { Objective, StatKey, StatVec } from '../game/types';
-import { isStatKey } from '../game/types';
-import { objectiveLabel, statLabel } from '../ui/labels';
+import { isStatKey, isObjective } from '../game/types';
+import { objectiveLabel, statLabel } from '../labels';
 import type { GapReport } from '../meta/gap';
 
 // ---------------------------------------------------------------------------
@@ -24,10 +24,6 @@ const STAT_MIN = -10_000;
 const STAT_MAX = 100_000;
 const MAX_LINES = 10;
 const MAX_LINE_LEN = 300;
-
-function isObjective(x: unknown): x is Objective {
-  return x === 'crit_value' || isStatKey(x);
-}
 
 function isShortStringArray(x: unknown): x is string[] {
   return (
