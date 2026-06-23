@@ -37,6 +37,13 @@ export function encodeBuild(snapshot: BuildSnapshot): string {
   return toBase64Url(deflate(json));
 }
 
+// Bound untrusted strings before they reach regex (formatSetName) / the DOM —
+// a multi-MB key would cause main-thread jank. Mirrors explainShared's MAX_KEY_LEN.
+const MAX_KEY_LEN = 128;
+function isShortString(x: unknown): x is string {
+  return typeof x === 'string' && x.length > 0 && x.length <= MAX_KEY_LEN;
+}
+
 function isObjective(x: unknown): x is Objective {
   return x === 'crit_value' || isStatKey(x);
 }
@@ -60,8 +67,8 @@ function isArtifact(x: unknown): x is Artifact {
   if (typeof x !== 'object' || x === null) return false;
   const a = x as Record<string, unknown>;
   return (
-    typeof a.id === 'string' &&
-    typeof a.setKey === 'string' &&
+    isShortString(a.id) &&
+    isShortString(a.setKey) &&
     (SLOTS as string[]).includes(a.slot as string) &&
     typeof a.rarity === 'number' &&
     typeof a.level === 'number' &&
@@ -76,14 +83,17 @@ function isArtifact(x: unknown): x is Artifact {
 function isOptimizeRequest(x: unknown): x is OptimizeRequest {
   if (typeof x !== 'object' || x === null) return false;
   const r = x as Record<string, unknown>;
-  return (
-    typeof r.characterKey === 'string' &&
-    typeof r.weaponKey === 'string' &&
-    (BUILD_LEVELS as number[]).includes(r.buildLevel as number) &&
-    isObjective(r.objective) &&
-    typeof r.constraints === 'object' &&
-    r.constraints !== null
-  );
+  if (!isShortString(r.characterKey) || !isShortString(r.weaponKey))
+    return false;
+  if (!(BUILD_LEVELS as number[]).includes(r.buildLevel as number))
+    return false;
+  if (!isObjective(r.objective)) return false;
+  if (typeof r.constraints !== 'object' || r.constraints === null) return false;
+  // minStats, if present, reaches the optimizer should a shared request ever be
+  // re-run — validate its keys/values now rather than trust the link.
+  const minStats = (r.constraints as Record<string, unknown>).minStats;
+  if (minStats !== undefined && !isStatVec(minStats)) return false;
+  return true;
 }
 
 function isBuildResult(x: unknown): x is BuildResult {
@@ -94,11 +104,14 @@ function isBuildResult(x: unknown): x is BuildResult {
     !Number.isFinite(b.objectiveValue)
   )
     return false;
-  if (typeof b.score !== 'number') return false;
+  if (typeof b.score !== 'number' || !Number.isFinite(b.score)) return false;
   if (!isStatVec(b.totals)) return false;
   if (typeof b.artifactIds !== 'object' || b.artifactIds === null) return false;
   const ids = b.artifactIds as Record<string, unknown>;
   if (!SLOTS.every((s) => typeof ids[s] === 'string')) return false;
+  // diagnostics is required to exist but not deep-validated: shared builds never
+  // reach gap analysis (GapSection gates on `sharedArtifacts`), the only reader
+  // of diagnostics.marginalBySlot. Deep-validate here if that gate is ever lifted.
   if (typeof b.diagnostics !== 'object' || b.diagnostics === null) return false;
   return true;
 }
@@ -111,15 +124,15 @@ function isBuildResult(x: unknown): x is BuildResult {
 export function parseBuildSnapshot(input: unknown): BuildSnapshot | null {
   if (typeof input !== 'object' || input === null) return null;
   const o = input as Record<string, unknown>;
-  if (!isOptimizeRequest(o.request)) return null;
-  if (!isBuildResult(o.build)) return null;
-  if (!Array.isArray(o.artifacts) || !o.artifacts.every(isArtifact))
-    return null;
-  return {
-    request: o.request,
-    build: o.build,
-    artifacts: o.artifacts,
-  };
+  const { request, build, artifacts } = o;
+  if (!isOptimizeRequest(request)) return null;
+  if (!isBuildResult(build)) return null;
+  if (!Array.isArray(artifacts) || !artifacts.every(isArtifact)) return null;
+  // The build's per-slot ids must resolve to a carried artifact, else the link
+  // renders a "valid" build with no gear shown. Keep the snapshot self-consistent.
+  const ids = new Set((artifacts as Artifact[]).map((a) => a.id));
+  if (!SLOTS.every((s) => ids.has(build.artifactIds[s]))) return null;
+  return { request, build, artifacts: artifacts as Artifact[] };
 }
 
 export function decodeBuild(
