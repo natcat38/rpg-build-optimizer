@@ -25,10 +25,6 @@ export function isStatKey(x: unknown): x is StatKey {
   return typeof x === 'string' && (STAT_KEYS as readonly string[]).includes(x);
 }
 
-export function isObjective(x: unknown): x is Objective {
-  return x === 'crit_value' || isStatKey(x);
-}
-
 export type BuildLevel = 1 | 20 | 40 | 50 | 60 | 70 | 80 | 90;
 export const BUILD_LEVELS: BuildLevel[] = [1, 20, 40, 50, 60, 70, 80, 90];
 
@@ -64,6 +60,10 @@ export interface OptimizeConstraints {
 }
 
 export type Objective = StatKey | 'crit_value';
+
+export function isObjective(x: unknown): x is Objective {
+  return x === 'crit_value' || isStatKey(x);
+}
 
 export interface OptimizeRequest {
   characterKey: string;
