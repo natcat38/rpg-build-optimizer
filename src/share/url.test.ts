@@ -80,6 +80,103 @@ const artifacts: Artifact[] = [
   },
 ];
 
+describe('decodeBuild validation', () => {
+  it('round-trips a valid snapshot unchanged', () => {
+    const out = decodeBuild(encodeBuild({ request, build, artifacts }));
+    expect(out).toEqual({ request, build, artifacts });
+  });
+
+  it('rejects an unknown objective', () => {
+    const bad = encodeBuild({
+      request: { ...request, objective: 'haste' as never },
+      build,
+      artifacts,
+    });
+    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects an out-of-range build level', () => {
+    const bad = encodeBuild({
+      request: { ...request, buildLevel: 999 as never },
+      build,
+      artifacts,
+    });
+    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects an unknown stat key in build.totals', () => {
+    const bad = encodeBuild({
+      request,
+      build: { ...build, totals: { bogus_stat: 50 } as never },
+      artifacts,
+    });
+    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects an artifact with an unknown slot', () => {
+    const bad = encodeBuild({
+      request,
+      build,
+      artifacts: [
+        { ...artifacts[0], slot: 'ring' as never },
+        ...artifacts.slice(1),
+      ],
+    });
+    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects an artifact with a non-stat mainStat', () => {
+    const bad = encodeBuild({
+      request,
+      build,
+      artifacts: [
+        { ...artifacts[0], mainStat: 'luck' as never },
+        ...artifacts.slice(1),
+      ],
+    });
+    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects a non-finite numeric (NaN score)', () => {
+    const bad = encodeBuild({
+      request,
+      build: { ...build, score: NaN },
+      artifacts,
+    });
+    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects an over-long key (DoS guard)', () => {
+    const bad = encodeBuild({
+      request: { ...request, characterKey: 'x'.repeat(200) },
+      build,
+      artifacts,
+    });
+    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects an unknown stat key in constraints.minStats', () => {
+    const bad = encodeBuild({
+      request: { ...request, constraints: { minStats: { bogus: 1 } as never } },
+      build,
+      artifacts,
+    });
+    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects when artifactIds reference an artifact not carried in the snapshot', () => {
+    const bad = encodeBuild({
+      request,
+      build: {
+        ...build,
+        artifactIds: { ...build.artifactIds, flower: 'missing' },
+      },
+      artifacts,
+    });
+    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+});
+
 describe('share url', () => {
   it('round-trips a self-contained build snapshot (request, build, full artifacts)', () => {
     const param = encodeBuild({ request, build, artifacts });
