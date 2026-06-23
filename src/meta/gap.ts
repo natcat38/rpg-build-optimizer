@@ -6,7 +6,7 @@ import {
   objectiveLabel,
   SLOT_LABELS,
   statLabel,
-} from '../ui/labels';
+} from '../labels';
 
 export interface GapReport {
   characterKey: string;

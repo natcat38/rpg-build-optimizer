@@ -1,6 +1,6 @@
 import type { Objective, StatKey, StatVec } from '../game/types';
 import { isStatKey } from '../game/types';
-import { objectiveLabel, statLabel } from '../ui/labels';
+import { objectiveLabel, statLabel } from '../labels';
 import type { GapReport } from '../meta/gap';
 
 // ---------------------------------------------------------------------------
