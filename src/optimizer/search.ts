@@ -7,7 +7,13 @@ import type {
   Slot,
 } from '../game/types';
 import { SLOTS } from '../game/types';
-import { totals, objectiveValue, satisfies, critRatioPenalty, critValue } from './score';
+import {
+  totals,
+  objectiveValue,
+  satisfies,
+  critRatioPenalty,
+  critValue,
+} from './score';
 import { buildDiagnostics } from './diagnostics';
 
 function poolsBySlot(

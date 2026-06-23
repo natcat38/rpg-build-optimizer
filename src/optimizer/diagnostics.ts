@@ -31,9 +31,7 @@ export function buildDiagnostics(
     const need = req.constraints.minStats![k] ?? 0;
     const have = b.totals[k] ?? 0;
     if (have - need < need * BINDING_MARGIN)
-      binding.push(
-        `${statLabel(k)} ≥ ${need} (build has ${have.toFixed(1)})`,
-      );
+      binding.push(`${statLabel(k)} ≥ ${need} (build has ${have.toFixed(1)})`);
   }
 
   const byId = new Map(inventory.map((a) => [a.id, a]));
