@@ -1,7 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Anthropic from '@anthropic-ai/sdk';
-import { parseExplainPayload } from '../src/ai/explainPayload';
-import { buildExplainPrompt } from '../src/ai/explainPrompt';
+import {
+  parseExplainPayload,
+  buildExplainPrompt,
+} from '../src/ai/explainShared';
 
 export default async function handler(
   req: VercelRequest,

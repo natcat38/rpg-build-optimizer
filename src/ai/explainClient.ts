@@ -1,4 +1,4 @@
-import type { ExplainPayload } from './explainPayload';
+import type { ExplainPayload } from './explainShared';
 
 /** Calls the serverless proxy. Throws on transport or shape errors. */
 export async function explainBuild(payload: ExplainPayload): Promise<string> {

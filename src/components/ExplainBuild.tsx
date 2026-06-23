@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Objective, StatVec } from '../game/types';
 import type { GapReport } from '../meta/gap';
 import { explainBuild } from '../ai/explainClient';
+import { toExplainPayload } from '../ai/explainShared';
 
 export function ExplainBuild({
   characterKey,
@@ -25,16 +26,9 @@ export function ExplainBuild({
     setLoading(true);
     setError(false);
     try {
-      const text = await explainBuild({
-        characterKey,
-        objective,
-        totals,
-        gap: {
-          feasibility: report.feasibility,
-          shortfalls: report.shortfalls,
-          action: report.action,
-        },
-      });
+      const text = await explainBuild(
+        toExplainPayload(characterKey, objective, totals, report),
+      );
       setExplanation(text);
     } catch {
       setError(true);
