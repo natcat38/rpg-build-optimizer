@@ -5,27 +5,11 @@ import type {
   ArtifactSetMeta,
 } from '../GameAdapter';
 import type { StatKey, StatVec, BuildLevel } from '../types';
-import { SLOTS } from '../types';
+import { SLOTS, STAT_KEYS } from '../types';
 import type { Snapshot } from './snapshot';
 import rawData from './data.generated.json';
 
 const data = rawData as unknown as Snapshot;
-
-const STAT_KEYS: StatKey[] = [
-  'hp',
-  'hp_pct',
-  'atk',
-  'atk_pct',
-  'def',
-  'def_pct',
-  'em',
-  'er_pct',
-  'crit_rate',
-  'crit_dmg',
-  'elemental_dmg',
-  'physical_dmg',
-  'healing',
-];
 
 function vec(obj?: Record<string, number>): StatVec {
   return (obj ?? {}) as StatVec;
@@ -36,7 +20,7 @@ export const PATCH: string = data.patch;
 export const genshinAdapter: GameAdapter = {
   id: 'genshin',
   slots: SLOTS,
-  statKeys: STAT_KEYS,
+  statKeys: [...STAT_KEYS],
 
   characters(): CharacterMeta[] {
     return data.characters.map((c) => ({

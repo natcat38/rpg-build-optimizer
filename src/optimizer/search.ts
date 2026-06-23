@@ -7,7 +7,7 @@ import type {
   Slot,
 } from '../game/types';
 import { SLOTS } from '../game/types';
-import { totals, objectiveValue, satisfies, critRatioPenalty } from './score';
+import { totals, objectiveValue, satisfies, critRatioPenalty, critValue } from './score';
 import { buildDiagnostics } from './diagnostics';
 
 function poolsBySlot(
@@ -37,7 +37,7 @@ function objectiveContribution(
       if (s.key === 'crit_rate') cr += s.value;
       if (s.key === 'crit_dmg') cd += s.value;
     }
-    return cr * 2 + cd;
+    return critValue(cr, cd);
   }
   let v = a.mainStat === objective ? a.mainStatValue : 0;
   for (const s of a.subStats) if (s.key === objective) v += s.value;
