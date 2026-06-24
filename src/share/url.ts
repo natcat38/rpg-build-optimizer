@@ -2,12 +2,11 @@ import { deflate, inflate } from 'pako';
 import type {
   Artifact,
   BuildResult,
-  Objective,
   OptimizeRequest,
   StatVec,
   SubStat,
 } from '../game/types';
-import { isStatKey, BUILD_LEVELS, SLOTS } from '../game/types';
+import { isStatKey, isObjective, BUILD_LEVELS, SLOTS } from '../game/types';
 
 export interface BuildSnapshot {
   request: OptimizeRequest;
@@ -42,10 +41,6 @@ export function encodeBuild(snapshot: BuildSnapshot): string {
 const MAX_KEY_LEN = 128;
 function isShortString(x: unknown): x is string {
   return typeof x === 'string' && x.length > 0 && x.length <= MAX_KEY_LEN;
-}
-
-function isObjective(x: unknown): x is Objective {
-  return x === 'crit_value' || isStatKey(x);
 }
 
 function isStatVec(x: unknown): x is StatVec {
