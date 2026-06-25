@@ -1,4 +1,5 @@
 import type { Artifact, Slot, StatKey, SubStat } from '../game/types';
+import type { GameAdapter } from '../game/GameAdapter';
 import { genshinAdapter } from '../game/genshin/adapter';
 
 const SLOT_MAP: Record<string, Slot> = {
@@ -40,7 +41,10 @@ interface GoodArtifact {
   substats: { key: string; value: number }[];
 }
 
-export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
+export function parseGOOD(
+  json: unknown,
+  adapter: GameAdapter = genshinAdapter,
+): Artifact[] | { error: 'BAD_FORMAT' } {
   if (typeof json !== 'object' || json === null) return { error: 'BAD_FORMAT' };
   const obj = json as Record<string, unknown>;
   if (obj.format !== 'GOOD' || !Array.isArray(obj.artifacts))
@@ -62,11 +66,7 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
       rarity: raw.rarity,
       level: raw.level,
       mainStat,
-      mainStatValue: genshinAdapter.mainStatValue(
-        mainStat,
-        raw.rarity,
-        raw.level,
-      ),
+      mainStatValue: adapter.mainStatValue(mainStat, raw.rarity, raw.level),
       subStats,
     });
   }
