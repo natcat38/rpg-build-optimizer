@@ -18,7 +18,7 @@ export function buildDiagnostics(
   ctx: OptimizeContext,
   req: OptimizeRequest,
   b: BuildResult,
-  inventory: Artifact[],
+  chosen: Artifact[],
   explored: number,
   pruned: number,
 ): BuildDiagnostics {
@@ -34,8 +34,6 @@ export function buildDiagnostics(
       binding.push(`${statLabel(k)} ≥ ${need} (build has ${have.toFixed(1)})`);
   }
 
-  const byId = new Map(inventory.map((a) => [a.id, a]));
-  const chosen = SLOTS.map((s) => byId.get(b.artifactIds[s])!).filter(Boolean);
   const marginalBySlot: Partial<Record<Slot, number>> = {};
   const fullObj = objectiveValue(totals(ctx, chosen), req.objective);
   for (const slot of SLOTS) {

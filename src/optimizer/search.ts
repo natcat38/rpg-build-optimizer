@@ -181,6 +181,7 @@ export function searchBuilds(
     return { builds: [], explored, pruned, reason: 'NO_FEASIBLE_BUILD' };
 
   // Anti-clone cap: drop exact duplicates; at most 2 results per shared 4-piece core.
+  const byId = new Map(inventory.map((a) => [a.id, a]));
   const seenExact = new Set<string>();
   const coreCount: Record<string, number> = {};
   const final: BuildResult[] = [];
@@ -193,9 +194,12 @@ export function searchBuilds(
     if ((coreCount[core] ?? 0) >= 2) continue;
     seenExact.add(exact);
     coreCount[core] = (coreCount[core] ?? 0) + 1;
+    const chosen = SLOTS.map((s) => byId.get(b.artifactIds[s])!).filter(
+      Boolean,
+    );
     final.push({
       ...b,
-      diagnostics: buildDiagnostics(ctx, req, b, inventory, explored, pruned),
+      diagnostics: buildDiagnostics(ctx, req, b, chosen, explored, pruned),
     });
     if (final.length >= k) break;
   }
