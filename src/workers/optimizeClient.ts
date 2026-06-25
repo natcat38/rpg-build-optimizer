@@ -7,8 +7,8 @@ import type {
 import type { GameAdapter } from '../game/GameAdapter';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { buildContext } from '../optimizer/context';
-import { searchBuilds } from '../optimizer/search';
-import type { WorkerRequest } from './optimize.worker';
+import { runSearchRequest, readSearchResponse } from './protocol';
+import type { WorkerRequest } from './protocol';
 
 /** Dispatch a fully-built request to the worker, with a synchronous fallback
  *  for environments without Worker (tests, SSR). */
@@ -18,7 +18,9 @@ function dispatch(
   ctx: OptimizeContext,
 ): Promise<OptimizeResult> {
   if (typeof Worker === 'undefined') {
-    return Promise.resolve(searchBuilds(req, inventory, ctx));
+    return Promise.resolve(
+      readSearchResponse(runSearchRequest({ req, inventory, ctx })),
+    );
   }
   return new Promise((resolve, reject) => {
     const worker = new Worker(
@@ -28,14 +30,11 @@ function dispatch(
       },
     );
     worker.onmessage = (e: MessageEvent) => {
-      if (e.data.type === 'done') {
-        resolve(e.data.result as OptimizeResult);
-        worker.terminate();
-      } else if (e.data.type === 'error') {
-        reject(new Error(e.data.message));
-        worker.terminate();
-      } else {
-        reject(new Error(`Unexpected worker message: ${String(e.data?.type)}`));
+      try {
+        resolve(readSearchResponse(e.data));
+      } catch (err) {
+        reject(err);
+      } finally {
         worker.terminate();
       }
     };
