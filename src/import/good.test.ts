@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { parseGOOD } from './good';
+import { genshinAdapter } from '../game/genshin/adapter';
+import type { GameAdapter } from '../game/GameAdapter';
 
 const goodFile = {
   format: 'GOOD',
@@ -42,5 +44,16 @@ describe('parseGOOD', () => {
     expect(arr[0].slot).toBe('sands');
     expect(arr[0].mainStat).toBe('atk_pct');
     expect(arr[0].subStats).toContainEqual({ key: 'crit_dmg', value: 14 });
+  });
+
+  it('resolves mainStatValue through the injected adapter', () => {
+    const stubAdapter: GameAdapter = {
+      ...genshinAdapter,
+      mainStatValue: () => 12345,
+    };
+    const out = parseGOOD(goodFile, stubAdapter);
+    expect(Array.isArray(out)).toBe(true);
+    const arr = out as import('../game/types').Artifact[];
+    expect(arr[0].mainStatValue).toBe(12345);
   });
 });
