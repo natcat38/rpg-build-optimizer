@@ -15,11 +15,11 @@ describe('App shell', () => {
     expect(screen.getByText(/Import by UID/i)).toBeInTheDocument();
   });
 
-  it('shows a friendly fallback for an unreadable shared link', () => {
+  it('shows a friendly fallback for an unreadable shared link', async () => {
     window.history.pushState({}, '', '/?b=garbage!!');
     render(<App />);
     expect(
-      screen.getByText(/This shared build couldn't be read/i),
+      await screen.findByText(/This shared build couldn't be read/i),
     ).toBeInTheDocument();
     window.history.pushState({}, '', '/');
   });

@@ -1,13 +1,34 @@
-import type {
-  GameAdapter,
-  CharacterMeta,
-  WeaponMeta,
-  ArtifactSetMeta,
-} from '../GameAdapter';
 import type { StatKey, StatVec, BuildLevel } from '../types';
-import { SLOTS, STAT_KEYS } from '../types';
+import { STAT_KEYS } from '../types';
 import type { Snapshot } from './snapshot';
 import rawData from './data.generated.json';
+
+export interface CharacterMeta {
+  key: string;
+  name: string;
+  element:
+    | 'pyro'
+    | 'hydro'
+    | 'electro'
+    | 'cryo'
+    | 'anemo'
+    | 'geo'
+    | 'dendro'
+    | 'physical';
+}
+
+export interface WeaponMeta {
+  key: string;
+  name: string;
+  type: string;
+}
+
+export interface ArtifactSetMeta {
+  key: string;
+  name: string;
+  twoPiece?: StatVec;
+  fourPiece?: StatVec;
+}
 
 const data = rawData as unknown as Snapshot;
 
@@ -17,10 +38,8 @@ function vec(obj?: Record<string, number>): StatVec {
 
 export const PATCH: string = data.patch;
 
-export const genshinAdapter: GameAdapter = {
-  id: 'genshin',
-  slots: SLOTS,
-  statKeys: [...STAT_KEYS],
+export const genshinAdapter = {
+  statKeys: [...STAT_KEYS] as StatKey[],
 
   characters(): CharacterMeta[] {
     return data.characters.map((c) => ({

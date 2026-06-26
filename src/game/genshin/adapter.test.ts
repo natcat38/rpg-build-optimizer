@@ -6,15 +6,6 @@ import rawData from './data.generated.json';
 const data = rawData as unknown as Snapshot;
 
 describe('genshinAdapter', () => {
-  it('exposes the five slots', () => {
-    expect(genshinAdapter.slots).toEqual([
-      'flower',
-      'plume',
-      'sands',
-      'goblet',
-      'circlet',
-    ]);
-  });
   it('returns a non-empty character list', () => {
     expect(genshinAdapter.characters().length).toBeGreaterThan(0);
   });

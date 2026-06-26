@@ -1,4 +1,3 @@
-import { deflate, inflate } from 'pako';
 import type {
   Artifact,
   BuildResult,
@@ -31,9 +30,56 @@ function fromBase64Url(s: string): Uint8Array {
   return out;
 }
 
-export function encodeBuild(snapshot: BuildSnapshot): string {
+// Native deflate/inflate via the platform's compression streams (no pako).
+// 'deflate' is zlib (RFC 1950) — the same wire format pako's deflate() produced,
+// so share links minted by older builds still decode. Driven via reader/writer
+// rather than Blob.stream()/Response, which jsdom (test env) doesn't implement.
+async function runStream(
+  transform: CompressionStream | DecompressionStream,
+  input: Uint8Array,
+): Promise<Uint8Array> {
+  const writer = transform.writable.getWriter();
+  // Fire-and-forget: a malformed-input error surfaces via the reader below, so
+  // swallow the writer's mirror rejection (write or close) to avoid an
+  // unhandled rejection.
+  writer
+    .write(input)
+    .then(() => writer.close())
+    .catch(() => {});
+  const reader = transform.readable.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    total += value.length;
+  }
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) {
+    out.set(c, off);
+    off += c.length;
+  }
+  return out;
+}
+
+async function deflate(text: string): Promise<Uint8Array> {
+  return runStream(
+    new CompressionStream('deflate'),
+    new TextEncoder().encode(text),
+  );
+}
+
+async function inflate(bytes: Uint8Array): Promise<string> {
+  return new TextDecoder().decode(
+    await runStream(new DecompressionStream('deflate'), bytes),
+  );
+}
+
+export async function encodeBuild(snapshot: BuildSnapshot): Promise<string> {
   const json = JSON.stringify(snapshot);
-  return toBase64Url(deflate(json));
+  return toBase64Url(await deflate(json));
 }
 
 // Bound untrusted strings before they reach regex (formatSetName) / the DOM —
@@ -130,12 +176,12 @@ export function parseBuildSnapshot(input: unknown): BuildSnapshot | null {
   return { request, build, artifacts: artifacts as Artifact[] };
 }
 
-export function decodeBuild(
+export async function decodeBuild(
   param: string,
-): BuildSnapshot | { error: 'UNREADABLE' } {
+): Promise<BuildSnapshot | { error: 'UNREADABLE' }> {
   try {
     if (!param) return { error: 'UNREADABLE' };
-    const json = inflate(fromBase64Url(param), { to: 'string' });
+    const json = await inflate(fromBase64Url(param));
     const snapshot = parseBuildSnapshot(JSON.parse(json));
     if (!snapshot) return { error: 'UNREADABLE' };
     return snapshot;
