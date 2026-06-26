@@ -31,7 +31,7 @@ function makeMsg(): WorkerRequest {
     objective: 'crit_value',
     topK: 3,
   };
-  const ctx = buildContext(genshinAdapter, req);
+  const ctx = buildContext(req);
   return { req, inventory: inv, ctx };
 }
 
@@ -74,12 +74,5 @@ describe('readSearchResponse', () => {
   it('throws on error envelope', () => {
     const envelope: WorkerResponse = { type: 'error', message: 'boom' };
     expect(() => readSearchResponse(envelope)).toThrow('boom');
-  });
-
-  it('throws with "Unexpected worker message" on unknown type', () => {
-    const envelope = { type: 'weird' } as unknown as WorkerResponse;
-    expect(() => readSearchResponse(envelope)).toThrow(
-      'Unexpected worker message',
-    );
   });
 });

@@ -1,6 +1,6 @@
 # 0008. GameAdapter seam for multi-game extensibility
 
-- Status: Accepted
+- Status: Superseded by [ADR-0012](0012-collapse-gameadapter-seam-to-concrete-adapter.md)
 - Date: 2026-06-06
 
 ## Context

@@ -9,7 +9,7 @@ import { Combobox } from './ui/Combobox';
 
 const STAT_OPTIONS: StatKey[] = genshinAdapter.statKeys;
 
-export function ArtifactForm({ onDone }: { onDone?: () => void }) {
+export function ArtifactForm() {
   const add = useInventory((s) => s.add);
   const [slot, setSlot] = useState<Slot>('sands');
   const [setKey, setSetKey] = useState(genshinAdapter.sets()[0]?.key ?? '');
@@ -34,7 +34,6 @@ export function ArtifactForm({ onDone }: { onDone?: () => void }) {
       subStats,
     };
     add(a);
-    onDone?.();
   }
 
   return (

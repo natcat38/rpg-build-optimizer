@@ -1,14 +1,6 @@
 import type { Artifact, Slot, StatKey, SubStat } from '../game/types';
-import type { GameAdapter } from '../game/GameAdapter';
+import { SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
-
-const SLOT_MAP: Record<string, Slot> = {
-  flower: 'flower',
-  plume: 'plume',
-  sands: 'sands',
-  goblet: 'goblet',
-  circlet: 'circlet',
-};
 
 const STAT_MAP: Record<string, StatKey> = {
   hp: 'hp',
@@ -41,10 +33,7 @@ interface GoodArtifact {
   substats: { key: string; value: number }[];
 }
 
-export function parseGOOD(
-  json: unknown,
-  adapter: GameAdapter = genshinAdapter,
-): Artifact[] | { error: 'BAD_FORMAT' } {
+export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
   if (typeof json !== 'object' || json === null) return { error: 'BAD_FORMAT' };
   const obj = json as Record<string, unknown>;
   if (obj.format !== 'GOOD' || !Array.isArray(obj.artifacts))
@@ -53,7 +42,9 @@ export function parseGOOD(
   const out: Artifact[] = [];
   for (const raw of obj.artifacts as GoodArtifact[]) {
     if (typeof raw !== 'object' || raw === null) continue; // tolerate malformed array elements
-    const slot = SLOT_MAP[raw.slotKey];
+    const slot = (SLOTS as string[]).includes(raw.slotKey)
+      ? (raw.slotKey as Slot)
+      : undefined;
     const mainStat = STAT_MAP[raw.mainStatKey];
     if (!slot || !mainStat) continue; // skip unrecognised entries rather than throwing
     const subStats: SubStat[] = (raw.substats ?? [])
@@ -66,7 +57,11 @@ export function parseGOOD(
       rarity: raw.rarity,
       level: raw.level,
       mainStat,
-      mainStatValue: adapter.mainStatValue(mainStat, raw.rarity, raw.level),
+      mainStatValue: genshinAdapter.mainStatValue(
+        mainStat,
+        raw.rarity,
+        raw.level,
+      ),
       subStats,
     });
   }

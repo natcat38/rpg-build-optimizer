@@ -58,14 +58,20 @@ export function App() {
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get('b');
     if (!param) return;
-    const out = decodeBuild(param);
-    if ('error' in out) {
-      setSharedError(true);
-      return;
-    }
-    setRequest(out.request);
-    setResult({ builds: [out.build], explored: 0, pruned: 0 });
-    setSharedArtifacts(out.artifacts);
+    let cancelled = false;
+    decodeBuild(param).then((out) => {
+      if (cancelled) return;
+      if ('error' in out) {
+        setSharedError(true);
+        return;
+      }
+      setRequest(out.request);
+      setResult({ builds: [out.build], explored: 0, pruned: 0 });
+      setSharedArtifacts(out.artifacts);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Resolve artifacts for Results: a shared build carries its own five artifacts;

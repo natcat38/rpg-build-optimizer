@@ -62,7 +62,12 @@ export function Results({
               artifacts={arts}
               rank={i + 1}
               onShare={async () => {
-                const url = `${location.origin}${location.pathname}?b=${encodeBuild({ request, build: b, artifacts: arts })}`;
+                const param = await encodeBuild({
+                  request,
+                  build: b,
+                  artifacts: arts,
+                });
+                const url = `${location.origin}${location.pathname}?b=${param}`;
                 try {
                   await navigator.clipboard.writeText(url);
                   setCopyFailed(false);

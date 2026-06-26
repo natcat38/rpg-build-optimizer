@@ -18,7 +18,7 @@ glossary is [`CONTEXT.md`](../CONTEXT.md); decisions live in [`docs/adr/`](../do
 ## Components
 
 - [Optimiser](/components/optimiser.md) — exact branch-and-bound top-K search.
-- [GameAdapter](/components/game-adapter.md) — the multi-game isolation seam.
+- [GameAdapter](/components/game-adapter.md) — the concrete `genshinAdapter` owning game data and baselines.
 - [Share link](/components/share-link.md) — the self-contained build snapshot in a URL.
 
 ## Data
@@ -36,7 +36,8 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0005 — self-contained share links](../docs/adr/0005-self-contained-share-links.md)
 - [ADR-0006 — inventory import and build-level model](../docs/adr/0006-inventory-import-and-build-level-model.md)
 - [ADR-0007 — gap analysis with frozen meta snapshot](../docs/adr/0007-gap-analysis-with-frozen-meta-snapshot.md)
-- [ADR-0008 — GameAdapter seam for multi-game](../docs/adr/0008-gameadapter-seam-for-multi-game.md)
+- [ADR-0008 — GameAdapter seam for multi-game](../docs/adr/0008-gameadapter-seam-for-multi-game.md) _(superseded by ADR-0012)_
 - [ADR-0009 — adapter owns universal game baselines](../docs/adr/0009-adapter-owns-universal-game-baselines.md)
 - [ADR-0010 — serverless proxy for AI explain](../docs/adr/0010-serverless-proxy-for-ai-explain.md)
 - [ADR-0011 — elemental DMG as single fungible stat](../docs/adr/0011-elemental-dmg-as-single-fungible-stat.md)
+- [ADR-0012 — collapse the GameAdapter seam to a concrete adapter](../docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md)

@@ -1,5 +1,4 @@
 import type { Artifact, Slot, StatKey, SubStat } from '../game/types';
-import type { GameAdapter } from '../game/GameAdapter';
 import { genshinAdapter } from '../game/genshin/adapter';
 
 export type UidError = { error: 'NOT_FOUND' | 'NO_SHOWCASE' | 'NETWORK' };
@@ -36,7 +35,6 @@ const PROP_STAT: Record<string, StatKey> = {
 
 export async function fetchUidArtifacts(
   uid: string,
-  adapter: GameAdapter = genshinAdapter,
 ): Promise<Artifact[] | UidError> {
   let res: Response;
   try {
@@ -88,7 +86,7 @@ export async function fetchUidArtifacts(
         rarity,
         level,
         mainStat,
-        mainStatValue: adapter.mainStatValue(mainStat, rarity, level),
+        mainStatValue: genshinAdapter.mainStatValue(mainStat, rarity, level),
         subStats,
       });
     }

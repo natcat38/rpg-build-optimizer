@@ -53,24 +53,18 @@ const SUBSTAT_TO_KEY: Record<string, string> = {
   'Dendro DMG Bonus': 'elemental_dmg',
 };
 
-const ELEMENT_MAP: Record<string, string> = {
-  Pyro: 'pyro',
-  Hydro: 'hydro',
-  Electro: 'electro',
-  Cryo: 'cryo',
-  Anemo: 'anemo',
-  Geo: 'geo',
-  Dendro: 'dendro',
-  Physical: 'physical',
-};
-
-const WEAPON_TYPE_MAP: Record<string, string> = {
-  Sword: 'sword',
-  Claymore: 'claymore',
-  Polearm: 'polearm',
-  Bow: 'bow',
-  Catalyst: 'catalyst',
-};
+// Allowlists: lowercase the genshindb value, then skip anything non-standard.
+const ELEMENTS = [
+  'pyro',
+  'hydro',
+  'electro',
+  'cryo',
+  'anemo',
+  'geo',
+  'dendro',
+  'physical',
+];
+const WEAPON_TYPES = ['sword', 'claymore', 'polearm', 'bow', 'catalyst'];
 
 const BUILD_LEVELS = [1, 20, 40, 50, 60, 70, 80, 90] as const;
 
@@ -286,8 +280,8 @@ function buildCharacters() {
     const c = genshindb.characters(name);
     if (!c) continue;
 
-    const element = ELEMENT_MAP[c.element];
-    if (!element) continue; // skip non-standard elements
+    const element = String(c.element).toLowerCase();
+    if (!ELEMENTS.includes(element)) continue; // skip non-standard elements
 
     const substattKey = SUBSTAT_TO_KEY[c.substat] ?? null;
 
@@ -345,8 +339,8 @@ function buildWeapons() {
     const w = genshindb.weapons(name);
     if (!w) continue;
 
-    const type = WEAPON_TYPE_MAP[w.weapontype];
-    if (!type) continue;
+    const type = String(w.weapontype).toLowerCase();
+    if (!WEAPON_TYPES.includes(type)) continue;
 
     const substatKey = SUBSTAT_TO_KEY[w.substat] ?? null;
 

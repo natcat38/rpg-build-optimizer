@@ -81,40 +81,42 @@ const artifacts: Artifact[] = [
 ];
 
 describe('decodeBuild validation', () => {
-  it('round-trips a valid snapshot unchanged', () => {
-    const out = decodeBuild(encodeBuild({ request, build, artifacts }));
+  it('round-trips a valid snapshot unchanged', async () => {
+    const out = await decodeBuild(
+      await encodeBuild({ request, build, artifacts }),
+    );
     expect(out).toEqual({ request, build, artifacts });
   });
 
-  it('rejects an unknown objective', () => {
-    const bad = encodeBuild({
+  it('rejects an unknown objective', async () => {
+    const bad = await encodeBuild({
       request: { ...request, objective: 'haste' as never },
       build,
       artifacts,
     });
-    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
   });
 
-  it('rejects an out-of-range build level', () => {
-    const bad = encodeBuild({
+  it('rejects an out-of-range build level', async () => {
+    const bad = await encodeBuild({
       request: { ...request, buildLevel: 999 as never },
       build,
       artifacts,
     });
-    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
   });
 
-  it('rejects an unknown stat key in build.totals', () => {
-    const bad = encodeBuild({
+  it('rejects an unknown stat key in build.totals', async () => {
+    const bad = await encodeBuild({
       request,
       build: { ...build, totals: { bogus_stat: 50 } as never },
       artifacts,
     });
-    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
   });
 
-  it('rejects an artifact with an unknown slot', () => {
-    const bad = encodeBuild({
+  it('rejects an artifact with an unknown slot', async () => {
+    const bad = await encodeBuild({
       request,
       build,
       artifacts: [
@@ -122,11 +124,11 @@ describe('decodeBuild validation', () => {
         ...artifacts.slice(1),
       ],
     });
-    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
   });
 
-  it('rejects an artifact with a non-stat mainStat', () => {
-    const bad = encodeBuild({
+  it('rejects an artifact with a non-stat mainStat', async () => {
+    const bad = await encodeBuild({
       request,
       build,
       artifacts: [
@@ -134,38 +136,38 @@ describe('decodeBuild validation', () => {
         ...artifacts.slice(1),
       ],
     });
-    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
   });
 
-  it('rejects a non-finite numeric (NaN score)', () => {
-    const bad = encodeBuild({
+  it('rejects a non-finite numeric (NaN score)', async () => {
+    const bad = await encodeBuild({
       request,
       build: { ...build, score: NaN },
       artifacts,
     });
-    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
   });
 
-  it('rejects an over-long key (DoS guard)', () => {
-    const bad = encodeBuild({
+  it('rejects an over-long key (DoS guard)', async () => {
+    const bad = await encodeBuild({
       request: { ...request, characterKey: 'x'.repeat(200) },
       build,
       artifacts,
     });
-    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
   });
 
-  it('rejects an unknown stat key in constraints.minStats', () => {
-    const bad = encodeBuild({
+  it('rejects an unknown stat key in constraints.minStats', async () => {
+    const bad = await encodeBuild({
       request: { ...request, constraints: { minStats: { bogus: 1 } as never } },
       build,
       artifacts,
     });
-    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
   });
 
-  it('rejects when artifactIds reference an artifact not carried in the snapshot', () => {
-    const bad = encodeBuild({
+  it('rejects when artifactIds reference an artifact not carried in the snapshot', async () => {
+    const bad = await encodeBuild({
       request,
       build: {
         ...build,
@@ -173,14 +175,14 @@ describe('decodeBuild validation', () => {
       },
       artifacts,
     });
-    expect(decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
   });
 });
 
 describe('share url', () => {
-  it('round-trips a self-contained build snapshot (request, build, full artifacts)', () => {
-    const param = encodeBuild({ request, build, artifacts });
-    const out = decodeBuild(param);
+  it('round-trips a self-contained build snapshot (request, build, full artifacts)', async () => {
+    const param = await encodeBuild({ request, build, artifacts });
+    const out = await decodeBuild(param);
     expect(out).not.toHaveProperty('error');
     if (!('error' in out)) {
       expect(out.request.characterKey).toBe('Raiden');
@@ -196,16 +198,18 @@ describe('share url', () => {
     }
   });
 
-  it('returns UNREADABLE for garbage input instead of throwing', () => {
-    expect(decodeBuild('not-valid-base64!!')).toEqual({ error: 'UNREADABLE' });
+  it('returns UNREADABLE for garbage input instead of throwing', async () => {
+    expect(await decodeBuild('not-valid-base64!!')).toEqual({
+      error: 'UNREADABLE',
+    });
   });
 
-  it('returns UNREADABLE for an empty string', () => {
-    expect(decodeBuild('')).toEqual({ error: 'UNREADABLE' });
+  it('returns UNREADABLE for an empty string', async () => {
+    expect(await decodeBuild('')).toEqual({ error: 'UNREADABLE' });
   });
 
-  it('returns UNREADABLE for valid JSON of the wrong shape', () => {
-    const param = encodeBuild({} as never);
-    expect(decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
+  it('returns UNREADABLE for valid JSON of the wrong shape', async () => {
+    const param = await encodeBuild({} as never);
+    expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
   });
 });

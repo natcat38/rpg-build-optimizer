@@ -4,8 +4,6 @@ import type {
   OptimizeRequest,
   OptimizeResult,
 } from '../game/types';
-import type { GameAdapter } from '../game/GameAdapter';
-import { genshinAdapter } from '../game/genshin/adapter';
 import { buildContext } from '../optimizer/context';
 import { runSearchRequest, readSearchResponse } from './protocol';
 import type { WorkerRequest } from './protocol';
@@ -50,14 +48,12 @@ function dispatch(
 /**
  * The optimiser: build the game context for a request and return the top builds
  * over an inventory. Owns context assembly + worker dispatch + sync fallback, so
- * callers wire nothing. Game-agnostic via the adapter (defaults to Genshin,
- * ADR-0008).
+ * callers wire nothing.
  */
 export function optimize(
   request: OptimizeRequest,
   inventory: Artifact[],
-  adapter: GameAdapter = genshinAdapter,
 ): Promise<OptimizeResult> {
-  const ctx = buildContext(adapter, request);
+  const ctx = buildContext(request);
   return dispatch(request, inventory, ctx);
 }

@@ -30,10 +30,5 @@ export function readSearchResponse(data: WorkerResponse): OptimizeResult {
   if (data.type === 'done') {
     return data.result;
   }
-  if (data.type === 'error') {
-    throw new Error(data.message);
-  }
-  throw new Error(
-    `Unexpected worker message: ${String((data as { type?: unknown }).type)}`,
-  );
+  throw new Error(data.message);
 }
