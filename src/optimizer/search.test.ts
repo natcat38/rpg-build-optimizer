@@ -149,4 +149,49 @@ describe('searchBuilds', () => {
     expect(r.builds[0].diagnostics.marginalBySlot).toBeTruthy();
     expect(typeof r.builds[0].diagnostics.explored).toBe('number');
   });
+
+  it('returns NO_FEASIBLE_BUILD for a fully empty inventory', () => {
+    const r = searchBuilds(req, [], ctx);
+    expect(r.reason).toBe('NO_FEASIBLE_BUILD');
+    expect(r.builds).toHaveLength(0);
+  });
+
+  it('defaults topK to 10 when the request omits it', () => {
+    counter = 0;
+    const { topK: _omit, ...noK } = req; // eslint-disable-line @typescript-eslint/no-unused-vars
+    const r = searchBuilds(noK as OptimizeRequest, inventory(3), ctx);
+    expect(r.builds.length).toBeGreaterThan(0);
+    expect(r.builds.length).toBeLessThanOrEqual(10);
+  });
+
+  it('stays exact when the kept list overflows the k*6 truncation cap (topK=1)', () => {
+    counter = 0;
+    const inv = inventory(3); // 3^5 = 243 feasible leaves >> k*6 = 6, forcing truncation
+    const bnb = searchBuilds({ ...req, topK: 1 }, inv, ctx);
+    const bf = bruteForce({ ...req, topK: 1 }, inv, ctx);
+    expect(bnb.builds[0].objectiveValue).toBe(bf.builds[0]?.objectiveValue);
+  });
+
+  it('drops exact-duplicate builds via the seenExact guard', () => {
+    // Two artifacts sharing an id in one slot make two recursion paths produce
+    // the identical 5-slot id tuple; seenExact must keep only the first.
+    const mkId = (slot: Slot, id: string): Artifact => ({
+      id,
+      setKey: 'A',
+      slot,
+      rarity: 5,
+      level: 20,
+      mainStat: 'crit_rate',
+      mainStatValue: 1,
+      subStats: [],
+    });
+    const inv: Artifact[] = SLOTS.map((s) => mkId(s, `${s}-0`));
+    inv.push(mkId('flower', 'flower-0')); // duplicate id in the flower slot
+    const r = searchBuilds({ ...req, topK: 5 }, inv, ctx);
+    const tuples = r.builds.map((b) =>
+      SLOTS.map((s) => b.artifactIds[s]).join(','),
+    );
+    expect(new Set(tuples).size).toBe(tuples.length); // no exact duplicates returned
+    expect(r.builds).toHaveLength(1); // the two identical-id paths collapse to one
+  });
 });

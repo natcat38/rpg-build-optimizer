@@ -25,13 +25,25 @@ describe('parseGOOD', () => {
     expect(parseGOOD({ foo: 1 })).toEqual({ error: 'BAD_FORMAT' });
   });
 
-  it('skips malformed (null) array elements without throwing', () => {
+  it('skips malformed (null/primitive) array elements, keeping the valid one', () => {
     const out = parseGOOD({
       format: 'GOOD',
-      artifacts: [null, goodFile.artifacts[0]],
+      artifacts: [null, 'garbage', goodFile.artifacts[0]],
     });
-    expect(Array.isArray(out)).toBe(true);
-    expect((out as unknown[]).length).toBe(1);
+    const arr = out as import('../game/types').Artifact[];
+    expect(Array.isArray(arr)).toBe(true);
+    expect(arr.length).toBe(1);
+    expect(arr[0].setKey).toBe('EmblemOfSeveredFate'); // the valid element survived
+  });
+
+  it('tolerates a non-array substats field instead of throwing', () => {
+    const out = parseGOOD({
+      format: 'GOOD',
+      artifacts: [{ ...goodFile.artifacts[0], substats: 'not-an-array' }],
+    });
+    const arr = out as import('../game/types').Artifact[];
+    expect(arr.length).toBe(1);
+    expect(arr[0].subStats).toEqual([]);
   });
 
   it('maps a GOOD artifact to our Artifact shape', () => {

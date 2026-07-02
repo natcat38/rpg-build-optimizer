@@ -194,9 +194,9 @@ export function searchBuilds(
     if ((coreCount[core] ?? 0) >= 2) continue;
     seenExact.add(exact);
     coreCount[core] = (coreCount[core] ?? 0) + 1;
-    const chosen = SLOTS.map((s) => byId.get(b.artifactIds[s])!).filter(
-      Boolean,
-    );
+    // Every id came from an inventory artifact (via the pools), so byId always
+    // resolves it — the assertion holds and no defensive filter is needed.
+    const chosen = SLOTS.map((s) => byId.get(b.artifactIds[s])!);
     final.push({
       ...b,
       diagnostics: buildDiagnostics(ctx, req, b, chosen, explored, pruned),

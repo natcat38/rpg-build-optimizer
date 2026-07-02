@@ -11,7 +11,9 @@ import { SLOTS } from '../game/types';
 import { totals, objectiveValue } from './score';
 import { statLabel } from '../labels';
 
-/** A minStat is "binding" when the build clears it by less than this fraction of the target. */
+/** A minStat is "binding" when the build clears it by less than this fraction
+ *  of the target. 5% is a display heuristic (call a constraint "just barely
+ *  met" vs "comfortable") — not correctness-critical. */
 const BINDING_MARGIN = 0.05;
 
 export function buildDiagnostics(

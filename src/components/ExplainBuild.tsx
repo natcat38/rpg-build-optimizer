@@ -30,7 +30,10 @@ export function ExplainBuild({
         toExplainPayload(characterKey, objective, totals, report),
       );
       setExplanation(text);
-    } catch {
+    } catch (err) {
+      // Log so a real backend regression is distinguishable from the expected
+      // "feature unavailable" path during debugging; UI behaviour is unchanged.
+      console.error('Explain build failed', err);
       setError(true);
     } finally {
       setLoading(false);

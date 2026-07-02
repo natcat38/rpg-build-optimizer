@@ -72,7 +72,12 @@ export const genshinAdapter = {
     level: BuildLevel,
   ): StatVec {
     const c = data.characters.find((x) => x.key === characterKey);
+    if (!c) throw new Error(`Unknown character key: ${characterKey}`);
     const w = data.weapons.find((x) => x.key === weaponKey);
+    if (!w) throw new Error(`Unknown weapon key: ${weaponKey}`);
+    // Fail loud on an unresolved key rather than silently returning a
+    // wrong-but-plausible near-empty build: the meta/sample presets carry
+    // hardcoded keys that could drift from the frozen dataset.
     const out: StatVec = {};
     const add = (src?: Record<string, number>) => {
       if (!src) return;
@@ -80,8 +85,8 @@ export const genshinAdapter = {
         out[k as StatKey] = (out[k as StatKey] ?? 0) + src[k];
       }
     };
-    add(c?.baseByLevel[String(level)]);
-    add(w?.byLevel[String(level)]);
+    add(c.baseByLevel[String(level)]);
+    add(w.byLevel[String(level)]);
     // The universal 100% base Energy Recharge every character shares is a
     // game-wide rule, not per-character snapshot data, so the adapter owns it
     // (see ADR-0009). Add it so ER totals and ER constraints are correct

@@ -85,6 +85,9 @@ export async function encodeBuild(snapshot: BuildSnapshot): Promise<string> {
 // Bound untrusted strings before they reach regex (formatSetName) / the DOM —
 // a multi-MB key would cause main-thread jank. Mirrors explainShared's MAX_KEY_LEN.
 const MAX_KEY_LEN = 128;
+// A build is exactly five artifacts (ADR-0005). Cap generously so a crafted
+// ?b= link can't hand us a huge array to validate/render (client-side jank).
+const MAX_ARTIFACTS = 20;
 function isShortString(x: unknown): x is string {
   return typeof x === 'string' && x.length > 0 && x.length <= MAX_KEY_LEN;
 }
@@ -168,7 +171,9 @@ export function parseBuildSnapshot(input: unknown): BuildSnapshot | null {
   const { request, build, artifacts } = o;
   if (!isOptimizeRequest(request)) return null;
   if (!isBuildResult(build)) return null;
-  if (!Array.isArray(artifacts) || !artifacts.every(isArtifact)) return null;
+  if (!Array.isArray(artifacts) || artifacts.length > MAX_ARTIFACTS)
+    return null;
+  if (!artifacts.every(isArtifact)) return null;
   // The build's per-slot ids must resolve to a carried artifact, else the link
   // renders a "valid" build with no gear shown. Keep the snapshot self-consistent.
   const ids = new Set((artifacts as Artifact[]).map((a) => a.id));

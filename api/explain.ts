@@ -14,6 +14,14 @@ export default async function handler(
     return;
   }
 
+  // Fail fast on oversized bodies before parsing / calling the paid API. The
+  // valid payload is tiny (bounded by parseExplainPayload); 16 KB is generous
+  // headroom. Vercel's 4.5 MB platform default is the only cap otherwise.
+  if (Number(req.headers['content-length'] ?? 0) > 16_000) {
+    res.status(413).json({ error: 'payload too large' });
+    return;
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     res.status(500).json({ error: 'unavailable' });
@@ -31,7 +39,7 @@ export default async function handler(
     const client = new Anthropic({ apiKey });
     const msg = await client.messages.create({
       model: 'claude-haiku-4-5',
-      max_tokens: 200,
+      max_tokens: 200, // caps cost/output at the ~2-3 sentences buildExplainPrompt asks for
       system,
       messages: [{ role: 'user', content: user }],
     });

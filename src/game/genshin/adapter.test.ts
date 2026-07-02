@@ -15,6 +15,16 @@ describe('genshinAdapter', () => {
     const base = genshinAdapter.baseStats(chars[0].key, weapons[0].key, 90);
     expect(base.atk ?? 0).toBeGreaterThan(0);
   });
+  it('throws on an unresolved character or weapon key (fails loud, not a silent near-empty build)', () => {
+    const chars = genshinAdapter.characters();
+    const weapons = genshinAdapter.weapons();
+    expect(() =>
+      genshinAdapter.baseStats('__nope__', weapons[0].key, 90),
+    ).toThrow(/unknown character/i);
+    expect(() =>
+      genshinAdapter.baseStats(chars[0].key, '__nope__', 90),
+    ).toThrow(/unknown weapon/i);
+  });
   it('resolves a 5-star ATK% main stat value at +20 to a known ~46.6%', () => {
     const v = genshinAdapter.mainStatValue('atk_pct', 5, 20);
     expect(v).toBeGreaterThan(40);

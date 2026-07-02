@@ -62,17 +62,20 @@ export function Results({
               artifacts={arts}
               rank={i + 1}
               onShare={async () => {
-                const param = await encodeBuild({
-                  request,
-                  build: b,
-                  artifacts: arts,
-                });
-                const url = `${location.origin}${location.pathname}?b=${param}`;
                 try {
+                  const param = await encodeBuild({
+                    request,
+                    build: b,
+                    artifacts: arts,
+                  });
+                  const url = `${location.origin}${location.pathname}?b=${param}`;
                   await navigator.clipboard.writeText(url);
                   setCopyFailed(false);
                   setCopied(i);
                 } catch {
+                  // encodeBuild (CompressionStream) or clipboard can reject —
+                  // both now surface as the copy-failed cue instead of an
+                  // unhandled rejection.
                   setCopied(null);
                   setCopyFailed(true);
                 }
