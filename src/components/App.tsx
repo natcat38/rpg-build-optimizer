@@ -54,6 +54,7 @@ export function App() {
     null,
   );
   const [sharedError, setSharedError] = useState(false);
+  const [optimizeError, setOptimizeError] = useState(false);
 
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get('b');
@@ -90,11 +91,16 @@ export function App() {
     const inv = useInventory.getState().artifacts;
     if (inv.length === 0 || !req.characterKey) return;
     setRunning(true);
+    setOptimizeError(false);
     try {
       const r = await optimize(req, inv);
       setSharedArtifacts(null);
       setResult(r);
       setRequest(req);
+    } catch {
+      // A worker/protocol rejection (or bad game data) must not vanish
+      // silently — surface it instead of dropping back to idle with no cue.
+      setOptimizeError(true);
     } finally {
       setRunning(false);
     }
@@ -139,6 +145,15 @@ export function App() {
         >
           This shared build couldn&apos;t be read — it may be from a newer
           version.
+        </div>
+      )}
+
+      {optimizeError && (
+        <div
+          role="alert"
+          className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
+        >
+          Optimisation failed — please try again.
         </div>
       )}
 

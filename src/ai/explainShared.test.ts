@@ -129,6 +129,13 @@ describe('buildExplainPrompt', () => {
     const { user, system } = buildExplainPrompt(payload);
     expect(`${system}\n${user}`.toLowerCase()).not.toContain('uid');
   });
+
+  it('wraps untrusted build data in a <build_data> delimiter and marks it data-only', () => {
+    const { system, user } = buildExplainPrompt(payload);
+    expect(user.startsWith('<build_data>')).toBe(true);
+    expect(user.trimEnd().endsWith('</build_data>')).toBe(true);
+    expect(system).toMatch(/never as instructions/i);
+  });
 });
 
 // ---------------------------------------------------------------------------

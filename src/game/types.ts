@@ -72,7 +72,6 @@ export interface OptimizeRequest {
   constraints: OptimizeConstraints;
   objective: Objective;
   topK?: number; // default 10
-  // artifactLevelMode: reserved for v1.1 "+20 projection"; v1.0 always uses current level.
 }
 
 /** Plain, structured-clone-safe context the worker needs (no adapter, no DOM). */

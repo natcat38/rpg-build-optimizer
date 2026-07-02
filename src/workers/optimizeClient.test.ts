@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { optimize } from './optimizeClient';
 import { genshinAdapter } from '../game/genshin/adapter';
 import type { Artifact, OptimizeRequest } from '../game/types';
@@ -34,5 +34,58 @@ describe('optimize (deep entry, sync fallback)', () => {
     // synchronous fallback path (buildContext -> searchBuilds) end to end.
     const r = await optimize(req, inv);
     expect(r.builds.length).toBeGreaterThan(0);
+  });
+});
+
+describe('optimize (real Worker path)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  // Stub a Worker global so dispatch takes the real message-passing branch
+  // (jsdom has no Worker). `react` drives the fake worker's response.
+  function stubWorker(react: (self: FakeWorker) => void) {
+    class FakeWorker {
+      onmessage: ((e: MessageEvent) => void) | null = null;
+      onerror: ((e: { message: string }) => void) | null = null;
+      postMessage() {
+        queueMicrotask(() => react(this));
+      }
+      terminate() {}
+    }
+    vi.stubGlobal('Worker', FakeWorker);
+  }
+  type FakeWorker = {
+    onmessage: ((e: MessageEvent) => void) | null;
+    onerror: ((e: { message: string }) => void) | null;
+  };
+
+  const req: OptimizeRequest = {
+    characterKey: genshinAdapter.characters()[0].key,
+    weaponKey: genshinAdapter.weapons()[0].key,
+    buildLevel: 90,
+    constraints: {},
+    objective: 'crit_value',
+    topK: 3,
+  };
+
+  it("resolves with the worker's result on a done message", async () => {
+    const result = { builds: [], explored: 1, pruned: 2 };
+    stubWorker((w) =>
+      w.onmessage?.({ data: { type: 'done', result } } as MessageEvent),
+    );
+    await expect(optimize(req, inv)).resolves.toEqual(result);
+  });
+
+  it('rejects when the worker posts an error response', async () => {
+    stubWorker((w) =>
+      w.onmessage?.({
+        data: { type: 'error', message: 'boom' },
+      } as MessageEvent),
+    );
+    await expect(optimize(req, inv)).rejects.toThrow('boom');
+  });
+
+  it('rejects on a worker onerror event', async () => {
+    stubWorker((w) => w.onerror?.({ message: 'crash' }));
+    await expect(optimize(req, inv)).rejects.toThrow('crash');
   });
 });

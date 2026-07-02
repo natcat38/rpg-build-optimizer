@@ -47,7 +47,11 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
       : undefined;
     const mainStat = STAT_MAP[raw.mainStatKey];
     if (!slot || !mainStat) continue; // skip unrecognised entries rather than throwing
-    const subStats: SubStat[] = (raw.substats ?? [])
+    // Guard the array shape too, not just undefined — a non-array `substats`
+    // (malformed export) would otherwise throw on `.map`, breaking the
+    // "skip malformed rather than throw" contract above.
+    const rawSubs = Array.isArray(raw.substats) ? raw.substats : [];
+    const subStats: SubStat[] = rawSubs
       .map((s) => ({ key: STAT_MAP[s.key], value: s.value }))
       .filter((s): s is SubStat => Boolean(s.key));
     out.push({
