@@ -41,3 +41,4 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0010 — serverless proxy for AI explain](../docs/adr/0010-serverless-proxy-for-ai-explain.md)
 - [ADR-0011 — elemental DMG as single fungible stat](../docs/adr/0011-elemental-dmg-as-single-fungible-stat.md)
 - [ADR-0012 — collapse the GameAdapter seam to a concrete adapter](../docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md)
+- [ADR-0013 — per-IP rate limiting on the AI explain proxy](../docs/adr/0013-rate-limit-ai-proxy.md)

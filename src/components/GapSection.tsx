@@ -24,7 +24,8 @@ export function GapSection({
   // Only for meta characters on freshly-optimised (non-shared) builds.
   if (sharedArtifacts || !meta) return null;
 
-  const report = computeGapReport(meta, artifacts, result.builds[0] ?? null);
+  const build = result.status === 'ok' ? (result.builds[0] ?? null) : null;
+  const report = computeGapReport(meta, artifacts, build);
 
   return (
     <div className="mb-4">
@@ -32,7 +33,7 @@ export function GapSection({
       <ExplainBuild
         characterKey={request.characterKey}
         objective={request.objective}
-        totals={result.builds[0]?.totals ?? {}}
+        totals={build?.totals ?? {}}
         report={report}
       />
     </div>

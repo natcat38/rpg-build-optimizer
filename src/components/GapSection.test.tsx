@@ -16,7 +16,11 @@ function makeRequest(characterKey: string): OptimizeRequest {
   };
 }
 
-const emptyResult: OptimizeResult = { builds: [], explored: 0, pruned: 0 };
+const emptyResult: OptimizeResult = {
+  status: 'infeasible',
+  explored: 0,
+  pruned: 0,
+};
 
 describe('GapSection', () => {
   it('renders the gap report for a meta character on a fresh build', () => {

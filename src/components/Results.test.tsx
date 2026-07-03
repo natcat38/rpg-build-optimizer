@@ -13,10 +13,9 @@ const req: OptimizeRequest = {
 
 it('shows the infeasible message when there are no builds', () => {
   const r: OptimizeResult = {
-    builds: [],
+    status: 'infeasible',
     explored: 10,
     pruned: 2,
-    reason: 'NO_FEASIBLE_BUILD',
   };
   render(<Results result={r} request={req} artifactsById={{}} />);
   expect(
@@ -78,6 +77,7 @@ it('renders one card per build with its objective value and pieces', () => {
     },
   };
   const r: OptimizeResult = {
+    status: 'ok',
     explored: 100,
     pruned: 50,
     builds: [

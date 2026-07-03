@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ImportPanel } from './ImportPanel';
 import { useInventory } from '../state/inventory';
@@ -108,5 +108,96 @@ describe('ImportPanel', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(
       /Imported 1 artifacts/i,
     );
+  });
+
+  it('dedupes a UID import against a GOOD import that landed while the UID fetch was in flight', async () => {
+    // A content-identical artifact reachable via both import paths (same
+    // artifactHash: setKey|slot|rarity|level|mainStat|substats).
+    let resolveFetch!: (v: unknown) => void;
+    const pending = new Promise((resolve) => {
+      resolveFetch = resolve;
+    });
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(pending));
+
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+
+    // Start the UID fetch; it suspends on the still-pending stubbed fetch,
+    // so onUid has not yet reached mergeDedupe.
+    await user.type(screen.getByLabelText('UID'), '700000000');
+    await user.click(screen.getByRole('button', { name: /fetch/i }));
+
+    // While that's in flight, a GOOD import of the *same* artifact lands.
+    const goodJson = JSON.stringify({
+      format: 'GOOD',
+      artifacts: [
+        {
+          setKey: 'x',
+          slotKey: 'sands',
+          rarity: 5,
+          level: 20,
+          mainStatKey: 'hp',
+          substats: [{ key: 'critDMG_', value: 14 }],
+        },
+      ],
+    });
+    const file = new File([goodJson], 'good.json', {
+      type: 'application/json',
+    });
+    Object.defineProperty(file, 'text', { value: async () => goodJson });
+    await user.upload(screen.getByLabelText('GOOD file'), file);
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /Imported 1 artifacts/i,
+    );
+
+    // Now let the UID fetch resolve with the same content, mapped through
+    // Enka's field names (see uid.ts's EQUIP_SLOT/PROP_STAT).
+    resolveFetch({
+      ok: true,
+      json: async () => ({
+        avatarInfoList: [
+          {
+            equipList: [
+              {
+                reliquary: { level: 21 }, // -1 => level 20
+                flat: {
+                  itemType: 'ITEM_RELIQUARY',
+                  equipType: 'EQUIP_SHOES', // -> slot 'sands'
+                  rankLevel: 5,
+                  setNameTextMapHash: 'x',
+                  reliquaryMainstat: {
+                    mainPropId: 'FIGHT_PROP_HP', // -> mainStat 'hp'
+                    statValue: 4780,
+                  },
+                  reliquarySubstats: [
+                    { appendPropId: 'FIGHT_PROP_CRITICAL_HURT', statValue: 14 },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    // Wait for onUid's continuation to fully finish, not just for the
+    // fetch promise to resolve: waitFor's first check runs synchronously,
+    // before resolveFetch's microtask chain (fetchUidArtifacts's own
+    // internal awaits, then mergeDedupe) has had a chance to run — a naive
+    // waitFor on the store length would pass immediately on the pre-UID
+    // count and never observe the race. setBusy(false) runs synchronously
+    // right before mergeDedupe(out) with no further await between them, so
+    // waiting for the button to leave "Fetching…" guarantees mergeDedupe
+    // has already executed.
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /^fetch$/i }),
+      ).toBeInTheDocument();
+    });
+
+    // The UID import's dedupe must see the GOOD import that already
+    // committed, even though its own `artifacts` closure was captured
+    // before that import landed — so the duplicate must NOT be kept.
+    expect(useInventory.getState().artifacts).toHaveLength(1);
   });
 });

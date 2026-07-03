@@ -21,7 +21,7 @@ export function Results({
   const [copied, setCopied] = useState<number | null>(null);
   const [copyFailed, setCopyFailed] = useState(false);
 
-  if (result.reason === 'NO_FEASIBLE_BUILD' || result.builds.length === 0) {
+  if (result.status === 'infeasible') {
     return (
       <div className="panel border-rose/20 text-sm text-rose">
         <p className="font-semibold">No build satisfies all constraints.</p>

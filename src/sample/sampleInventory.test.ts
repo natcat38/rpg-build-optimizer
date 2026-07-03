@@ -34,9 +34,8 @@ describe('SAMPLE_INVENTORY', () => {
       };
       const ctx = buildContext(req);
       const res = searchBuilds(req, SAMPLE_INVENTORY, ctx);
-      expect(res.reason, `${p.label} should be feasible`).not.toBe(
-        'NO_FEASIBLE_BUILD',
-      );
+      expect(res.status, `${p.label} should be feasible`).toBe('ok');
+      if (res.status !== 'ok') continue; // narrows for TS; assert above already failed the test otherwise
       expect(res.builds.length, `${p.label} builds`).toBeGreaterThan(0);
       const top = res.builds[0];
       if (p.constraints.minStats?.er_pct != null) {

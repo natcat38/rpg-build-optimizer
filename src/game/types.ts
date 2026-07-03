@@ -99,9 +99,6 @@ export interface BuildResult {
   diagnostics: BuildDiagnostics;
 }
 
-export interface OptimizeResult {
-  builds: BuildResult[];
-  explored: number;
-  pruned: number;
-  reason?: 'NO_FEASIBLE_BUILD';
-}
+export type OptimizeResult =
+  | { status: 'ok'; builds: BuildResult[]; explored: number; pruned: number }
+  | { status: 'infeasible'; explored: number; pruned: number };

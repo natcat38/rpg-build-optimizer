@@ -121,6 +121,10 @@ personal data is sent (no UID, no inventory).
 - Set `VITE_AI_ENABLED=true` to render the button (build-time flag — keep it off
   until the key is deployed).
 - Set a spend cap in the Anthropic console (the feature's hard cost ceiling).
+- Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (from an
+  [Upstash](https://upstash.com) Redis database) to enable per-IP rate
+  limiting (10 requests/60s — see [ADR-0013](docs/adr/0013-rate-limit-ai-proxy.md)).
+  Without them the endpoint still works, just unthrottled.
 - Locally, run `vercel dev` (not `npm run dev`) to serve the `/api` function.
 
 ## Data & attribution

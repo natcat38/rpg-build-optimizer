@@ -10,6 +10,12 @@ vi.mock('@anthropic-ai/sdk', () => ({
   },
 }));
 
+// Mock the rate limiter so the handler's own behaviour (429 vs pass-through)
+// is tested independent of real Upstash wiring, which _ratelimit.test.ts
+// already covers.
+const { checkRateLimit } = vi.hoisted(() => ({ checkRateLimit: vi.fn() }));
+vi.mock('./_ratelimit', () => ({ checkRateLimit }));
+
 import handler from './explain';
 
 function makeRes() {
@@ -49,6 +55,8 @@ function makeReq(
 const ORIGINAL_ENV = process.env;
 beforeEach(() => {
   create.mockReset();
+  checkRateLimit.mockReset();
+  checkRateLimit.mockResolvedValue({ success: true });
   process.env = { ...ORIGINAL_ENV, ANTHROPIC_API_KEY: 'test-key' };
 });
 afterEach(() => {
@@ -71,6 +79,72 @@ describe('api/explain handler', () => {
     );
     expect(res.statusCode).toBe(413);
     expect(create).not.toHaveBeenCalled();
+  });
+
+  it('does not 413 at exactly the content-length boundary (16000)', async () => {
+    create.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] });
+    const res = makeRes();
+    await handler(
+      makeReq({ headers: { 'content-length': '16000' } }),
+      res as unknown as VercelResponse,
+    );
+    expect(res.statusCode).not.toBe(413);
+    expect(res.statusCode).toBe(200);
+  });
+
+  // The content-length guard is a cheap pre-parse fast path, not the real
+  // size backstop — a missing or non-numeric header reads as 0 (Number(x) ??
+  // 0), so parseExplainPayload's own field-level caps (MAX_KEY_LEN etc.) are
+  // what actually bound an oversized/adversarial body in these cases.
+  it('rejects an oversized body via parseExplainPayload when content-length is absent', async () => {
+    const res = makeRes();
+    await handler(
+      makeReq({
+        headers: {},
+        body: { ...validBody(), characterKey: 'x'.repeat(1000) },
+      }),
+      res as unknown as VercelResponse,
+    );
+    expect(res.statusCode).toBe(400);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('rejects an oversized body via parseExplainPayload when content-length is non-numeric', async () => {
+    const res = makeRes();
+    await handler(
+      makeReq({
+        headers: { 'content-length': 'abc' },
+        body: { ...validBody(), characterKey: 'x'.repeat(1000) },
+      }),
+      res as unknown as VercelResponse,
+    );
+    expect(res.statusCode).toBe(400);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('429s when the rate limiter reports the limit exceeded, before calling the API', async () => {
+    checkRateLimit.mockResolvedValue({ success: false });
+    const res = makeRes();
+    await handler(makeReq(), res as unknown as VercelResponse);
+    expect(res.statusCode).toBe(429);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('checks the rate limit using the first x-forwarded-for address', async () => {
+    const res = makeRes();
+    await handler(
+      makeReq({ headers: { 'x-forwarded-for': '203.0.113.5, 10.0.0.1' } }),
+      res as unknown as VercelResponse,
+    );
+    expect(checkRateLimit).toHaveBeenCalledWith('203.0.113.5');
+  });
+
+  it('still checks a rate limit when x-forwarded-for is absent', async () => {
+    create.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] });
+    const res = makeRes();
+    await handler(makeReq(), res as unknown as VercelResponse);
+    expect(checkRateLimit).toHaveBeenCalledTimes(1);
+    expect(res.statusCode).toBe(200);
   });
 
   it('500s (unavailable) when the API key is missing', async () => {

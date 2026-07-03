@@ -50,7 +50,11 @@ export function ExplainBuild({
           </p>
         </div>
       ) : (
-        <button className="btn-ghost" onClick={run} disabled={loading}>
+        <button
+          className="btn-ghost"
+          onClick={() => void run()}
+          disabled={loading}
+        >
           {loading ? 'Thinking…' : '✨ Explain this build'}
         </button>
       )}

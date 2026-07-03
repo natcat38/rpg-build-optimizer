@@ -60,14 +60,16 @@ export function App() {
     const param = new URLSearchParams(window.location.search).get('b');
     if (!param) return;
     let cancelled = false;
-    decodeBuild(param).then((out) => {
+    // decodeBuild never rejects (its own try/catch resolves { error } instead),
+    // so this fire-and-forget is by design, not a missed rejection handler.
+    void decodeBuild(param).then((out) => {
       if (cancelled) return;
       if ('error' in out) {
         setSharedError(true);
         return;
       }
       setRequest(out.request);
-      setResult({ builds: [out.build], explored: 0, pruned: 0 });
+      setResult({ status: 'ok', builds: [out.build], explored: 0, pruned: 0 });
       setSharedArtifacts(out.artifacts);
     });
     return () => {
@@ -86,23 +88,34 @@ export function App() {
 
   const [running, setRunning] = useState(false);
 
+  // Guards against a stale run's result clobbering a newer one: OptimizePanel
+  // and SampleGear share `running` (below) so their controls disable
+  // together, but a same-tick double-trigger can still start two runs before
+  // either's disable reaches the DOM — this token makes only the most
+  // recently started run allowed to commit its outcome or clear `running`.
+  const runToken = useRef(0);
+
   async function runCurrent() {
     const req = currentRequest(useOptimizeRequest.getState());
     const inv = useInventory.getState().artifacts;
     if (inv.length === 0 || !req.characterKey) return;
+    const token = ++runToken.current;
     setRunning(true);
     setOptimizeError(false);
     try {
       const r = await optimize(req, inv);
+      if (runToken.current !== token) return; // superseded by a newer run
       setSharedArtifacts(null);
       setResult(r);
       setRequest(req);
-    } catch {
+    } catch (err) {
+      if (runToken.current !== token) return;
       // A worker/protocol rejection (or bad game data) must not vanish
       // silently — surface it instead of dropping back to idle with no cue.
+      console.error('Optimize failed', err);
       setOptimizeError(true);
     } finally {
-      setRunning(false);
+      if (runToken.current === token) setRunning(false);
     }
   }
 
@@ -160,7 +173,7 @@ export function App() {
       <div className="space-y-10">
         {sampleMode && (
           <div className="animate-fade-up">
-            <SampleGear onRun={runCurrent} />
+            <SampleGear onRun={runCurrent} running={running} />
           </div>
         )}
         <Section

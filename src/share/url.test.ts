@@ -1,6 +1,19 @@
 import { describe, it, expect } from 'vitest';
+import { deflateSync } from 'node:zlib';
 import { encodeBuild, decodeBuild } from './url';
 import type { Artifact, BuildResult, OptimizeRequest } from '../game/types';
+
+// Test-only: builds a share param the same way encodeBuild does (deflate +
+// base64url), but from a hand-written JSON *string* rather than a real
+// BuildSnapshot object — so we can splice in tokens (like `1e400`) that
+// JSON.parse turns into non-finite numbers, which JSON.stringify itself can
+// never produce (it serializes NaN/Infinity as `null`). Uses node:zlib
+// instead of CompressionStream purely for a synchronous one-liner; it
+// produces the same zlib/RFC-1950 format `inflate()` expects.
+function toBase64UrlParam(json: string): string {
+  const bin = deflateSync(Buffer.from(json, 'utf-8')).toString('binary');
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
 
 const request: OptimizeRequest = {
   characterKey: 'Raiden',
@@ -176,6 +189,39 @@ describe('decodeBuild validation', () => {
       artifacts,
     });
     expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects an artifact rarity that overflows to Infinity', async () => {
+    // JSON's number grammar allows `1e400`; JSON.parse evaluates it to
+    // Infinity since it overflows a float64 — a valid JSON payload
+    // JSON.stringify itself could never produce (NaN/Infinity serialize
+    // to `null`), so this has to be spliced into raw JSON text.
+    const snapshot = { request, build, artifacts };
+    const json = JSON.stringify(snapshot).replace(
+      `"rarity":${artifacts[0].rarity}`,
+      '"rarity":1e400',
+    );
+    expect(await decodeBuild(toBase64UrlParam(json))).toEqual({
+      error: 'UNREADABLE',
+    });
+  });
+
+  it('rejects a share param whose decompressed payload exceeds the size cap (decompression-bomb guard)', async () => {
+    // diagnostics is intentionally not deep-validated (see parseBuildSnapshot's
+    // comment) — so a huge field hidden there is otherwise a validly-shaped
+    // snapshot that would sail through undetected without a decompression cap.
+    const snapshot = {
+      request,
+      build: {
+        ...build,
+        diagnostics: { ...build.diagnostics, junk: 'a'.repeat(3_000_000) },
+      },
+      artifacts,
+    };
+    const json = JSON.stringify(snapshot);
+    expect(await decodeBuild(toBase64UrlParam(json))).toEqual({
+      error: 'UNREADABLE',
+    });
   });
 });
 

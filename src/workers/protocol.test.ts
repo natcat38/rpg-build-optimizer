@@ -41,6 +41,7 @@ describe('runSearchRequest', () => {
     const response = runSearchRequest(msg);
     expect(response.type).toBe('done');
     const result = readSearchResponse(response);
+    if (result.status !== 'ok') throw new Error('expected a feasible result');
     expect(result.builds.length).toBeGreaterThan(0);
   });
 
@@ -68,6 +69,7 @@ describe('readSearchResponse', () => {
   it('returns result on done envelope', () => {
     const msg = makeMsg();
     const result = readSearchResponse(runSearchRequest(msg));
+    if (result.status !== 'ok') throw new Error('expected a feasible result');
     expect(Array.isArray(result.builds)).toBe(true);
   });
 

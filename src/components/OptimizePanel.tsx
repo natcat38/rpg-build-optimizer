@@ -135,7 +135,7 @@ export function OptimizePanel({
                   objective: meta.objective,
                   constraints: metaToConstraints(meta),
                 });
-                onRun();
+                void onRun();
               }}
             >
               Use meta build
@@ -144,7 +144,7 @@ export function OptimizePanel({
           <button
             className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
             disabled={!canRun || running}
-            onClick={() => onRun()}
+            onClick={() => void onRun()}
           >
             {running ? 'Searching…' : 'Optimise'}
           </button>

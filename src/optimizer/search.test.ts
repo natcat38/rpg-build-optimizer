@@ -4,9 +4,24 @@ import type {
   Artifact,
   OptimizeContext,
   OptimizeRequest,
+  OptimizeResult,
   Slot,
 } from '../game/types';
 import { SLOTS } from '../game/types';
+
+/** Narrow a search result to its feasible variant; fails the test (with a
+ *  clear message) instead of a TS error if the search was unexpectedly
+ *  infeasible. Every test in this file that inspects `.builds` expects one. */
+function expectOk(
+  r: OptimizeResult,
+): Extract<OptimizeResult, { status: 'ok' }> {
+  if (r.status !== 'ok') {
+    throw new Error(
+      `expected a feasible result, got infeasible (explored=${r.explored}, pruned=${r.pruned})`,
+    );
+  }
+  return r;
+}
 
 const ctx: OptimizeContext = {
   base: { crit_rate: 5, crit_dmg: 50 },
@@ -47,14 +62,13 @@ describe('searchBuilds', () => {
   it('returns NO_FEASIBLE_BUILD when a slot pool is empty', () => {
     const inv = inventory(2).filter((a) => a.slot !== 'circlet');
     const r = searchBuilds(req, inv, ctx);
-    expect(r.reason).toBe('NO_FEASIBLE_BUILD');
-    expect(r.builds).toHaveLength(0);
+    expect(r.status).toBe('infeasible');
   });
 
   it('finds the maximum crit_value build', () => {
     counter = 0;
     const inv = inventory(3);
-    const r = searchBuilds(req, inv, ctx);
+    const r = expectOk(searchBuilds(req, inv, ctx));
     expect(r.builds.length).toBeGreaterThan(0);
     // best picks the highest cr/cd in every slot: cr main=2 each (5 slots), cd sub=4 each
     // totals: crit_rate = 5 + 5*2 = 15 ; crit_dmg = 50 + 5*4 = 70 ; cv = 15*2 + 70 = 100
@@ -69,15 +83,15 @@ describe('searchBuilds', () => {
       inv,
       ctx,
     );
-    expect(r.reason).toBe('NO_FEASIBLE_BUILD');
+    expect(r.status).toBe('infeasible');
   });
 
   it('branch-and-bound matches brute force on small inventories (correctness)', () => {
     for (let seed = 0; seed < 20; seed++) {
       counter = seed * 1000;
       const inv = inventory(3);
-      const bnb = searchBuilds(req, inv, ctx);
-      const bf = bruteForce(req, inv, ctx);
+      const bnb = expectOk(searchBuilds(req, inv, ctx));
+      const bf = expectOk(bruteForce(req, inv, ctx));
       expect(bnb.builds[0]?.objectiveValue).toBe(bf.builds[0]?.objectiveValue);
     }
   });
@@ -123,16 +137,118 @@ describe('searchBuilds', () => {
           });
         }
       }
-      const bnb = searchBuilds(reqEr, inv, ctxSets);
-      const bf = bruteForce(reqEr, inv, ctxSets);
+      const bnb = expectOk(searchBuilds(reqEr, inv, ctxSets));
+      const bf = expectOk(bruteForce(reqEr, inv, ctxSets));
       expect(bnb.builds[0]?.objectiveValue).toBe(bf.builds[0]?.objectiveValue);
+    }
+  });
+
+  // The oracle above only ever runs with empty constraints. mainStatLocks,
+  // setRequirement, and critRatioTarget are each unit-tested in isolation
+  // (score.test.ts) but never through the brute-force oracle — which is the
+  // admissibility guarantee ADR-0004 actually leans on. These three extend
+  // it to cover those dimensions, asserting .score (not just
+  // .objectiveValue) so the penalty-omitted pruning bound is verified too.
+
+  it('branch-and-bound matches brute force with a mainStatLocks constraint (score)', () => {
+    let n = 0;
+    const rnd = () => {
+      n = (n * 1103515245 + 12345) & 0x7fffffff;
+      return n;
+    };
+    for (let seed = 0; seed < 20; seed++) {
+      n = seed * 7919 + 1;
+      let id = 0;
+      const altStats: Artifact['mainStat'][] = ['atk_pct', 'hp_pct', 'em'];
+      const inv: Artifact[] = [];
+      for (const slot of SLOTS) {
+        for (let i = 0; i < 4; i++) {
+          // Force at least one crit_rate candidate per slot (index 0) so the
+          // sands lock below is always satisfiable; randomize the rest so the
+          // lock genuinely narrows some pools before the bound is computed.
+          const locked = i === 0 || rnd() % 2 === 0;
+          inv.push({
+            id: `ms${id++}`,
+            setKey: 'A',
+            slot,
+            rarity: 5,
+            level: 20,
+            mainStat: locked ? 'crit_rate' : altStats[rnd() % altStats.length],
+            mainStatValue: rnd() % 50,
+            subStats: rnd() % 3 ? [{ key: 'crit_dmg', value: rnd() % 20 }] : [],
+          });
+        }
+      }
+      const reqLocked: OptimizeRequest = {
+        ...req,
+        constraints: { mainStatLocks: { sands: 'crit_rate' } },
+      };
+      const bnb = expectOk(searchBuilds(reqLocked, inv, ctx));
+      const bf = expectOk(bruteForce(reqLocked, inv, ctx));
+      expect(bnb.builds[0]?.score).toBe(bf.builds[0]?.score);
+    }
+  });
+
+  it('branch-and-bound matches brute force with a 4pc setRequirement constraint (score)', () => {
+    let n = 0;
+    const rnd = () => {
+      n = (n * 1103515245 + 12345) & 0x7fffffff;
+      return n;
+    };
+    for (let seed = 0; seed < 20; seed++) {
+      n = seed * 7919 + 1;
+      let id = 0;
+      const inv: Artifact[] = [];
+      for (const slot of SLOTS) {
+        for (let i = 0; i < 4; i++) {
+          // Guarantee a Target piece in every slot (index 0) so the 4pc
+          // requirement is always reachable; the rest are split across two
+          // other sets, so satisfies() genuinely rejects many leaves.
+          const setKey =
+            i === 0 ? 'Target' : rnd() % 2 === 0 ? 'Other1' : 'Other2';
+          inv.push({
+            id: `sr${id++}`,
+            setKey,
+            slot,
+            rarity: 5,
+            level: 20,
+            mainStat: 'crit_rate',
+            mainStatValue: rnd() % 50,
+            subStats: rnd() % 3 ? [{ key: 'crit_dmg', value: rnd() % 20 }] : [],
+          });
+        }
+      }
+      const reqSet: OptimizeRequest = {
+        ...req,
+        constraints: { setRequirement: { kind: '4pc', setKey: 'Target' } },
+      };
+      const bnb = expectOk(searchBuilds(reqSet, inv, ctx));
+      const bf = expectOk(bruteForce(reqSet, inv, ctx));
+      expect(bnb.builds[0]?.score).toBe(bf.builds[0]?.score);
+    }
+    // 2pc / 2+2 share meetsSetRequirement's count-based check (score.ts) with
+    // 4pc — same code path, so this case is representative rather than
+    // needing its own dedicated oracle run.
+  });
+
+  it('branch-and-bound matches brute force with a critRatioTarget tiebreak (score)', () => {
+    for (let seed = 0; seed < 20; seed++) {
+      counter = seed * 1000;
+      const inv = inventory(3);
+      const reqRatio: OptimizeRequest = {
+        ...req,
+        constraints: { critRatioTarget: 1 / 3 }, // conventional 1:2 CR:CD
+      };
+      const bnb = expectOk(searchBuilds(reqRatio, inv, ctx));
+      const bf = expectOk(bruteForce(reqRatio, inv, ctx));
+      expect(bnb.builds[0]?.score).toBe(bf.builds[0]?.score);
     }
   });
 
   it('applies an anti-clone cap so top results are not all identical cores', () => {
     counter = 0;
     const inv = inventory(4);
-    const r = searchBuilds({ ...req, topK: 5 }, inv, ctx);
+    const r = expectOk(searchBuilds({ ...req, topK: 5 }, inv, ctx));
     const cores = r.builds.map((b) =>
       SLOTS.slice(0, 4)
         .map((s) => b.artifactIds[s])
@@ -144,7 +260,7 @@ describe('searchBuilds', () => {
   it('emits explored/pruned counts and per-build diagnostics', () => {
     counter = 0;
     const inv = inventory(3);
-    const r = searchBuilds(req, inv, ctx);
+    const r = expectOk(searchBuilds(req, inv, ctx));
     expect(r.explored).toBeGreaterThan(0);
     expect(r.builds[0].diagnostics.marginalBySlot).toBeTruthy();
     expect(typeof r.builds[0].diagnostics.explored).toBe('number');
@@ -152,14 +268,13 @@ describe('searchBuilds', () => {
 
   it('returns NO_FEASIBLE_BUILD for a fully empty inventory', () => {
     const r = searchBuilds(req, [], ctx);
-    expect(r.reason).toBe('NO_FEASIBLE_BUILD');
-    expect(r.builds).toHaveLength(0);
+    expect(r.status).toBe('infeasible');
   });
 
   it('defaults topK to 10 when the request omits it', () => {
     counter = 0;
     const { topK: _omit, ...noK } = req; // eslint-disable-line @typescript-eslint/no-unused-vars
-    const r = searchBuilds(noK as OptimizeRequest, inventory(3), ctx);
+    const r = expectOk(searchBuilds(noK as OptimizeRequest, inventory(3), ctx));
     expect(r.builds.length).toBeGreaterThan(0);
     expect(r.builds.length).toBeLessThanOrEqual(10);
   });
@@ -167,8 +282,8 @@ describe('searchBuilds', () => {
   it('stays exact when the kept list overflows the k*6 truncation cap (topK=1)', () => {
     counter = 0;
     const inv = inventory(3); // 3^5 = 243 feasible leaves >> k*6 = 6, forcing truncation
-    const bnb = searchBuilds({ ...req, topK: 1 }, inv, ctx);
-    const bf = bruteForce({ ...req, topK: 1 }, inv, ctx);
+    const bnb = expectOk(searchBuilds({ ...req, topK: 1 }, inv, ctx));
+    const bf = expectOk(bruteForce({ ...req, topK: 1 }, inv, ctx));
     expect(bnb.builds[0].objectiveValue).toBe(bf.builds[0]?.objectiveValue);
   });
 
@@ -187,7 +302,7 @@ describe('searchBuilds', () => {
     });
     const inv: Artifact[] = SLOTS.map((s) => mkId(s, `${s}-0`));
     inv.push(mkId('flower', 'flower-0')); // duplicate id in the flower slot
-    const r = searchBuilds({ ...req, topK: 5 }, inv, ctx);
+    const r = expectOk(searchBuilds({ ...req, topK: 5 }, inv, ctx));
     const tuples = r.builds.map((b) =>
       SLOTS.map((s) => b.artifactIds[s]).join(','),
     );

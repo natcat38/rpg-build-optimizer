@@ -108,7 +108,7 @@ export function searchBuilds(
   const k = req.topK ?? 10;
   const pools = poolsBySlot(inventory, req);
   if (SLOTS.some((s) => pools[s].length === 0)) {
-    return { builds: [], explored: 0, pruned: 0, reason: 'NO_FEASIBLE_BUILD' };
+    return { status: 'infeasible', explored: 0, pruned: 0 };
   }
 
   // Surface high-contribution pieces first so the kept list fills with strong
@@ -177,8 +177,7 @@ export function searchBuilds(
 
   recurse(0, 0);
 
-  if (kept.length === 0)
-    return { builds: [], explored, pruned, reason: 'NO_FEASIBLE_BUILD' };
+  if (kept.length === 0) return { status: 'infeasible', explored, pruned };
 
   // Anti-clone cap: drop exact duplicates; at most 2 results per shared 4-piece core.
   const byId = new Map(inventory.map((a) => [a.id, a]));
@@ -203,7 +202,7 @@ export function searchBuilds(
     });
     if (final.length >= k) break;
   }
-  return { builds: final, explored, pruned };
+  return { status: 'ok', builds: final, explored, pruned };
 }
 
 /** Exhaustive reference search — used only by the correctness test. */
@@ -214,7 +213,7 @@ export function bruteForce(
 ): OptimizeResult {
   const pools = poolsBySlot(inventory, req);
   if (SLOTS.some((s) => pools[s].length === 0))
-    return { builds: [], explored: 0, pruned: 0, reason: 'NO_FEASIBLE_BUILD' };
+    return { status: 'infeasible', explored: 0, pruned: 0 };
   let best: BuildResult | null = null;
   const chosen: Artifact[] = [];
   function rec(i: number) {
@@ -233,6 +232,6 @@ export function bruteForce(
   }
   rec(0);
   return best
-    ? { builds: [best], explored: 0, pruned: 0 }
-    : { builds: [], explored: 0, pruned: 0, reason: 'NO_FEASIBLE_BUILD' };
+    ? { status: 'ok', builds: [best], explored: 0, pruned: 0 }
+    : { status: 'infeasible', explored: 0, pruned: 0 };
 }

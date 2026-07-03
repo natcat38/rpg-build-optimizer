@@ -34,9 +34,17 @@ function fromBase64Url(s: string): Uint8Array {
 // 'deflate' is zlib (RFC 1950) — the same wire format pako's deflate() produced,
 // so share links minted by older builds still decode. Driven via reader/writer
 // rather than Blob.stream()/Response, which jsdom (test env) doesn't implement.
+// A share link is at most 5 artifacts plus a small request/build envelope
+// (ADR-0005) — real decompressed payloads are well under 100 KB. Cap
+// generously so a crafted small deflate stream can't decompression-bomb the
+// tab (inflate() is the only caller that passes this; deflate() never needs
+// it since compressing our own small snapshot can't blow up).
+const MAX_INFLATED_BYTES = 1_000_000;
+
 async function runStream(
   transform: CompressionStream | DecompressionStream,
   input: Uint8Array,
+  maxBytes?: number,
 ): Promise<Uint8Array> {
   const writer = transform.writable.getWriter();
   // Fire-and-forget: a malformed-input error surfaces via the reader below, so
@@ -54,6 +62,10 @@ async function runStream(
     if (done) break;
     chunks.push(value);
     total += value.length;
+    if (maxBytes !== undefined && total > maxBytes) {
+      await reader.cancel();
+      throw new Error('decompressed payload exceeds size cap');
+    }
   }
   const out = new Uint8Array(total);
   let off = 0;
@@ -73,7 +85,11 @@ async function deflate(text: string): Promise<Uint8Array> {
 
 async function inflate(bytes: Uint8Array): Promise<string> {
   return new TextDecoder().decode(
-    await runStream(new DecompressionStream('deflate'), bytes),
+    await runStream(
+      new DecompressionStream('deflate'),
+      bytes,
+      MAX_INFLATED_BYTES,
+    ),
   );
 }
 
@@ -115,7 +131,9 @@ function isArtifact(x: unknown): x is Artifact {
     isShortString(a.setKey) &&
     (SLOTS as string[]).includes(a.slot as string) &&
     typeof a.rarity === 'number' &&
+    Number.isFinite(a.rarity) &&
     typeof a.level === 'number' &&
+    Number.isFinite(a.level) &&
     isStatKey(a.mainStat) &&
     typeof a.mainStatValue === 'number' &&
     Number.isFinite(a.mainStatValue) &&

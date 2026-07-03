@@ -4,6 +4,13 @@ import {
   parseExplainPayload,
   buildExplainPrompt,
 } from '../src/ai/explainShared';
+import { checkRateLimit } from './_ratelimit';
+
+function clientIp(req: VercelRequest): string {
+  const xff = req.headers['x-forwarded-for'];
+  const first = Array.isArray(xff) ? xff[0] : xff;
+  return first?.split(',')[0]?.trim() || 'unknown';
+}
 
 export default async function handler(
   req: VercelRequest,
@@ -19,6 +26,14 @@ export default async function handler(
   // headroom. Vercel's 4.5 MB platform default is the only cap otherwise.
   if (Number(req.headers['content-length'] ?? 0) > 16_000) {
     res.status(413).json({ error: 'payload too large' });
+    return;
+  }
+
+  // Per-IP cost/abuse guard ahead of the parse/key checks (ADR-0013) —
+  // cheapest rejection first.
+  const { success } = await checkRateLimit(clientIp(req));
+  if (!success) {
+    res.status(429).json({ error: 'rate limited' });
     return;
   }
 

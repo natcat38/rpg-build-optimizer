@@ -40,6 +40,13 @@ function dispatch(
       reject(new Error(e.message));
       worker.terminate();
     };
+    // Fires if the posted response fails structured-clone deserialization on
+    // receipt — without this, neither onmessage nor onerror ever runs and
+    // the promise hangs forever (UI stuck on "Searching…").
+    worker.onmessageerror = () => {
+      reject(new Error('worker message could not be deserialized'));
+      worker.terminate();
+    };
     const message: WorkerRequest = { req, inventory, ctx };
     worker.postMessage(message);
   });

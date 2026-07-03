@@ -71,13 +71,13 @@ export const genshinAdapter = {
     weaponKey: string,
     level: BuildLevel,
   ): StatVec {
+    // Fail loud on an unresolved key rather than silently returning a
+    // wrong-but-plausible near-empty build: the meta/sample presets carry
+    // hardcoded keys that could drift from the frozen dataset.
     const c = data.characters.find((x) => x.key === characterKey);
     if (!c) throw new Error(`Unknown character key: ${characterKey}`);
     const w = data.weapons.find((x) => x.key === weaponKey);
     if (!w) throw new Error(`Unknown weapon key: ${weaponKey}`);
-    // Fail loud on an unresolved key rather than silently returning a
-    // wrong-but-plausible near-empty build: the meta/sample presets carry
-    // hardcoded keys that could drift from the frozen dataset.
     const out: StatVec = {};
     const add = (src?: Record<string, number>) => {
       if (!src) return;

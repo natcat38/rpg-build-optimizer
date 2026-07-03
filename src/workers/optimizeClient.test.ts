@@ -33,6 +33,7 @@ describe('optimize (deep entry, sync fallback)', () => {
     // Worker is undefined in the Vitest/Node environment, so this exercises the
     // synchronous fallback path (buildContext -> searchBuilds) end to end.
     const r = await optimize(req, inv);
+    if (r.status !== 'ok') throw new Error('expected a feasible result');
     expect(r.builds.length).toBeGreaterThan(0);
   });
 });
@@ -46,16 +47,22 @@ describe('optimize (real Worker path)', () => {
     class FakeWorker {
       onmessage: ((e: MessageEvent) => void) | null = null;
       onerror: ((e: { message: string }) => void) | null = null;
+      onmessageerror: ((e: MessageEvent) => void) | null = null;
+      terminated = false;
       postMessage() {
         queueMicrotask(() => react(this));
       }
-      terminate() {}
+      terminate() {
+        this.terminated = true;
+      }
     }
     vi.stubGlobal('Worker', FakeWorker);
   }
   type FakeWorker = {
     onmessage: ((e: MessageEvent) => void) | null;
     onerror: ((e: { message: string }) => void) | null;
+    onmessageerror: ((e: MessageEvent) => void) | null;
+    terminated: boolean;
   };
 
   const req: OptimizeRequest = {
@@ -68,7 +75,12 @@ describe('optimize (real Worker path)', () => {
   };
 
   it("resolves with the worker's result on a done message", async () => {
-    const result = { builds: [], explored: 1, pruned: 2 };
+    const result = {
+      status: 'ok' as const,
+      builds: [],
+      explored: 1,
+      pruned: 2,
+    };
     stubWorker((w) =>
       w.onmessage?.({ data: { type: 'done', result } } as MessageEvent),
     );
@@ -87,5 +99,15 @@ describe('optimize (real Worker path)', () => {
   it('rejects on a worker onerror event', async () => {
     stubWorker((w) => w.onerror?.({ message: 'crash' }));
     await expect(optimize(req, inv)).rejects.toThrow('crash');
+  });
+
+  it('rejects and terminates on a worker onmessageerror event (structured-clone failure)', async () => {
+    let worker!: FakeWorker;
+    stubWorker((w) => {
+      worker = w;
+      w.onmessageerror?.({} as MessageEvent);
+    });
+    await expect(optimize(req, inv)).rejects.toThrow();
+    expect(worker.terminated).toBe(true);
   });
 });

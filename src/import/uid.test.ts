@@ -66,6 +66,20 @@ describe('fetchUidArtifacts', () => {
     expect(r).toEqual({ error: 'NETWORK' });
   });
 
+  it('returns NETWORK when the response body is not valid JSON', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => {
+          throw new SyntaxError('Unexpected token in JSON');
+        },
+      }),
+    );
+    const r = await fetchUidArtifacts('123');
+    expect(r).toEqual({ error: 'NETWORK' });
+  });
+
   it('skips non-reliquary equip items (e.g. weapons)', async () => {
     vi.stubGlobal(
       'fetch',
