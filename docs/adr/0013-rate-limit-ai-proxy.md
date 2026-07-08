@@ -32,8 +32,11 @@ one-function-at-a-time proxy model) via `@upstash/ratelimit` +
 - `api/_ratelimit.ts` — `checkRateLimit(identifier)`, called in
   `api/explain.ts` right after the method/size guards and before the
   `ANTHROPIC_API_KEY`/payload checks (cheapest rejection first).
-- Identifier is the first address in `x-forwarded-for` (Vercel-set),
-  falling back to `'unknown'` if absent.
+- Identifier is `x-real-ip` (Vercel's edge sets it to the true connecting IP,
+  which a client can't forge), falling back to the first `x-forwarded-for`
+  address and then `'unknown'`. The leftmost `x-forwarded-for` entry is
+  client-supplied and trivially spoofed to rotate buckets, so it's a
+  last-resort fallback only, not the primary key.
 - **Graceful no-op when unconfigured**: if `UPSTASH_REDIS_REST_URL` or
   `UPSTASH_REDIS_REST_TOKEN` is unset, `checkRateLimit` always allows the
   request (with a `console.warn`) rather than failing closed — mirrors the

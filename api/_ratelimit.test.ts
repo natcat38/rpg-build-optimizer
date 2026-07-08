@@ -32,15 +32,20 @@ afterEach(() => {
 });
 
 describe('checkRateLimit', () => {
-  it('allows the request when Upstash env vars are unset (graceful no-op)', async () => {
+  it('allows the request when Upstash env vars are unset (graceful no-op) and warns', async () => {
     process.env = { ...ORIGINAL_ENV };
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const result = await checkRateLimit('1.2.3.4');
 
     expect(result).toEqual({ success: true });
     expect(RatelimitCtor).not.toHaveBeenCalled();
+    // The fail-open no-op must stay observable — if the env vars are ever
+    // dropped in prod, this warn is the only signal the limiter went dark.
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
   });
 
   it('allows the request when only one of the two env vars is set', async () => {
@@ -81,5 +86,21 @@ describe('checkRateLimit', () => {
     const result = await checkRateLimit('1.2.3.4');
 
     expect(result).toEqual({ success: false });
+  });
+
+  it('reuses one limiter across calls with the same env (built once, not per request)', async () => {
+    // Unique creds so this asserts fresh construction regardless of earlier tests.
+    process.env = {
+      ...ORIGINAL_ENV,
+      UPSTASH_REDIS_REST_URL: 'https://reuse.upstash.io',
+      UPSTASH_REDIS_REST_TOKEN: 'reuse-token',
+    };
+    limit.mockResolvedValue({ success: true, remaining: 9 });
+
+    await checkRateLimit('1.2.3.4');
+    await checkRateLimit('5.6.7.8');
+
+    expect(RatelimitCtor).toHaveBeenCalledTimes(1);
+    expect(limit).toHaveBeenCalledTimes(2);
   });
 });

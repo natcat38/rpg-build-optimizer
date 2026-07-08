@@ -3,10 +3,11 @@ import { SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { validateArtifactDraft } from '../state/artifactValidation';
 
-// A full-collection GOOD export is large (hundreds of pieces) but not
-// unbounded; cap generously so a corrupt/malicious file can't wedge the
-// main thread parsing/rendering an arbitrarily huge array.
-const MAX_ARTIFACTS = 2000;
+// A full-collection GOOD export is large (a maxed account's artifact inventory
+// runs into the low thousands) but not unbounded; cap generously so a
+// corrupt/malicious file can't wedge the main thread parsing/rendering an
+// arbitrarily huge array, while still admitting a real full export.
+const MAX_ARTIFACTS = 4000;
 
 const STAT_MAP: Record<string, StatKey> = {
   hp: 'hp',
@@ -64,6 +65,10 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
     // "skip malformed rather than throw" contract above.
     const rawSubs = Array.isArray(raw.substats) ? raw.substats : [];
     const subStats: SubStat[] = rawSubs
+      // Guard each element's shape too, not just the outer array — a null or
+      // primitive entry ([null], [5]) would otherwise throw on `s.key`,
+      // breaking the "skip malformed rather than throw" contract above.
+      .filter((s) => typeof s === 'object' && s !== null)
       .map((s) => ({ key: STAT_MAP[s.key], value: s.value }))
       .filter((s): s is SubStat => Boolean(s.key) && Number.isFinite(s.value));
     // Same invariant the manual ArtifactForm entry path enforces (<=4

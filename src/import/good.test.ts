@@ -144,17 +144,32 @@ describe('parseGOOD', () => {
     expect(arr.length).toBe(0);
   });
 
+  it('tolerates null/primitive substat elements instead of throwing', () => {
+    const out = parseGOOD({
+      format: 'GOOD',
+      artifacts: [
+        {
+          ...goodFile.artifacts[0],
+          substats: [null, 5, { key: 'critRate_', value: 7 }],
+        },
+      ],
+    });
+    const arr = out as import('../game/types').Artifact[];
+    expect(arr.length).toBe(1);
+    expect(arr[0].subStats).toEqual([{ key: 'crit_rate', value: 7 }]);
+  });
+
   it('rejects a GOOD file whose artifacts array is oversized', () => {
-    const artifacts = Array.from({ length: 2001 }, () => goodFile.artifacts[0]);
+    const artifacts = Array.from({ length: 4001 }, () => goodFile.artifacts[0]);
     expect(parseGOOD({ format: 'GOOD', artifacts })).toEqual({
       error: 'BAD_FORMAT',
     });
   });
 
   it('accepts a GOOD file at exactly the array size cap', () => {
-    const artifacts = Array.from({ length: 2000 }, () => goodFile.artifacts[0]);
+    const artifacts = Array.from({ length: 4000 }, () => goodFile.artifacts[0]);
     const out = parseGOOD({ format: 'GOOD', artifacts });
     const arr = out as import('../game/types').Artifact[];
-    expect(arr.length).toBe(2000);
+    expect(arr.length).toBe(4000);
   });
 });

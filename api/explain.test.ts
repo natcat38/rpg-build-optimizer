@@ -139,6 +139,20 @@ describe('api/explain handler', () => {
     expect(checkRateLimit).toHaveBeenCalledWith('203.0.113.5');
   });
 
+  it('prefers the un-spoofable x-real-ip over a client-supplied x-forwarded-for', async () => {
+    const res = makeRes();
+    await handler(
+      makeReq({
+        headers: {
+          'x-real-ip': '198.51.100.7',
+          'x-forwarded-for': '203.0.113.5, 10.0.0.1',
+        },
+      }),
+      res as unknown as VercelResponse,
+    );
+    expect(checkRateLimit).toHaveBeenCalledWith('198.51.100.7');
+  });
+
   it('still checks a rate limit when x-forwarded-for is absent', async () => {
     create.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] });
     const res = makeRes();

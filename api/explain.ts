@@ -7,6 +7,12 @@ import {
 import { checkRateLimit } from './_ratelimit';
 
 function clientIp(req: VercelRequest): string {
+  // Prefer x-real-ip: Vercel's edge sets it to the true connecting IP, which a
+  // client can't forge. The leftmost x-forwarded-for entry is client-supplied
+  // and trivially spoofed to rotate rate-limit buckets, so it's only a
+  // last-resort fallback (non-Vercel/local, where the limiter is a no-op anyway).
+  const real = req.headers['x-real-ip'];
+  if (typeof real === 'string' && real.trim()) return real.trim();
   const xff = req.headers['x-forwarded-for'];
   const first = Array.isArray(xff) ? xff[0] : xff;
   return first?.split(',')[0]?.trim() || 'unknown';
