@@ -38,3 +38,7 @@ coverage/
 
 # Vercel
 .vercel
+
+# Local scanner tool + its exports (not repo content)
+inventory_kamera/
+genshinData_GOOD_*.json
