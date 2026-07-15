@@ -45,7 +45,7 @@ export function ExplainBuild({
       {explanation ? (
         <div className="panel space-y-2">
           <p className="field-label">AI explanation</p>
-          <p className="text-sm leading-relaxed text-parchment/90">
+          <p className="text-sm leading-relaxed text-paper/90">
             {explanation}
           </p>
         </div>

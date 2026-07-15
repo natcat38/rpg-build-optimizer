@@ -31,7 +31,7 @@ export function SampleGear({
   return (
     <div className="panel space-y-3">
       <div>
-        <h2 className="font-display text-lg font-bold tracking-wide text-parchment">
+        <h2 className="font-display text-lg font-bold tracking-wide text-paper">
           No gear handy? Try a sample build
         </h2>
         <p className="text-xs text-muted">

@@ -7,56 +7,47 @@
     color-scheme: dark;
   }
 
+  /* Per-game reading signal. Values are "r g b" triplets so Tailwind's
+     rgb(var(--x) / <alpha-value>) color functions can apply opacity. */
+  [data-game='genshin'] {
+    --accent: 242 182 76;
+    --accent-bright: 255 207 118;
+    --accent-deep: 185 133 38;
+  }
+  [data-game='wuwa'] {
+    --accent: 76 214 192;
+    --accent-bright: 126 228 212;
+    --accent-deep: 47 156 138;
+  }
+
   html {
     scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-abyss-800 font-sans text-parchment antialiased;
+    @apply bg-surface-800 font-sans text-paper antialiased;
     min-height: 100vh;
-    /* Layered atmosphere: a warm Mora glow above, an anemo glow below,
-       a faint constellation grid, over the abyssal base. */
-    background-color: #0a0d1a;
+    /* Quiet instrument atmosphere: a faint measurement grid over the graphite
+       base, one soft glow tied to the active accent. No grain, no fantasy
+       poster — the numbers carry the visual weight, not the background. */
+    background-color: #0f1116;
     background-image:
       radial-gradient(
-        ellipse 80% 50% at 50% -10%,
-        rgba(233, 196, 106, 0.16),
+        ellipse 70% 45% at 50% -10%,
+        rgb(var(--accent) / 0.1),
         transparent 60%
       ),
-      radial-gradient(
-        ellipse 70% 60% at 85% 110%,
-        rgba(90, 209, 196, 0.12),
-        transparent 60%
-      ),
-      radial-gradient(
-        ellipse 50% 40% at 10% 100%,
-        rgba(90, 120, 209, 0.1),
-        transparent 60%
-      ),
-      linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
     background-size:
       100% 100%,
-      100% 100%,
-      100% 100%,
-      44px 44px,
-      44px 44px;
+      32px 32px,
+      32px 32px;
     background-attachment: fixed;
   }
 
-  /* Subtle grain overlay for texture/depth. */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.5;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-  }
-
   ::selection {
-    background: rgba(233, 196, 106, 0.3);
+    background: rgb(var(--accent) / 0.3);
     color: #fff;
   }
 
@@ -65,22 +56,33 @@
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #070912;
+    background: #0f1116;
   }
   ::-webkit-scrollbar-thumb {
-    background: #2a3157;
+    background: #2a2f3d;
     border-radius: 999px;
-    border: 2px solid #070912;
+    border: 2px solid #0f1116;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #3a4470;
+    background: #3a4152;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer components {
-  /* Glass panel with a gold hairline gradient border. */
+  /* Instrument panel with a hairline accent border. */
   .panel {
-    @apply relative rounded-2xl border border-white/10 bg-abyss-700/60 p-6 shadow-panel backdrop-blur-md;
+    @apply relative rounded-2xl border border-white/10 bg-surface-700/60 p-6 shadow-panel backdrop-blur-md;
   }
   .panel::before {
     content: '';
@@ -90,8 +92,8 @@
     padding: 1px;
     background: linear-gradient(
       140deg,
-      rgba(233, 196, 106, 0.45),
-      rgba(233, 196, 106, 0.02) 35%,
+      rgb(var(--accent) / 0.4),
+      rgb(var(--accent) / 0.02) 35%,
       transparent 60%
     );
     -webkit-mask:
@@ -102,18 +104,9 @@
     pointer-events: none;
   }
 
-  /* Ornate diamond section badge holding a numeral. */
+  /* Calibrated section index — a numbered tick, not an ornament. */
   .section-badge {
-    @apply relative grid h-9 w-9 flex-none place-items-center font-display text-sm font-bold text-abyss-900;
-    background: linear-gradient(160deg, #f6d98a, #d9a94e);
-    transform: rotate(45deg);
-    border-radius: 6px;
-    box-shadow:
-      0 6px 18px -6px rgba(233, 196, 106, 0.7),
-      inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  }
-  .section-badge > span {
-    transform: rotate(-45deg);
+    @apply relative grid h-9 w-9 flex-none place-items-center rounded-lg border border-accent/30 bg-accent/10 font-mono text-sm font-bold text-accent-bright;
   }
 
   /* Form field shell — labels above dark controls. */
@@ -121,34 +114,39 @@
     @apply mb-1.5 block text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted;
   }
   .field {
-    @apply w-full rounded-lg border border-white/10 bg-abyss-900/70 px-3 py-2 text-sm text-parchment
+    @apply w-full rounded-lg border border-white/10 bg-surface-900/70 px-3 py-2 text-sm text-paper
       outline-none transition placeholder:text-muted/60
-      focus:border-mora/60 focus:ring-2 focus:ring-mora/25;
+      focus:border-accent/60 focus:ring-2 focus:ring-accent/25;
   }
   select.field {
     @apply cursor-pointer appearance-none bg-no-repeat pr-9;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23e9c46a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f2b64c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
     background-position: right 0.75rem center;
   }
   select.field option {
-    background-color: #10142a;
-    color: #f1ebdd;
+    background-color: #1b1e27;
+    color: #e9e7e0;
   }
 
-  /* Primary action — molten gold. */
+  /* Primary action — the accent reading, made actionable. */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold
-      text-abyss-900 shadow-glow-mora transition
+      text-surface-900 shadow-glow-accent transition
       hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0
       disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:brightness-100;
-    background: linear-gradient(150deg, #f6d98a, #e0b259 60%, #cf9c3f);
+    background: linear-gradient(
+      150deg,
+      rgb(var(--accent-bright)),
+      rgb(var(--accent)) 60%,
+      rgb(var(--accent-deep))
+    );
   }
 
-  /* Secondary action — anemo ghost. */
+  /* Secondary action — the constraint signal, ghosted. */
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-teal/30 bg-teal/5 px-4 py-2
-      text-sm font-semibold text-teal-bright transition
-      hover:border-teal/60 hover:bg-teal/10
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-flux/30 bg-flux/5 px-4 py-2
+      text-sm font-semibold text-flux-bright transition
+      hover:border-flux/60 hover:bg-flux/10
       disabled:cursor-not-allowed disabled:opacity-40;
   }
 
@@ -158,6 +156,6 @@
   }
 
   .eyebrow {
-    @apply font-mono text-[0.7rem] uppercase tracking-[0.4em] text-mora/80;
+    @apply font-mono text-[0.7rem] uppercase tracking-[0.4em] text-accent/80;
   }
 }

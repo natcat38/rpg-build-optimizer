@@ -4,10 +4,13 @@ import { parseGOOD } from '../import/good';
 import { fetchUidArtifacts } from '../import/uid';
 import { mergeNew } from '../import/dedupe';
 import { useInventory } from '../state/inventory';
+import { useGame } from '../state/game';
+import { GAMES } from '../game/registry';
 import type { Artifact } from '../game/types';
 
 export function ImportPanel() {
   const { artifacts, addMany } = useInventory();
+  const game = GAMES[useGame((s) => s.gameId)];
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [uid, setUid] = useState('');
@@ -20,7 +23,7 @@ export function ImportPanel() {
     const fresh = mergeNew(useInventory.getState().artifacts, incoming);
     addMany(fresh);
     setErr(null);
-    setMsg(`Imported ${fresh.length} artifacts.`);
+    setMsg(`Imported ${fresh.length} ${game.gearNounPlural.toLowerCase()}.`);
   }
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
@@ -69,14 +72,17 @@ export function ImportPanel() {
           Inventory
         </span>
         <span className="chip">
-          <span className="font-bold text-mora">{count}</span>
-          {count === 1 ? 'artifact' : 'artifacts'} loaded
+          <span className="font-bold text-accent">{count}</span>
+          {count === 1
+            ? game.gearNoun.toLowerCase()
+            : game.gearNounPlural.toLowerCase()}{' '}
+          loaded
         </span>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
         {/* GOOD file upload */}
-        <div className="rounded-xl border border-white/5 bg-abyss-900/40 p-4">
+        <div className="rounded-xl border border-white/5 bg-surface-900/40 p-4">
           <label className="field-label" htmlFor="good-file">
             Upload GOOD export
           </label>
@@ -91,13 +97,13 @@ export function ImportPanel() {
             aria-label="GOOD file"
             className="block w-full cursor-pointer text-xs text-muted
               file:mr-3 file:cursor-pointer file:rounded-md file:border-0
-              file:bg-mora/15 file:px-3 file:py-2 file:font-semibold file:text-mora-bright
-              hover:file:bg-mora/25"
+              file:bg-accent/15 file:px-3 file:py-2 file:font-semibold file:text-accent-bright
+              hover:file:bg-accent/25"
           />
         </div>
 
         {/* UID import */}
-        <div className="rounded-xl border border-white/5 bg-abyss-900/40 p-4">
+        <div className="rounded-xl border border-white/5 bg-surface-900/40 p-4">
           <label className="field-label" htmlFor="uid-input">
             Import by UID
           </label>

@@ -4,6 +4,8 @@ import { BUILD_LEVELS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest } from '../state/optimizeRequest';
+import { useGame } from '../state/game';
+import { GAMES } from '../game/registry';
 import { objectiveLabel } from '../ui/labels';
 import { Combobox } from './ui/Combobox';
 import { META_TARGETS, metaToConstraints } from '../meta/metaTargets';
@@ -25,6 +27,7 @@ export function OptimizePanel({
   running: boolean;
 }) {
   const artifacts = useInventory((s) => s.artifacts);
+  const game = GAMES[useGame((s) => s.gameId)];
   const chars = useMemo(() => genshinAdapter.characters(), []);
   const weapons = useMemo(() => genshinAdapter.weapons(), []);
 
@@ -44,7 +47,7 @@ export function OptimizePanel({
   const hasArtifacts = artifacts.length > 0;
   const canRun = hasArtifacts && !!characterKey;
   const hint = !hasArtifacts
-    ? 'Add or import artifacts before optimising.'
+    ? `Add or import ${game.gearNounPlural.toLowerCase()} before optimising.`
     : !characterKey
       ? 'Pick a character to start.'
       : null;
@@ -117,10 +120,10 @@ export function OptimizePanel({
         ) : (
           <p className="text-sm text-muted">
             Searching{' '}
-            <span className="font-semibold text-parchment">
+            <span className="font-semibold text-paper">
               {artifacts.length}
             </span>{' '}
-            artifacts for the exact optimum.
+            {game.gearNounPlural.toLowerCase()} for the exact optimum.
           </p>
         )}
         <div className="flex gap-2">
