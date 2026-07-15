@@ -5,11 +5,14 @@ import { OptimizePanel } from './OptimizePanel';
 import { Results } from './Results';
 import { SampleGear } from './SampleGear';
 import { GapSection } from './GapSection';
+import { GameSwitcher } from './GameSwitcher';
 import { decodeBuild } from '../share/url';
-import { PATCH } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest, currentRequest } from '../state/optimizeRequest';
+import { useGame } from '../state/game';
+import { GAMES, type GameDescriptor } from '../game/registry';
 import { optimize } from '../workers/optimizeClient';
+import { buildHeroExample, type HeroExample } from '../sample/heroExample';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 
 function Section({
@@ -28,11 +31,9 @@ function Section({
   return (
     <section className="animate-fade-up" style={{ animationDelay: delay }}>
       <div className="mb-3 flex items-center gap-3">
-        <span className="section-badge">
-          <span>{n}</span>
-        </span>
+        <span className="section-badge">{String(n).padStart(2, '0')}</span>
         <div>
-          <h2 className="font-display text-lg font-bold tracking-wide text-parchment">
+          <h2 className="font-display text-lg font-bold tracking-wide text-paper">
             {title}
           </h2>
           {hint && <p className="text-xs text-muted">{hint}</p>}
@@ -43,7 +44,84 @@ function Section({
   );
 }
 
+/** Thesis-only hero: shown while the solved demo is computing, once the user
+ *  has their own gear loaded, or for a coming-soon game with nothing to solve yet. */
+function ThesisHero({ game }: { game: GameDescriptor }) {
+  return (
+    <>
+      <h1 className="font-display text-4xl font-black leading-tight text-paper sm:text-5xl">
+        RPG Build Optimizer
+      </h1>
+      <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
+        {game.tagline} Exact branch-and-bound search over your inventory —
+        computed entirely in your browser, no account required.
+      </p>
+    </>
+  );
+}
+
+/** The hero leads with a real solve, not an empty form: one genuine build from
+ *  a seeded synthetic inventory (see src/sample/heroExample.ts), plus the exact
+ *  search proof — the thing this tool actually does. */
+function SolvedHero({ hero }: { hero: HeroExample }) {
+  const reduction = hero.naive / Math.max(hero.explored, 1);
+  const reductionLabel =
+    reduction < 10
+      ? `${reduction.toFixed(1)}×`
+      : `${Math.round(reduction).toLocaleString()}×`;
+  return (
+    <>
+      <h1 className="font-display text-4xl font-black leading-tight text-paper sm:text-5xl">
+        RPG Build Optimizer
+      </h1>
+      <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
+        Find the mathematically optimal gear build for any character. Exact
+        branch-and-bound search over your inventory — computed entirely in your
+        browser, no account required.
+      </p>
+      <div className="mt-6 flex flex-wrap items-end gap-x-8 gap-y-4">
+        <div>
+          <p className="text-[0.7rem] uppercase tracking-[0.18em] text-muted">
+            Crit Value, one real solve
+          </p>
+          <p className="font-mono text-5xl font-bold leading-none text-accent-bright">
+            {hero.build.objectiveValue.toFixed(1)}
+          </p>
+        </div>
+        <p className="max-w-sm font-mono text-xs leading-relaxed text-muted">
+          Searched{' '}
+          <span className="text-paper">{hero.naive.toLocaleString()}</span>{' '}
+          possible builds · evaluated{' '}
+          <span className="text-paper">{hero.explored.toLocaleString()}</span> ·
+          pruned{' '}
+          <span className="text-paper">{hero.pruned.toLocaleString()}</span> ·
+          proven optimal in {reductionLabel} fewer evaluations.
+        </p>
+      </div>
+    </>
+  );
+}
+
+function ComingSoon({ game }: { game: GameDescriptor }) {
+  return (
+    <div className="panel animate-fade-up space-y-2 text-center">
+      <p className="eyebrow">{game.name}</p>
+      <h2 className="font-display text-xl font-bold text-paper">
+        Support is in the works
+      </h2>
+      <p className="mx-auto max-w-md text-sm text-muted">
+        The {game.gearNounPlural.toLowerCase()} and {game.setNoun.toLowerCase()}{' '}
+        model for {game.name} isn&apos;t wired up to the solver yet. Switch back
+        to Genshin Impact to run a real optimisation today.
+      </p>
+    </div>
+  );
+}
+
 export function App() {
+  const gameId = useGame((s) => s.gameId);
+  const game = GAMES[gameId];
+
   const artifacts = useInventory((s) => s.artifacts);
   const sampleMode =
     artifacts.length === 0 ||
@@ -55,6 +133,18 @@ export function App() {
   );
   const [sharedError, setSharedError] = useState(false);
   const [optimizeError, setOptimizeError] = useState(false);
+
+  // The hero's demo solve is independent of the user's own inventory/state and
+  // reasonably cheap (~tens of ms — see heroExample.ts), so it's computed in an
+  // effect (after first paint) rather than blocking initial render.
+  const [hero, setHero] = useState<HeroExample | null>(null);
+  useEffect(() => {
+    if (game.availability !== 'live' || !sampleMode) return;
+    setHero(buildHeroExample());
+    // sampleMode intentionally excluded: once computed, keep showing it even
+    // if the user's inventory state changes shape afterward.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.availability]);
 
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get('b');
@@ -71,6 +161,18 @@ export function App() {
       setRequest(out.request);
       setResult({ status: 'ok', builds: [out.build], explored: 0, pruned: 0 });
       setSharedArtifacts(out.artifacts);
+      // Hydrate the Optimise panel's own store too, not just the read-only
+      // Results view — otherwise it keeps showing its default character/weapon
+      // (decoupled from the shared build) even though Results correctly shows
+      // the shared one.
+      const optReq = useOptimizeRequest.getState();
+      optReq.applyPreset({
+        characterKey: out.request.characterKey,
+        weaponKey: out.request.weaponKey,
+        objective: out.request.objective,
+        constraints: out.request.constraints,
+      });
+      optReq.setBuildLevel(out.request.buildLevel);
     });
     return () => {
       cancelled = true;
@@ -129,102 +231,118 @@ export function App() {
     }
   }, [result]);
 
+  const showSolvedHero = game.availability === 'live' && sampleMode && hero;
+
   return (
     <div className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
-      <header className="mb-12 animate-fade-up">
-        <div className="mb-3 flex items-center justify-between gap-4">
-          <p className="eyebrow">Teyvat Artifact Forge</p>
-          <span className="chip">
-            <span className="h-1.5 w-1.5 rounded-full bg-jade" />
-            genshin-db · patch {PATCH}
-          </span>
+      <header className="mb-10 animate-fade-up">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="eyebrow">RPG Build Optimizer</p>
+          <div className="flex flex-wrap items-center gap-3">
+            {game.availability === 'live' && (
+              <span className="chip">
+                <span className="h-1.5 w-1.5 rounded-full bg-jade" />
+                {game.source} · patch {game.patch}
+              </span>
+            )}
+            <GameSwitcher />
+          </div>
         </div>
-        <h1 className="font-display text-4xl font-black leading-tight sm:text-5xl">
-          <span className="bg-gradient-to-br from-mora-bright via-mora to-mora-deep bg-clip-text text-transparent">
-            RPG Build Optimizer
-          </span>
-        </h1>
-        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
-          Find the mathematically optimal artifact build for any character.
-          Exact branch-and-bound search over your inventory — computed entirely
-          in your browser, no account required.
-        </p>
+        {showSolvedHero ? (
+          <SolvedHero hero={hero} />
+        ) : (
+          <ThesisHero game={game} />
+        )}
       </header>
 
-      {sharedError && (
-        <div
-          role="alert"
-          className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
-        >
-          This shared build couldn&apos;t be read — it may be from a newer
-          version.
-        </div>
-      )}
-
-      {optimizeError && (
-        <div
-          role="alert"
-          className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
-        >
-          Optimisation failed — please try again.
-        </div>
-      )}
-
-      <div className="space-y-10">
-        {sampleMode && (
-          <div className="animate-fade-up">
-            <SampleGear onRun={runCurrent} running={running} />
-          </div>
-        )}
-        <Section
-          n={1}
-          title="Load your artifacts"
-          hint="Import a full inventory, fetch from a UID, or add pieces by hand."
-          delay="0.05s"
-        >
-          <ImportPanel />
-          <details className="group mt-3">
-            <summary className="inline-flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-teal-bright transition hover:text-teal">
-              <span className="text-xs transition group-open:rotate-90">▶</span>
-              Or add one manually
-            </summary>
-            <div className="mt-3">
-              <ArtifactForm />
+      {game.availability === 'coming-soon' ? (
+        <ComingSoon game={game} />
+      ) : (
+        <>
+          {sharedError && (
+            <div
+              role="alert"
+              className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
+            >
+              This shared build couldn&apos;t be read — it may be from a newer
+              version.
             </div>
-          </details>
-        </Section>
+          )}
 
-        <Section
-          n={2}
-          title="Optimise"
-          hint="Choose a character, weapon, and what to maximise."
-          delay="0.1s"
-        >
-          <OptimizePanel onRun={runCurrent} running={running} />
-        </Section>
+          {optimizeError && (
+            <div
+              role="alert"
+              className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
+            >
+              Optimisation failed — please try again.
+            </div>
+          )}
 
-        {result && request && (
-          <div id="results-section">
-            <Section n={3} title="Results" delay="0s">
-              <GapSection
-                result={result}
-                request={request}
-                artifacts={artifacts}
-                sharedArtifacts={sharedArtifacts}
-              />
-              <Results
-                result={result}
-                request={request}
-                artifactsById={artifactsById}
-              />
+          <div className="space-y-10">
+            {sampleMode && (
+              <div className="animate-fade-up">
+                <SampleGear onRun={runCurrent} running={running} />
+              </div>
+            )}
+            <Section
+              n={1}
+              title={`Load your ${game.gearNounPlural.toLowerCase()}`}
+              hint="Import a full inventory, fetch from a UID, or add pieces by hand."
+              delay="0.05s"
+            >
+              <ImportPanel />
+              <details className="group mt-3">
+                <summary className="inline-flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-flux-bright transition hover:text-flux">
+                  <span className="text-xs transition group-open:rotate-90">
+                    ▶
+                  </span>
+                  Or add one manually
+                </summary>
+                <div className="mt-3">
+                  <ArtifactForm />
+                </div>
+              </details>
             </Section>
+
+            <Section
+              n={2}
+              title="Optimise"
+              hint="Choose a character, weapon, and what to maximise."
+              delay="0.1s"
+            >
+              <OptimizePanel onRun={runCurrent} running={running} />
+            </Section>
+
+            {result && request && (
+              <div id="results-section">
+                <Section n={3} title="Results" delay="0s">
+                  <GapSection
+                    result={result}
+                    request={request}
+                    artifacts={artifacts}
+                    sharedArtifacts={sharedArtifacts}
+                  />
+                  <Results
+                    result={result}
+                    request={request}
+                    artifactsById={artifactsById}
+                  />
+                </Section>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       <footer className="mt-16 border-t border-white/5 pt-6 text-center text-xs text-muted/70">
-        Built with branch-and-bound optimization in a Web Worker · Data from
-        genshin-db (patch {PATCH}) · Not affiliated with HoYoverse.
+        Built with branch-and-bound optimization in a Web Worker
+        {game.availability === 'live' && (
+          <>
+            {' '}
+            · Data from {game.source} (patch {game.patch})
+          </>
+        )}{' '}
+        · Not affiliated with the game&apos;s publisher.
       </footer>
     </div>
   );
