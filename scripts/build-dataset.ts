@@ -280,10 +280,10 @@ function buildCharacters() {
     const c = genshindb.characters(name);
     if (!c) continue;
 
-    const element = String(c.element).toLowerCase();
+    const element = String(c.elementText).toLowerCase();
     if (!ELEMENTS.includes(element)) continue; // skip non-standard elements
 
-    const substattKey = SUBSTAT_TO_KEY[c.substat] ?? null;
+    const substattKey = SUBSTAT_TO_KEY[c.substatText] ?? null;
 
     const baseByLevel: Record<string, Record<string, number>> = {};
     for (const level of BUILD_LEVELS) {
@@ -339,10 +339,10 @@ function buildWeapons() {
     const w = genshindb.weapons(name);
     if (!w) continue;
 
-    const type = String(w.weapontype).toLowerCase();
+    const type = String(w.weaponText).toLowerCase();
     if (!WEAPON_TYPES.includes(type)) continue;
 
-    const substatKey = SUBSTAT_TO_KEY[w.substat] ?? null;
+    const substatKey = SUBSTAT_TO_KEY[w.mainStatText] ?? null;
 
     const byLevel: Record<string, Record<string, number>> = {};
     for (const level of BUILD_LEVELS) {
@@ -397,13 +397,13 @@ function buildSets() {
     if (!a) continue;
 
     // Skip prayer sets (1pc only, no 2pc bonus)
-    if (!a['2pc']) continue;
+    if (!a.effect2Pc) continue;
 
     // Retain every set. Flat-stat 2pc bonuses are scored; conditional/non-stat
     // 2pc bonuses (e.g. Golden Troupe, Marechaussee Hunter) are kept with an empty
     // bonus so the set is still requirable as a constraint (ADR-0003) — it just
     // contributes 0 to stat scoring.
-    const twoPiece = parse2pc(a['2pc']) ?? {};
+    const twoPiece = parse2pc(a.effect2Pc) ?? {};
     const fourPiece = parse4pcStatOnly();
     if (Object.keys(twoPiece).length === 0) {
       console.log(`  · retained set "${name}" with no scored 2pc bonus`);
@@ -464,7 +464,7 @@ function main() {
   const sets = dedupeByKey(buildSets(), 'set');
 
   const snapshot = {
-    patch: '4.3',
+    patch: '6.7',
     characters,
     weapons,
     sets,

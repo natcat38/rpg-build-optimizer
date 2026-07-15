@@ -54,10 +54,11 @@ ${table}
 
 **A note on the two objectives.** \`crit_value\` is concentrated on a minority of
 artifacts, so ordering surfaces the winners immediately and the bound tightens hard —
-it scales to an 800-piece inventory (~100 billion naive builds). \`er_pct\` is spread
-across nearly every artifact, so the bound tightens slowly; at 800 it does not finish
-in reasonable time and is capped at 400. Branch-and-bound's effectiveness depends on
-how concentrated the objective is — an honest limit, not a bug.
+it scales to an 800-piece inventory (~100 billion naive builds) in a few seconds.
+\`er_pct\` is spread across nearly every artifact, so the bound tightens slowly; at
+800 it still completes (~47s, one run) but is excluded from this routine table to
+keep \`npm run bench\` fast for everyday use. Branch-and-bound's effectiveness depends
+on how concentrated the objective is — an honest limit, not a bug.
 `;
 
 writeFileSync('docs/speed-report.md', md);
