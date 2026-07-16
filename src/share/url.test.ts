@@ -11,7 +11,7 @@ import type { Artifact, BuildResult, OptimizeRequest } from '../game/types';
 // instead of CompressionStream purely for a synchronous one-liner; it
 // produces the same zlib/RFC-1950 format `inflate()` expects.
 function toBase64UrlParam(json: string): string {
-  const bin = deflateSync(Buffer.from(json, 'utf-8')).toString('binary');
+  const bin = deflateSync(new TextEncoder().encode(json)).toString('binary');
   return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 

@@ -21,7 +21,7 @@ function toBase64Url(bytes: Uint8Array): string {
   return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function fromBase64Url(s: string): Uint8Array {
+function fromBase64Url(s: string): Uint8Array<ArrayBuffer> {
   const b64 = s.replace(/-/g, '+').replace(/_/g, '/');
   const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4); // restore padding for strict atob
   const bin = atob(padded);
@@ -43,7 +43,7 @@ const MAX_INFLATED_BYTES = 1_000_000;
 
 async function runStream(
   transform: CompressionStream | DecompressionStream,
-  input: Uint8Array,
+  input: Uint8Array<ArrayBuffer>,
   maxBytes?: number,
 ): Promise<Uint8Array> {
   const writer = transform.writable.getWriter();
@@ -83,7 +83,7 @@ async function deflate(text: string): Promise<Uint8Array> {
   );
 }
 
-async function inflate(bytes: Uint8Array): Promise<string> {
+async function inflate(bytes: Uint8Array<ArrayBuffer>): Promise<string> {
   return new TextDecoder().decode(
     await runStream(
       new DecompressionStream('deflate'),
