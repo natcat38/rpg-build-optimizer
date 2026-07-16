@@ -56,7 +56,7 @@ export function BuildCard({
           </div>
         </div>
         {onShare && (
-          <button className="btn-ghost" onClick={onShare}>
+          <button className="btn-ghost" onClick={() => void onShare()}>
             Copy share link
           </button>
         )}

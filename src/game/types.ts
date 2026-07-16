@@ -3,7 +3,7 @@ export const SLOTS: Slot[] = ['flower', 'plume', 'sands', 'goblet', 'circlet'];
 
 // STAT_KEYS is the single source of truth; StatKey is derived from it so the
 // runtime guard (isStatKey) and the compile-time union can never drift apart.
-const STAT_KEYS = [
+export const STAT_KEYS = [
   'hp',
   'hp_pct',
   'atk',
@@ -61,6 +61,10 @@ export interface OptimizeConstraints {
 
 export type Objective = StatKey | 'crit_value';
 
+export function isObjective(x: unknown): x is Objective {
+  return x === 'crit_value' || isStatKey(x);
+}
+
 export interface OptimizeRequest {
   characterKey: string;
   weaponKey: string;
@@ -68,7 +72,6 @@ export interface OptimizeRequest {
   constraints: OptimizeConstraints;
   objective: Objective;
   topK?: number; // default 10
-  // artifactLevelMode: reserved for v1.1 "+20 projection"; v1.0 always uses current level.
 }
 
 /** Plain, structured-clone-safe context the worker needs (no adapter, no DOM). */
@@ -96,9 +99,6 @@ export interface BuildResult {
   diagnostics: BuildDiagnostics;
 }
 
-export interface OptimizeResult {
-  builds: BuildResult[];
-  explored: number;
-  pruned: number;
-  reason?: 'NO_FEASIBLE_BUILD';
-}
+export type OptimizeResult =
+  | { status: 'ok'; builds: BuildResult[]; explored: number; pruned: number }
+  | { status: 'infeasible'; explored: number; pruned: number };

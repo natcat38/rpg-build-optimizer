@@ -45,7 +45,12 @@ export async function fetchUidArtifacts(
     return { error: 'NETWORK' };
   }
   if (!res.ok) return { error: 'NOT_FOUND' };
-  const data = (await res.json()) as Record<string, unknown>;
+  let data: Record<string, unknown>;
+  try {
+    data = (await res.json()) as Record<string, unknown>;
+  } catch {
+    return { error: 'NETWORK' };
+  }
   const avatars = data?.avatarInfoList;
   if (!Array.isArray(avatars) || avatars.length === 0)
     return { error: 'NO_SHOWCASE' };

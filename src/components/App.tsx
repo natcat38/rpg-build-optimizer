@@ -4,10 +4,7 @@ import { ArtifactForm } from './ArtifactForm';
 import { OptimizePanel } from './OptimizePanel';
 import { Results } from './Results';
 import { SampleGear } from './SampleGear';
-import { GapReport } from './GapReport';
-import { ExplainBuild } from './ExplainBuild';
-import { META_TARGETS } from '../meta/metaTargets';
-import { computeGapReport } from '../meta/gap';
+import { GapSection } from './GapSection';
 import { decodeBuild } from '../share/url';
 import { PATCH } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
@@ -57,18 +54,27 @@ export function App() {
     null,
   );
   const [sharedError, setSharedError] = useState(false);
+  const [optimizeError, setOptimizeError] = useState(false);
 
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get('b');
     if (!param) return;
-    const out = decodeBuild(param);
-    if ('error' in out) {
-      setSharedError(true);
-      return;
-    }
-    setRequest(out.request);
-    setResult({ builds: [out.build], explored: 0, pruned: 0 });
-    setSharedArtifacts(out.artifacts);
+    let cancelled = false;
+    // decodeBuild never rejects (its own try/catch resolves { error } instead),
+    // so this fire-and-forget is by design, not a missed rejection handler.
+    void decodeBuild(param).then((out) => {
+      if (cancelled) return;
+      if ('error' in out) {
+        setSharedError(true);
+        return;
+      }
+      setRequest(out.request);
+      setResult({ status: 'ok', builds: [out.build], explored: 0, pruned: 0 });
+      setSharedArtifacts(out.artifacts);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Resolve artifacts for Results: a shared build carries its own five artifacts;
@@ -82,18 +88,34 @@ export function App() {
 
   const [running, setRunning] = useState(false);
 
+  // Guards against a stale run's result clobbering a newer one: OptimizePanel
+  // and SampleGear share `running` (below) so their controls disable
+  // together, but a same-tick double-trigger can still start two runs before
+  // either's disable reaches the DOM — this token makes only the most
+  // recently started run allowed to commit its outcome or clear `running`.
+  const runToken = useRef(0);
+
   async function runCurrent() {
     const req = currentRequest(useOptimizeRequest.getState());
     const inv = useInventory.getState().artifacts;
     if (inv.length === 0 || !req.characterKey) return;
+    const token = ++runToken.current;
     setRunning(true);
+    setOptimizeError(false);
     try {
       const r = await optimize(req, inv);
+      if (runToken.current !== token) return; // superseded by a newer run
       setSharedArtifacts(null);
       setResult(r);
       setRequest(req);
+    } catch (err) {
+      if (runToken.current !== token) return;
+      // A worker/protocol rejection (or bad game data) must not vanish
+      // silently — surface it instead of dropping back to idle with no cue.
+      console.error('Optimize failed', err);
+      setOptimizeError(true);
     } finally {
-      setRunning(false);
+      if (runToken.current === token) setRunning(false);
     }
   }
 
@@ -139,10 +161,19 @@ export function App() {
         </div>
       )}
 
+      {optimizeError && (
+        <div
+          role="alert"
+          className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
+        >
+          Optimisation failed — please try again.
+        </div>
+      )}
+
       <div className="space-y-10">
         {sampleMode && (
           <div className="animate-fade-up">
-            <SampleGear onRun={runCurrent} />
+            <SampleGear onRun={runCurrent} running={running} />
           </div>
         )}
         <Section
@@ -175,26 +206,12 @@ export function App() {
         {result && request && (
           <div id="results-section">
             <Section n={3} title="Results" delay="0s">
-              {!sharedArtifacts &&
-                META_TARGETS[request.characterKey] &&
-                (() => {
-                  const report = computeGapReport(
-                    META_TARGETS[request.characterKey],
-                    artifacts,
-                    result.builds[0] ?? null,
-                  );
-                  return (
-                    <div className="mb-4">
-                      <GapReport report={report} />
-                      <ExplainBuild
-                        characterKey={request.characterKey}
-                        objective={request.objective}
-                        totals={result.builds[0]?.totals ?? {}}
-                        report={report}
-                      />
-                    </div>
-                  );
-                })()}
+              <GapSection
+                result={result}
+                request={request}
+                artifacts={artifacts}
+                sharedArtifacts={sharedArtifacts}
+              />
               <Results
                 result={result}
                 request={request}

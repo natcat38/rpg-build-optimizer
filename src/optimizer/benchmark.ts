@@ -183,7 +183,7 @@ export function runBenchmark(
         objective: sc.objective,
         topK: 10,
       };
-      const ctx = buildContext(genshinAdapter, req);
+      const ctx = buildContext(req);
       const times: number[] = [];
       let explored = 0;
       let pruned = 0;

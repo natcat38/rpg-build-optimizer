@@ -19,7 +19,7 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 - **2+2** — a build satisfying two different 2-piece set bonuses simultaneously.
 - **Stat keys** — `hp, hp_pct, atk, atk_pct, def, def_pct, em, er_pct, crit_rate, crit_dmg, elemental_dmg, physical_dmg, healing`.
 - **Elemental DMG** — `elemental_dmg`; a **single fungible stat** combining all element-specific DMG% bonuses (Pyro/Hydro/…/Dendro). The element is not tracked, so an off-element goblet is scored like an on-element one. Physical DMG (`physical_dmg`) is separate. See [ADR-0011](docs/adr/0011-elemental-dmg-as-single-fungible-stat.md).
-- **Energy Recharge (ER)** — `er_pct`; commonly a minimum constraint (e.g. ≥160%). Every character starts from a **universal 100% base ER**; this game-wide baseline is supplied by the `GameAdapter`, not the reference snapshot. See [ADR-0009](docs/adr/0009-adapter-owns-universal-game-baselines.md).
+- **Energy Recharge (ER)** — `er_pct`; commonly a minimum constraint (e.g. ≥160%). Every character starts from a **universal 100% base ER**; this game-wide baseline is supplied by the `genshinAdapter`, not the reference snapshot. See [ADR-0009](docs/adr/0009-adapter-owns-universal-game-baselines.md).
 - **Elemental Mastery (EM)** — `em`.
 - **Crit Value (CV)** — `crit_rate * 2 + crit_dmg`. A common **objective**.
 - **Crit ratio** — the balance of crit rate to crit DMG (healthy ≈ 1:2). Used as a **soft tiebreak**, never a hard constraint.
@@ -38,7 +38,7 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 - **Diagnostics** — per-build data the optimiser emits: binding constraints, per-slot marginal contribution, explored/pruned counts.
 - **Anti-clone cap** — the v1.0 results rule preventing near-identical builds from filling the top-K.
 - **Build snapshot** — the self-contained state encoded in a **share link** (character, weapon, build level, five full artifacts, constraints, objective, meta target). See [ADR-0005](docs/adr/0005-self-contained-share-links.md).
-- **GameAdapter** — the interface isolating game-specific data so a second game can slot in without touching the optimiser. See [ADR-0008](docs/adr/0008-gameadapter-seam-for-multi-game.md).
+- **genshinAdapter** — the concrete object owning all game-specific data (characters, weapons, sets, base stats, main-stat values) and the universal game baselines. The optimiser, import, and share layers import it directly. (Originally a `GameAdapter` interface for multi-game extensibility, [ADR-0008](docs/adr/0008-gameadapter-seam-for-multi-game.md); collapsed to a concrete adapter — YAGNI, single game — in [ADR-0012](docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md).)
 
 ### v1.1 domain
 

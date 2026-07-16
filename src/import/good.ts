@@ -1,13 +1,13 @@
 import type { Artifact, Slot, StatKey, SubStat } from '../game/types';
+import { SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
+import { validateArtifactDraft } from '../state/artifactValidation';
 
-const SLOT_MAP: Record<string, Slot> = {
-  flower: 'flower',
-  plume: 'plume',
-  sands: 'sands',
-  goblet: 'goblet',
-  circlet: 'circlet',
-};
+// A full-collection GOOD export is large (a maxed account's artifact inventory
+// runs into the low thousands) but not unbounded; cap generously so a
+// corrupt/malicious file can't wedge the main thread parsing/rendering an
+// arbitrarily huge array, while still admitting a real full export.
+const MAX_ARTIFACTS = 4000;
 
 const STAT_MAP: Record<string, StatKey> = {
   hp: 'hp',
@@ -43,18 +43,39 @@ interface GoodArtifact {
 export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
   if (typeof json !== 'object' || json === null) return { error: 'BAD_FORMAT' };
   const obj = json as Record<string, unknown>;
-  if (obj.format !== 'GOOD' || !Array.isArray(obj.artifacts))
+  if (
+    obj.format !== 'GOOD' ||
+    !Array.isArray(obj.artifacts) ||
+    obj.artifacts.length > MAX_ARTIFACTS
+  )
     return { error: 'BAD_FORMAT' };
 
   const out: Artifact[] = [];
   for (const raw of obj.artifacts as GoodArtifact[]) {
     if (typeof raw !== 'object' || raw === null) continue; // tolerate malformed array elements
-    const slot = SLOT_MAP[raw.slotKey];
+    const slot = (SLOTS as string[]).includes(raw.slotKey)
+      ? (raw.slotKey as Slot)
+      : undefined;
     const mainStat = STAT_MAP[raw.mainStatKey];
     if (!slot || !mainStat) continue; // skip unrecognised entries rather than throwing
-    const subStats: SubStat[] = (raw.substats ?? [])
+    if (raw.rarity !== 4 && raw.rarity !== 5) continue; // reject corrupt rarity
+    if (!Number.isFinite(raw.level)) continue; // validateArtifactDraft's range check misses NaN
+    // Guard the array shape too, not just undefined — a non-array `substats`
+    // (malformed export) would otherwise throw on `.map`, breaking the
+    // "skip malformed rather than throw" contract above.
+    const rawSubs = Array.isArray(raw.substats) ? raw.substats : [];
+    const subStats: SubStat[] = rawSubs
+      // Guard each element's shape too, not just the outer array — a null or
+      // primitive entry ([null], [5]) would otherwise throw on `s.key`,
+      // breaking the "skip malformed rather than throw" contract above.
+      .filter((s) => typeof s === 'object' && s !== null)
       .map((s) => ({ key: STAT_MAP[s.key], value: s.value }))
-      .filter((s): s is SubStat => Boolean(s.key));
+      .filter((s): s is SubStat => Boolean(s.key) && Number.isFinite(s.value));
+    // Same invariant the manual ArtifactForm entry path enforces (<=4
+    // sub-stats, none equal to the main stat) — a GOOD export can carry the
+    // same corruption a hand-typed draft can.
+    if (validateArtifactDraft({ mainStat, level: raw.level, subStats }))
+      continue;
     out.push({
       id: crypto.randomUUID(),
       setKey: raw.setKey,

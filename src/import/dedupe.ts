@@ -8,3 +8,15 @@ export function artifactHash(a: Artifact): string {
     .join(',');
   return `${a.setKey}|${a.slot}|${a.rarity}|${a.level}|${a.mainStat}|${subs}`;
 }
+
+/**
+ * The subset of `incoming` whose content (per artifactHash, id-independent) is
+ * not already present in `existing`. Pure: callers add the result to the store.
+ */
+export function mergeNew(
+  existing: Artifact[],
+  incoming: Artifact[],
+): Artifact[] {
+  const seen = new Set(existing.map(artifactHash));
+  return incoming.filter((a) => !seen.has(artifactHash(a)));
+}

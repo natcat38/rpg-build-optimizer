@@ -36,4 +36,20 @@ export default tseslint.config(
       globals: globals.node,
     },
   },
+  {
+    // Type-aware promise-handling rules, scoped to app + serverless-function
+    // source (not scripts/, which has no covering tsconfig — standalone dev
+    // tooling, not app/test runtime surface).
+    files: ['src/**/*.{ts,tsx}', 'api/**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+    },
+  },
 );
