@@ -3,17 +3,22 @@ import { META_TARGETS, metaToConstraints } from './metaTargets';
 import { genshinAdapter } from '../game/genshin/adapter';
 
 describe('META_TARGETS', () => {
-  it('covers the four showcase characters with sets present in the snapshot', () => {
+  it('every entry resolves to a real character and set in the snapshot', () => {
     const setKeys = new Set(genshinAdapter.sets().map((s) => s.key));
     const charKeys = new Set(genshinAdapter.characters().map((c) => c.key));
-    for (const key of ['furina', 'nahida', 'navia', 'neuvillette']) {
-      const m = META_TARGETS[key];
-      expect(m, key).toBeTruthy();
-      expect(charKeys.has(m.characterKey)).toBe(true);
+    for (const [key, m] of Object.entries(META_TARGETS)) {
+      expect(charKeys.has(m.characterKey), `${key} characterKey`).toBe(true);
       const req = m.setRequirement;
       const keys = req.kind === '2+2' ? req.setKeys : [req.setKey];
       for (const sk of keys)
         expect(setKeys.has(sk), `${key} set ${sk}`).toBe(true);
+      expect(m.source, `${key} source`).toMatch(/^https?:\/\//);
+    }
+  });
+
+  it('covers at least the four original showcase characters', () => {
+    for (const key of ['furina', 'nahida', 'navia', 'neuvillette']) {
+      expect(META_TARGETS[key], key).toBeTruthy();
     }
   });
 

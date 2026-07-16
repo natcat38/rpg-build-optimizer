@@ -1,14 +1,23 @@
 import { useMemo } from 'react';
-import type { BuildLevel, Objective } from '../game/types';
+import type { BuildLevel, Objective, Slot, StatKey } from '../game/types';
 import { BUILD_LEVELS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest } from '../state/optimizeRequest';
 import { useGame } from '../state/game';
 import { GAMES } from '../game/registry';
-import { objectiveLabel } from '../ui/labels';
+import {
+  formatSetName,
+  objectiveLabel,
+  SLOT_LABELS,
+  statLabel,
+} from '../ui/labels';
 import { Combobox } from './ui/Combobox';
-import { META_TARGETS, metaToConstraints } from '../meta/metaTargets';
+import {
+  META_TARGETS,
+  metaToConstraints,
+  type MetaTarget,
+} from '../meta/metaTargets';
 
 const OBJECTIVES: Objective[] = [
   'crit_value',
@@ -18,6 +27,78 @@ const OBJECTIVES: Objective[] = [
   'er_pct',
   'elemental_dmg',
 ];
+
+// Stats whose values are conventionally displayed as a percentage.
+const PCT_STATS = new Set<StatKey>([
+  'hp_pct',
+  'atk_pct',
+  'def_pct',
+  'er_pct',
+  'crit_rate',
+  'crit_dmg',
+  'elemental_dmg',
+  'physical_dmg',
+  'healing',
+]);
+
+function setRequirementLabel(meta: MetaTarget): string {
+  const req = meta.setRequirement;
+  if (req.kind === '2+2')
+    return req.setKeys.map((k) => `2pc ${formatSetName(k)}`).join(' + ');
+  return `${req.kind} ${formatSetName(req.setKey)}`;
+}
+
+/** Read-only preview of what "Use meta build" is about to apply — the recipe
+ *  itself isn't editable, but every field it fills (constraints, ER floor)
+ *  stays editable afterward via the fields above (ADR-0007). */
+function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
+  const mainsEntries = (Object.keys(meta.mains) as Slot[]).filter(
+    (s) => meta.mains[s],
+  );
+  return (
+    <div className="rounded-lg border border-white/5 bg-surface-900/40 p-3 text-xs text-muted">
+      <p>
+        <span className="font-semibold text-paper">
+          {setRequirementLabel(meta)}
+        </span>
+        {mainsEntries.length > 0 && (
+          <>
+            {' · '}
+            {mainsEntries
+              .map((s) => `${SLOT_LABELS[s]}: ${statLabel(meta.mains[s]!)}`)
+              .join(' · ')}
+          </>
+        )}
+      </p>
+      <p className="mt-1 flex flex-wrap gap-x-3">
+        {meta.erTarget != null && <span>ER target {meta.erTarget}%</span>}
+        {meta.critRatioTarget != null && (
+          <span>
+            CR:CD ≈ 1:
+            {((1 - meta.critRatioTarget) / meta.critRatioTarget).toFixed(1)}
+          </span>
+        )}
+        {meta.statTargets &&
+          (Object.entries(meta.statTargets) as [StatKey, number][]).map(
+            ([k, v]) => (
+              <span key={k}>
+                {statLabel(k)} {v}
+                {PCT_STATS.has(k) ? '%' : ''}
+              </span>
+            ),
+          )}
+      </p>
+      <a
+        className="mt-1 inline-block text-accent hover:underline"
+        href={meta.source}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Source
+      </a>
+    </div>
+  );
+}
 
 export function OptimizePanel({
   onRun,
@@ -114,15 +195,15 @@ export function OptimizePanel({
         </label>
       </div>
 
+      {meta && <MetaTargetSummary meta={meta} />}
+
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
         {hint ? (
           <p className="text-sm text-muted">{hint}</p>
         ) : (
           <p className="text-sm text-muted">
             Searching{' '}
-            <span className="font-semibold text-paper">
-              {artifacts.length}
-            </span>{' '}
+            <span className="font-semibold text-paper">{artifacts.length}</span>{' '}
             {game.gearNounPlural.toLowerCase()} for the exact optimum.
           </p>
         )}

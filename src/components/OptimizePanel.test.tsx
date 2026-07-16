@@ -88,4 +88,23 @@ describe('OptimizePanel meta prefill', () => {
     });
     expect(onRun).toHaveBeenCalled();
   });
+
+  it('shows a read-only summary of the meta recipe, including statTargets', () => {
+    addFlower();
+    useOptimizeRequest.getState().setCharacterKey('xiao');
+    render(<OptimizePanel onRun={() => {}} running={false} />);
+    expect(screen.getByText(/4pc Vermillion Hereafter/i)).toBeInTheDocument();
+    expect(screen.getByText(/ER target 120%/i)).toBeInTheDocument();
+    expect(screen.getByText(/CRIT Rate 70%/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Source/i })).toHaveAttribute(
+      'href',
+      'https://keqingmains.com/xiao/',
+    );
+  });
+
+  it('omits the summary for a character without a meta recipe', () => {
+    useOptimizeRequest.getState().setCharacterKey('zzz_not_meta');
+    render(<OptimizePanel onRun={() => {}} running={false} />);
+    expect(screen.queryByRole('link', { name: /Source/i })).toBeNull();
+  });
 });
