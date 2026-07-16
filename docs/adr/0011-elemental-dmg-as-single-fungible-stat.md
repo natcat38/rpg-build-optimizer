@@ -1,6 +1,6 @@
 # 0011. Elemental DMG modelled as one fungible stat key
 
-- Status: Accepted
+- Status: Amended by [0014](0014-element-aware-goblet-scoring.md)
 - Date: 2026-06-21
 
 ## Context

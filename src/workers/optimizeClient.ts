@@ -5,8 +5,28 @@ import type {
   OptimizeResult,
 } from '../game/types';
 import { buildContext } from '../optimizer/context';
+import { genshinAdapter } from '../game/genshin/adapter';
 import { runSearchRequest, readSearchResponse } from './protocol';
 import type { WorkerRequest } from './protocol';
+
+// A goblet's element (ADR-0013) is only meaningful relative to the character
+// being optimised for. Off-element goblets are still legal gear (their
+// sub-stats count) but their elemental_dmg main stat is dead weight in-game,
+// so zero it out before the solver ever sees it — no solver changes needed.
+function zeroOffElementGoblets(
+  inventory: Artifact[],
+  characterKey: string,
+): Artifact[] {
+  const character = genshinAdapter
+    .characters()
+    .find((c) => c.key === characterKey);
+  if (!character) return inventory;
+  return inventory.map((a) =>
+    a.element && a.element !== character.element
+      ? { ...a, mainStatValue: 0 }
+      : a,
+  );
+}
 
 /** Dispatch a fully-built request to the worker, with a synchronous fallback
  *  for environments without Worker (tests, SSR). */
@@ -62,5 +82,6 @@ export function optimize(
   inventory: Artifact[],
 ): Promise<OptimizeResult> {
   const ctx = buildContext(request);
-  return dispatch(request, inventory, ctx);
+  const adjusted = zeroOffElementGoblets(inventory, request.characterKey);
+  return dispatch(request, adjusted, ctx);
 }

@@ -36,6 +36,75 @@ describe('optimize (deep entry, sync fallback)', () => {
     if (r.status !== 'ok') throw new Error('expected a feasible result');
     expect(r.builds.length).toBeGreaterThan(0);
   });
+
+  it('zeroes an off-element goblet main stat before it reaches the solver (ADR-0014)', async () => {
+    const chars = genshinAdapter.characters();
+    const character = chars[0];
+    const offElement = (
+      ['pyro', 'hydro', 'electro', 'cryo', 'anemo', 'geo', 'dendro'] as const
+    ).find((e) => e !== character.element)!;
+    const goblet: Artifact = {
+      id: 'goblet-off',
+      setKey: 'A',
+      slot: 'goblet',
+      rarity: 5,
+      level: 20,
+      mainStat: 'elemental_dmg',
+      mainStatValue: 1000, // would dominate the objective if not zeroed
+      subStats: [],
+      element: offElement,
+    };
+    const req: OptimizeRequest = {
+      characterKey: character.key,
+      weaponKey: genshinAdapter.weapons()[0].key,
+      buildLevel: 90,
+      constraints: {},
+      objective: 'elemental_dmg',
+      topK: 1,
+    };
+    const withGoblet = [
+      ...inv.filter((a) => a.slot !== 'goblet'),
+      goblet,
+      { ...goblet, id: 'goblet-off-2' },
+    ];
+    const r = await optimize(req, withGoblet);
+    if (r.status !== 'ok') throw new Error('expected a feasible result');
+    // The off-element goblet's 1000 main-stat value must not appear in totals.
+    expect(r.builds[0].totals.elemental_dmg ?? 0).toBe(0);
+  });
+
+  it('leaves an on-element goblet main stat untouched', async () => {
+    const chars = genshinAdapter.characters();
+    const character = chars[0];
+    const goblet: Artifact = {
+      id: 'goblet-on',
+      setKey: 'A',
+      slot: 'goblet',
+      rarity: 5,
+      level: 20,
+      mainStat: 'elemental_dmg',
+      mainStatValue: 46.6,
+      subStats: [],
+      element: character.element as Artifact['element'],
+    };
+    if (goblet.element === undefined) return; // character.element === 'physical': not testable here
+    const req: OptimizeRequest = {
+      characterKey: character.key,
+      weaponKey: genshinAdapter.weapons()[0].key,
+      buildLevel: 90,
+      constraints: {},
+      objective: 'elemental_dmg',
+      topK: 1,
+    };
+    const withGoblet = [
+      ...inv.filter((a) => a.slot !== 'goblet'),
+      goblet,
+      { ...goblet, id: 'goblet-on-2', mainStatValue: 0 },
+    ];
+    const r = await optimize(req, withGoblet);
+    if (r.status !== 'ok') throw new Error('expected a feasible result');
+    expect(r.builds[0].totals.elemental_dmg ?? 0).toBe(46.6);
+  });
 });
 
 describe('optimize (real Worker path)', () => {

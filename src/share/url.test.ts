@@ -259,3 +259,47 @@ describe('share url', () => {
     expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
   });
 });
+
+describe('element field (ADR-0014)', () => {
+  it('round-trips an artifact with element set', async () => {
+    const withElement: Artifact[] = [
+      { ...artifacts[3], element: 'hydro' },
+      ...artifacts.slice(0, 3),
+      artifacts[4],
+    ];
+    const param = await encodeBuild({
+      request,
+      build,
+      artifacts: withElement,
+    });
+    const out = await decodeBuild(param);
+    expect(out).not.toHaveProperty('error');
+    if (!('error' in out)) {
+      const goblet = out.artifacts.find((a) => a.slot === 'goblet');
+      expect(goblet?.element).toBe('hydro');
+    }
+  });
+
+  it('round-trips an artifact without element (old links stay valid)', async () => {
+    const param = await encodeBuild({ request, build, artifacts });
+    const out = await decodeBuild(param);
+    expect(out).not.toHaveProperty('error');
+    if (!('error' in out)) {
+      const goblet = out.artifacts.find((a) => a.slot === 'goblet');
+      expect(goblet?.element).toBeUndefined();
+    }
+  });
+
+  it('rejects an artifact with an invalid element value', async () => {
+    const bad = await encodeBuild({
+      request,
+      build,
+      artifacts: [
+        { ...artifacts[3], element: 'fire' as never },
+        ...artifacts.slice(0, 3),
+        artifacts[4],
+      ],
+    });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+});

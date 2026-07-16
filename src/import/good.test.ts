@@ -172,4 +172,26 @@ describe('parseGOOD', () => {
     const arr = out as import('../game/types').Artifact[];
     expect(arr.length).toBe(4000);
   });
+
+  it('captures the element of an elemental_dmg goblet (ADR-0014)', () => {
+    const out = parseGOOD({
+      format: 'GOOD',
+      artifacts: [
+        {
+          ...goodFile.artifacts[0],
+          slotKey: 'goblet',
+          mainStatKey: 'pyro_dmg_',
+        },
+      ],
+    });
+    const arr = out as import('../game/types').Artifact[];
+    expect(arr[0].mainStat).toBe('elemental_dmg');
+    expect(arr[0].element).toBe('pyro');
+  });
+
+  it('leaves element unset for a non-elemental-dmg main stat', () => {
+    const out = parseGOOD(goodFile); // mainStatKey 'atk_'
+    const arr = out as import('../game/types').Artifact[];
+    expect(arr[0].element).toBeUndefined();
+  });
 });

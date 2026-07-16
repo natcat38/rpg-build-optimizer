@@ -1,4 +1,4 @@
-import type { StatKey, StatVec, BuildLevel } from '../types';
+import type { StatKey, StatVec, BuildLevel, Element } from '../types';
 import { STAT_KEYS } from '../types';
 import type { Snapshot } from './snapshot';
 import rawData from './data.generated.json';
@@ -6,15 +6,7 @@ import rawData from './data.generated.json';
 export interface CharacterMeta {
   key: string;
   name: string;
-  element:
-    | 'pyro'
-    | 'hydro'
-    | 'electro'
-    | 'cryo'
-    | 'anemo'
-    | 'geo'
-    | 'dendro'
-    | 'physical';
+  element: Element | 'physical';
 }
 
 export interface WeaponMeta {
