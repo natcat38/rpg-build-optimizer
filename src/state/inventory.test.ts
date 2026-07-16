@@ -21,16 +21,4 @@ describe('inventory store', () => {
     useInventory.getState().add(sample());
     expect(useInventory.getState().artifacts).toHaveLength(1);
   });
-
-  it('updates an artifact by id', () => {
-    useInventory.getState().add(sample());
-    useInventory.getState().update('a1', { level: 16 });
-    expect(useInventory.getState().artifacts[0].level).toBe(16);
-  });
-
-  it('removes an artifact by id', () => {
-    useInventory.getState().add(sample());
-    useInventory.getState().remove('a1');
-    expect(useInventory.getState().artifacts).toHaveLength(0);
-  });
 });

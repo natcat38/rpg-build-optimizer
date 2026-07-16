@@ -4,7 +4,13 @@ import { useOptimizeRequest } from '../state/optimizeRequest';
 import { SAMPLE_PRESETS, type SamplePreset } from '../sample/presets';
 import { SAMPLE_INVENTORY } from '../sample/sampleInventory';
 
-export function SampleGear({ onRun }: { onRun: () => void | Promise<void> }) {
+export function SampleGear({
+  onRun,
+  running,
+}: {
+  onRun: () => void | Promise<void>;
+  running: boolean;
+}) {
   const clear = useInventory((s) => s.clear);
   const addMany = useInventory((s) => s.addMany);
   const applyPreset = useOptimizeRequest((s) => s.applyPreset);
@@ -38,9 +44,9 @@ export function SampleGear({ onRun }: { onRun: () => void | Promise<void> }) {
           <button
             key={p.label}
             className="btn-ghost"
-            disabled={busy !== null}
+            disabled={busy !== null || running}
             aria-busy={busy === p.label}
-            onClick={() => load(p)}
+            onClick={() => void load(p)}
           >
             {busy === p.label ? 'Optimising…' : p.label}
           </button>

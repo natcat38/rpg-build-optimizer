@@ -40,9 +40,15 @@ export function totals(ctx: OptimizeContext, build: Artifact[]): StatVec {
   return t;
 }
 
+/** Crit value: CRIT Rate weighted 2:1 against CRIT DMG. The one place this
+ *  formula lives — both the score and the search pruning bound call it. */
+export function critValue(cr: number, cd: number): number {
+  return cr * 2 + cd;
+}
+
 export function objectiveValue(t: StatVec, objective: Objective): number {
   if (objective === 'crit_value')
-    return (t.crit_rate ?? 0) * 2 + (t.crit_dmg ?? 0);
+    return critValue(t.crit_rate ?? 0, t.crit_dmg ?? 0);
   return t[objective] ?? 0;
 }
 
@@ -85,7 +91,8 @@ export function satisfies(
  * Soft tiebreak: penalise distance of crit_rate/(crit_rate+crit_dmg) from `target`.
  * The target is that ratio, NOT the CR:CD ratio: target 0.5 => CR==CD (1:1); the
  * conventional Genshin 1:2 CR:CD corresponds to target ≈ 0.333. Returns 0 when
- * target is undefined (the v1.0 UI does not expose this control).
+ * target is undefined — it's set only via meta-target presets (see
+ * metaTargets.ts), not a direct user-facing control.
  */
 export function critRatioPenalty(t: StatVec, target?: number): number {
   if (target === undefined) return 0;

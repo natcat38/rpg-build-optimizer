@@ -32,7 +32,8 @@ export function OptimizePanel({
   const weaponKey = useOptimizeRequest((s) => s.weaponKey);
   const buildLevel = useOptimizeRequest((s) => s.buildLevel);
   const objective = useOptimizeRequest((s) => s.objective);
-  const minER = useOptimizeRequest((s) => s.minER);
+  const erFloor = useOptimizeRequest((s) => s.constraints.minStats?.er_pct);
+  const minER = erFloor != null ? String(erFloor) : '';
   const setCharacterKey = useOptimizeRequest((s) => s.setCharacterKey);
   const setWeaponKey = useOptimizeRequest((s) => s.setWeaponKey);
   const setBuildLevel = useOptimizeRequest((s) => s.setBuildLevel);
@@ -134,7 +135,7 @@ export function OptimizePanel({
                   objective: meta.objective,
                   constraints: metaToConstraints(meta),
                 });
-                onRun();
+                void onRun();
               }}
             >
               Use meta build
@@ -143,7 +144,7 @@ export function OptimizePanel({
           <button
             className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
             disabled={!canRun || running}
-            onClick={() => onRun()}
+            onClick={() => void onRun()}
           >
             {running ? 'Searching…' : 'Optimise'}
           </button>

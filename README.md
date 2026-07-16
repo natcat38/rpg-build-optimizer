@@ -40,14 +40,14 @@ A few deliberate design decisions (full rationale in [`docs/adr/`](./docs/adr)):
 
 - **100% client-side** ([ADR-0001](./docs/adr/0001-client-side-only-architecture.md)) — no backend, no accounts; the heavy search runs in a **Web Worker** so the UI never blocks.
 - **Stat-only model, no damage engine** ([ADR-0003](./docs/adr/0003-stat-only-model-no-damage-engine.md)) — it maximises a chosen _stat_ under constraints rather than modelling in-game DPS. This keeps it fast, explainable, and correct for every character with zero per-character maintenance. (Consequence: conditional/non-stat 4-piece set effects are honoured as a _constraint_ but not _scored_.)
-- **Frozen reference data behind a `GameAdapter` seam** ([ADR-0002](./docs/adr/0002-frozen-bundled-reference-dataset.md), [ADR-0008](./docs/adr/0008-gameadapter-seam-for-multi-game.md)) — a bundled `genshin-db` snapshot, with the optimiser depending only on the adapter interface so a second game could slot in without touching the core.
+- **Frozen reference data behind a concrete adapter** ([ADR-0002](./docs/adr/0002-frozen-bundled-reference-dataset.md), [ADR-0012](./docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md)) — a bundled `genshin-db` snapshot, exposed to the optimiser through the `genshinAdapter` object. (Originally a multi-game `GameAdapter` interface, [ADR-0008](./docs/adr/0008-gameadapter-seam-for-multi-game.md); collapsed to a concrete adapter once it was clear only one game would ship.)
 - **Self-contained share links** ([ADR-0005](./docs/adr/0005-self-contained-share-links.md)) — the five full artifacts are embedded (deflate + base64url), so a recipient who doesn't own your inventory still sees the exact pieces.
 
 Domain vocabulary is defined once in [`CONTEXT.md`](./CONTEXT.md).
 
 ## Tech stack
 
-Vite · React 18 · TypeScript (strict) · Tailwind CSS · Zustand (state) · Web Workers · Vitest + Testing Library · pako (URL compression). Deployed static on Vercel; CI via GitHub Actions (typecheck + lint + test + build).
+Vite · React 18 · TypeScript (strict) · Tailwind CSS · Zustand (state) · Web Workers · Vitest + Testing Library · native `CompressionStream` (URL compression). Deployed static on Vercel; CI via GitHub Actions (typecheck + lint + test + build).
 
 ## Local development
 
@@ -66,7 +66,7 @@ npm run bench      # regenerate docs/speed-report.md from the benchmark harness
 
 ```
 src/
-  game/        # domain types + GameAdapter seam + frozen Genshin dataset & adapter
+  game/        # domain types + frozen Genshin dataset & genshinAdapter
   optimizer/   # pure scoring, feasibility, and the exact branch-and-bound search
   workers/     # the optimise Web Worker + a promise/sync-fallback client
   import/      # GOOD-file parser, Enka UID import, content-hash dedupe
@@ -121,6 +121,10 @@ personal data is sent (no UID, no inventory).
 - Set `VITE_AI_ENABLED=true` to render the button (build-time flag — keep it off
   until the key is deployed).
 - Set a spend cap in the Anthropic console (the feature's hard cost ceiling).
+- Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (from an
+  [Upstash](https://upstash.com) Redis database) to enable per-IP rate
+  limiting (10 requests/60s — see [ADR-0013](docs/adr/0013-rate-limit-ai-proxy.md)).
+  Without them the endpoint still works, just unthrottled.
 - Locally, run `vercel dev` (not `npm run dev`) to serve the `/api` function.
 
 ## Data & attribution

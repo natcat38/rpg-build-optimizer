@@ -40,4 +40,6 @@ bundle by Vite, which would leak the key to every visitor.
 - **`VITE_ANTHROPIC_API_KEY` in the client** — leaks the key in the public
   bundle. Non-starter.
 - **IP rate limiting via Vercel KV** — more robust but adds infrastructure;
-  out of scope for a portfolio demo (revisit if abuse appears).
+  out of scope for a portfolio demo (revisit if abuse appears). _Revisited
+  and adopted (via Upstash, not Vercel KV) in
+  [ADR-0013](0013-rate-limit-ai-proxy.md)._

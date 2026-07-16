@@ -7,7 +7,13 @@ import type {
   Slot,
 } from '../game/types';
 import { SLOTS } from '../game/types';
-import { totals, objectiveValue, satisfies, critRatioPenalty } from './score';
+import {
+  totals,
+  objectiveValue,
+  satisfies,
+  critRatioPenalty,
+  critValue,
+} from './score';
 import { buildDiagnostics } from './diagnostics';
 
 function poolsBySlot(
@@ -37,7 +43,7 @@ function objectiveContribution(
       if (s.key === 'crit_rate') cr += s.value;
       if (s.key === 'crit_dmg') cd += s.value;
     }
-    return cr * 2 + cd;
+    return critValue(cr, cd);
   }
   let v = a.mainStat === objective ? a.mainStatValue : 0;
   for (const s of a.subStats) if (s.key === objective) v += s.value;
@@ -102,7 +108,7 @@ export function searchBuilds(
   const k = req.topK ?? 10;
   const pools = poolsBySlot(inventory, req);
   if (SLOTS.some((s) => pools[s].length === 0)) {
-    return { builds: [], explored: 0, pruned: 0, reason: 'NO_FEASIBLE_BUILD' };
+    return { status: 'infeasible', explored: 0, pruned: 0 };
   }
 
   // Surface high-contribution pieces first so the kept list fills with strong
@@ -171,10 +177,10 @@ export function searchBuilds(
 
   recurse(0, 0);
 
-  if (kept.length === 0)
-    return { builds: [], explored, pruned, reason: 'NO_FEASIBLE_BUILD' };
+  if (kept.length === 0) return { status: 'infeasible', explored, pruned };
 
   // Anti-clone cap: drop exact duplicates; at most 2 results per shared 4-piece core.
+  const byId = new Map(inventory.map((a) => [a.id, a]));
   const seenExact = new Set<string>();
   const coreCount: Record<string, number> = {};
   const final: BuildResult[] = [];
@@ -187,13 +193,16 @@ export function searchBuilds(
     if ((coreCount[core] ?? 0) >= 2) continue;
     seenExact.add(exact);
     coreCount[core] = (coreCount[core] ?? 0) + 1;
+    // Every id came from an inventory artifact (via the pools), so byId always
+    // resolves it — the assertion holds and no defensive filter is needed.
+    const chosen = SLOTS.map((s) => byId.get(b.artifactIds[s])!);
     final.push({
       ...b,
-      diagnostics: buildDiagnostics(ctx, req, b, inventory, explored, pruned),
+      diagnostics: buildDiagnostics(ctx, req, b, chosen, explored, pruned),
     });
     if (final.length >= k) break;
   }
-  return { builds: final, explored, pruned };
+  return { status: 'ok', builds: final, explored, pruned };
 }
 
 /** Exhaustive reference search — used only by the correctness test. */
@@ -204,7 +213,7 @@ export function bruteForce(
 ): OptimizeResult {
   const pools = poolsBySlot(inventory, req);
   if (SLOTS.some((s) => pools[s].length === 0))
-    return { builds: [], explored: 0, pruned: 0, reason: 'NO_FEASIBLE_BUILD' };
+    return { status: 'infeasible', explored: 0, pruned: 0 };
   let best: BuildResult | null = null;
   const chosen: Artifact[] = [];
   function rec(i: number) {
@@ -223,6 +232,6 @@ export function bruteForce(
   }
   rec(0);
   return best
-    ? { builds: [best], explored: 0, pruned: 0 }
-    : { builds: [], explored: 0, pruned: 0, reason: 'NO_FEASIBLE_BUILD' };
+    ? { status: 'ok', builds: [best], explored: 0, pruned: 0 }
+    : { status: 'infeasible', explored: 0, pruned: 0 };
 }

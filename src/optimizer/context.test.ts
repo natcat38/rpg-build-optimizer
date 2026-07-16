@@ -6,7 +6,7 @@ describe('buildContext', () => {
   it('produces a base vector and set-bonus map from the adapter', () => {
     const chars = genshinAdapter.characters();
     const weapons = genshinAdapter.weapons();
-    const ctx = buildContext(genshinAdapter, {
+    const ctx = buildContext({
       characterKey: chars[0].key,
       weaponKey: weapons[0].key,
       buildLevel: 90,

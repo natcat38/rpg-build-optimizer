@@ -10,5 +10,9 @@ export default defineConfig({
     // Ignore local git worktrees (e.g. .worktrees/*) so a checked-out copy of
     // the repo isn't scanned and run with a second, conflicting React instance.
     exclude: [...configDefaults.exclude, '**/.worktrees/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+    },
   },
 });

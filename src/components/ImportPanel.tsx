@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { type ChangeEvent } from 'react';
 import { parseGOOD } from '../import/good';
 import { fetchUidArtifacts } from '../import/uid';
-import { artifactHash } from '../import/hash';
+import { mergeNew } from '../import/dedupe';
 import { useInventory } from '../state/inventory';
 import type { Artifact } from '../game/types';
 
@@ -14,8 +14,10 @@ export function ImportPanel() {
   const [busy, setBusy] = useState(false);
 
   function mergeDedupe(incoming: Artifact[]) {
-    const seen = new Set(artifacts.map(artifactHash));
-    const fresh = incoming.filter((a) => !seen.has(artifactHash(a)));
+    // Read live state rather than the render-time `artifacts` closure: onFile
+    // and onUid are both async, so a second import can otherwise dedupe
+    // against a snapshot that predates the first import's commit.
+    const fresh = mergeNew(useInventory.getState().artifacts, incoming);
     addMany(fresh);
     setErr(null);
     setMsg(`Imported ${fresh.length} artifacts.`);
@@ -85,7 +87,7 @@ export function ImportPanel() {
             id="good-file"
             type="file"
             accept="application/json,.json"
-            onChange={onFile}
+            onChange={(e) => void onFile(e)}
             aria-label="GOOD file"
             className="block w-full cursor-pointer text-xs text-muted
               file:mr-3 file:cursor-pointer file:rounded-md file:border-0
@@ -115,7 +117,7 @@ export function ImportPanel() {
             <button
               className="btn-primary flex-none"
               disabled={busy || !uid}
-              onClick={onUid}
+              onClick={() => void onUid()}
             >
               {busy ? 'Fetching…' : 'Fetch'}
             </button>

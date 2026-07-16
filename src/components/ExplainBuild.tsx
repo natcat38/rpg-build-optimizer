@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Objective, StatVec } from '../game/types';
 import type { GapReport } from '../meta/gap';
 import { explainBuild } from '../ai/explainClient';
+import { toExplainPayload } from '../ai/explainShared';
 
 export function ExplainBuild({
   characterKey,
@@ -25,18 +26,14 @@ export function ExplainBuild({
     setLoading(true);
     setError(false);
     try {
-      const text = await explainBuild({
-        characterKey,
-        objective,
-        totals,
-        gap: {
-          feasibility: report.feasibility,
-          shortfalls: report.shortfalls,
-          action: report.action,
-        },
-      });
+      const text = await explainBuild(
+        toExplainPayload(characterKey, objective, totals, report),
+      );
       setExplanation(text);
-    } catch {
+    } catch (err) {
+      // Log so a real backend regression is distinguishable from the expected
+      // "feature unavailable" path during debugging; UI behaviour is unchanged.
+      console.error('Explain build failed', err);
       setError(true);
     } finally {
       setLoading(false);
@@ -53,7 +50,11 @@ export function ExplainBuild({
           </p>
         </div>
       ) : (
-        <button className="btn-ghost" onClick={run} disabled={loading}>
+        <button
+          className="btn-ghost"
+          onClick={() => void run()}
+          disabled={loading}
+        >
           {loading ? 'Thinking…' : '✨ Explain this build'}
         </button>
       )}

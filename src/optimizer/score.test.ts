@@ -6,6 +6,7 @@ import {
   critRatioPenalty,
   countSets,
   addInto,
+  critValue,
 } from './score';
 import type {
   Artifact,
@@ -98,6 +99,13 @@ describe('objectiveValue', () => {
   it('reads a plain stat objective', () => {
     expect(objectiveValue({ em: 200 }, 'em')).toBe(200);
     expect(objectiveValue({}, 'em')).toBe(0);
+  });
+});
+
+describe('critValue', () => {
+  it('weights crit rate 2:1 against crit dmg', () => {
+    expect(critValue(60, 120)).toBe(240);
+    expect(critValue(0, 0)).toBe(0);
   });
 });
 

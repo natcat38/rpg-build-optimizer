@@ -6,7 +6,7 @@ import {
   objectiveLabel,
   SLOT_LABELS,
   statLabel,
-} from '../ui/labels';
+} from '../labels';
 
 export interface GapReport {
   characterKey: string;
@@ -89,6 +89,9 @@ export function computeGapReport(
       const cd = build.totals.crit_dmg ?? 0;
       if (cr + cd > 0) {
         const ratio = cr / (cr + cd);
+        // 0.05 tolerance is a display heuristic: only flag a crit-ratio shortfall
+        // when the build is off the target ratio by more than 5 points, so
+        // near-on-target builds aren't nagged. Not correctness-critical.
         if (Math.abs(ratio - meta.critRatioTarget) > 0.05) {
           const haveX = cr > 0 ? (cd / cr).toFixed(1) : '∞';
           const targetX =
