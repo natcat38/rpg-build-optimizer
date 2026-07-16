@@ -96,15 +96,37 @@ describe('OptimizePanel meta prefill', () => {
     expect(screen.getByText(/4pc Vermillion Hereafter/i)).toBeInTheDocument();
     expect(screen.getByText(/ER target 120%/i)).toBeInTheDocument();
     expect(screen.getByText(/CRIT Rate 70%/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Source/i })).toHaveAttribute(
-      'href',
-      'https://keqingmains.com/xiao/',
-    );
+    const sourceLinks = screen.getAllByRole('link', { name: /Source/i });
+    expect(
+      sourceLinks.some(
+        (a) => a.getAttribute('href') === 'https://keqingmains.com/xiao/',
+      ),
+    ).toBe(true);
   });
 
   it('omits the summary for a character without a meta recipe', () => {
     useOptimizeRequest.getState().setCharacterKey('zzz_not_meta');
     render(<OptimizePanel onRun={() => {}} running={false} />);
     expect(screen.queryByRole('link', { name: /Source/i })).toBeNull();
+  });
+});
+
+describe('OptimizePanel teammates', () => {
+  beforeEach(() => {
+    useInventory.getState().clear();
+    useOptimizeRequest.getState().reset();
+  });
+
+  it('shows "Works well with" recs for a covered character', () => {
+    useOptimizeRequest.getState().setCharacterKey('xiao');
+    render(<OptimizePanel onRun={() => {}} running={false} />);
+    expect(screen.getByText(/Works well with/i)).toBeInTheDocument();
+    expect(screen.getByText(/Faruzan/)).toBeInTheDocument();
+  });
+
+  it('omits the teammates section for a character without recs', () => {
+    useOptimizeRequest.getState().setCharacterKey('zzz_not_meta');
+    render(<OptimizePanel onRun={() => {}} running={false} />);
+    expect(screen.queryByText(/Works well with/i)).toBeNull();
   });
 });

@@ -18,6 +18,11 @@ import {
   metaToConstraints,
   type MetaTarget,
 } from '../meta/metaTargets';
+import {
+  TEAMMATES,
+  resolveTeammateName,
+  type TeammateRec,
+} from '../meta/teammates';
 
 const OBJECTIVES: Objective[] = [
   'crit_value',
@@ -100,6 +105,41 @@ function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
   );
 }
 
+/** Curated "works well with" list (ADR-0007-style: static, sourced). Falls
+ *  back to the raw character key rather than crashing if a teammate isn't
+ *  in the frozen dataset. */
+function TeammatesSummary({
+  entry,
+  characters,
+}: {
+  entry: { recs: TeammateRec[]; source: string };
+  characters: { key: string; name: string }[];
+}) {
+  return (
+    <div className="rounded-lg border border-white/5 bg-surface-900/40 p-3 text-xs text-muted">
+      <p className="mb-1.5 font-semibold text-paper">Works well with</p>
+      <ul className="space-y-1">
+        {entry.recs.map((r) => (
+          <li key={r.characterKey}>
+            <span className="font-medium text-paper">
+              {resolveTeammateName(r.characterKey, characters)}
+            </span>{' '}
+            <span className="text-muted">({r.role})</span> — {r.why}
+          </li>
+        ))}
+      </ul>
+      <a
+        className="mt-1.5 inline-block text-accent hover:underline"
+        href={entry.source}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Source
+      </a>
+    </div>
+  );
+}
+
 export function OptimizePanel({
   onRun,
   running,
@@ -133,6 +173,7 @@ export function OptimizePanel({
       ? 'Pick a character to start.'
       : null;
   const meta = META_TARGETS[characterKey];
+  const teammates = TEAMMATES[characterKey];
 
   return (
     <div className="panel space-y-5">
@@ -196,6 +237,7 @@ export function OptimizePanel({
       </div>
 
       {meta && <MetaTargetSummary meta={meta} />}
+      {teammates && <TeammatesSummary entry={teammates} characters={chars} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
         {hint ? (
