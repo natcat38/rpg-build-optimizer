@@ -85,7 +85,8 @@ interface OptimizeRequest {
   buildLevel: 1 | 20 | 40 | 50 | 60 | 70 | 80 | 90; // ascension-breakpoint; drives character + weapon (ADR-0006)
   artifactLevelMode?: 'current' | 'plus20'; // v1.0 default 'current'; 'plus20' is the v1.1 toggle
   constraints: {
-    setRequirement?: // any ONE of:
+    setRequirement?:
+      // any ONE of:
       | { kind: '4pc'; setKey: string }
       | { kind: '2+2'; setKeys: [string, string] }
       | { kind: '2pc'; setKey: string };

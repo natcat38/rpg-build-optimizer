@@ -13,8 +13,7 @@ export interface WorkerRequest {
 }
 
 export type WorkerResponse =
-  | { type: 'done'; result: OptimizeResult }
-  | { type: 'error'; message: string };
+  { type: 'done'; result: OptimizeResult } | { type: 'error'; message: string };
 
 export function runSearchRequest(msg: WorkerRequest): WorkerResponse {
   try {

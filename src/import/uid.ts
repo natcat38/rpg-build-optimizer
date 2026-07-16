@@ -67,13 +67,11 @@ export async function fetchUidArtifacts(
       if (!flat || flat.itemType !== 'ITEM_RELIQUARY') continue;
       const slot = EQUIP_SLOT[flat.equipType as string];
       const reliquaryMainstat = flat.reliquaryMainstat as
-        | { mainPropId?: string; statValue?: number }
-        | undefined;
+        { mainPropId?: string; statValue?: number } | undefined;
       const mainStat = PROP_STAT[reliquaryMainstat?.mainPropId ?? ''];
       if (!slot || !mainStat) continue;
       const rawSubs = flat.reliquarySubstats as
-        | Array<{ appendPropId: string; statValue: number }>
-        | undefined;
+        Array<{ appendPropId: string; statValue: number }> | undefined;
       const subStats: SubStat[] = (rawSubs ?? [])
         .map((s) => ({ key: PROP_STAT[s.appendPropId], value: s.statValue }))
         .filter((s): s is SubStat => Boolean(s.key));

@@ -71,12 +71,10 @@ export function parseExplainPayload(input: unknown): ExplainPayload | null {
   const g = o.gap as Record<string, unknown>;
   if (!isShortStringArray(g.feasibility)) return null;
   if (!isShortStringArray(g.shortfalls)) return null;
-  if (
-    !(
-      g.action === null ||
-      (typeof g.action === 'string' && g.action.length <= MAX_LINE_LEN)
-    )
-  )
+  if (!(
+    g.action === null ||
+    (typeof g.action === 'string' && g.action.length <= MAX_LINE_LEN)
+  ))
     return null;
 
   return {
