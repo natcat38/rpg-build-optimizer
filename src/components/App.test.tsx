@@ -3,6 +3,7 @@ import { render, screen, act } from '@testing-library/react';
 import { App } from './App';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest } from '../state/optimizeRequest';
+import { useRoster } from '../state/roster';
 import type { Artifact, BuildResult, OptimizeResult } from '../game/types';
 import { SLOTS } from '../game/types';
 
@@ -13,6 +14,7 @@ describe('App shell', () => {
   beforeEach(() => {
     useInventory.getState().clear();
     useOptimizeRequest.getState().reset();
+    useRoster.getState().clear();
     window.history.pushState({}, '', '/');
   });
 
@@ -29,6 +31,23 @@ describe('App shell', () => {
       await screen.findByText(/This shared build couldn't be read/i),
     ).toBeInTheDocument();
     window.history.pushState({}, '', '/');
+  });
+
+  it('shows the roster dashboard instead of OptimizePanel once a roster is imported', () => {
+    useRoster.getState().setRoster({ furina: {} });
+    render(<App />);
+    expect(screen.getByText(/Your roster/i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^optimise$/i }),
+    ).toBeNull();
+  });
+
+  it('shows the classic Optimise flow when the roster is empty', () => {
+    render(<App />);
+    expect(
+      screen.getByRole('button', { name: /^optimise$/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Your roster/i)).toBeNull();
   });
 });
 
@@ -67,6 +86,7 @@ describe('App — overlapping optimise runs', () => {
     useInventory.getState().clear();
     useInventory.getState().addMany(SAMPLE_ARTIFACTS);
     useOptimizeRequest.getState().reset();
+    useRoster.getState().clear();
     window.history.pushState({}, '', '/');
   });
 

@@ -1,0 +1,151 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { CharacterDetail } from './CharacterDetail';
+import { useRoster } from '../state/roster';
+import { useInventory } from '../state/inventory';
+import { useWeaponInventory } from '../state/weapons';
+import { useOptimizeRequest } from '../state/optimizeRequest';
+
+function renderDetail(characterKey: string) {
+  return render(
+    <CharacterDetail
+      characterKey={characterKey}
+      onBack={() => {}}
+      onRun={() => {}}
+      running={false}
+      result={null}
+      request={null}
+      artifacts={[]}
+      artifactsById={{}}
+      sharedArtifacts={null}
+    />,
+  );
+}
+
+describe('CharacterDetail', () => {
+  beforeEach(() => {
+    useRoster.getState().clear();
+    useInventory.getState().clear();
+    useWeaponInventory.getState().clear();
+    useOptimizeRequest.getState().reset();
+  });
+
+  it('shows a weapon switch suggestion when a better owned weapon exists', () => {
+    useRoster.getState().setRoster({ furina: { weaponKey: 'favonius_sword' } });
+    useWeaponInventory.getState().setWeapons([
+      { key: 'favonius_sword', level: 90, refinement: 1, location: 'furina' },
+      { key: 'freedomsworn', level: 90, refinement: 1, location: null },
+    ]);
+    renderDetail('furina');
+    // "Switch to:" and the weapon name sit in separate text nodes around a
+    // <span>, so match against the paragraph's combined textContent.
+    expect(
+      screen.getByText(
+        (_, el) =>
+          el?.tagName === 'P' &&
+          /Switch to:\s*Freedom-Sworn/i.test(el.textContent ?? ''),
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('flags a conflict when the recommended weapon is equipped elsewhere', () => {
+    useRoster.getState().setRoster({
+      furina: { weaponKey: 'favonius_sword' },
+      kamisato_ayaka: {},
+    });
+    useWeaponInventory.getState().setWeapons([
+      {
+        key: 'splendor_of_tranquil_waters',
+        level: 90,
+        refinement: 1,
+        location: 'kamisato_ayaka',
+      },
+    ]);
+    renderDetail('furina');
+    expect(
+      screen.getByText(/Currently equipped on Kamisato Ayaka/i),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the best-owned-already-equipped message when equipped is top ranked', () => {
+    useRoster.getState().setRoster({
+      furina: { weaponKey: 'splendor_of_tranquil_waters' },
+    });
+    useWeaponInventory.getState().setWeapons([
+      {
+        key: 'splendor_of_tranquil_waters',
+        level: 90,
+        refinement: 1,
+        location: 'furina',
+      },
+    ]);
+    renderDetail('furina');
+    expect(
+      screen.getByText(/Best owned weapon is already equipped/i),
+    ).toBeInTheDocument();
+  });
+
+  it('omits the weapon card for an uncurated character', () => {
+    useRoster.getState().setRoster({ zzz_not_curated: {} });
+    renderDetail('zzz_not_curated');
+    expect(screen.queryByText(/Switch to:/i)).toBeNull();
+    expect(screen.queryByText(/already equipped/i)).toBeNull();
+  });
+
+  it('shows talent shortfalls in priority order', () => {
+    useRoster.getState().setRoster({
+      furina: { talent: { burst: 1, skill: 1, auto: 1 } },
+    });
+    renderDetail('furina');
+    expect(screen.getByText(/Elemental Burst: 1 → 9/i)).toBeInTheDocument();
+  });
+
+  it('shows "Talents at target" when nothing is below target', () => {
+    useRoster.getState().setRoster({
+      furina: { talent: { burst: 9, skill: 9, auto: 9 } },
+    });
+    renderDetail('furina');
+    expect(screen.getByText(/Talents at target/i)).toBeInTheDocument();
+  });
+
+  it('shows unknown-level talents (?) when GOOD talent data is absent', () => {
+    useRoster.getState().setRoster({ furina: {} });
+    renderDetail('furina');
+    expect(screen.getByText(/Elemental Burst: \? → 9/i)).toBeInTheDocument();
+  });
+
+  it('shows a fully-fieldable team comp using owned members', () => {
+    useRoster.getState().setRoster({
+      furina: { weaponKey: 'freedomsworn' }, // matches the only owned weapon, avoids a stray "don't own" from the weapon card
+      neuvillette: {},
+      kaedehara_kazuha: {},
+      bennett: {},
+    });
+    useWeaponInventory
+      .getState()
+      .setWeapons([
+        { key: 'freedomsworn', level: 90, refinement: 1, location: 'furina' },
+      ]);
+    renderDetail('furina');
+    expect(screen.getByText('Neuvillette')).toBeInTheDocument();
+    expect(screen.getByText('Kaedehara Kazuha')).toBeInTheDocument();
+    expect(screen.getByText('Bennett')).toBeInTheDocument();
+    expect(screen.queryByText(/don't own/i)).toBeNull();
+  });
+
+  it("shows a don't-own note for unfilled team comp slots", () => {
+    useRoster.getState().setRoster({ furina: {} });
+    renderDetail('furina');
+    expect(screen.getAllByText(/don't own/i).length).toBeGreaterThan(0);
+  });
+
+  it('still renders the OptimizePanel and header for the selected character', () => {
+    useRoster.getState().setRoster({ furina: {} });
+    renderDetail('furina');
+    expect(screen.getByText('Furina')).toBeInTheDocument();
+    expect(screen.getByText('hydro')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /your roster/i }),
+    ).toBeInTheDocument();
+  });
+});

@@ -109,9 +109,12 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
   return out;
 }
 
+export type TalentSlot = 'auto' | 'skill' | 'burst';
+
 export interface RosterEntry {
   buildLevel?: BuildLevel;
   weaponKey?: string;
+  talent?: Partial<Record<TalentSlot, number>>;
 }
 
 // Ascension 0..6 → max level cap. A character can't be de-leveled, so the cap
@@ -148,10 +151,16 @@ export function parseGOODRoster(json: unknown): Record<string, RosterEntry> {
     genshinAdapter.weapons().map((w) => [normalizeKey(w.key), w.key]),
   );
 
+  const TALENT_SLOTS: TalentSlot[] = ['auto', 'skill', 'burst'];
+
   const entries: Record<string, RosterEntry> = {};
   for (const raw of rawChars) {
     if (typeof raw !== 'object' || raw === null) continue;
-    const { key, ascension } = raw as { key?: unknown; ascension?: unknown };
+    const { key, ascension, talent } = raw as {
+      key?: unknown;
+      ascension?: unknown;
+      talent?: unknown;
+    };
     if (typeof key !== 'string') continue;
     const ours = charByNorm.get(normalizeKey(key));
     if (!ours) continue;
@@ -163,6 +172,22 @@ export function parseGOODRoster(json: unknown): Record<string, RosterEntry> {
       ascension <= 6
     ) {
       entry.buildLevel = ASCENSION_CAP[ascension];
+    }
+    if (typeof talent === 'object' && talent !== null) {
+      const t = talent as Record<string, unknown>;
+      const parsed: Partial<Record<TalentSlot, number>> = {};
+      for (const slot of TALENT_SLOTS) {
+        const v = t[slot];
+        if (
+          typeof v === 'number' &&
+          Number.isInteger(v) &&
+          v >= 1 &&
+          v <= 10
+        ) {
+          parsed[slot] = v;
+        }
+      }
+      if (Object.keys(parsed).length > 0) entry.talent = parsed;
     }
     entries[ours] = entry;
   }
@@ -179,4 +204,62 @@ export function parseGOODRoster(json: unknown): Record<string, RosterEntry> {
     (entries[ourChar] ??= {}).weaponKey = ourWeapon;
   }
   return entries;
+}
+
+export interface OwnedWeapon {
+  key: string;
+  level: number;
+  refinement: number;
+  location: string | null;
+}
+
+/** Full weapon inventory (equipped + unequipped), unlike parseGOODRoster's
+ *  weapon handling which only records the one weapon equipped per character.
+ *  Same skip-unresolvable-key contract as parseGOODRoster. */
+export function parseGOODWeapons(json: unknown): OwnedWeapon[] {
+  if (typeof json !== 'object' || json === null) return [];
+  const obj = json as Record<string, unknown>;
+  if (obj.format !== 'GOOD') return [];
+  const rawWeapons = Array.isArray(obj.weapons)
+    ? obj.weapons.slice(0, MAX_ROSTER)
+    : [];
+  if (rawWeapons.length === 0) return [];
+
+  const charByNorm = new Map(
+    genshinAdapter.characters().map((c) => [normalizeKey(c.key), c.key]),
+  );
+  const weaponByNorm = new Map(
+    genshinAdapter.weapons().map((w) => [normalizeKey(w.key), w.key]),
+  );
+
+  const out: OwnedWeapon[] = [];
+  for (const raw of rawWeapons) {
+    if (typeof raw !== 'object' || raw === null) continue;
+    const { key, level, refinement, location } = raw as {
+      key?: unknown;
+      level?: unknown;
+      refinement?: unknown;
+      location?: unknown;
+    };
+    if (typeof key !== 'string') continue;
+    const ourWeapon = weaponByNorm.get(normalizeKey(key));
+    if (!ourWeapon) continue;
+    const ourLocation =
+      typeof location === 'string' && location !== ''
+        ? (charByNorm.get(normalizeKey(location)) ?? null)
+        : null;
+    out.push({
+      key: ourWeapon,
+      level: typeof level === 'number' && Number.isFinite(level) ? level : 1,
+      refinement:
+        typeof refinement === 'number' &&
+        Number.isInteger(refinement) &&
+        refinement >= 1 &&
+        refinement <= 5
+          ? refinement
+          : 1,
+      location: ourLocation,
+    });
+  }
+  return out;
 }

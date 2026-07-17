@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseGOOD, parseGOODRoster } from './good';
+import { parseGOOD, parseGOODRoster, parseGOODWeapons } from './good';
 
 const goodFile = {
   format: 'GOOD',
@@ -315,5 +315,123 @@ describe('parseGOODRoster', () => {
       buildLevel: 90,
       weaponKey: 'the_catch',
     });
+  });
+
+  it('parses valid talent levels', () => {
+    const out = parseGOODRoster({
+      format: 'GOOD',
+      characters: [
+        { key: 'RaidenShogun', ascension: 6, talent: { auto: 6, skill: 9, burst: 9 } },
+      ],
+    });
+    expect(out['raiden_shogun'].talent).toEqual({ auto: 6, skill: 9, burst: 9 });
+  });
+
+  it('drops out-of-range talent slots, keeping valid ones', () => {
+    const out = parseGOODRoster({
+      format: 'GOOD',
+      characters: [
+        { key: 'RaidenShogun', ascension: 6, talent: { auto: 0, skill: 9, burst: 11 } },
+      ],
+    });
+    expect(out['raiden_shogun'].talent).toEqual({ skill: 9 });
+  });
+
+  it('omits talent entirely when absent or malformed', () => {
+    const noTalent = (talent: unknown) =>
+      parseGOODRoster({
+        format: 'GOOD',
+        characters: [{ key: 'RaidenShogun', ascension: 6, talent }],
+      })['raiden_shogun'];
+    expect(noTalent(undefined)).toEqual({ buildLevel: 90 });
+    expect(noTalent(null)).toEqual({ buildLevel: 90 });
+    expect(noTalent('garbage')).toEqual({ buildLevel: 90 });
+    expect(noTalent({ auto: 0, skill: 11 })).toEqual({ buildLevel: 90 });
+  });
+});
+
+describe('parseGOODWeapons', () => {
+  it('returns [] for non-GOOD input or a file with no weapons array', () => {
+    expect(parseGOODWeapons({ foo: 1 })).toEqual([]);
+    expect(parseGOODWeapons(null)).toEqual([]);
+    expect(parseGOODWeapons(goodFile)).toEqual([]);
+  });
+
+  it('parses an equipped weapon with resolved location', () => {
+    const out = parseGOODWeapons({
+      format: 'GOOD',
+      weapons: [
+        {
+          key: 'TheFirstGreatMagic',
+          level: 90,
+          refinement: 1,
+          location: 'Lyney',
+        },
+      ],
+    });
+    expect(out).toEqual([
+      {
+        key: 'the_first_great_magic',
+        level: 90,
+        refinement: 1,
+        location: 'lyney',
+      },
+    ]);
+  });
+
+  it('parses an unequipped weapon (empty location) as owned with null location', () => {
+    const out = parseGOODWeapons({
+      format: 'GOOD',
+      weapons: [
+        { key: 'TheCatch', level: 50, refinement: 2, location: '' },
+      ],
+    });
+    expect(out).toEqual([
+      { key: 'the_catch', level: 50, refinement: 2, location: null },
+    ]);
+  });
+
+  it('treats an unresolvable location as owned but unequipped', () => {
+    const out = parseGOODWeapons({
+      format: 'GOOD',
+      weapons: [
+        { key: 'TheCatch', level: 50, refinement: 2, location: 'NicoleKamera' },
+      ],
+    });
+    expect(out).toEqual([
+      { key: 'the_catch', level: 50, refinement: 2, location: null },
+    ]);
+  });
+
+  it('skips a weapon with an unresolvable key', () => {
+    const out = parseGOODWeapons({
+      format: 'GOOD',
+      weapons: [{ key: 'NotARealWeapon', level: 1, refinement: 1, location: '' }],
+    });
+    expect(out).toEqual([]);
+  });
+
+  it('defaults level and refinement when missing or out of range', () => {
+    const out = parseGOODWeapons({
+      format: 'GOOD',
+      weapons: [{ key: 'TheCatch', location: '' }],
+    });
+    expect(out).toEqual([
+      { key: 'the_catch', level: 1, refinement: 1, location: null },
+    ]);
+  });
+
+  it('tolerates malformed array elements without throwing', () => {
+    expect(() =>
+      parseGOODWeapons({
+        format: 'GOOD',
+        weapons: [null, 'garbage', { key: 'TheCatch', location: '' }],
+      }),
+    ).not.toThrow();
+    const out = parseGOODWeapons({
+      format: 'GOOD',
+      weapons: [null, 'garbage', { key: 'TheCatch', location: '' }],
+    });
+    expect(out.length).toBe(1);
   });
 });
