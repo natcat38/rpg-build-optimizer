@@ -65,7 +65,9 @@ function ThesisHero({ game }: { game: GameDescriptor }) {
  *  a seeded synthetic inventory (see src/sample/heroExample.ts), plus the exact
  *  search proof — the thing this tool actually does. */
 function SolvedHero({ hero }: { hero: HeroExample }) {
-  const reductionLabel = formatReduction(hero.naive / Math.max(hero.explored, 1));
+  const reductionLabel = formatReduction(
+    hero.naive / Math.max(hero.explored, 1),
+  );
   return (
     <>
       <h1 className="font-display text-4xl font-black leading-tight text-paper sm:text-5xl">

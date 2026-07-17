@@ -1,5 +1,9 @@
 import { writeFileSync } from 'node:fs';
-import { runBenchmark, formatReduction, type BenchRow } from '../src/optimizer/benchmark';
+import {
+  runBenchmark,
+  formatReduction,
+  type BenchRow,
+} from '../src/optimizer/benchmark';
 import { PATCH } from '../src/game/genshin/adapter';
 
 // crit_value scales to the ~100-billion-combination 800 case because its value

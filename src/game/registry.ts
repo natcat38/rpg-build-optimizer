@@ -21,7 +21,8 @@ export const GAMES: Record<GameId, GameDescriptor> = {
   genshin: {
     id: 'genshin',
     name: 'Genshin Impact',
-    tagline: 'Find the mathematically optimal artifact build for any character.',
+    tagline:
+      'Find the mathematically optimal artifact build for any character.',
     patch: PATCH,
     availability: 'live',
     gearNoun: 'Artifact',

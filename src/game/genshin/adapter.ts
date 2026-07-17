@@ -45,7 +45,11 @@ export const genshinAdapter = {
   character(key: string): CharacterMeta | undefined {
     const c = data.characters.find((x) => x.key === key);
     if (!c) return undefined;
-    return { key: c.key, name: c.name, element: c.element as CharacterMeta['element'] };
+    return {
+      key: c.key,
+      name: c.name,
+      element: c.element as CharacterMeta['element'],
+    };
   },
 
   weapons(): WeaponMeta[] {

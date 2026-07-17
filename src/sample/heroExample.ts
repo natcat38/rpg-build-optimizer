@@ -1,7 +1,16 @@
-import { makeInventory, naiveCount, DEFAULT_SEED } from '../optimizer/benchmark';
+import {
+  makeInventory,
+  naiveCount,
+  DEFAULT_SEED,
+} from '../optimizer/benchmark';
 import { buildContext } from '../optimizer/context';
 import { searchBuilds } from '../optimizer/search';
-import type { Artifact, BuildResult, OptimizeRequest, Slot } from '../game/types';
+import type {
+  Artifact,
+  BuildResult,
+  OptimizeRequest,
+  Slot,
+} from '../game/types';
 import { SLOTS } from '../game/types';
 
 /**
@@ -36,10 +45,17 @@ export function buildHeroExample(): HeroExample | null {
 
   const build = res.builds[0];
   const bySlot = new Map(inventory.map((a) => [a.id, a]));
-  const artifacts = SLOTS.map((s: Slot) => bySlot.get(build.artifactIds[s])).filter(
-    (a): a is Artifact => Boolean(a),
-  );
+  const artifacts = SLOTS.map((s: Slot) =>
+    bySlot.get(build.artifactIds[s]),
+  ).filter((a): a is Artifact => Boolean(a));
   const naive = naiveCount(inventory);
 
-  return { request, build, artifacts, naive, explored: res.explored, pruned: res.pruned };
+  return {
+    request,
+    build,
+    artifacts,
+    naive,
+    explored: res.explored,
+    pruned: res.pruned,
+  };
 }

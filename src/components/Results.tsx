@@ -53,9 +53,7 @@ export function Results({
               {result.explored.toLocaleString()}
             </span>{' '}
             · pruned{' '}
-            <span className="text-paper">
-              {result.pruned.toLocaleString()}
-            </span>{' '}
+            <span className="text-paper">{result.pruned.toLocaleString()}</span>{' '}
             subtrees before the optimum was proven.
           </span>
         </div>

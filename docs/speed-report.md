@@ -19,17 +19,17 @@ what that saves: how many full builds exist versus how many we actually evaluate
 - **Reduction** — Naive ÷ Explored ("explores 1 in N").
 - **Time** — median of 3 runs of `optimize()`; varies by machine, unlike the other columns.
 
-| Inventory | Scenario | Naive builds | Explored | Pruned | Reduction | Time (ms) |
-| --- | --- | --: | --: | --: | --: | --: |
-| 50 | crit_value | 100,000 | 250 | 120 | 400× | 14.3 |
-| 100 | crit_value | 3,200,000 | 480 | 585 | 6,667× | 10.6 |
-| 200 | crit_value | 102,400,000 | 640 | 75,450 | 160,000× | 24.8 |
-| 400 | crit_value | 3,276,800,000 | 1,680 | 62,390 | 1,950,476× | 31.6 |
-| 800 | crit_value | 104,857,600,000 | 153,600 | 1,713,379 | 682,667× | 3359.9 |
-| 50 | er_pct | 100,000 | 210 | 232 | 476× | 6.9 |
-| 100 | er_pct | 3,200,000 | 14,140 | 28,117 | 226× | 360.9 |
-| 200 | er_pct | 102,400,000 | 4,760 | 13,298 | 21,513× | 78.8 |
-| 400 | er_pct | 3,276,800,000 | 478,880 | 869,809 | 6,843× | 10207.5 |
+| Inventory | Scenario   |    Naive builds | Explored |    Pruned |  Reduction | Time (ms) |
+| --------- | ---------- | --------------: | -------: | --------: | ---------: | --------: |
+| 50        | crit_value |         100,000 |      250 |       120 |       400× |      14.3 |
+| 100       | crit_value |       3,200,000 |      480 |       585 |     6,667× |      10.6 |
+| 200       | crit_value |     102,400,000 |      640 |    75,450 |   160,000× |      24.8 |
+| 400       | crit_value |   3,276,800,000 |    1,680 |    62,390 | 1,950,476× |      31.6 |
+| 800       | crit_value | 104,857,600,000 |  153,600 | 1,713,379 |   682,667× |    3359.9 |
+| 50        | er_pct     |         100,000 |      210 |       232 |       476× |       6.9 |
+| 100       | er_pct     |       3,200,000 |   14,140 |    28,117 |       226× |     360.9 |
+| 200       | er_pct     |     102,400,000 |    4,760 |    13,298 |    21,513× |      78.8 |
+| 400       | er_pct     |   3,276,800,000 |  478,880 |   869,809 |     6,843× |   10207.5 |
 
 **A note on the two objectives.** `crit_value` is concentrated on a minority of
 artifacts, so ordering surfaces the winners immediately and the bound tightens hard —
