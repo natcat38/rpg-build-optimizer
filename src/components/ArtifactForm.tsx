@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { Artifact, Slot, StatKey, SubStat } from '../game/types';
-import { SLOTS } from '../game/types';
+import type { Artifact, Element, Slot, StatKey, SubStat } from '../game/types';
+import { ELEMENTS, SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { validateArtifactDraft } from '../state/artifactValidation';
 import { useInventory } from '../state/inventory';
@@ -14,6 +14,7 @@ export function ArtifactForm() {
   const [slot, setSlot] = useState<Slot>('sands');
   const [setKey, setSetKey] = useState(genshinAdapter.sets()[0]?.key ?? '');
   const [mainStat, setMainStat] = useState<StatKey>('atk_pct');
+  const [element, setElement] = useState<Element | ''>('');
   const [level, setLevel] = useState(20);
   // Sub-stat editing UI is intentionally minimal in v1.0; reserved for future use.
   const subStats: SubStat[] = [];
@@ -32,6 +33,10 @@ export function ArtifactForm() {
       mainStat,
       mainStatValue: genshinAdapter.mainStatValue(mainStat, 5, level),
       subStats,
+      element:
+        slot === 'goblet' && mainStat === 'elemental_dmg' && element
+          ? element
+          : undefined,
     };
     add(a);
   }
@@ -77,6 +82,23 @@ export function ArtifactForm() {
             ))}
           </select>
         </label>
+        {slot === 'goblet' && mainStat === 'elemental_dmg' && (
+          <label className="block">
+            <span className="field-label">Element</span>
+            <select
+              className="field"
+              value={element}
+              onChange={(e) => setElement(e.target.value as Element | '')}
+            >
+              <option value="">Any (unknown)</option>
+              {ELEMENTS.map((el) => (
+                <option key={el} value={el}>
+                  {el[0].toUpperCase() + el.slice(1)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="block">
           <span className="field-label">Level</span>
           <input

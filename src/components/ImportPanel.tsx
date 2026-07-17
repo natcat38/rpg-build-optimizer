@@ -1,26 +1,32 @@
 import { useState } from 'react';
 import { type ChangeEvent } from 'react';
-import { parseGOOD } from '../import/good';
+import { parseGOOD, parseGOODRoster } from '../import/good';
 import { fetchUidArtifacts } from '../import/uid';
 import { mergeNew } from '../import/dedupe';
 import { useInventory } from '../state/inventory';
+import { useRoster } from '../state/roster';
+import { useGame } from '../state/game';
+import { getGame } from '../game/registry';
 import type { Artifact } from '../game/types';
 
 export function ImportPanel() {
   const { artifacts, addMany } = useInventory();
+  const game = getGame(useGame((s) => s.gameId));
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [uid, setUid] = useState('');
   const [busy, setBusy] = useState(false);
 
-  function mergeDedupe(incoming: Artifact[]) {
+  function mergeDedupe(incoming: Artifact[], suffix = '') {
     // Read live state rather than the render-time `artifacts` closure: onFile
     // and onUid are both async, so a second import can otherwise dedupe
     // against a snapshot that predates the first import's commit.
     const fresh = mergeNew(useInventory.getState().artifacts, incoming);
     addMany(fresh);
     setErr(null);
-    setMsg(`Imported ${fresh.length} artifacts.`);
+    setMsg(
+      `Imported ${fresh.length} ${game.gearNounPlural.toLowerCase()}.${suffix}`,
+    );
   }
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
@@ -36,7 +42,13 @@ export function ImportPanel() {
         );
         return;
       }
-      mergeDedupe(out);
+      const roster = parseGOODRoster(json);
+      const rosterCount = Object.keys(roster).length;
+      if (rosterCount > 0) useRoster.getState().setRoster(roster);
+      mergeDedupe(
+        out,
+        rosterCount > 0 ? ` Roster: ${rosterCount} characters.` : '',
+      );
     } catch {
       setMsg(null);
       setErr(
@@ -69,14 +81,17 @@ export function ImportPanel() {
           Inventory
         </span>
         <span className="chip">
-          <span className="font-bold text-mora">{count}</span>
-          {count === 1 ? 'artifact' : 'artifacts'} loaded
+          <span className="font-bold text-accent">{count}</span>
+          {count === 1
+            ? game.gearNoun.toLowerCase()
+            : game.gearNounPlural.toLowerCase()}{' '}
+          loaded
         </span>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
         {/* GOOD file upload */}
-        <div className="rounded-xl border border-white/5 bg-abyss-900/40 p-4">
+        <div className="rounded-xl border border-white/5 bg-surface-900/40 p-4">
           <label className="field-label" htmlFor="good-file">
             Upload GOOD export
           </label>
@@ -91,13 +106,13 @@ export function ImportPanel() {
             aria-label="GOOD file"
             className="block w-full cursor-pointer text-xs text-muted
               file:mr-3 file:cursor-pointer file:rounded-md file:border-0
-              file:bg-mora/15 file:px-3 file:py-2 file:font-semibold file:text-mora-bright
-              hover:file:bg-mora/25"
+              file:bg-accent/15 file:px-3 file:py-2 file:font-semibold file:text-accent-bright
+              hover:file:bg-accent/25"
           />
         </div>
 
         {/* UID import */}
-        <div className="rounded-xl border border-white/5 bg-abyss-900/40 p-4">
+        <div className="rounded-xl border border-white/5 bg-surface-900/40 p-4">
           <label className="field-label" htmlFor="uid-input">
             Import by UID
           </label>

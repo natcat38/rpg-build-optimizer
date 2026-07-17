@@ -110,7 +110,7 @@ export function Combobox({
         </button>
       )}
       {open && (
-        <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-abyss-900 shadow-lg">
+        <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-surface-900 shadow-lg">
           {filtered.length === 0 ? (
             <li className="px-3 py-2 text-sm text-muted">No results</li>
           ) : (
@@ -119,7 +119,7 @@ export function Combobox({
                 key={opt.value}
                 className={[
                   'cursor-pointer px-3 py-2 text-sm',
-                  opt.value === value ? 'text-mora' : 'text-parchment',
+                  opt.value === value ? 'text-accent' : 'text-paper',
                   i === activeIndex ? 'bg-white/5' : 'hover:bg-white/5',
                 ].join(' ')}
                 onClick={() => handleSelect(opt)}

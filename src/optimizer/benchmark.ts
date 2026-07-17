@@ -11,6 +11,15 @@ import { genshinAdapter } from '../game/genshin/adapter';
 import { buildContext } from './context';
 import { searchBuilds } from './search';
 
+/** Shared "N× fewer evaluations" formatting — used by both the doc-generating
+ *  benchmark script (scripts/benchmark.ts) and the browser hero demo
+ *  (src/components/App.tsx) so the same concept reads consistently everywhere. */
+export function formatReduction(r: number): string {
+  if (r < 1) return `${r.toFixed(2)}×`;
+  if (r < 10) return `${r.toFixed(1)}×`;
+  return `${Math.round(r).toLocaleString('en-US')}×`;
+}
+
 /** Deterministic PRNG so committed benchmark numbers reproduce anywhere. */
 function mulberry32(seed: number): () => number {
   let s = seed >>> 0;
@@ -151,7 +160,7 @@ export const DEFAULT_SEED = 20260609;
 
 // Each slot always has >=1 artifact when built via makeInventory(size>=5), so
 // the product is never 0; searchBuilds() guards the empty-slot case independently.
-function naiveCount(inv: Artifact[]): number {
+export function naiveCount(inv: Artifact[]): number {
   return SLOTS.map((s) => inv.filter((a) => a.slot === s).length).reduce(
     (p, n) => p * n,
     1,

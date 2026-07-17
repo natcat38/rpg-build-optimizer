@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseGOOD } from './good';
+import { parseGOOD, parseGOODRoster } from './good';
 
 const goodFile = {
   format: 'GOOD',
@@ -171,5 +171,149 @@ describe('parseGOOD', () => {
     const out = parseGOOD({ format: 'GOOD', artifacts });
     const arr = out as import('../game/types').Artifact[];
     expect(arr.length).toBe(4000);
+  });
+
+  it('captures the element of an elemental_dmg goblet (ADR-0014)', () => {
+    const out = parseGOOD({
+      format: 'GOOD',
+      artifacts: [
+        {
+          ...goodFile.artifacts[0],
+          slotKey: 'goblet',
+          mainStatKey: 'pyro_dmg_',
+        },
+      ],
+    });
+    const arr = out as import('../game/types').Artifact[];
+    expect(arr[0].mainStat).toBe('elemental_dmg');
+    expect(arr[0].element).toBe('pyro');
+  });
+
+  it('leaves element unset for a non-elemental-dmg main stat', () => {
+    const out = parseGOOD(goodFile); // mainStatKey 'atk_'
+    const arr = out as import('../game/types').Artifact[];
+    expect(arr[0].element).toBeUndefined();
+  });
+
+  it('still parses artifacts unaffected when characters/weapons arrays are also present', () => {
+    const out = parseGOOD({
+      ...goodFile,
+      characters: [{ key: 'RaidenShogun', ascension: 6 }],
+      weapons: [{ key: 'TheCatch', location: 'RaidenShogun' }],
+    });
+    const arr = out as import('../game/types').Artifact[];
+    expect(arr.length).toBe(1);
+    expect(arr[0].setKey).toBe('EmblemOfSeveredFate');
+  });
+});
+
+describe('parseGOODRoster', () => {
+  it('returns {} for non-GOOD input', () => {
+    expect(parseGOODRoster({ foo: 1 })).toEqual({});
+    expect(parseGOODRoster(null)).toEqual({});
+  });
+
+  it('returns {} for a GOOD file with no characters/weapons arrays', () => {
+    expect(parseGOODRoster(goodFile)).toEqual({});
+  });
+
+  it('matches a character key and derives build level from ascension', () => {
+    const out = parseGOODRoster({
+      format: 'GOOD',
+      characters: [{ key: 'RaidenShogun', ascension: 6 }],
+    });
+    expect(out['raiden_shogun']).toEqual({ buildLevel: 90 });
+  });
+
+  it('maps ascension to the correct level cap across the range', () => {
+    const asc = (n: number) =>
+      parseGOODRoster({
+        format: 'GOOD',
+        characters: [{ key: 'RaidenShogun', ascension: n }],
+      })['raiden_shogun'].buildLevel;
+    expect(asc(0)).toBe(20);
+    expect(asc(5)).toBe(80);
+    expect(asc(6)).toBe(90);
+  });
+
+  it('omits buildLevel for out-of-range or non-numeric ascension', () => {
+    const noLevel = (ascension: unknown) =>
+      parseGOODRoster({
+        format: 'GOOD',
+        characters: [{ key: 'RaidenShogun', ascension }],
+      })['raiden_shogun'];
+    expect(noLevel(7)).toEqual({});
+    expect(noLevel('x')).toEqual({});
+    expect(noLevel(undefined)).toEqual({});
+  });
+
+  it('resolves an equipped weapon via location, including apostrophe keys', () => {
+    const out = parseGOODRoster({
+      format: 'GOOD',
+      weapons: [{ key: 'AmosBow', location: 'RaidenShogun' }],
+    });
+    expect(out['raiden_shogun']).toEqual({ weaponKey: "amos'_bow" });
+  });
+
+  it('resolves TheCatch to the_catch', () => {
+    const out = parseGOODRoster({
+      format: 'GOOD',
+      weapons: [{ key: 'TheCatch', location: 'RaidenShogun' }],
+    });
+    expect(out['raiden_shogun'].weaponKey).toBe('the_catch');
+  });
+
+  it('ignores unequipped weapons (empty location)', () => {
+    const out = parseGOODRoster({
+      format: 'GOOD',
+      weapons: [{ key: 'TheCatch', location: '' }],
+    });
+    expect(out).toEqual({});
+  });
+
+  it('creates an entry for a weapon equipped on a character absent from characters[]', () => {
+    const out = parseGOODRoster({
+      format: 'GOOD',
+      weapons: [{ key: 'TheCatch', location: 'RaidenShogun' }],
+    });
+    expect(out['raiden_shogun']).toEqual({ weaponKey: 'the_catch' });
+  });
+
+  it('skips an unresolvable character key (TravelerAnemo) without throwing', () => {
+    expect(() =>
+      parseGOODRoster({
+        format: 'GOOD',
+        characters: [{ key: 'TravelerAnemo', ascension: 6 }],
+      }),
+    ).not.toThrow();
+    const out = parseGOODRoster({
+      format: 'GOOD',
+      characters: [{ key: 'TravelerAnemo', ascension: 6 }],
+    });
+    expect(out).toEqual({});
+  });
+
+  it('tolerates malformed array elements (null/primitive) without throwing', () => {
+    const out = parseGOODRoster({
+      format: 'GOOD',
+      characters: [null, 'garbage', { key: 'RaidenShogun', ascension: 6 }],
+      weapons: [null, 42, { key: 'TheCatch', location: 'RaidenShogun' }],
+    });
+    expect(out['raiden_shogun']).toEqual({
+      buildLevel: 90,
+      weaponKey: 'the_catch',
+    });
+  });
+
+  it('combines a character and its equipped weapon into one entry', () => {
+    const out = parseGOODRoster({
+      format: 'GOOD',
+      characters: [{ key: 'RaidenShogun', ascension: 6 }],
+      weapons: [{ key: 'TheCatch', location: 'RaidenShogun' }],
+    });
+    expect(out['raiden_shogun']).toEqual({
+      buildLevel: 90,
+      weaponKey: 'the_catch',
+    });
   });
 });

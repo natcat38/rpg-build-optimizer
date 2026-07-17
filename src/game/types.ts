@@ -25,6 +25,20 @@ export function isStatKey(x: unknown): x is StatKey {
   return typeof x === 'string' && (STAT_KEYS as readonly string[]).includes(x);
 }
 
+// The 7 elements that can appear as a goblet's elemental_dmg main stat
+// (physical_dmg is its own separate StatKey, never part of this union).
+export const ELEMENTS = [
+  'pyro',
+  'hydro',
+  'electro',
+  'cryo',
+  'anemo',
+  'geo',
+  'dendro',
+] as const;
+
+export type Element = (typeof ELEMENTS)[number];
+
 export type BuildLevel = 1 | 20 | 40 | 50 | 60 | 70 | 80 | 90;
 export const BUILD_LEVELS: BuildLevel[] = [1, 20, 40, 50, 60, 70, 80, 90];
 
@@ -45,6 +59,9 @@ export interface Artifact {
   mainStat: StatKey;
   mainStatValue: number; // resolved from rarity+level tables at creation/import time
   subStats: SubStat[]; // <=4, none equal to mainStat
+  /** Which element an elemental_dmg goblet's main stat is (ADR-0014). Set only
+   *  when mainStat === 'elemental_dmg'; unset means "unknown" (treated as on-element). */
+  element?: Element;
 }
 
 export type SetRequirement =

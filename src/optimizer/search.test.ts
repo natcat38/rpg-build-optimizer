@@ -231,6 +231,81 @@ describe('searchBuilds', () => {
     // needing its own dedicated oracle run.
   });
 
+  it('prunes a sparse 4pc setRequirement without exploring the full pool (regression)', () => {
+    // Regression for a real-account perf cliff: a setRequirement used to be
+    // checked only at the leaf (satisfies()), so on an inventory spanning many
+    // sets almost every branch was explored to full depth just to be
+    // rejected. 15 artifacts/slot = 15^5 = 759,375 raw combinations; only 2
+    // per slot match the required set, so a leaf-only check would explore a
+    // large fraction of that. The feasibility bound (suffixSetPotential) must
+    // keep explored+pruned far below the raw pool size.
+    let n = 0;
+    const rnd = () => {
+      n = (n * 1103515245 + 12345) & 0x7fffffff;
+      return n;
+    };
+    let id = 0;
+    const inv: Artifact[] = [];
+    for (const slot of SLOTS) {
+      for (let i = 0; i < 15; i++) {
+        const setKey = i < 2 ? 'Target' : `Other${i % 5}`;
+        inv.push({
+          id: `sparse${id++}`,
+          setKey,
+          slot,
+          rarity: 5,
+          level: 20,
+          mainStat: 'crit_rate',
+          mainStatValue: rnd() % 50,
+          subStats: rnd() % 3 ? [{ key: 'crit_dmg', value: rnd() % 20 }] : [],
+        });
+      }
+    }
+    const reqSet: OptimizeRequest = {
+      ...req,
+      constraints: { setRequirement: { kind: '4pc', setKey: 'Target' } },
+    };
+    const r = expectOk(searchBuilds(reqSet, inv, ctx));
+    expect(r.explored + r.pruned).toBeLessThan(50_000); // << 15^5 = 759,375
+  });
+
+  it('prunes an unconstrained search despite a scorable 2pc set bonus (regression)', () => {
+    // Regression for a real-account perf cliff: the set-bonus ceiling used to
+    // be one flat constant computed once up front, added to every branch's
+    // bound regardless of whether that branch could still reach the bonus's
+    // 2pc/4pc threshold. On an inventory where the bonus-granting set is rare,
+    // that slack alone kept nearly every branch "unprunable" until the leaf.
+    // No setRequirement here — this is the default "Optimise" click.
+    const ctxWithBonus: OptimizeContext = {
+      base: { crit_rate: 5, crit_dmg: 50 },
+      setBonuses: { Bonus: { two: { crit_rate: 12 } } },
+    };
+    let n = 0;
+    const rnd = () => {
+      n = (n * 1103515245 + 12345) & 0x7fffffff;
+      return n;
+    };
+    let id = 0;
+    const inv: Artifact[] = [];
+    for (const slot of SLOTS) {
+      for (let i = 0; i < 15; i++) {
+        const setKey = i < 2 ? 'Bonus' : `Other${i % 5}`;
+        inv.push({
+          id: `bonus${id++}`,
+          setKey,
+          slot,
+          rarity: 5,
+          level: 20,
+          mainStat: 'crit_rate',
+          mainStatValue: rnd() % 50,
+          subStats: rnd() % 3 ? [{ key: 'crit_dmg', value: rnd() % 20 }] : [],
+        });
+      }
+    }
+    const r = expectOk(searchBuilds(req, inv, ctxWithBonus));
+    expect(r.explored + r.pruned).toBeLessThan(50_000); // << 15^5 = 759,375
+  });
+
   it('branch-and-bound matches brute force with a critRatioTarget tiebreak (score)', () => {
     for (let seed = 0; seed < 20; seed++) {
       counter = seed * 1000;

@@ -5,7 +5,13 @@ import type {
   StatVec,
   SubStat,
 } from '../game/types';
-import { isStatKey, isObjective, BUILD_LEVELS, SLOTS } from '../game/types';
+import {
+  isStatKey,
+  isObjective,
+  BUILD_LEVELS,
+  ELEMENTS,
+  SLOTS,
+} from '../game/types';
 
 export interface BuildSnapshot {
   request: OptimizeRequest;
@@ -138,7 +144,14 @@ function isArtifact(x: unknown): x is Artifact {
     typeof a.mainStatValue === 'number' &&
     Number.isFinite(a.mainStatValue) &&
     Array.isArray(a.subStats) &&
-    a.subStats.every(isSubStat)
+    a.subStats.every(isSubStat) &&
+    // Optional (ADR-0014): absent on links minted before element tracking existed.
+    // Only ever meaningful on an elemental_dmg goblet — reject it anywhere else
+    // rather than silently accepting an inconsistent artifact.
+    (a.element === undefined ||
+      ((ELEMENTS as readonly string[]).includes(a.element as string) &&
+        a.slot === 'goblet' &&
+        a.mainStat === 'elemental_dmg'))
   );
 }
 

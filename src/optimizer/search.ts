@@ -50,30 +50,82 @@ function objectiveContribution(
   return v;
 }
 
-/**
- * Admissible over-estimate of the objective gain any reachable set-bonus layout
- * can grant (ADR-0004). With 5 slots the only bonus-bearing layouts are:
- *   - {4,1} or {5}: a single set's (2pc + 4pc)  -> max over sets of (two+four)
- *   - {2,2,1}:      two different sets' 2pc each -> sum of the two largest 2pc
- * The ceiling is the max of those, so it never underestimates (e.g. two
- * ER-bonus sets in a 2+2 build for an er_pct objective).
- */
-function maxSetBonusObjective(
+/** Inclusive suffix count: how many of pools[slotIndex..end] contain at least
+ *  one artifact matching `setKey` — an admissible upper bound on how many more
+ *  set-matching pieces could still be picked from here on. */
+function suffixSetPotential(
+  pools: Record<Slot, Artifact[]>,
+  setKey: string,
+): number[] {
+  const flags = SLOTS.map((s) => pools[s].some((a) => a.setKey === setKey));
+  const suffix = new Array(SLOTS.length + 1).fill(0);
+  for (let i = SLOTS.length - 1; i >= 0; i--)
+    suffix[i] = suffix[i + 1] + (flags[i] ? 1 : 0);
+  return suffix;
+}
+
+interface RelevantSetBonus {
+  key: string;
+  two: number;
+  four: number;
+  /** Inclusive suffix count of how many more pieces of this set could still
+   *  be picked from pools[slotIndex..end] — see suffixSetPotential. */
+  remaining: number[];
+}
+
+/** Sets whose 2pc/4pc grants a nonzero contribution to this objective — most
+ *  sets grant 0 (their bonus is a different stat, or unscored per ADR-0003),
+ *  so this list is typically tiny (0-5 entries) even across a full dataset. */
+function relevantSetBonuses(
   ctx: OptimizeContext,
   objective: OptimizeRequest['objective'],
-): number {
-  let bestSingle = 0; // best (two + four) from one set, for {4,1}/{5}
-  const twoValues: number[] = [];
+  pools: Record<Slot, Artifact[]>,
+): RelevantSetBonus[] {
+  const out: RelevantSetBonus[] = [];
   for (const key of Object.keys(ctx.setBonuses)) {
     const b = ctx.setBonuses[key];
     const two = b.two ? objectiveValue(b.two, objective) : 0;
     const four = b.four ? objectiveValue(b.four, objective) : 0;
-    bestSingle = Math.max(bestSingle, two + four);
-    twoValues.push(two);
+    if (two || four) {
+      out.push({ key, two, four, remaining: suffixSetPotential(pools, key) });
+    }
   }
-  twoValues.sort((a, b) => b - a);
-  const bestTwoPlusTwo = (twoValues[0] ?? 0) + (twoValues[1] ?? 0); // two distinct sets' 2pc
-  return Math.max(bestSingle, bestTwoPlusTwo);
+  return out;
+}
+
+/**
+ * Admissible over-estimate of the objective gain any reachable set-bonus layout
+ * can grant (ADR-0004), given how many pieces of each relevant set are already
+ * chosen (`matched`, parallel to `relevant`) and how many more could still be
+ * picked from here (`relevant[i].remaining[slotIndex]`). Unlike a single
+ * global constant, this shrinks as choices rule sets out — e.g. once a set's
+ * 2pc is no longer reachable, its contribution drops out of the bound instead
+ * of inflating every branch's ceiling for the rest of the search.
+ */
+function setBonusCeilingAt(
+  relevant: RelevantSetBonus[],
+  matched: number[],
+  slotIndex: number,
+): number {
+  let bestSingle = 0;
+  // Top two `two` values across distinct sets, tracked without allocating —
+  // this runs once per search node (potentially hundreds of thousands of times).
+  let top1 = 0;
+  let top2 = 0;
+  for (let i = 0; i < relevant.length; i++) {
+    const r = relevant[i];
+    const feasibleMax = matched[i] + r.remaining[slotIndex];
+    const two = feasibleMax >= 2 ? r.two : 0;
+    const four = feasibleMax >= 4 ? r.four : 0;
+    bestSingle = Math.max(bestSingle, two + four);
+    if (two > top1) {
+      top2 = top1;
+      top1 = two;
+    } else if (two > top2) {
+      top2 = two;
+    }
+  }
+  return Math.max(bestSingle, top1 + top2);
 }
 
 function makeBuildResult(
@@ -128,10 +180,38 @@ export function searchBuilds(
   const suffixMax: number[] = new Array(SLOTS.length + 1).fill(0);
   for (let i = SLOTS.length - 1; i >= 0; i--)
     suffixMax[i] = suffixMax[i + 1] + maxBySlot[i];
-  const setBonusCeiling = maxSetBonusObjective(ctx, req.objective);
+  const relevantSets = relevantSetBonuses(ctx, req.objective, pools);
+  const relevantIndex = new Map(relevantSets.map((r, i) => [r.key, i]));
+  const matchedRelevant: number[] = new Array(relevantSets.length).fill(0);
   // The base stats always contribute to the objective (e.g. crit_rate/crit_dmg from character/weapon).
   // Include this in the upper bound so pruning remains admissible.
   const baseObjective = objectiveValue(ctx.base, req.objective);
+
+  // A setRequirement (e.g. 4pc) is otherwise only checked at the leaf via
+  // satisfies(), so on an inventory spanning many sets almost every branch is
+  // explored to full depth just to be rejected. This mirrors suffixMax above,
+  // but bounds "how many more required-set pieces could still be picked" —
+  // an admissible feasibility bound, so pruning stays exact (ADR-0004) while
+  // engaging long before the leaf.
+  const setReq = req.constraints.setRequirement;
+  let neededA = 0,
+    neededB = 0,
+    setKeyA = '',
+    setKeyB = '';
+  let remainingA: number[] | null = null;
+  let remainingB: number[] | null = null;
+  if (setReq) {
+    if (setReq.kind === '2+2') {
+      [setKeyA, setKeyB] = setReq.setKeys;
+      neededA = 2;
+      neededB = 2;
+      remainingB = suffixSetPotential(pools, setKeyB);
+    } else {
+      setKeyA = setReq.setKey;
+      neededA = setReq.kind === '4pc' ? 4 : 2;
+    }
+    remainingA = suffixSetPotential(pools, setKeyA);
+  }
 
   const kept: BuildResult[] = [];
   let explored = 0;
@@ -151,7 +231,12 @@ export function searchBuilds(
     if (kept.length > k * 6) kept.length = k * 6;
   }
 
-  function recurse(slotIndex: number, runningObjective: number) {
+  function recurse(
+    slotIndex: number,
+    runningObjective: number,
+    matchedA: number,
+    matchedB: number,
+  ) {
     if (slotIndex === SLOTS.length) {
       explored++;
       const t = totals(ctx, chosen);
@@ -160,22 +245,38 @@ export function searchBuilds(
       return;
     }
     const upper =
-      baseObjective + runningObjective + suffixMax[slotIndex] + setBonusCeiling;
+      baseObjective +
+      runningObjective +
+      suffixMax[slotIndex] +
+      setBonusCeilingAt(relevantSets, matchedRelevant, slotIndex);
     if (upper <= minKeptScore()) {
+      pruned++;
+      return;
+    }
+    if (remainingA && matchedA + remainingA[slotIndex] < neededA) {
+      pruned++;
+      return;
+    }
+    if (remainingB && matchedB + remainingB[slotIndex] < neededB) {
       pruned++;
       return;
     }
     for (const a of pools[SLOTS[slotIndex]]) {
       chosen.push(a);
+      const relIdx = relevantIndex.get(a.setKey);
+      if (relIdx !== undefined) matchedRelevant[relIdx]++;
       recurse(
         slotIndex + 1,
         runningObjective + objectiveContribution(a, req.objective),
+        matchedA + (setKeyA && a.setKey === setKeyA ? 1 : 0),
+        matchedB + (setKeyB && a.setKey === setKeyB ? 1 : 0),
       );
+      if (relIdx !== undefined) matchedRelevant[relIdx]--;
       chosen.pop();
     }
   }
 
-  recurse(0, 0);
+  recurse(0, 0, 0, 0);
 
   if (kept.length === 0) return { status: 'infeasible', explored, pruned };
 

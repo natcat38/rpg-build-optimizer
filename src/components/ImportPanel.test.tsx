@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ImportPanel } from './ImportPanel';
 import { useInventory } from '../state/inventory';
+import { useRoster } from '../state/roster';
 
 const goodJson = JSON.stringify({
   format: 'GOOD',
@@ -41,10 +42,14 @@ const uidShowcase = {
   ],
 };
 
-beforeEach(() => useInventory.setState({ artifacts: [] }));
+beforeEach(() => {
+  useInventory.setState({ artifacts: [] });
+  useRoster.getState().clear();
+});
 afterEach(() => {
   vi.restoreAllMocks();
   useInventory.setState({ artifacts: [] });
+  useRoster.getState().clear();
 });
 
 describe('ImportPanel', () => {
@@ -199,5 +204,42 @@ describe('ImportPanel', () => {
     // committed, even though its own `artifacts` closure was captured
     // before that import landed — so the duplicate must NOT be kept.
     expect(useInventory.getState().artifacts).toHaveLength(1);
+  });
+
+  it('populates the roster from a GOOD file with characters/weapons arrays and reports the count', async () => {
+    const rosterJson = JSON.stringify({
+      format: 'GOOD',
+      artifacts: [],
+      characters: [{ key: 'RaidenShogun', ascension: 6 }],
+      weapons: [{ key: 'TheCatch', location: 'RaidenShogun' }],
+    });
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+    const file = new File([rosterJson], 'good.json', {
+      type: 'application/json',
+    });
+    Object.defineProperty(file, 'text', { value: async () => rosterJson });
+    await user.upload(screen.getByLabelText('GOOD file'), file);
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /Roster: 1 characters/i,
+    );
+    expect(useRoster.getState().entries['raiden_shogun']).toEqual({
+      buildLevel: 90,
+      weaponKey: 'the_catch',
+    });
+  });
+
+  it('leaves the roster untouched for a GOOD file without characters/weapons arrays', async () => {
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+    const file = new File([goodJson], 'good.json', {
+      type: 'application/json',
+    });
+    Object.defineProperty(file, 'text', { value: async () => goodJson });
+    await user.upload(screen.getByLabelText('GOOD file'), file);
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /Imported 1 artifacts/i,
+    );
+    expect(useRoster.getState().entries).toEqual({});
   });
 });

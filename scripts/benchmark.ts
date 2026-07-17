@@ -1,5 +1,9 @@
 import { writeFileSync } from 'node:fs';
-import { runBenchmark, type BenchRow } from '../src/optimizer/benchmark';
+import {
+  runBenchmark,
+  formatReduction,
+  type BenchRow,
+} from '../src/optimizer/benchmark';
 import { PATCH } from '../src/game/genshin/adapter';
 
 // crit_value scales to the ~100-billion-combination 800 case because its value
@@ -10,8 +14,6 @@ const CRIT_SIZES = [50, 100, 200, 400, 800];
 const ER_SIZES = [50, 100, 200, 400];
 
 const fmt = (n: number): string => n.toLocaleString('en-US');
-const fmtReduction = (r: number): string =>
-  r >= 1 ? `${fmt(Math.round(r))}×` : `${r.toFixed(2)}×`;
 
 const rows: BenchRow[] = [
   ...runBenchmark(CRIT_SIZES, [
@@ -25,7 +27,7 @@ const table = [
   '| --- | --- | --: | --: | --: | --: | --: |',
   ...rows.map(
     (r) =>
-      `| ${fmt(r.size)} | ${r.scenario} | ${fmt(r.naive)} | ${fmt(r.explored)} | ${fmt(r.pruned)} | ${fmtReduction(r.reductionFactor)} | ${r.ms.toFixed(1)} |`,
+      `| ${fmt(r.size)} | ${r.scenario} | ${fmt(r.naive)} | ${fmt(r.explored)} | ${fmt(r.pruned)} | ${formatReduction(r.reductionFactor)} | ${r.ms.toFixed(1)} |`,
   ),
 ].join('\n');
 
@@ -54,10 +56,11 @@ ${table}
 
 **A note on the two objectives.** \`crit_value\` is concentrated on a minority of
 artifacts, so ordering surfaces the winners immediately and the bound tightens hard —
-it scales to an 800-piece inventory (~100 billion naive builds). \`er_pct\` is spread
-across nearly every artifact, so the bound tightens slowly; at 800 it does not finish
-in reasonable time and is capped at 400. Branch-and-bound's effectiveness depends on
-how concentrated the objective is — an honest limit, not a bug.
+it scales to an 800-piece inventory (~100 billion naive builds) in a few seconds.
+\`er_pct\` is spread across nearly every artifact, so the bound tightens slowly; at
+800 it still completes (~47s, one run) but is excluded from this routine table to
+keep \`npm run bench\` fast for everyday use. Branch-and-bound's effectiveness depends
+on how concentrated the objective is — an honest limit, not a bug.
 `;
 
 writeFileSync('docs/speed-report.md', md);

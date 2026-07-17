@@ -18,7 +18,7 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 - **Set bonus** — the effect from wearing 2 (**2pc**) or 4 (**4pc**) of a set. Only the **flat-stat** portion of 2pc (and rare flat-stat 4pc) is **scored**; conditional/non-stat 4pc effects are honoured as a **constraint** but not scored. See [ADR-0003](docs/adr/0003-stat-only-model-no-damage-engine.md).
 - **2+2** — a build satisfying two different 2-piece set bonuses simultaneously.
 - **Stat keys** — `hp, hp_pct, atk, atk_pct, def, def_pct, em, er_pct, crit_rate, crit_dmg, elemental_dmg, physical_dmg, healing`.
-- **Elemental DMG** — `elemental_dmg`; a **single fungible stat** combining all element-specific DMG% bonuses (Pyro/Hydro/…/Dendro). The element is not tracked, so an off-element goblet is scored like an on-element one. Physical DMG (`physical_dmg`) is separate. See [ADR-0011](docs/adr/0011-elemental-dmg-as-single-fungible-stat.md).
+- **Elemental DMG** — `elemental_dmg`; a **single fungible stat** combining all element-specific DMG% bonuses (Pyro/Hydro/…/Dendro). A goblet's element is tracked (`Artifact.element`) and an off-element goblet's main stat is zeroed before scoring. Physical DMG (`physical_dmg`) is separate. See [ADR-0011](docs/adr/0011-elemental-dmg-as-single-fungible-stat.md) and [ADR-0014](docs/adr/0014-element-aware-goblet-scoring.md).
 - **Energy Recharge (ER)** — `er_pct`; commonly a minimum constraint (e.g. ≥160%). Every character starts from a **universal 100% base ER**; this game-wide baseline is supplied by the `genshinAdapter`, not the reference snapshot. See [ADR-0009](docs/adr/0009-adapter-owns-universal-game-baselines.md).
 - **Elemental Mastery (EM)** — `em`.
 - **Crit Value (CV)** — `crit_rate * 2 + crit_dmg`. A common **objective**.
