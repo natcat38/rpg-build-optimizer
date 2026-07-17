@@ -29,7 +29,7 @@ describe('BuildCard grade badge', () => {
     };
     render(<BuildCard build={build} request={req} artifacts={artifacts} />);
     expect(screen.getByText('S')).toBeInTheDocument();
-    expect(screen.getByText(/CRIT Rate 70\/70/)).toBeInTheDocument();
+    expect(screen.getByText(/CRIT Rate 70%\/70%/)).toBeInTheDocument();
   });
 
   it('surfaces the weakest stat when the grade is short of S', () => {

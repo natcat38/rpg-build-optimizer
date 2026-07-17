@@ -11,6 +11,15 @@ import { genshinAdapter } from '../game/genshin/adapter';
 import { buildContext } from './context';
 import { searchBuilds } from './search';
 
+/** Shared "N× fewer evaluations" formatting — used by both the doc-generating
+ *  benchmark script (scripts/benchmark.ts) and the browser hero demo
+ *  (src/components/App.tsx) so the same concept reads consistently everywhere. */
+export function formatReduction(r: number): string {
+  if (r < 1) return `${r.toFixed(2)}×`;
+  if (r < 10) return `${r.toFixed(1)}×`;
+  return `${Math.round(r).toLocaleString('en-US')}×`;
+}
+
 /** Deterministic PRNG so committed benchmark numbers reproduce anywhere. */
 function mulberry32(seed: number): () => number {
   let s = seed >>> 0;

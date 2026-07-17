@@ -1,5 +1,5 @@
 import { writeFileSync } from 'node:fs';
-import { runBenchmark, type BenchRow } from '../src/optimizer/benchmark';
+import { runBenchmark, formatReduction, type BenchRow } from '../src/optimizer/benchmark';
 import { PATCH } from '../src/game/genshin/adapter';
 
 // crit_value scales to the ~100-billion-combination 800 case because its value
@@ -10,8 +10,6 @@ const CRIT_SIZES = [50, 100, 200, 400, 800];
 const ER_SIZES = [50, 100, 200, 400];
 
 const fmt = (n: number): string => n.toLocaleString('en-US');
-const fmtReduction = (r: number): string =>
-  r >= 1 ? `${fmt(Math.round(r))}×` : `${r.toFixed(2)}×`;
 
 const rows: BenchRow[] = [
   ...runBenchmark(CRIT_SIZES, [
@@ -25,7 +23,7 @@ const table = [
   '| --- | --- | --: | --: | --: | --: | --: |',
   ...rows.map(
     (r) =>
-      `| ${fmt(r.size)} | ${r.scenario} | ${fmt(r.naive)} | ${fmt(r.explored)} | ${fmt(r.pruned)} | ${fmtReduction(r.reductionFactor)} | ${r.ms.toFixed(1)} |`,
+      `| ${fmt(r.size)} | ${r.scenario} | ${fmt(r.naive)} | ${fmt(r.explored)} | ${fmt(r.pruned)} | ${formatReduction(r.reductionFactor)} | ${r.ms.toFixed(1)} |`,
   ),
 ].join('\n');
 

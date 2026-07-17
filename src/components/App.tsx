@@ -13,6 +13,7 @@ import { useGame } from '../state/game';
 import { getGame, type GameDescriptor } from '../game/registry';
 import { optimize } from '../workers/optimizeClient';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
+import { formatReduction } from '../optimizer/benchmark';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 
 function Section({
@@ -64,11 +65,7 @@ function ThesisHero({ game }: { game: GameDescriptor }) {
  *  a seeded synthetic inventory (see src/sample/heroExample.ts), plus the exact
  *  search proof — the thing this tool actually does. */
 function SolvedHero({ hero }: { hero: HeroExample }) {
-  const reduction = hero.naive / Math.max(hero.explored, 1);
-  const reductionLabel =
-    reduction < 10
-      ? `${reduction.toFixed(1)}×`
-      : `${Math.round(reduction).toLocaleString()}×`;
+  const reductionLabel = formatReduction(hero.naive / Math.max(hero.explored, 1));
   return (
     <>
       <h1 className="font-display text-4xl font-black leading-tight text-paper sm:text-5xl">

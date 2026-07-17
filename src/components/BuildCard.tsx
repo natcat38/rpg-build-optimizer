@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type {
   Artifact,
   BuildResult,
@@ -7,6 +8,7 @@ import type {
 import { SLOTS } from '../game/types';
 import {
   formatSetName,
+  isPctStat,
   objectiveLabel,
   SLOT_GLYPH,
   SLOT_LABELS,
@@ -48,7 +50,10 @@ export function BuildCard({
 }) {
   const bySlot = new Map(artifacts.map((a) => [a.slot, a]));
   const statTargets = META_TARGETS[request.characterKey]?.statTargets;
-  const grade = statTargets ? gradeBuild(build.totals, statTargets) : null;
+  const grade = useMemo(
+    () => (statTargets ? gradeBuild(build.totals, statTargets) : null),
+    [build.totals, statTargets],
+  );
   const weakest = grade?.perStat.reduce((a, s) => (s.pct < a.pct ? s : a));
 
   return (
@@ -86,14 +91,19 @@ export function BuildCard({
       {grade && (
         <div className="rounded-lg border border-white/5 bg-surface-900/30 px-3 py-2 text-xs text-muted">
           <p className="flex flex-wrap gap-x-3">
-            {grade.perStat.map((s) => (
-              <span key={s.key}>
-                {statLabel(s.key)} {s.have.toFixed(0)}/{s.target.toFixed(0)}{' '}
-                <span className={s.pct >= 1 ? 'text-jade' : 'text-paper/80'}>
-                  ({(s.pct * 100).toFixed(0)}%)
+            {grade.perStat.map((s) => {
+              const unit = isPctStat(s.key) ? '%' : '';
+              return (
+                <span key={s.key}>
+                  {statLabel(s.key)} {s.have.toFixed(0)}
+                  {unit}/{s.target.toFixed(0)}
+                  {unit}{' '}
+                  <span className={s.pct >= 1 ? 'text-jade' : 'text-paper/80'}>
+                    ({(s.pct * 100).toFixed(0)}%)
+                  </span>
                 </span>
-              </span>
-            ))}
+              );
+            })}
           </p>
           {weakest && weakest.pct < 1 && (
             <p className="mt-1 text-paper/80">

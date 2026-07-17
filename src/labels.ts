@@ -35,6 +35,23 @@ export function statLabel(key: StatKey): string {
   return STAT_LABELS[key] ?? key;
 }
 
+// Stats whose values are conventionally displayed as a percentage.
+const PCT_STATS = new Set<StatKey>([
+  'hp_pct',
+  'atk_pct',
+  'def_pct',
+  'er_pct',
+  'crit_rate',
+  'crit_dmg',
+  'elemental_dmg',
+  'physical_dmg',
+  'healing',
+]);
+
+export function isPctStat(key: StatKey): boolean {
+  return PCT_STATS.has(key);
+}
+
 export function objectiveLabel(obj: Objective): string {
   return OBJECTIVE_LABELS[obj] ?? obj;
 }

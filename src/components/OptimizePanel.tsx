@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import type { BuildLevel, Objective, Slot, StatKey } from '../game/types';
 import { BUILD_LEVELS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
@@ -8,6 +8,7 @@ import { useGame } from '../state/game';
 import { getGame } from '../game/registry';
 import {
   formatSetName,
+  isPctStat,
   objectiveLabel,
   SLOT_LABELS,
   statLabel,
@@ -33,24 +34,30 @@ const OBJECTIVES: Objective[] = [
   'elemental_dmg',
 ];
 
-// Stats whose values are conventionally displayed as a percentage.
-const PCT_STATS = new Set<StatKey>([
-  'hp_pct',
-  'atk_pct',
-  'def_pct',
-  'er_pct',
-  'crit_rate',
-  'crit_dmg',
-  'elemental_dmg',
-  'physical_dmg',
-  'healing',
-]);
-
 function setRequirementLabel(meta: MetaTarget): string {
   const req = meta.setRequirement;
   if (req.kind === '2+2')
     return req.setKeys.map((k) => `2pc ${formatSetName(k)}`).join(' + ');
   return `${req.kind} ${formatSetName(req.setKey)}`;
+}
+
+/** Shared shell for the two read-only meta-recipe panels below (recipe
+ *  summary, teammate recs) — same border/background/text treatment and a
+ *  trailing "Source" link out to the guide it was curated from. */
+function InfoPanel({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-white/5 bg-surface-900/40 p-3 text-xs text-muted">
+      {children}
+      <a
+        className="mt-1.5 inline-block text-accent hover:underline"
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Source
+      </a>
+    </div>
+  );
 }
 
 /** Read-only preview of what "Use meta build" is about to apply — the recipe
@@ -61,7 +68,7 @@ function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
     (s) => meta.mains[s],
   );
   return (
-    <div className="rounded-lg border border-white/5 bg-surface-900/40 p-3 text-xs text-muted">
+    <InfoPanel href={meta.source}>
       <p>
         <span className="font-semibold text-paper">
           {setRequirementLabel(meta)}
@@ -88,20 +95,12 @@ function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
             ([k, v]) => (
               <span key={k}>
                 {statLabel(k)} {v}
-                {PCT_STATS.has(k) ? '%' : ''}
+                {isPctStat(k) ? '%' : ''}
               </span>
             ),
           )}
       </p>
-      <a
-        className="mt-1 inline-block text-accent hover:underline"
-        href={meta.source}
-        target="_blank"
-        rel="noreferrer"
-      >
-        Source
-      </a>
-    </div>
+    </InfoPanel>
   );
 }
 
@@ -116,7 +115,7 @@ function TeammatesSummary({
   characters: { key: string; name: string }[];
 }) {
   return (
-    <div className="rounded-lg border border-white/5 bg-surface-900/40 p-3 text-xs text-muted">
+    <InfoPanel href={entry.source}>
       <p className="mb-1.5 font-semibold text-paper">Works well with</p>
       <ul className="space-y-1">
         {entry.recs.map((r) => (
@@ -128,15 +127,7 @@ function TeammatesSummary({
           </li>
         ))}
       </ul>
-      <a
-        className="mt-1.5 inline-block text-accent hover:underline"
-        href={entry.source}
-        target="_blank"
-        rel="noreferrer"
-      >
-        Source
-      </a>
-    </div>
+    </InfoPanel>
   );
 }
 

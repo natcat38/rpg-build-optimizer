@@ -1,3 +1,7 @@
+// ponytail: hand-transcribed from the `source` guides below, same freshness
+// caveat as src/meta/metaTargets.ts — curated as of patch 6.7, no automated
+// drift check; the `source` link is the re-verification path.
+
 /** A curated teammate recommendation (ADR-0007-style: static, sourced, overridable-by-ignoring). */
 export interface TeammateRec {
   characterKey: string;
