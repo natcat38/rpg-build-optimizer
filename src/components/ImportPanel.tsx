@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { type ChangeEvent } from 'react';
-import { parseGOOD } from '../import/good';
+import { parseGOOD, parseGOODRoster } from '../import/good';
 import { fetchUidArtifacts } from '../import/uid';
 import { mergeNew } from '../import/dedupe';
 import { useInventory } from '../state/inventory';
+import { useRoster } from '../state/roster';
 import { useGame } from '../state/game';
 import { getGame } from '../game/registry';
 import type { Artifact } from '../game/types';
@@ -16,14 +17,16 @@ export function ImportPanel() {
   const [uid, setUid] = useState('');
   const [busy, setBusy] = useState(false);
 
-  function mergeDedupe(incoming: Artifact[]) {
+  function mergeDedupe(incoming: Artifact[], suffix = '') {
     // Read live state rather than the render-time `artifacts` closure: onFile
     // and onUid are both async, so a second import can otherwise dedupe
     // against a snapshot that predates the first import's commit.
     const fresh = mergeNew(useInventory.getState().artifacts, incoming);
     addMany(fresh);
     setErr(null);
-    setMsg(`Imported ${fresh.length} ${game.gearNounPlural.toLowerCase()}.`);
+    setMsg(
+      `Imported ${fresh.length} ${game.gearNounPlural.toLowerCase()}.${suffix}`,
+    );
   }
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
@@ -39,7 +42,13 @@ export function ImportPanel() {
         );
         return;
       }
-      mergeDedupe(out);
+      const roster = parseGOODRoster(json);
+      const rosterCount = Object.keys(roster).length;
+      if (rosterCount > 0) useRoster.getState().setRoster(roster);
+      mergeDedupe(
+        out,
+        rosterCount > 0 ? ` Roster: ${rosterCount} characters.` : '',
+      );
     } catch {
       setMsg(null);
       setErr(

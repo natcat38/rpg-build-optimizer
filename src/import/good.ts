@@ -1,4 +1,11 @@
-import type { Artifact, Element, Slot, StatKey, SubStat } from '../game/types';
+import type {
+  Artifact,
+  BuildLevel,
+  Element,
+  Slot,
+  StatKey,
+  SubStat,
+} from '../game/types';
 import { ELEMENTS, SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { validateArtifactDraft } from '../state/artifactValidation';
@@ -100,4 +107,76 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
     });
   }
   return out;
+}
+
+export interface RosterEntry {
+  buildLevel?: BuildLevel;
+  weaponKey?: string;
+}
+
+// Ascension 0..6 → max level cap. A character can't be de-leveled, so the cap
+// is the level the player is heading to — evaluate builds there (ADR-0015).
+const ASCENSION_CAP: BuildLevel[] = [20, 40, 50, 60, 70, 80, 90];
+
+// Same wedge-guard rationale as MAX_ARTIFACTS; real accounts are ~100/150.
+const MAX_ROSTER = 1000;
+
+const normalizeKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/** Owned-roster extraction from a GOOD export: which characters the player
+ *  owns, what weapon each has equipped, and the build level implied by their
+ *  ascension. GOOD keys ("RaidenShogun") and dataset keys ("raiden_shogun",
+ *  "amos'_bow") are matched by normalizing both to alphanumeric lowercase.
+ *  Unresolvable keys (e.g. "TravelerAnemo" — Traveler isn't in the frozen
+ *  dataset) are skipped, mirroring parseGOOD's skip-don't-throw contract. */
+export function parseGOODRoster(json: unknown): Record<string, RosterEntry> {
+  if (typeof json !== 'object' || json === null) return {};
+  const obj = json as Record<string, unknown>;
+  if (obj.format !== 'GOOD') return {};
+  const rawChars = Array.isArray(obj.characters)
+    ? obj.characters.slice(0, MAX_ROSTER)
+    : [];
+  const rawWeapons = Array.isArray(obj.weapons)
+    ? obj.weapons.slice(0, MAX_ROSTER)
+    : [];
+  if (rawChars.length === 0 && rawWeapons.length === 0) return {};
+
+  const charByNorm = new Map(
+    genshinAdapter.characters().map((c) => [normalizeKey(c.key), c.key]),
+  );
+  const weaponByNorm = new Map(
+    genshinAdapter.weapons().map((w) => [normalizeKey(w.key), w.key]),
+  );
+
+  const entries: Record<string, RosterEntry> = {};
+  for (const raw of rawChars) {
+    if (typeof raw !== 'object' || raw === null) continue;
+    const { key, ascension } = raw as { key?: unknown; ascension?: unknown };
+    if (typeof key !== 'string') continue;
+    const ours = charByNorm.get(normalizeKey(key));
+    if (!ours) continue;
+    const entry: RosterEntry = {};
+    if (
+      typeof ascension === 'number' &&
+      Number.isInteger(ascension) &&
+      ascension >= 0 &&
+      ascension <= 6
+    ) {
+      entry.buildLevel = ASCENSION_CAP[ascension];
+    }
+    entries[ours] = entry;
+  }
+  for (const raw of rawWeapons) {
+    if (typeof raw !== 'object' || raw === null) continue;
+    const { key, location } = raw as { key?: unknown; location?: unknown };
+    if (typeof key !== 'string' || typeof location !== 'string') continue;
+    if (location === '') continue; // unequipped
+    const ourChar = charByNorm.get(normalizeKey(location));
+    const ourWeapon = weaponByNorm.get(normalizeKey(key));
+    if (!ourChar || !ourWeapon) continue;
+    // A weapon equipped on a character missing from characters[] still
+    // implies ownership — create the entry.
+    (entries[ourChar] ??= {}).weaponKey = ourWeapon;
+  }
+  return entries;
 }

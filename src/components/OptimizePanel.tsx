@@ -3,6 +3,7 @@ import type { BuildLevel, Objective, Slot, StatKey } from '../game/types';
 import { BUILD_LEVELS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
+import { useRoster } from '../state/roster';
 import { useOptimizeRequest } from '../state/optimizeRequest';
 import { useGame } from '../state/game';
 import { getGame } from '../game/registry';
@@ -139,6 +140,7 @@ export function OptimizePanel({
   running: boolean;
 }) {
   const artifacts = useInventory((s) => s.artifacts);
+  const rosterEntries = useRoster((s) => s.entries);
   const game = getGame(useGame((s) => s.gameId));
   const chars = useMemo(() => genshinAdapter.characters(), []);
   const weapons = useMemo(() => genshinAdapter.weapons(), []);
@@ -156,6 +158,26 @@ export function OptimizePanel({
   const setMinER = useOptimizeRequest((s) => s.setMinER);
   const applyPreset = useOptimizeRequest((s) => s.applyPreset);
 
+  function onCharacterChange(key: string) {
+    setCharacterKey(key);
+    // Pre-fill from the owned roster; both fields stay manually overridable
+    // afterward (same pre-fill-stay-overridable spirit as "Use meta build",
+    // ADR-0007 / ADR-0015).
+    const entry = rosterEntries[key];
+    if (entry?.weaponKey) setWeaponKey(entry.weaponKey);
+    if (entry?.buildLevel) setBuildLevel(entry.buildLevel);
+  }
+
+  const charOptions = useMemo(() => {
+    const owned = (key: string) => key in rosterEntries;
+    const opts = chars.map((c) => ({
+      value: c.key,
+      label: owned(c.key) ? `${c.name} (Owned)` : c.name,
+    }));
+    // Stable sort: owned first, dataset order preserved within each group.
+    return opts.sort((a, b) => Number(owned(b.value)) - Number(owned(a.value)));
+  }, [chars, rosterEntries]);
+
   const hasArtifacts = artifacts.length > 0;
   const canRun = hasArtifacts && !!characterKey;
   const hint = !hasArtifacts
@@ -165,6 +187,9 @@ export function OptimizePanel({
       : null;
   const meta = META_TARGETS[characterKey];
   const teammates = TEAMMATES[characterKey];
+  // A character can't be de-leveled, so a rostered character's build level
+  // is a floor, not just a suggestion — levels below it aren't achievable.
+  const rosterBuildLevel = rosterEntries[characterKey]?.buildLevel;
 
   return (
     <div className="panel space-y-5">
@@ -172,9 +197,9 @@ export function OptimizePanel({
         <div className="block">
           <span className="field-label">Character</span>
           <Combobox
-            options={chars.map((c) => ({ value: c.key, label: c.name }))}
+            options={charOptions}
             value={characterKey}
-            onChange={setCharacterKey}
+            onChange={onCharacterChange}
           />
         </div>
         <div className="block">
@@ -194,11 +219,16 @@ export function OptimizePanel({
               setBuildLevel(Number(e.target.value) as BuildLevel)
             }
           >
-            {BUILD_LEVELS.map((l) => (
-              <option key={l} value={l}>
-                Lv. {l}
-              </option>
-            ))}
+            {BUILD_LEVELS.map((l) => {
+              const alreadyAchieved =
+                rosterBuildLevel != null && l < rosterBuildLevel;
+              return (
+                <option key={l} value={l} disabled={alreadyAchieved}>
+                  Lv. {l}
+                  {alreadyAchieved ? ' (already achieved)' : ''}
+                </option>
+              );
+            })}
           </select>
         </label>
         <label className="block">
@@ -211,6 +241,7 @@ export function OptimizePanel({
             {OBJECTIVES.map((o) => (
               <option key={o} value={o}>
                 {objectiveLabel(o)}
+                {meta?.objective === o ? ' (Recommended)' : ''}
               </option>
             ))}
           </select>
