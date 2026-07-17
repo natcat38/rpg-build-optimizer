@@ -18,11 +18,11 @@ export const TALENT_TARGETS: Record<
   { target: TalentTargets; source: string }
 > = {
   furina: {
-    target: { priority: ['burst', 'skill', 'auto'], levels: { burst: 9, skill: 1, auto: 1 } },
+    target: { priority: ['burst', 'skill', 'auto'], levels: { burst: 9, skill: 9, auto: 1 } },
     source: 'https://keqingmains.com/furina/',
   },
   nahida: {
-    target: { priority: ['burst', 'skill', 'auto'], levels: { burst: 9, skill: 9, auto: 1 } },
+    target: { priority: ['skill', 'burst', 'auto'], levels: { skill: 9, burst: 6, auto: 1 } },
     source: 'https://keqingmains.com/nahida/',
   },
   navia: {
@@ -38,15 +38,15 @@ export const TALENT_TARGETS: Record<
     source: 'https://keqingmains.com/hutao/',
   },
   arataki_itto: {
-    target: { priority: ['auto', 'skill', 'burst'], levels: { auto: 9, skill: 9, burst: 6 } },
+    target: { priority: ['auto', 'burst', 'skill'], levels: { auto: 9, burst: 9, skill: 6 } },
     source: 'https://keqingmains.com/itto/',
   },
   raiden_shogun: {
-    target: { priority: ['burst', 'skill', 'auto'], levels: { burst: 9, skill: 9, auto: 6 } },
+    target: { priority: ['burst', 'skill', 'auto'], levels: { burst: 9, skill: 9, auto: 1 } },
     source: 'https://keqingmains.com/raiden/',
   },
   xiao: {
-    target: { priority: ['auto', 'skill', 'burst'], levels: { auto: 9, skill: 9, burst: 1 } },
+    target: { priority: ['auto', 'skill', 'burst'], levels: { auto: 9, skill: 8, burst: 8 } },
     source: 'https://keqingmains.com/xiao/',
   },
   klee: {
@@ -54,7 +54,7 @@ export const TALENT_TARGETS: Record<
     source: 'https://keqingmains.com/klee/',
   },
   tartaglia: {
-    target: { priority: ['auto', 'skill', 'burst'], levels: { auto: 9, skill: 9, burst: 6 } },
+    target: { priority: ['skill', 'burst', 'auto'], levels: { skill: 9, burst: 9, auto: 1 } },
     source: 'https://keqingmains.com/childe/',
   },
   keqing: {
@@ -62,19 +62,19 @@ export const TALENT_TARGETS: Record<
     source: 'https://keqingmains.com/keqing/',
   },
   kamisato_ayaka: {
-    target: { priority: ['auto', 'burst', 'skill'], levels: { auto: 9, burst: 9, skill: 6 } },
+    target: { priority: ['burst', 'auto', 'skill'], levels: { burst: 9, auto: 9, skill: 6 } },
     source: 'https://keqingmains.com/ayaka/',
   },
   yoimiya: {
-    target: { priority: ['auto', 'skill', 'burst'], levels: { auto: 9, skill: 6, burst: 6 } },
+    target: { priority: ['auto', 'skill', 'burst'], levels: { auto: 9, skill: 6, burst: 1 } },
     source: 'https://keqingmains.com/yoimiya/',
   },
   alhaitham: {
-    target: { priority: ['auto', 'skill', 'burst'], levels: { auto: 9, skill: 9, burst: 1 } },
+    target: { priority: ['skill', 'auto', 'burst'], levels: { skill: 9, auto: 9, burst: 6 } },
     source: 'https://keqingmains.com/q/alhaitham-quickguide',
   },
   cyno: {
-    target: { priority: ['burst', 'skill', 'auto'], levels: { burst: 9, skill: 9, auto: 6 } },
+    target: { priority: ['burst', 'skill', 'auto'], levels: { burst: 9, skill: 9, auto: 1 } },
     source: 'https://keqingmains.com/q/cyno-quickguide',
   },
   wanderer: {
@@ -86,19 +86,19 @@ export const TALENT_TARGETS: Record<
     source: 'https://keqingmains.com/ganyu/',
   },
   arlecchino: {
-    target: { priority: ['auto', 'skill', 'burst'], levels: { auto: 9, skill: 9, burst: 1 } },
+    target: { priority: ['auto', 'burst', 'skill'], levels: { auto: 9, burst: 6, skill: 1 } },
     source: 'https://keqingmains.com/q/arlecchino-quickguide',
   },
   xingqiu: {
-    target: { priority: ['skill', 'burst', 'auto'], levels: { skill: 9, burst: 9, auto: 1 } },
+    target: { priority: ['burst', 'skill', 'auto'], levels: { burst: 9, skill: 9, auto: 1 } },
     source: 'https://keqingmains.com/xingqiu/',
   },
   yelan: {
-    target: { priority: ['auto', 'burst', 'skill'], levels: { auto: 9, burst: 9, skill: 1 } },
+    target: { priority: ['burst', 'skill', 'auto'], levels: { burst: 9, skill: 6, auto: 1 } },
     source: 'https://keqingmains.com/yelan/',
   },
   xiangling: {
-    target: { priority: ['skill', 'burst', 'auto'], levels: { skill: 9, burst: 9, auto: 1 } },
+    target: { priority: ['burst', 'skill', 'auto'], levels: { burst: 9, skill: 9, auto: 1 } },
     source: 'https://keqingmains.com/xiangling/',
   },
   bennett: {
@@ -106,7 +106,7 @@ export const TALENT_TARGETS: Record<
     source: 'https://keqingmains.com/bennett/',
   },
   kaedehara_kazuha: {
-    target: { priority: ['skill', 'burst', 'auto'], levels: { skill: 9, burst: 6, auto: 1 } },
+    target: { priority: ['burst', 'skill', 'auto'], levels: { burst: 9, skill: 6, auto: 1 } },
     source: 'https://keqingmains.com/kazuha/',
   },
   zhongli: {
@@ -114,7 +114,7 @@ export const TALENT_TARGETS: Record<
     source: 'https://keqingmains.com/zhongli/',
   },
   kuki_shinobu: {
-    target: { priority: ['burst', 'skill', 'auto'], levels: { burst: 9, skill: 6, auto: 1 } },
+    target: { priority: ['skill', 'burst', 'auto'], levels: { skill: 9, burst: 6, auto: 1 } },
     source: 'https://keqingmains.com/q/shinobu-quickguide/',
   },
   faruzan: {
@@ -134,7 +134,7 @@ export const TALENT_TARGETS: Record<
     source: 'https://keqingmains.com/q/wriothesley-quickguide/',
   },
   clorinde: {
-    target: { priority: ['auto', 'skill', 'burst'], levels: { auto: 9, skill: 9, burst: 6 } },
+    target: { priority: ['skill', 'burst', 'auto'], levels: { skill: 9, burst: 9, auto: 1 } },
     source: 'https://keqingmains.com/q/clorinde-quickguide/',
   },
 };

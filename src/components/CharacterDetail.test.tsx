@@ -34,7 +34,7 @@ describe('CharacterDetail', () => {
     useRoster.getState().setRoster({ furina: { weaponKey: 'favonius_sword' } });
     useWeaponInventory.getState().setWeapons([
       { key: 'favonius_sword', level: 90, refinement: 1, location: 'furina' },
-      { key: 'freedomsworn', level: 90, refinement: 1, location: null },
+      { key: 'primordial_jade_cutter', level: 90, refinement: 1, location: null },
     ]);
     renderDetail('furina');
     // "Switch to:" and the weapon name sit in separate text nodes around a
@@ -43,7 +43,7 @@ describe('CharacterDetail', () => {
       screen.getByText(
         (_, el) =>
           el?.tagName === 'P' &&
-          /Switch to:\s*Freedom-Sworn/i.test(el.textContent ?? ''),
+          /Switch to:\s*Primordial Jade Cutter/i.test(el.textContent ?? ''),
       ),
     ).toBeInTheDocument();
   });
@@ -116,7 +116,7 @@ describe('CharacterDetail', () => {
 
   it('shows a fully-fieldable team comp using owned members', () => {
     useRoster.getState().setRoster({
-      furina: { weaponKey: 'freedomsworn' }, // matches the only owned weapon, avoids a stray "don't own" from the weapon card
+      furina: { weaponKey: 'finale_of_the_deep' }, // matches the only owned weapon, avoids a stray "don't own" from the weapon card
       neuvillette: {},
       kaedehara_kazuha: {},
       bennett: {},
@@ -124,7 +124,7 @@ describe('CharacterDetail', () => {
     useWeaponInventory
       .getState()
       .setWeapons([
-        { key: 'freedomsworn', level: 90, refinement: 1, location: 'furina' },
+        { key: 'finale_of_the_deep', level: 90, refinement: 1, location: 'furina' },
       ]);
     renderDetail('furina');
     expect(screen.getByText('Neuvillette')).toBeInTheDocument();
