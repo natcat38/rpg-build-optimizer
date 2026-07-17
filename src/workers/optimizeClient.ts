@@ -9,7 +9,7 @@ import { genshinAdapter } from '../game/genshin/adapter';
 import { runSearchRequest, readSearchResponse } from './protocol';
 import type { WorkerRequest } from './protocol';
 
-// A goblet's element (ADR-0013) is only meaningful relative to the character
+// A goblet's element (ADR-0014) is only meaningful relative to the character
 // being optimised for. Off-element goblets are still legal gear (their
 // sub-stats count) but their elemental_dmg main stat is dead weight in-game,
 // so zero it out before the solver ever sees it — no solver changes needed.
@@ -17,9 +17,7 @@ function zeroOffElementGoblets(
   inventory: Artifact[],
   characterKey: string,
 ): Artifact[] {
-  const character = genshinAdapter
-    .characters()
-    .find((c) => c.key === characterKey);
+  const character = genshinAdapter.character(characterKey);
   if (!character) return inventory;
   return inventory.map((a) =>
     a.element && a.element !== character.element

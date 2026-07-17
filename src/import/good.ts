@@ -1,5 +1,5 @@
 import type { Artifact, Element, Slot, StatKey, SubStat } from '../game/types';
-import { SLOTS } from '../game/types';
+import { ELEMENTS, SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { validateArtifactDraft } from '../state/artifactValidation';
 
@@ -32,16 +32,11 @@ const STAT_MAP: Record<string, StatKey> = {
 };
 
 // GOOD's mainStatKey already carries the element for elemental_dmg goblets
-// (e.g. 'pyro_dmg_') — capture it instead of discarding it (ADR-0013).
-const ELEMENT_KEYS: Record<string, Element> = {
-  pyro_dmg_: 'pyro',
-  hydro_dmg_: 'hydro',
-  electro_dmg_: 'electro',
-  cryo_dmg_: 'cryo',
-  anemo_dmg_: 'anemo',
-  geo_dmg_: 'geo',
-  dendro_dmg_: 'dendro',
-};
+// (e.g. 'pyro_dmg_') — capture it instead of discarding it (ADR-0014).
+// Derived from ELEMENTS so this can't drift out of sync with the canonical list.
+const ELEMENT_KEYS: Record<string, Element> = Object.fromEntries(
+  ELEMENTS.map((el) => [`${el}_dmg_`, el]),
+) as Record<string, Element>;
 
 interface GoodArtifact {
   setKey: string;
@@ -101,7 +96,7 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
         raw.level,
       ),
       subStats,
-      element: ELEMENT_KEYS[raw.mainStatKey],
+      element: slot === 'goblet' ? ELEMENT_KEYS[raw.mainStatKey] : undefined,
     });
   }
   return out;

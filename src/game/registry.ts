@@ -43,3 +43,9 @@ export const GAMES: Record<GameId, GameDescriptor> = {
 };
 
 export const GAME_LIST: GameDescriptor[] = Object.values(GAMES);
+
+/** Safe lookup for a persisted `gameId` (localStorage can outlive a removed/
+ *  renamed GameId variant) — falls back to Genshin rather than crashing. */
+export function getGame(id: GameId): GameDescriptor {
+  return GAMES[id] ?? GAMES.genshin;
+}

@@ -10,7 +10,7 @@ import { decodeBuild } from '../share/url';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest, currentRequest } from '../state/optimizeRequest';
 import { useGame } from '../state/game';
-import { GAMES, type GameDescriptor } from '../game/registry';
+import { getGame, type GameDescriptor } from '../game/registry';
 import { optimize } from '../workers/optimizeClient';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
@@ -120,7 +120,9 @@ function ComingSoon({ game }: { game: GameDescriptor }) {
 
 export function App() {
   const gameId = useGame((s) => s.gameId);
-  const game = GAMES[gameId];
+  const game = getGame(gameId);
+
+  const isLive = game.availability === 'live';
 
   const artifacts = useInventory((s) => s.artifacts);
   const sampleMode =
@@ -139,12 +141,13 @@ export function App() {
   // effect (after first paint) rather than blocking initial render.
   const [hero, setHero] = useState<HeroExample | null>(null);
   useEffect(() => {
-    if (game.availability !== 'live' || !sampleMode) return;
+    // Guarded by `hero` itself (not just omitted from deps): once computed,
+    // keep showing it even if the user's inventory state changes shape
+    // afterward, but still compute it the first time sampleMode turns true
+    // (e.g. a returning user who starts with real gear already loaded).
+    if (hero || !isLive || !sampleMode) return;
     setHero(buildHeroExample());
-    // sampleMode intentionally excluded: once computed, keep showing it even
-    // if the user's inventory state changes shape afterward.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [game.availability]);
+  }, [isLive, sampleMode, hero]);
 
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get('b');
@@ -231,7 +234,7 @@ export function App() {
     }
   }, [result]);
 
-  const showSolvedHero = game.availability === 'live' && sampleMode && hero;
+  const showSolvedHero = isLive && sampleMode && hero;
 
   return (
     <div className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
@@ -239,7 +242,7 @@ export function App() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <p className="eyebrow">RPG Build Optimizer</p>
           <div className="flex flex-wrap items-center gap-3">
-            {game.availability === 'live' && (
+            {isLive && (
               <span className="chip">
                 <span className="h-1.5 w-1.5 rounded-full bg-jade" />
                 {game.source} · patch {game.patch}
@@ -255,7 +258,11 @@ export function App() {
         )}
       </header>
 
-      {game.availability === 'coming-soon' ? (
+      {/* A decoded shared build (?b=) or its decode error must stay visible even
+          when the active game is coming-soon — the link may point at content
+          from the (live) game it was shared for, independent of the current
+          GameSwitcher selection. */}
+      {!isLive && !result && !sharedError ? (
         <ComingSoon game={game} />
       ) : (
         <>
@@ -336,7 +343,7 @@ export function App() {
 
       <footer className="mt-16 border-t border-white/5 pt-6 text-center text-xs text-muted/70">
         Built with branch-and-bound optimization in a Web Worker
-        {game.availability === 'live' && (
+        {isLive && (
           <>
             {' '}
             · Data from {game.source} (patch {game.patch})

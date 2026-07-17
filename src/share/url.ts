@@ -145,9 +145,13 @@ function isArtifact(x: unknown): x is Artifact {
     Number.isFinite(a.mainStatValue) &&
     Array.isArray(a.subStats) &&
     a.subStats.every(isSubStat) &&
-    // Optional (ADR-0013): absent on links minted before element tracking existed.
+    // Optional (ADR-0014): absent on links minted before element tracking existed.
+    // Only ever meaningful on an elemental_dmg goblet — reject it anywhere else
+    // rather than silently accepting an inconsistent artifact.
     (a.element === undefined ||
-      (ELEMENTS as readonly string[]).includes(a.element as string))
+      ((ELEMENTS as readonly string[]).includes(a.element as string) &&
+        a.slot === 'goblet' &&
+        a.mainStat === 'elemental_dmg'))
   );
 }
 

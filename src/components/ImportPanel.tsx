@@ -5,12 +5,12 @@ import { fetchUidArtifacts } from '../import/uid';
 import { mergeNew } from '../import/dedupe';
 import { useInventory } from '../state/inventory';
 import { useGame } from '../state/game';
-import { GAMES } from '../game/registry';
+import { getGame } from '../game/registry';
 import type { Artifact } from '../game/types';
 
 export function ImportPanel() {
   const { artifacts, addMany } = useInventory();
-  const game = GAMES[useGame((s) => s.gameId)];
+  const game = getGame(useGame((s) => s.gameId));
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [uid, setUid] = useState('');

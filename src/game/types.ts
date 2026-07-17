@@ -59,7 +59,7 @@ export interface Artifact {
   mainStat: StatKey;
   mainStatValue: number; // resolved from rarity+level tables at creation/import time
   subStats: SubStat[]; // <=4, none equal to mainStat
-  /** Which element an elemental_dmg goblet's main stat is (ADR-0013). Set only
+  /** Which element an elemental_dmg goblet's main stat is (ADR-0014). Set only
    *  when mainStat === 'elemental_dmg'; unset means "unknown" (treated as on-element). */
   element?: Element;
 }

@@ -6,7 +6,7 @@ export function artifactHash(a: Artifact): string {
     .sort((x, y) => x.key.localeCompare(y.key))
     .map((s) => `${s.key}:${s.value}`)
     .join(',');
-  return `${a.setKey}|${a.slot}|${a.rarity}|${a.level}|${a.mainStat}|${subs}`;
+  return `${a.setKey}|${a.slot}|${a.rarity}|${a.level}|${a.mainStat}|${a.element ?? ''}|${subs}`;
 }
 
 /**

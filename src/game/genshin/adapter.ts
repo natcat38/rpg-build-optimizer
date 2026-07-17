@@ -41,6 +41,13 @@ export const genshinAdapter = {
     }));
   },
 
+  /** Single-character lookup without mapping the full dataset. */
+  character(key: string): CharacterMeta | undefined {
+    const c = data.characters.find((x) => x.key === key);
+    if (!c) return undefined;
+    return { key: c.key, name: c.name, element: c.element as CharacterMeta['element'] };
+  },
+
   weapons(): WeaponMeta[] {
     return data.weapons.map((w) => ({
       key: w.key,

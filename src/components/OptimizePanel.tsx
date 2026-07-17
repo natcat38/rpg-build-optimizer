@@ -5,7 +5,7 @@ import { genshinAdapter } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest } from '../state/optimizeRequest';
 import { useGame } from '../state/game';
-import { GAMES } from '../game/registry';
+import { getGame } from '../game/registry';
 import {
   formatSetName,
   objectiveLabel,
@@ -77,7 +77,7 @@ function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
       </p>
       <p className="mt-1 flex flex-wrap gap-x-3">
         {meta.erTarget != null && <span>ER target {meta.erTarget}%</span>}
-        {meta.critRatioTarget != null && (
+        {meta.critRatioTarget != null && meta.critRatioTarget > 0 && (
           <span>
             CR:CD ≈ 1:
             {((1 - meta.critRatioTarget) / meta.critRatioTarget).toFixed(1)}
@@ -148,7 +148,7 @@ export function OptimizePanel({
   running: boolean;
 }) {
   const artifacts = useInventory((s) => s.artifacts);
-  const game = GAMES[useGame((s) => s.gameId)];
+  const game = getGame(useGame((s) => s.gameId));
   const chars = useMemo(() => genshinAdapter.characters(), []);
   const weapons = useMemo(() => genshinAdapter.weapons(), []);
 

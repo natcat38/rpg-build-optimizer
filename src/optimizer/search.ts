@@ -108,18 +108,24 @@ function setBonusCeilingAt(
   slotIndex: number,
 ): number {
   let bestSingle = 0;
-  const twoValues: number[] = [];
+  // Top two `two` values across distinct sets, tracked without allocating —
+  // this runs once per search node (potentially hundreds of thousands of times).
+  let top1 = 0;
+  let top2 = 0;
   for (let i = 0; i < relevant.length; i++) {
     const r = relevant[i];
     const feasibleMax = matched[i] + r.remaining[slotIndex];
     const two = feasibleMax >= 2 ? r.two : 0;
     const four = feasibleMax >= 4 ? r.four : 0;
     bestSingle = Math.max(bestSingle, two + four);
-    twoValues.push(two);
+    if (two > top1) {
+      top2 = top1;
+      top1 = two;
+    } else if (two > top2) {
+      top2 = two;
+    }
   }
-  twoValues.sort((a, b) => b - a);
-  const bestTwoPlusTwo = (twoValues[0] ?? 0) + (twoValues[1] ?? 0);
-  return Math.max(bestSingle, bestTwoPlusTwo);
+  return Math.max(bestSingle, top1 + top2);
 }
 
 function makeBuildResult(

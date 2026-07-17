@@ -151,7 +151,7 @@ export const DEFAULT_SEED = 20260609;
 
 // Each slot always has >=1 artifact when built via makeInventory(size>=5), so
 // the product is never 0; searchBuilds() guards the empty-slot case independently.
-function naiveCount(inv: Artifact[]): number {
+export function naiveCount(inv: Artifact[]): number {
   return SLOTS.map((s) => inv.filter((a) => a.slot === s).length).reduce(
     (p, n) => p * n,
     1,
