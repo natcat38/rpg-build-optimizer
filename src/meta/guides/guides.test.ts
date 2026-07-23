@@ -295,6 +295,16 @@ describe('GUIDES data integrity', () => {
     sandrone: 'claymore',
     shenhe: 'polearm',
     skirk: 'sword',
+    baizhu: 'catalyst',
+    collei: 'bow',
+    emilie: 'polearm',
+    kaveh: 'claymore',
+    kinich: 'claymore',
+    kirara: 'sword',
+    lauma: 'catalyst',
+    nefer: 'catalyst',
+    tighnari: 'bow',
+    yaoyao: 'polearm',
   };
 
   it('every characterKey resolves against the dataset', () => {
