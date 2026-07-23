@@ -278,6 +278,23 @@ describe('GUIDES data integrity', () => {
     venti: 'bow',
     xianyun: 'catalyst',
     yumemizuki_mizuki: 'catalyst',
+    aloy: 'bow',
+    charlotte: 'catalyst',
+    chongyun: 'claymore',
+    citlali: 'catalyst',
+    diona: 'bow',
+    escoffier: 'polearm',
+    eula: 'claymore',
+    freminet: 'claymore',
+    kaeya: 'sword',
+    layla: 'sword',
+    lohen: 'polearm',
+    mika: 'polearm',
+    qiqi: 'sword',
+    rosaria: 'polearm',
+    sandrone: 'claymore',
+    shenhe: 'polearm',
+    skirk: 'sword',
   };
 
   it('every characterKey resolves against the dataset', () => {
