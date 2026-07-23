@@ -100,6 +100,29 @@ export const electro: Record<string, CharacterGuide> = {
       },
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['crit_rate', 'crit_dmg', 'atk_pct', 'em'],
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Adds AoE Electro damage at both the start and end of her Elemental Skill blink.',
+      },
+      {
+        level: 2,
+        note: 'Chance to generate Elemental Particles when hitting Electro-affected enemies.',
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: 'Grants a temporary ATK bonus after triggering an Electro reaction.',
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'Grants a brief Electro DMG Bonus on attacking, stacking independently.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'mistsplitter_reforged',
@@ -161,6 +184,30 @@ export const electro: Record<string, CharacterGuide> = {
       erTarget: 140,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'em'],
+      floors: { er_pct: 140 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Grants a bonus Normal Attack SPD boost after casting his Burst, refreshed by Judication hits.',
+      },
+      {
+        level: 2,
+        note: 'Normal Attacks grant a stacking Electro DMG Bonus.',
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: 'Restores Energy to nearby teammates when triggering Elemental Reactions.',
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'Grants a stacking buff that triggers bonus Duststalker Bolts on Normal Attacks.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'staff_of_the_scarlet_sands',

@@ -107,6 +107,30 @@ export const dendro: Record<string, CharacterGuide> = {
         em: 200,
       },
     },
+    substats: {
+      priority: ['er_pct', 'em', 'crit_rate', 'crit_dmg'],
+      floors: { er_pct: 105, em: 200 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: "Projection Attack hits reduce his Elemental Skill's cooldown — mainly useful in overworld/co-op.",
+      },
+      {
+        level: 2,
+        note: 'Each Mirror stack grants bonus Elemental Mastery, up to a cap.',
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: 'Consuming or generating Mirrors via his Burst grants EM to teammates and Dendro DMG to Alhaitham.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Guarantees Mirrors after his Burst and grants CRIT buffs when the Mirror cap is exceeded — his best constellation.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'light_of_foliar_incision',

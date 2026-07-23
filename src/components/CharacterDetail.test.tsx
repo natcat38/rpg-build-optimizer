@@ -169,14 +169,14 @@ describe('CharacterDetail', () => {
   });
 
   it('omits the stat-targets card for a character with neither statTargets nor substats', () => {
-    useRoster.getState().setRoster({ keqing: {} });
-    renderDetail('keqing');
+    useRoster.getState().setRoster({ diluc: {} });
+    renderDetail('diluc');
     expect(screen.queryByText('Recommended Stats')).toBeNull();
   });
 
   it('omits the constellation card when no constellation guidance is curated', () => {
-    useRoster.getState().setRoster({ keqing: {} });
-    renderDetail('keqing');
+    useRoster.getState().setRoster({ diluc: {} });
+    renderDetail('diluc');
     expect(screen.queryByText('Constellations')).toBeNull();
   });
 

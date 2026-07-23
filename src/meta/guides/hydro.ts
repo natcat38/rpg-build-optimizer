@@ -275,6 +275,30 @@ export const hydro: Record<string, CharacterGuide> = {
       erTarget: 140,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'atk_pct'],
+      floors: { er_pct: 140 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Increases his max Rain Sword count, improving healing and damage reduction uptime.',
+      },
+      {
+        level: 2,
+        note: "Extends his Burst's duration and applies a Hydro RES shred to enemies.",
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: "Boosts his Elemental Skill's damage for the duration of his Burst.",
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'Changes his sword-rain attack pattern and restores Energy, sharply reducing his ER requirement.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'primordial_jade_cutter',
@@ -342,6 +366,30 @@ export const hydro: Record<string, CharacterGuide> = {
         crit_dmg: 140,
       },
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'hp_pct'],
+      floors: { er_pct: 160 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Grants an additional Elemental Skill charge, easing rotation and Energy needs.',
+      },
+      {
+        level: 2,
+        note: 'Burst waves fire an extra arrow that deals bonus Hydro DMG based on max HP.',
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: 'Marked enemies grant nearby party members a Max HP bonus — strong with HP-scaling teammates.',
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'After her Burst, Normal Attacks become enhanced Hydro shots for a short window.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'aqua_simulacra',

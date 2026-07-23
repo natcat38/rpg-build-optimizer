@@ -15,6 +15,30 @@ export const cryo: Record<string, CharacterGuide> = {
       erTarget: 140,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'crit_dmg', 'atk_pct', 'crit_rate'],
+      floors: { er_pct: 140 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Reduces Elemental Skill cooldown on Normal/Charged Attack hits — minor rotational impact.',
+      },
+      {
+        level: 2,
+        note: 'Elemental Burst creates two extra miniature storms, adding solid single-target and boss damage.',
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: "Applies a DEF shred to nearby opponents, boosting both her and the team's damage.",
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'Grants a large DMG bonus to one Charged Attack periodically — pairs well with Shenhe or speedrun setups.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'mistsplitter_reforged',
@@ -83,6 +107,27 @@ export const cryo: Record<string, CharacterGuide> = {
         atk: 1800,
       },
     },
+    substats: {
+      priority: ['er_pct', 'crit_dmg', 'atk_pct', 'crit_rate'],
+      floors: { er_pct: 111 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Charged Attacks reduce enemy Cryo RES and generate Energy on hit.',
+      },
+      { level: 2, note: 'Elemental Skill gains an additional charge.' },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: 'Enemies caught in her Burst take increasingly more damage over its duration.',
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'Frostflake Arrow charges instantly for a short time after using her Elemental Skill.',
+      },
+    ],
     weapons: [
       {
         weaponKey: "amos'_bow",

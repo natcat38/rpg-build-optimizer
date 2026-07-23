@@ -104,6 +104,30 @@ export const anemo: Record<string, CharacterGuide> = {
       critRatioTarget: 0.333,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['crit_rate', 'crit_dmg', 'atk_pct', 'er_pct'],
+      floors: { er_pct: 100 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Increases Normal/Charged Attack speed in Windfavored state and adds damage to his wind arrows.',
+      },
+      {
+        level: 2,
+        note: 'Increases Burst damage based on remaining Kuugoryoku Points when cast.',
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: 'Grants a random elemental buff when his Skill contacts an element, up to three at once.',
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'Normal Attacks fire additional Anemo arcs and restore Kuugoryoku Points when low.',
+      },
+    ],
     weapons: [
       {
         weaponKey: "tulaytullah's_remembrance",

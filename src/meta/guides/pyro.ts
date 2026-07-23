@@ -187,6 +187,29 @@ export const pyro: Record<string, CharacterGuide> = {
       },
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['crit_rate', 'crit_dmg', 'atk_pct', 'em'],
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Extends the Aurous Blaze mark duration and grants a temporary ATK bonus when marked enemies are defeated.',
+      },
+      {
+        level: 2,
+        note: 'Grants a Pyro DMG bonus on crit hits, even while off-field.',
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: "Reduces her Elemental Skill's cooldown when Aurous Blaze marks explode.",
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Chance for Normal Attacks to fire an additional Blazing Arrow during Skill uptime.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'thundering_pulse',
@@ -250,6 +273,30 @@ export const pyro: Record<string, CharacterGuide> = {
       erTarget: 150,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'atk_pct'],
+      floors: { er_pct: 150 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Doubles the damage bonus from her Mask of the Red Death state and grants interruption resistance on Normal/Charged Attacks.',
+      },
+      {
+        level: 2,
+        note: 'Blood-Debt Directives convert immediately into Dues; clearing Dues triggers an AoE Pyro attack and RES buffs.',
+      },
+      { level: 3, note: '+3 Normal Attack level.' },
+      {
+        level: 4,
+        note: "Absorbing a Blood-Debt Directive reduces her Burst's cooldown and restores Energy.",
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Burst damage scales with her Bond of Life, and her attacks gain CRIT buffs after using her Elemental Skill.',
+      },
+    ],
     weapons: [
       {
         weaponKey: "crimson_moon's_semblance",
