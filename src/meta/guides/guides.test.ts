@@ -264,6 +264,20 @@ describe('GUIDES data integrity', () => {
     kujou_sara: 'bow',
     wriothesley: 'catalyst',
     clorinde: 'sword',
+    chasca: 'bow',
+    ifa: 'catalyst',
+    jahoda: 'bow',
+    jean: 'sword',
+    lan_yan: 'catalyst',
+    lynette: 'sword',
+    prune: 'catalyst',
+    sayu: 'claymore',
+    shikanoin_heizou: 'catalyst',
+    sucrose: 'catalyst',
+    varka: 'claymore',
+    venti: 'bow',
+    xianyun: 'catalyst',
+    yumemizuki_mizuki: 'catalyst',
   };
 
   it('every characterKey resolves against the dataset', () => {
