@@ -190,6 +190,30 @@ export const anemo: Record<string, CharacterGuide> = {
       erTarget: 190,
       objective: 'em',
     },
+    substats: {
+      priority: ['er_pct', 'em', 'atk_pct', 'crit_rate'],
+      floors: { er_pct: 190 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Reduces his Elemental Skill cooldown and resets it on casting his Burst.',
+      },
+      {
+        level: 2,
+        note: 'Grants Kazuha and the on-field character bonus Elemental Mastery while his Burst field is active.',
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: 'Regenerates Energy when his Skill cooldown is low, and while gliding.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Grants Anemo infusion after using his Skill or Burst and scales his attacks with Elemental Mastery.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'freedomsworn',
@@ -253,6 +277,30 @@ export const anemo: Record<string, CharacterGuide> = {
       erTarget: 275,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'atk_pct'],
+      floors: { er_pct: 275 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Allows firing up to two Hurricane Arrows per Elemental Skill cast, as a backup if one misses.',
+      },
+      {
+        level: 2,
+        note: "Extends her Burst's duration, improving buff and debuff uptime.",
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: "Her Skill's vortices restore additional Energy based on enemies hit.",
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Adds an Anemo CRIT DMG buff and enables off-field vortex triggers during her Burst.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'favonius_warbow',

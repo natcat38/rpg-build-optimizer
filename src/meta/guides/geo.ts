@@ -190,6 +190,26 @@ export const geo: Record<string, CharacterGuide> = {
       },
       objective: 'hp_pct',
     },
+    substats: {
+      priority: ['hp_pct', 'crit_rate'],
+    },
+    constellations: [
+      { level: 1, note: 'Allows two Stone Steles to exist at once.' },
+      {
+        level: 2,
+        note: 'His Burst grants a shield to nearby characters when the meteor lands.',
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: "Enlarges his Burst's radius and extends the Petrification duration.",
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Converts a portion of incoming shield damage into healing for the active character.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'black_tassel',

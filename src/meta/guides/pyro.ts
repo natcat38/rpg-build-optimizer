@@ -361,6 +361,30 @@ export const pyro: Record<string, CharacterGuide> = {
       critRatioTarget: 0.333,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'em'],
+      floors: { er_pct: 160 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: "Guoba's attacks reduce enemy Pyro RES on hit.",
+      },
+      {
+        level: 2,
+        note: 'Normal Attack strings apply a delayed AoE Pyro explosion.',
+      },
+      { level: 3, note: '+3 Pyronado (Elemental Burst) level.' },
+      {
+        level: 4,
+        note: "Extends Pyronado's duration — her single strongest constellation in any team.",
+      },
+      { level: 5, note: '+3 Guoba Attack (Elemental Skill) level.' },
+      {
+        level: 6,
+        note: 'Grants nearby party members a Pyro DMG Bonus for the duration of Pyronado.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'the_catch',
@@ -423,6 +447,30 @@ export const pyro: Record<string, CharacterGuide> = {
       erTarget: 180,
       objective: 'hp_pct',
     },
+    substats: {
+      priority: ['hp_pct', 'er_pct', 'crit_rate', 'crit_dmg'],
+      floors: { er_pct: 180 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Removes the cap on his ATK buff and adds a portion of his own base ATK to it.',
+      },
+      {
+        level: 2,
+        note: 'Grants bonus Energy Recharge whenever his HP drops below a threshold.',
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: 'Adds a follow-up attack to a charged variant of his Elemental Skill.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Grants nearby melee allies a Pyro DMG Bonus and Pyro infusion.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'aquila_favonia',

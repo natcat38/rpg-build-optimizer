@@ -191,6 +191,30 @@ export const cryo: Record<string, CharacterGuide> = {
       erTarget: 100,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['crit_rate', 'crit_dmg', 'atk_pct', 'er_pct'],
+      floors: { er_pct: 100 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Unlocks an enhanced Charged Attack after finishing a Normal Attack chain in his Skill state, extending Skill duration on landing it.',
+      },
+      {
+        level: 2,
+        note: 'Stacks from his ascension passive increase his Burst damage.',
+      },
+      { level: 3, note: '+3 Normal Attack level.' },
+      {
+        level: 4,
+        note: 'Increases the healing from his enhanced Charged Attack and grants an Attack SPD buff when it overflows.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'His enhanced Charged Attack gains bonus CRIT stats and fires an additional icicle strike.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'cashflow_supervision',

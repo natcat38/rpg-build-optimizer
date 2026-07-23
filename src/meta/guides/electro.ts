@@ -272,6 +272,30 @@ export const electro: Record<string, CharacterGuide> = {
       erTarget: 135,
       objective: 'em',
     },
+    substats: {
+      priority: ['em', 'er_pct', 'hp_pct'],
+      floors: { er_pct: 135 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: "Increases her Burst's AoE, better for hitting multiple enemies.",
+      },
+      {
+        level: 2,
+        note: "Extends her Skill's duration, improving uptime.",
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: 'Her Normal Attacks trigger bonus AoE Electro damage periodically while her Skill is active.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Survives lethal damage once on a cooldown and gains bonus Elemental Mastery at low HP.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'freedomsworn',
@@ -337,6 +361,30 @@ export const electro: Record<string, CharacterGuide> = {
       critRatioTarget: 0.333,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'atk_pct', 'crit_rate', 'crit_dmg'],
+      floors: { er_pct: 160 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Reduces her Elemental Skill cooldown when Tengu Juurai grants buffs or hits opponents.',
+      },
+      {
+        level: 2,
+        note: 'Leaves a weaker Crowfeather at her original position when using her Elemental Burst.',
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: 'Increases the number of Tengu Juurai: Stormcluster released by her Skill follow-up.',
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'Grants a large bonus CRIT DMG to the Electro damage of characters she buffs.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'elegy_for_the_end',
@@ -400,6 +448,30 @@ export const electro: Record<string, CharacterGuide> = {
       erTarget: 110,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'atk_pct'],
+      floors: { er_pct: 110 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Her Normal Attacks generate coordinated shade strikes during Night Vigil.',
+      },
+      {
+        level: 2,
+        note: "Increases her ascension passive's buff value and grants interruption resistance at max stacks.",
+      },
+      { level: 3, note: "+3 Hunter's Vigil (Elemental Skill) level." },
+      {
+        level: 4,
+        note: 'Boosts her Elemental Burst damage based on her current Bond of Life.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Grants CRIT buffs, summons defensive shades, and grants damage reduction during Night Vigil.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'absolution',

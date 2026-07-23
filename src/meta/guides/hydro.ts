@@ -457,6 +457,30 @@ export const hydro: Record<string, CharacterGuide> = {
         hp: 65000,
       },
     },
+    substats: {
+      priority: ['er_pct', 'hp_pct', 'crit_rate', 'crit_dmg'],
+      floors: { er_pct: 115 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Increases her bubble bounce count, improving buff stacking and healing.',
+      },
+      {
+        level: 2,
+        note: 'Applies a Hydro RES shred to enemies hit and grants personal shields during her Skill and Burst.',
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: "Extends her Burst's duration for additional healing/damage instances.",
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Her Burst gains CRIT Rate and CRIT DMG scaling with her max HP.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'silvershower_heartstrings',
