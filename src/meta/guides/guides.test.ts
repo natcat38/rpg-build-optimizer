@@ -305,6 +305,18 @@ describe('GUIDES data integrity', () => {
     nefer: 'catalyst',
     tighnari: 'bow',
     yaoyao: 'polearm',
+    beidou: 'claymore',
+    dori: 'claymore',
+    fischl: 'bow',
+    flins: 'polearm',
+    iansan: 'polearm',
+    ineffa: 'polearm',
+    lisa: 'catalyst',
+    ororon: 'bow',
+    razor: 'claymore',
+    sethos: 'bow',
+    varesa: 'catalyst',
+    yae_miko: 'catalyst',
   };
 
   it('every characterKey resolves against the dataset', () => {
