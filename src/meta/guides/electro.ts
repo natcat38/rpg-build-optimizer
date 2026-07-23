@@ -16,6 +16,29 @@ export const electro: Record<string, CharacterGuide> = {
       critRatioTarget: 0.333,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['crit_rate', 'crit_dmg', 'atk_pct', 'er_pct'],
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Speeds up Resolve stacking, especially from Electro Elemental Bursts on the team.',
+      },
+      {
+        level: 2,
+        note: "Best stopping point: during her Burst, her attacks ignore a portion of enemies' DEF.",
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: 'On Burst end, grants nearby party members a temporary ATK bonus.',
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: "During her Burst, her attacks reduce nearby allies' Elemental Burst cooldowns.",
+      },
+    ],
     weapons: [
       {
         weaponKey: 'engulfing_lightning',

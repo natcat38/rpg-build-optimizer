@@ -103,6 +103,30 @@ export const geo: Record<string, CharacterGuide> = {
       erTarget: 130,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'def_pct'],
+      floors: { er_pct: 130 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Grants Superlative Superstrength stacks immediately, then more shortly after casting his Burst.',
+      },
+      {
+        level: 2,
+        note: "Nearby Geo party members reduce his Burst's cooldown and restore Energy.",
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: 'On Burst end, grants nearby party members a DEF and ATK bonus.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Charged Attacks gain bonus CRIT DMG and a chance to not consume Superstrength stacks.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'redhorn_stonethresher',

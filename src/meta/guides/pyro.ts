@@ -15,6 +15,29 @@ export const pyro: Record<string, CharacterGuide> = {
       critRatioTarget: 0.333,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['crit_rate', 'crit_dmg', 'hp_pct', 'atk_pct'],
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Charged Attacks during Paramita Papilio consume no stamina, enabling more attacks per rotation.',
+      },
+      {
+        level: 2,
+        note: 'Increases Blood Blossom damage based on max HP; can also be applied via her Burst.',
+      },
+      { level: 3, note: '+3 Guide to Afterlife (Elemental Skill) level.' },
+      {
+        level: 4,
+        note: 'Defeating an enemy afflicted with Blood Blossom grants nearby party members a CRIT Rate bonus.',
+      },
+      { level: 5, note: '+3 Spirit Soother (Elemental Burst) level.' },
+      {
+        level: 6,
+        note: 'At low HP or on lethal damage, briefly survives with greatly increased RES, CRIT Rate, and interruption resistance.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'staff_of_homa',
@@ -78,6 +101,30 @@ export const pyro: Record<string, CharacterGuide> = {
       erTarget: 100,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'atk_pct'],
+      floors: { er_pct: 100 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Attacks and Elemental Skill summon sparks that deal bonus damage, counted as Burst damage for buff purposes.',
+      },
+      {
+        level: 2,
+        note: "Jumpy Dumpty mines lower nearby enemies' DEF.",
+      },
+      { level: 3, note: '+3 Jumpy Dumpty (Elemental Skill) level.' },
+      {
+        level: 4,
+        note: "Switching off-field during Sparks 'n' Splash triggers an AoE Pyro explosion.",
+      },
+      { level: 5, note: "+3 Sparks 'n' Splash (Elemental Burst) level." },
+      {
+        level: 6,
+        note: 'During her Burst, party members gain Energy Recharge and a Pyro DMG Bonus.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'dodoco_tales',

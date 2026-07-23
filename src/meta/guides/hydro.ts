@@ -188,6 +188,30 @@ export const hydro: Record<string, CharacterGuide> = {
       erTarget: 125,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'atk_pct'],
+      floors: { er_pct: 125 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Reduces Elemental Skill cooldown, enabling shorter ranged/melee rotations.',
+      },
+      {
+        level: 2,
+        note: 'Defeating an enemy affected by Riptide restores Energy.',
+      },
+      { level: 3, note: '+3 Melee Stance (Elemental Skill) level.' },
+      {
+        level: 4,
+        note: 'Automatically triggers Riptide effects periodically while in Melee Stance.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Resets Melee Stance cooldown after using his Elemental Burst while in Melee Stance.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'polar_star',
