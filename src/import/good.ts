@@ -5,6 +5,7 @@ import type {
   Slot,
   StatKey,
   SubStat,
+  TalentSlot,
 } from '../game/types';
 import { ELEMENTS, SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
@@ -109,12 +110,13 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
   return out;
 }
 
-export type TalentSlot = 'auto' | 'skill' | 'burst';
-
 export interface RosterEntry {
   buildLevel?: BuildLevel;
   weaponKey?: string;
   talent?: Partial<Record<TalentSlot, number>>;
+  /** Owned constellation level, 0-6. Personalizes the advisor's
+   *  constellation guidance card (ADR-0018). */
+  constellation?: number;
 }
 
 // Ascension 0..6 → max level cap. A character can't be de-leveled, so the cap
@@ -156,10 +158,11 @@ export function parseGOODRoster(json: unknown): Record<string, RosterEntry> {
   const entries: Record<string, RosterEntry> = {};
   for (const raw of rawChars) {
     if (typeof raw !== 'object' || raw === null) continue;
-    const { key, ascension, talent } = raw as {
+    const { key, ascension, talent, constellation } = raw as {
       key?: unknown;
       ascension?: unknown;
       talent?: unknown;
+      constellation?: unknown;
     };
     if (typeof key !== 'string') continue;
     const ours = charByNorm.get(normalizeKey(key));
@@ -173,17 +176,20 @@ export function parseGOODRoster(json: unknown): Record<string, RosterEntry> {
     ) {
       entry.buildLevel = ASCENSION_CAP[ascension];
     }
+    if (
+      typeof constellation === 'number' &&
+      Number.isInteger(constellation) &&
+      constellation >= 0 &&
+      constellation <= 6
+    ) {
+      entry.constellation = constellation;
+    }
     if (typeof talent === 'object' && talent !== null) {
       const t = talent as Record<string, unknown>;
       const parsed: Partial<Record<TalentSlot, number>> = {};
       for (const slot of TALENT_SLOTS) {
         const v = t[slot];
-        if (
-          typeof v === 'number' &&
-          Number.isInteger(v) &&
-          v >= 1 &&
-          v <= 10
-        ) {
+        if (typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 10) {
           parsed[slot] = v;
         }
       }

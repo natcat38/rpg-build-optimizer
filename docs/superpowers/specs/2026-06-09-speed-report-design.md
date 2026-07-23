@@ -1,7 +1,7 @@
 # RPG Build Optimizer — Speed Report (v1.1 §5.2) Design
 
 > **Status:** approved design, pre-build (2026-06-09).
-> **Implements:** §5.2 of `docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md`.
+> **Implements:** §5.2 of the v1.1 depth-layer design (that spec was removed as superseded — see [ADR-0018](../../adr/0018-character-guides-unified-model.md)).
 > **Grounds in:** [ADR-0004 — exact branch-and-bound](../../adr/0004-exact-branch-and-bound-optimisation.md). The report is the _measured_ half of "provably optimal, and proven"; the correctness test (§5.3) is the proved half and already exists in `src/optimizer/search.test.ts`.
 > **Audience:** algorithms/backend reviewers first; the headline number is for everyone.
 

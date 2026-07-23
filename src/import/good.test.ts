@@ -321,17 +321,29 @@ describe('parseGOODRoster', () => {
     const out = parseGOODRoster({
       format: 'GOOD',
       characters: [
-        { key: 'RaidenShogun', ascension: 6, talent: { auto: 6, skill: 9, burst: 9 } },
+        {
+          key: 'RaidenShogun',
+          ascension: 6,
+          talent: { auto: 6, skill: 9, burst: 9 },
+        },
       ],
     });
-    expect(out['raiden_shogun'].talent).toEqual({ auto: 6, skill: 9, burst: 9 });
+    expect(out['raiden_shogun'].talent).toEqual({
+      auto: 6,
+      skill: 9,
+      burst: 9,
+    });
   });
 
   it('drops out-of-range talent slots, keeping valid ones', () => {
     const out = parseGOODRoster({
       format: 'GOOD',
       characters: [
-        { key: 'RaidenShogun', ascension: 6, talent: { auto: 0, skill: 9, burst: 11 } },
+        {
+          key: 'RaidenShogun',
+          ascension: 6,
+          talent: { auto: 0, skill: 9, burst: 11 },
+        },
       ],
     });
     expect(out['raiden_shogun'].talent).toEqual({ skill: 9 });
@@ -347,6 +359,30 @@ describe('parseGOODRoster', () => {
     expect(noTalent(null)).toEqual({ buildLevel: 90 });
     expect(noTalent('garbage')).toEqual({ buildLevel: 90 });
     expect(noTalent({ auto: 0, skill: 11 })).toEqual({ buildLevel: 90 });
+  });
+
+  it('parses a valid constellation level, including 0', () => {
+    const con = (constellation: unknown) =>
+      parseGOODRoster({
+        format: 'GOOD',
+        characters: [{ key: 'RaidenShogun', ascension: 6, constellation }],
+      })['raiden_shogun'].constellation;
+    expect(con(2)).toBe(2);
+    expect(con(0)).toBe(0);
+    expect(con(6)).toBe(6);
+  });
+
+  it('omits constellation for out-of-range or non-numeric values', () => {
+    const con = (constellation: unknown) =>
+      parseGOODRoster({
+        format: 'GOOD',
+        characters: [{ key: 'RaidenShogun', ascension: 6, constellation }],
+      })['raiden_shogun'].constellation;
+    expect(con(-1)).toBeUndefined();
+    expect(con(7)).toBeUndefined();
+    expect(con(1.5)).toBeUndefined();
+    expect(con('6')).toBeUndefined();
+    expect(con(undefined)).toBeUndefined();
   });
 });
 
@@ -382,9 +418,7 @@ describe('parseGOODWeapons', () => {
   it('parses an unequipped weapon (empty location) as owned with null location', () => {
     const out = parseGOODWeapons({
       format: 'GOOD',
-      weapons: [
-        { key: 'TheCatch', level: 50, refinement: 2, location: '' },
-      ],
+      weapons: [{ key: 'TheCatch', level: 50, refinement: 2, location: '' }],
     });
     expect(out).toEqual([
       { key: 'the_catch', level: 50, refinement: 2, location: null },
@@ -406,7 +440,9 @@ describe('parseGOODWeapons', () => {
   it('skips a weapon with an unresolvable key', () => {
     const out = parseGOODWeapons({
       format: 'GOOD',
-      weapons: [{ key: 'NotARealWeapon', level: 1, refinement: 1, location: '' }],
+      weapons: [
+        { key: 'NotARealWeapon', level: 1, refinement: 1, location: '' },
+      ],
     });
     expect(out).toEqual([]);
   });

@@ -14,7 +14,7 @@ import {
   SLOT_LABELS,
   statLabel,
 } from '../ui/labels';
-import { META_TARGETS } from '../meta/metaTargets';
+import { GUIDES } from '../meta/guides';
 import { gradeBuild, type Grade } from '../meta/grade';
 
 const GRADE_STYLE: Record<Grade, string> = {
@@ -49,7 +49,7 @@ export function BuildCard({
   onShare?: () => void | Promise<void>;
 }) {
   const bySlot = new Map(artifacts.map((a) => [a.slot, a]));
-  const statTargets = META_TARGETS[request.characterKey]?.statTargets;
+  const statTargets = GUIDES[request.characterKey]?.build?.statTargets;
   const grade = useMemo(
     () => (statTargets ? gradeBuild(build.totals, statTargets) : null),
     [build.totals, statTargets],

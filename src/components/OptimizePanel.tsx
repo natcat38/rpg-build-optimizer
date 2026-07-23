@@ -13,11 +13,7 @@ import {
   statLabel,
 } from '../ui/labels';
 import { Combobox } from './ui/Combobox';
-import {
-  META_TARGETS,
-  metaToConstraints,
-  type MetaTarget,
-} from '../meta/metaTargets';
+import { GUIDES, metaToConstraints, type MetaTarget } from '../meta/guides';
 
 const OBJECTIVES: Objective[] = [
   'crit_value',
@@ -28,7 +24,7 @@ const OBJECTIVES: Objective[] = [
   'elemental_dmg',
 ];
 
-function setRequirementLabel(meta: MetaTarget): string {
+export function setRequirementLabel(meta: MetaTarget): string {
   const req = meta.setRequirement;
   if (req.kind === '2+2')
     return req.setKeys.map((k) => `2pc ${formatSetName(k)}`).join(' + ');
@@ -63,12 +59,18 @@ export function InfoPanel({
 /** Read-only preview of what "Use meta build" is about to apply — the recipe
  *  itself isn't editable, but every field it fills (constraints, ER floor)
  *  stays editable afterward via the fields above (ADR-0007). */
-function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
+function MetaTargetSummary({
+  meta,
+  source,
+}: {
+  meta: MetaTarget;
+  source: string;
+}) {
   const mainsEntries = (Object.keys(meta.mains) as Slot[]).filter(
     (s) => meta.mains[s],
   );
   return (
-    <InfoPanel href={meta.source}>
+    <InfoPanel href={source}>
       <p>
         <span className="font-semibold text-paper">
           {setRequirementLabel(meta)}
@@ -156,7 +158,8 @@ export function OptimizePanel({
     : !characterKey
       ? 'Pick a character to start.'
       : null;
-  const meta = META_TARGETS[characterKey];
+  const guide = GUIDES[characterKey];
+  const meta = guide?.build;
   // A character can't be de-leveled, so a rostered character's build level
   // is a floor, not just a suggestion — levels below it aren't achievable.
   const rosterBuildLevel = rosterEntries[characterKey]?.buildLevel;
@@ -228,7 +231,7 @@ export function OptimizePanel({
         </label>
       </div>
 
-      {meta && <MetaTargetSummary meta={meta} />}
+      {meta && <MetaTargetSummary meta={meta} source={guide.source} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
         {hint ? (

@@ -1,0 +1,197 @@
+import type { CharacterGuide } from './types';
+
+export const cryo: Record<string, CharacterGuide> = {
+  kamisato_ayaka: {
+    source: 'https://keqingmains.com/ayaka/',
+    build: {
+      setRequirement: {
+        kind: '4pc',
+        setKey: 'BlizzardStrayer',
+      },
+      mains: {
+        sands: 'atk_pct',
+        goblet: 'elemental_dmg',
+      },
+      erTarget: 140,
+      objective: 'crit_value',
+    },
+    weapons: [
+      {
+        weaponKey: 'mistsplitter_reforged',
+        rank: 1,
+        note: 'signature',
+      },
+      {
+        weaponKey: 'haran_geppaku_futsu',
+        rank: 2,
+      },
+      {
+        weaponKey: 'primordial_jade_cutter',
+        rank: 3,
+      },
+      {
+        weaponKey: 'finale_of_the_deep',
+        rank: 4,
+        note: 'F2P craftable, best 4-star',
+      },
+    ],
+    talents: {
+      priority: ['burst', 'auto', 'skill'],
+      levels: {
+        burst: 9,
+        auto: 9,
+        skill: 6,
+      },
+    },
+    teams: [
+      {
+        name: 'Ayaka Freeze',
+        slots: [
+          {
+            role: 'Anemo grouper/buffer',
+            options: ['kaedehara_kazuha'],
+          },
+          {
+            role: 'off-field Hydro applicator/healer',
+            options: ['sangonomiya_kokomi'],
+          },
+          {
+            role: 'Cryo buffer/debuffer',
+            options: ['shenhe'],
+          },
+        ],
+      },
+    ],
+  },
+  ganyu: {
+    source: 'https://keqingmains.com/ganyu/',
+    build: {
+      setRequirement: {
+        kind: '4pc',
+        setKey: 'BlizzardStrayer',
+      },
+      mains: {
+        sands: 'atk_pct',
+        goblet: 'elemental_dmg',
+      },
+      erTarget: 111,
+      critRatioTarget: 0.167,
+      objective: 'crit_value',
+      statTargets: {
+        crit_rate: 35,
+        crit_dmg: 200,
+        atk: 1800,
+      },
+    },
+    weapons: [
+      {
+        weaponKey: "amos'_bow",
+        rank: 1,
+        note: 'best-in-slot',
+      },
+      {
+        weaponKey: "hunter's_path",
+        rank: 2,
+      },
+      {
+        weaponKey: 'the_stringless',
+        rank: 3,
+        note: 'F2P option',
+      },
+      {
+        weaponKey: 'favonius_warbow',
+        rank: 4,
+        note: 'F2P energy option',
+      },
+    ],
+    talents: {
+      priority: ['auto', 'burst', 'skill'],
+      levels: {
+        auto: 9,
+        burst: 9,
+        skill: 6,
+      },
+    },
+    teams: [
+      {
+        name: 'Ganyu Melt',
+        slots: [
+          {
+            role: 'Anemo grouper / battery',
+            options: ['venti'],
+          },
+          {
+            role: 'ATK buffer / Pyro applicator',
+            options: ['bennett'],
+          },
+          {
+            role: 'off-field Pyro DPS (Melt)',
+            options: ['xiangling'],
+          },
+        ],
+      },
+    ],
+  },
+  wriothesley: {
+    source: 'https://keqingmains.com/q/wriothesley-quickguide/',
+    build: {
+      setRequirement: {
+        kind: '4pc',
+        setKey: 'MarechausseeHunter',
+      },
+      mains: {
+        sands: 'atk_pct',
+        goblet: 'elemental_dmg',
+      },
+      erTarget: 100,
+      objective: 'crit_value',
+    },
+    weapons: [
+      {
+        weaponKey: 'cashflow_supervision',
+        rank: 1,
+        note: 'signature',
+      },
+      {
+        weaponKey: 'the_widsith',
+        rank: 2,
+      },
+      {
+        weaponKey: 'prototype_amber',
+        rank: 3,
+        note: 'F2P option',
+      },
+      {
+        weaponKey: 'mappa_mare',
+        rank: 4,
+      },
+    ],
+    talents: {
+      priority: ['auto', 'skill', 'burst'],
+      levels: {
+        auto: 9,
+        skill: 9,
+        burst: 1,
+      },
+    },
+    teams: [
+      {
+        name: 'Wriothesley Reverse Melt',
+        slots: [
+          {
+            role: 'shielder',
+            options: ['zhongli'],
+          },
+          {
+            role: 'ATK buff + healer',
+            options: ['bennett'],
+          },
+          {
+            role: 'Cryo buffer',
+            options: ['shenhe'],
+          },
+        ],
+      },
+    ],
+  },
+};

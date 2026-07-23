@@ -16,8 +16,8 @@ regardless of who the player's roster actually contains.
 
 [0015] explicitly declined to parse `characters[].talent`, reasoning the
 stat-only model ([0003]) had "no lever a talent level could act on." That
-holds for damage math, but a curated *target* talent level (e.g. "Burst 9 /
-Skill 9") needs only the player's *current* level to compare against — a
+holds for damage math, but a curated _target_ talent level (e.g. "Burst 9 /
+Skill 9") needs only the player's _current_ level to compare against — a
 plain integer comparison, not a damage multiplier. The same is true for
 weapon choice: recommending "switch to X" needs only a curated ranking of
 weapons plus the player's owned-weapon list, not a stat/DPS comparison
@@ -30,13 +30,13 @@ epistemic contract [0007]'s `META_TARGETS` already established (hand-sourced
 from KQM guides, a `source` URL per entry, gracefully absent rather than
 guessed for uncovered characters):
 
-- [`weapons.ts`](../../src/meta/weapons.ts) — `WEAPON_RANKINGS`, an ordinal
+- `weapons.ts` (now folded into [`guides/`](../../src/meta/guides/index.ts) — see [ADR-0018](0018-character-guides-unified-model.md)) — `WEAPON_RANKINGS`, an ordinal
   weapon list per character, and `bestOwnedWeapon(characterKey, owned)`,
   which picks the highest-ranked weapon the player owns (preferring an
   unequipped copy or one already on this character) and flags when the only
   owned copy is equipped on someone else. The rank is **never** fed to the
   solver or treated as a stat comparison — it's guide consensus, full stop.
-- [`talents.ts`](../../src/meta/talents.ts) — `TALENT_TARGETS`, a priority
+- `talents.ts` (now folded into [`guides/`](../../src/meta/guides/index.ts)) — `TALENT_TARGETS`, a priority
   order plus target level per talent slot, and `talentGaps(target, owned)`,
   a plain integer comparison against `RosterEntry.talent` (now parsed by
   [`parseGOODRoster`](../../src/import/good.ts), validating each of
@@ -44,10 +44,10 @@ guessed for uncovered characters):
   style [0015] already used). This is curated-target comparison, **not**
   damage modeling — [0003] stands unmodified. Constellations remain
   unparsed and out of scope, unchanged from [0015].
-- [`teamComps.ts`](../../src/meta/teamComps.ts) — `TEAM_COMPS`, replacing
+- `teamComps.ts` (now folded into [`guides/`](../../src/meta/guides/index.ts)) — `TEAM_COMPS`, replacing
   the ad hoc `TEAMMATES` table, structures each character's best-known comp
   as three role slots with ranked options, and `bestFieldableComp(comps,
-  ownedKeys)` resolves each slot to the best-ranked *owned* character,
+ownedKeys)` resolves each slot to the best-ranked _owned_ character,
   reporting `null` (with the top pick surfaced as "you don't own X") for
   slots the roster can't fill.
 
@@ -75,7 +75,7 @@ would contend for the main thread if fired concurrently. Characters with no
 `statTargets` render with no badge and trigger no compute at all — the same
 "omit rather than fake" contract `gradeBuild` already had.
 [`CharacterDetail`](../../src/components/CharacterDetail.tsx) then composes
-the weapon/talent/team cards above alongside the *unmodified*
+the weapon/talent/team cards above alongside the _unmodified_
 `OptimizePanel`/`GapSection`/`Results` flow for the selected character.
 
 ## Consequences

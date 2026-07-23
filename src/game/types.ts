@@ -42,6 +42,8 @@ export type Element = (typeof ELEMENTS)[number];
 export type BuildLevel = 1 | 20 | 40 | 50 | 60 | 70 | 80 | 90;
 export const BUILD_LEVELS: BuildLevel[] = [1, 20, 40, 50, 60, 70, 80, 90];
 
+export type TalentSlot = 'auto' | 'skill' | 'burst';
+
 /** A sparse stat vector. Missing keys are treated as 0. */
 export type StatVec = Partial<Record<StatKey, number>>;
 

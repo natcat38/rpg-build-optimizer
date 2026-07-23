@@ -3,11 +3,10 @@ import { genshinAdapter } from '../game/genshin/adapter';
 import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
 import { useWeaponInventory } from '../state/weapons';
-import { META_TARGETS, metaToConstraints } from '../meta/metaTargets';
-import { bestOwnedWeapon } from '../meta/weapons';
+import { GUIDES, buildMetaRequest } from '../meta/guides';
 import { gradeBuild, type Grade } from '../meta/grade';
 import { optimize } from '../workers/optimizeClient';
-import type { OptimizeRequest } from '../game/types';
+import { useBuildCache } from '../state/buildCache';
 
 const GRADE_ORDER: Grade[] = ['S', 'A', 'B', 'C', 'D'];
 
@@ -40,9 +39,9 @@ export function RosterDashboard({
     [],
   );
 
-  const [grades, setGrades] = useState<
-    Record<string, Grade | 'infeasible'>
-  >({});
+  const [grades, setGrades] = useState<Record<string, Grade | 'infeasible'>>(
+    {},
+  );
 
   const ownedKeys = useMemo(() => Object.keys(rosterEntries), [rosterEntries]);
 
@@ -51,25 +50,26 @@ export function RosterDashboard({
     setGrades({});
     void (async () => {
       for (const key of ownedKeys) {
-        const meta = META_TARGETS[key];
+        const meta = GUIDES[key]?.build;
         if (!meta?.statTargets) continue; // nothing to grade — no compute
         const entry = rosterEntries[key];
-        const weaponKey =
-          entry?.weaponKey ?? bestOwnedWeapon(key, ownedWeapons)?.rec.weaponKey;
-        if (!weaponKey) continue; // no sane request without a weapon
+        const req = buildMetaRequest(key, meta, entry, ownedWeapons);
+        if (!req) continue; // no sane request without a weapon
 
-        const req: OptimizeRequest = {
-          characterKey: key,
-          weaponKey,
-          buildLevel: entry?.buildLevel ?? 90,
-          objective: meta.objective,
-          constraints: metaToConstraints(meta),
-        };
         // ponytail: sequential fresh-worker dispatch (~10-50ms each); a
         // persistent-worker batch protocol is only worth it if this
         // visibly lags at high curation coverage.
         const result = await optimize(req, artifacts);
         if (cancelled) return;
+        useBuildCache
+          .getState()
+          .setBuild(key, {
+            request: req,
+            result,
+            artifacts,
+            ownedWeapons,
+            rosterEntries,
+          });
         if (result.status === 'ok' && result.builds[0]) {
           const g = gradeBuild(result.builds[0].totals, meta.statTargets);
           setGrades((prev) => ({ ...prev, [key]: g?.grade ?? 'infeasible' }));
@@ -88,7 +88,7 @@ export function RosterDashboard({
       const g = grades[key];
       if (g && g !== 'infeasible') return GRADE_ORDER.indexOf(g);
       if (g === 'infeasible') return GRADE_ORDER.length;
-      if (META_TARGETS[key]?.statTargets) return GRADE_ORDER.length + 1; // curated, pending
+      if (GUIDES[key]?.build?.statTargets) return GRADE_ORDER.length + 1; // curated, pending
       return GRADE_ORDER.length + 2; // uncurated
     };
     return [...ownedKeys].sort((a, b) => {

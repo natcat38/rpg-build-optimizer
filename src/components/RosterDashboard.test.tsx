@@ -5,6 +5,7 @@ import { RosterDashboard } from './RosterDashboard';
 import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
 import { useWeaponInventory } from '../state/weapons';
+import { useBuildCache } from '../state/buildCache';
 import type { BuildResult, OptimizeResult } from '../game/types';
 import { SLOTS } from '../game/types';
 
@@ -20,7 +21,12 @@ function makeResult(totals: Record<string, number>): OptimizeResult {
     totals,
     objectiveValue: 100,
     score: 100,
-    diagnostics: { bindingConstraints: [], marginalBySlot: {}, explored: 1, pruned: 0 },
+    diagnostics: {
+      bindingConstraints: [],
+      marginalBySlot: {},
+      explored: 1,
+      pruned: 0,
+    },
   };
   return { status: 'ok', builds: [build], explored: 1, pruned: 0 };
 }
@@ -31,6 +37,7 @@ describe('RosterDashboard', () => {
     useRoster.getState().clear();
     useInventory.getState().clear();
     useWeaponInventory.getState().clear();
+    useBuildCache.getState().clear();
   });
 
   it('renders every owned character, curated or not', () => {
@@ -47,7 +54,7 @@ describe('RosterDashboard', () => {
 
   it('never calls optimize for an uncurated character', async () => {
     useRoster.getState().setRoster({
-      // furina has no statTargets in META_TARGETS — nothing to grade.
+      // furina has no statTargets in GUIDES.furina.build — nothing to grade.
       furina: { weaponKey: 'favonius_sword' },
       zzz_not_a_real_character_key: {},
     });
@@ -59,7 +66,7 @@ describe('RosterDashboard', () => {
   });
 
   it('grades progressively as each optimize call resolves', async () => {
-    // xiao has statTargets: { crit_rate: 70 } in META_TARGETS.
+    // xiao has statTargets: { crit_rate: 70 } in GUIDES.xiao.build.
     useRoster.getState().setRoster({
       xiao: { weaponKey: 'black_tassel', buildLevel: 90 },
     });
@@ -76,6 +83,7 @@ describe('RosterDashboard', () => {
       await pending;
     });
     expect(screen.getByText('S')).toBeInTheDocument();
+    expect(useBuildCache.getState().builds.xiao).toBeDefined();
   });
 
   it('calls onSelect with the character key when a card is clicked', async () => {

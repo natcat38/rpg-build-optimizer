@@ -1,6 +1,6 @@
 import type { Artifact, BuildResult, Slot, StatKey } from '../game/types';
 import { SLOTS } from '../game/types';
-import type { MetaTarget } from './metaTargets';
+import type { MetaTarget } from './guides/types';
 import {
   formatSetName,
   objectiveLabel,
@@ -57,6 +57,7 @@ function mainGaps(
 }
 
 export function computeGapReport(
+  characterKey: string,
   meta: MetaTarget,
   inventory: Artifact[],
   build: BuildResult | null,
@@ -126,5 +127,5 @@ export function computeGapReport(
       action = `Your ${SLOT_LABELS[weakest]} contributes least to ${objectiveLabel(meta.objective)} — upgrading it has the most upside.`;
   }
 
-  return { characterKey: meta.characterKey, feasibility, shortfalls, action };
+  return { characterKey, feasibility, shortfalls, action };
 }

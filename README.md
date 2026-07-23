@@ -21,13 +21,14 @@ This tool does two things well: _given the gear you own, what's the best build f
 
 ## Features
 
-- **Import your whole account** — upload a GOOD-format inventory export (`.json`, from any community scanner) covering artifacts, characters, weapons, and talent levels.
-- **Roster dashboard** — every character you own, with a build grade where curated guidance exists. Click into any of them for a full advisor view.
-- **Per-character advice, all constrained to what you own:**
-  - **Artifact build** — an exact search over your own artifacts (not a heuristic guess), with the full resulting stat sheet.
+- **Import your whole account** — upload a GOOD-format inventory export (`.json`, from any community scanner) covering artifacts, characters, weapons, and talent levels. Or fetch a quick preview of showcased characters by UID (via [Enka.Network](https://enka.network)) — not a full inventory, but no file needed.
+- **Roster dashboard** — every character you own, with a build grade where curated guidance exists. Click into any of them for a full guide page.
+- **A guide page for every owned character, built from what you actually own — no click required:**
+  - **Recommended artifact build** — auto-computed the moment you open the page: an exact search over your own artifacts (not a heuristic guess), with recommended stat thresholds and substat priority shown alongside it.
   - **Weapon switch** — the best weapon you actually own for this character, flagging when it's currently equipped on someone else.
   - **Talent priority** — which talents to level next, compared against your account's real talent levels.
-  - **Team comp** — the best endgame team your roster can field, naming who to pull/farm for any role you can't fill yet.
+  - **Constellation guidance** — recommended constellation breakpoints, checked off against your actual owned level.
+  - **Team comp, with alternatives** — the best endgame team your roster can field, plus other viable comps, each teammate slot showing their own recommended weapon and artifact set.
 - **Gap analysis** — compares your best owned build against a meta target and tells you what to farm to close the gap.
 - **Shareable links** — every build encodes into a self-contained URL. Open the link and you see the exact build — no account, nothing stored server-side.
 - **Try with example gear** — no inventory? One click loads a curated sample inventory, picks a character + a representative constraint, and runs the optimiser, landing you straight on ranked results.
@@ -44,7 +45,7 @@ A few deliberate design decisions (full rationale in [`docs/adr/`](./docs/adr)):
 - **Stat-only model, no damage engine** ([ADR-0003](./docs/adr/0003-stat-only-model-no-damage-engine.md)) — it maximises a chosen _stat_ under constraints rather than modelling in-game DPS. This keeps it fast, explainable, and correct for every character with zero per-character maintenance. (Consequence: conditional/non-stat 4-piece set effects are honoured as a _constraint_ but not _scored_.)
 - **Frozen reference data behind a concrete adapter** ([ADR-0002](./docs/adr/0002-frozen-bundled-reference-dataset.md), [ADR-0012](./docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md)) — a bundled `genshin-db` snapshot, exposed to the optimiser through the `genshinAdapter` object. (Originally a multi-game `GameAdapter` interface, [ADR-0008](./docs/adr/0008-gameadapter-seam-for-multi-game.md); collapsed to a concrete adapter, and the app itself made explicitly Genshin-only, once it was clear only one game would ship — [ADR-0012](./docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md), [ADR-0017](./docs/adr/0017-genshin-only-remove-multi-game-facade.md).)
 - **Self-contained share links** ([ADR-0005](./docs/adr/0005-self-contained-share-links.md)) — the five full artifacts are embedded (deflate + base64url), so a recipient who doesn't own your inventory still sees the exact pieces.
-- **Curated, inventory-filtered recommendations, not a damage engine** ([ADR-0016](./docs/adr/0016-per-character-advisor-curated-overlays.md)) — weapon rankings, talent targets, and team comps are hand-sourced from community guides, then intersected with what your account actually owns. This keeps [ADR-0003](./docs/adr/0003-stat-only-model-no-damage-engine.md)'s no-damage-engine decision intact: recommendations are curated-target comparisons, not DPS math.
+- **Curated, inventory-filtered recommendations, not a damage engine** ([ADR-0016](./docs/adr/0016-per-character-advisor-curated-overlays.md), [ADR-0018](./docs/adr/0018-character-guides-unified-model.md)) — one curated guide record per character, hand-sourced from community guides, then intersected with what your account actually owns. This keeps [ADR-0003](./docs/adr/0003-stat-only-model-no-damage-engine.md)'s no-damage-engine decision intact: recommendations are curated-target comparisons, not DPS math.
 
 Domain vocabulary is defined once in [`CONTEXT.md`](./CONTEXT.md).
 
@@ -72,16 +73,19 @@ src/
   game/        # domain types + frozen Genshin dataset & genshinAdapter
   optimizer/   # pure scoring, feasibility, and the exact branch-and-bound search
   workers/     # the optimise Web Worker + a promise/sync-fallback client
-  import/      # GOOD-file parser (artifacts, roster, talents, weapons), Enka UID import, dedupe
-  state/       # Zustand stores: inventory, roster, weapon inventory, artifact validation
-  meta/        # curated meta targets, weapon rankings, talent targets, team comps, gap/grade logic
+  import/      # GOOD-file parser (artifacts, roster, talents, weapons, constellations), Enka UID import, dedupe
+  state/       # Zustand stores: inventory, roster, weapon inventory, build cache, artifact validation
+  meta/        # curated character guides (src/meta/guides/), gap/grade logic
+  ai/          # Claude explain-build client + shared request/response shaping
+  ui/          # UI-only label re-exports + slot glyphs
   share/       # self-contained build-snapshot URL encode/decode
   components/  # ImportPanel, RosterDashboard, CharacterDetail, OptimizePanel, Results, BuildCard, App
 scripts/
   build-dataset.ts   # extracts the frozen snapshot from genshin-db
+  meta-coverage.ts   # advisory reporter for curated character-guide coverage
 docs/
   adr/         # architecture decision records
-  superpowers/ # design spec + implementation plan
+  superpowers/ # design specs + implementation plans (historical, per-feature)
 ```
 
 ## Performance
@@ -97,17 +101,20 @@ any time with `npm run bench`.
 
 ## Roadmap
 
-v1.0 shipped the lean optimiser. The **v1.1 depth layer** is landing incrementally:
+v1.0 shipped the lean optimiser; the account advisor followed
+([ADR-0016](./docs/adr/0016-per-character-advisor-curated-overlays.md)), then
+a redesign toward a guide page per character — official-style build guides,
+personalized against your real inventory
+([ADR-0018](./docs/adr/0018-character-guides-unified-model.md)):
 
 - ✅ **"Try with example gear"** — one-click sample builds that load a curated inventory and auto-run the optimiser (no import required).
 - ✅ **Benchmark / speed report** — a committed, reproducible report (`npm run bench`) proving how little of the brute-force space the search explores.
-- ✅ **Gap analysis** — compare your best owned build against a meta target and tell you _what to farm_ to close the gap (the centrepiece).
+- ✅ **Gap analysis** — compare your best owned build against a meta target and tell you _what to farm_ to close the gap.
 - ✅ **AI: Explain this build** — an optional Claude-powered plain-English explanation of the optimised build (see below).
-- ✅ **Roster dashboard and per-character advisor** — import your account and every owned character gets a build grade, a weapon-switch recommendation, talent priority, and a roster-filterable team comp, all constrained to what you actually own ([ADR-0016](./docs/adr/0016-per-character-advisor-curated-overlays.md)).
-- _(ongoing)_ expanding curated coverage (weapon rankings, talent targets, team comps) from the current ~30 characters toward the full roster.
+- ✅ **Roster dashboard and per-character advisor** — import your account and every owned character gets a build grade, a weapon-switch recommendation, talent priority, and a roster-filterable team comp, all constrained to what you actually own.
+- ✅ **Guide-page parity** — the artifact build auto-runs on open (no click), plus recommended stat thresholds, substat priority, constellation guidance checked against your owned level, and multiple team comps with each teammate's own recommended gear shown inline.
+- _(ongoing)_ expanding curated guide coverage from the current ~30 characters toward the full 116-character roster, tracked by `npm run meta:coverage`.
 - _(planned)_ an end-to-end test and a live "watch it search" visualisation.
-
-See [`docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md`](./docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md).
 
 ## AI: Explain this build
 

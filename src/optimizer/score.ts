@@ -92,7 +92,7 @@ export function satisfies(
  * The target is that ratio, NOT the CR:CD ratio: target 0.5 => CR==CD (1:1); the
  * conventional Genshin 1:2 CR:CD corresponds to target ≈ 0.333. Returns 0 when
  * target is undefined — it's set only via meta-target presets (see
- * metaTargets.ts), not a direct user-facing control.
+ * meta/guides/), not a direct user-facing control.
  */
 export function critRatioPenalty(t: StatVec, target?: number): number {
   if (target === undefined) return 0;

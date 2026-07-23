@@ -10,7 +10,10 @@ import { CharacterDetail } from './CharacterDetail';
 import { decodeBuild } from '../share/url';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
+import { useWeaponInventory } from '../state/weapons';
 import { useOptimizeRequest, currentRequest } from '../state/optimizeRequest';
+import { useBuildCache, isFreshBuild } from '../state/buildCache';
+import { GUIDES, buildMetaRequest } from '../meta/guides';
 import { GAME } from '../game/registry';
 import { optimize } from '../workers/optimizeClient';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
@@ -55,9 +58,9 @@ function ThesisHero() {
         RPG Build Optimizer
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
-        Find the mathematically optimal artifact build for any character.
-        Exact branch-and-bound search over your inventory — computed entirely
-        in your browser, no account required.
+        Find the mathematically optimal artifact build for any character. Exact
+        branch-and-bound search over your inventory — computed entirely in your
+        browser, no account required.
       </p>
     </>
   );
@@ -122,18 +125,98 @@ export function App() {
     string | null
   >(null);
 
+  // Dedup guard: writing window.location.hash below re-enters via the
+  // hashchange listener with the same key — this ref lets that re-entrant
+  // call short-circuit instead of re-running the auto-solve.
+  const lastAppliedKey = useRef<string | null>(null);
+
   function selectCharacter(key: string) {
-    // Pre-fill from the owned roster (same spirit as OptimizePanel's own
-    // onCharacterChange pre-fill, ADR-0015) — both fields stay overridable.
+    if (lastAppliedKey.current === key) return;
+    lastAppliedKey.current = key;
+
+    // Read every store fresh via .getState() rather than closing over this
+    // render's hook-subscribed values: the hash-route effect below registers
+    // this function once (via syncFromHash) with an empty deps array, so a
+    // later popstate/hashchange invocation would otherwise run against
+    // whatever roster/weapons/artifacts existed at mount time.
     const optReq = useOptimizeRequest.getState();
+    const currentRosterEntries = useRoster.getState().entries;
+    const currentOwnedWeapons = useWeaponInventory.getState().weapons;
+    const currentArtifacts = useInventory.getState().artifacts;
+    const entry = currentRosterEntries[key];
+    const meta = GUIDES[key]?.build;
+    const metaReq = meta
+      ? buildMetaRequest(key, meta, entry, currentOwnedWeapons)
+      : null;
+
+    setSelectedCharacterKey(key);
+    window.location.hash = `#/c/${key}`;
+
+    if (metaReq) {
+      // Same "Use meta build" pipeline the manual button applies — the
+      // artifact build just runs automatically instead of waiting for a click.
+      optReq.applyPreset({
+        characterKey: key,
+        weaponKey: metaReq.weaponKey,
+        objective: metaReq.objective,
+        constraints: metaReq.constraints,
+      });
+      optReq.setBuildLevel(metaReq.buildLevel);
+
+      const cached = useBuildCache.getState().builds[key];
+      if (
+        isFreshBuild(
+          cached,
+          metaReq,
+          currentArtifacts,
+          currentOwnedWeapons,
+          currentRosterEntries,
+        )
+      ) {
+        setResult(cached.result);
+        setRequest(cached.request);
+      } else {
+        setResult(null);
+        setRequest(null);
+        void runCurrent(key);
+      }
+      return;
+    }
+
+    // No meta guide (or no owned/equipped weapon to run with) — pre-fill only,
+    // same spirit as OptimizePanel's own onCharacterChange pre-fill (ADR-0015).
     optReq.setCharacterKey(key);
-    const entry = rosterEntries[key];
     if (entry?.weaponKey) optReq.setWeaponKey(entry.weaponKey);
     if (entry?.buildLevel) optReq.setBuildLevel(entry.buildLevel);
     setResult(null);
     setRequest(null);
-    setSelectedCharacterKey(key);
   }
+
+  function goBack() {
+    lastAppliedKey.current = null;
+    setSelectedCharacterKey(null);
+    if (window.location.hash) window.location.hash = '';
+  }
+
+  // Hash route: restore the selected character on load/back-forward, so a
+  // refresh or shared link keeps the guide page open (no router dependency).
+  useEffect(() => {
+    function syncFromHash() {
+      const match = /^#\/c\/(.+)$/.exec(window.location.hash);
+      if (match) selectCharacter(decodeURIComponent(match[1]));
+      else if (lastAppliedKey.current !== null) goBack();
+    }
+    syncFromHash();
+    window.addEventListener('popstate', syncFromHash);
+    window.addEventListener('hashchange', syncFromHash);
+    return () => {
+      window.removeEventListener('popstate', syncFromHash);
+      window.removeEventListener('hashchange', syncFromHash);
+    };
+    // Only wire the listeners once; syncFromHash/selectCharacter read fresh
+    // store state themselves, so they don't need to be reactive dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // The hero's demo solve is independent of the user's own inventory/state and
   // reasonably cheap (~tens of ms — see heroExample.ts), so it's computed in an
@@ -199,7 +282,10 @@ export function App() {
   // recently started run allowed to commit its outcome or clear `running`.
   const runToken = useRef(0);
 
-  async function runCurrent() {
+  /** `cacheKey` is passed only by the curated-character auto-run path
+   *  (`selectCharacter`) — manual "Optimise"/"Use meta build" clicks call
+   *  this with no argument and never write the shared build cache. */
+  async function runCurrent(cacheKey?: string) {
     const req = currentRequest(useOptimizeRequest.getState());
     const inv = useInventory.getState().artifacts;
     if (inv.length === 0 || !req.characterKey) return;
@@ -212,6 +298,15 @@ export function App() {
       setSharedArtifacts(null);
       setResult(r);
       setRequest(req);
+      if (cacheKey) {
+        useBuildCache.getState().setBuild(cacheKey, {
+          request: req,
+          result: r,
+          artifacts: inv,
+          ownedWeapons: useWeaponInventory.getState().weapons,
+          rosterEntries: useRoster.getState().entries,
+        });
+      }
     } catch (err) {
       if (runToken.current !== token) return;
       // A worker/protocol rejection (or bad game data) must not vanish
@@ -282,9 +377,7 @@ export function App() {
           <ImportPanel />
           <details className="group mt-3">
             <summary className="inline-flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-flux-bright transition hover:text-flux">
-              <span className="text-xs transition group-open:rotate-90">
-                ▶
-              </span>
+              <span className="text-xs transition group-open:rotate-90">▶</span>
               Or add one manually
             </summary>
             <div className="mt-3">
@@ -298,7 +391,7 @@ export function App() {
             <Section n={2} title="Character" delay="0.1s">
               <CharacterDetail
                 characterKey={selectedCharacterKey}
-                onBack={() => setSelectedCharacterKey(null)}
+                onBack={goBack}
                 onRun={runCurrent}
                 running={running}
                 result={result}

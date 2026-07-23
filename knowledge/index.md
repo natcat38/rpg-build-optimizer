@@ -25,7 +25,7 @@ glossary is [`CONTEXT.md`](../CONTEXT.md); decisions live in [`docs/adr/`](../do
 ## Data
 
 - [Reference data](/data/reference-data.md) — the frozen game rulebook + inventory import.
-- Advisor overlays — curated, frozen tables in `src/meta/`: `WEAPON_RANKINGS` (weapon rec), `TALENT_TARGETS` (talent priority/levels), `TEAM_COMPS` (roster-filterable team comps), alongside the existing `META_TARGETS`. See [ADR-0016](../docs/adr/0016-per-character-advisor-curated-overlays.md).
+- Advisor overlays — one curated `CharacterGuide` record per character in `src/meta/guides/` (build recipe, substats, weapons, talents, constellations, teams), merged from per-element files into `GUIDES`. See [ADR-0016](../docs/adr/0016-per-character-advisor-curated-overlays.md) and [ADR-0018](../docs/adr/0018-character-guides-unified-model.md).
 
 ## Decisions
 
@@ -45,6 +45,7 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0012 — collapse the GameAdapter seam to a concrete adapter](../docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md) _(completed by ADR-0017)_
 - [ADR-0013 — per-IP rate limiting on the AI explain proxy](../docs/adr/0013-rate-limit-ai-proxy.md)
 - [ADR-0014 — element-aware goblet scoring](../docs/adr/0014-element-aware-goblet-scoring.md)
-- [ADR-0015 — GOOD roster import](../docs/adr/0015-good-roster-import.md) _(amended by ADR-0016)_
-- [ADR-0016 — per-character advisor: curated weapon/talent/team overlays](../docs/adr/0016-per-character-advisor-curated-overlays.md)
+- [ADR-0015 — GOOD roster import](../docs/adr/0015-good-roster-import.md) _(amended by ADR-0016, ADR-0018)_
+- [ADR-0016 — per-character advisor: curated weapon/talent/team overlays](../docs/adr/0016-per-character-advisor-curated-overlays.md) _(amended by ADR-0018)_
 - [ADR-0017 — Genshin-only: remove the multi-game display facade](../docs/adr/0017-genshin-only-remove-multi-game-facade.md)
+- [ADR-0018 — character guides: unified data model, auto-run, and full-roster coverage](../docs/adr/0018-character-guides-unified-model.md)

@@ -34,7 +34,12 @@ describe('CharacterDetail', () => {
     useRoster.getState().setRoster({ furina: { weaponKey: 'favonius_sword' } });
     useWeaponInventory.getState().setWeapons([
       { key: 'favonius_sword', level: 90, refinement: 1, location: 'furina' },
-      { key: 'primordial_jade_cutter', level: 90, refinement: 1, location: null },
+      {
+        key: 'primordial_jade_cutter',
+        level: 90,
+        refinement: 1,
+        location: null,
+      },
     ]);
     renderDetail('furina');
     // "Switch to:" and the weapon name sit in separate text nodes around a
@@ -124,7 +129,12 @@ describe('CharacterDetail', () => {
     useWeaponInventory
       .getState()
       .setWeapons([
-        { key: 'finale_of_the_deep', level: 90, refinement: 1, location: 'furina' },
+        {
+          key: 'finale_of_the_deep',
+          level: 90,
+          refinement: 1,
+          location: 'furina',
+        },
       ]);
     renderDetail('furina');
     expect(screen.getByText('Neuvillette')).toBeInTheDocument();
@@ -147,5 +157,46 @@ describe('CharacterDetail', () => {
     expect(
       screen.getByRole('button', { name: /your roster/i }),
     ).toBeInTheDocument();
+  });
+
+  it('shows recommended stat thresholds for a character with statTargets', () => {
+    useRoster.getState().setRoster({ nahida: {} });
+    renderDetail('nahida');
+    expect(screen.getByText('Recommended Stats')).toBeInTheDocument();
+    expect(screen.getByText(/Elemental Mastery: ≥900/i)).toBeInTheDocument();
+  });
+
+  it('omits the stat-targets card for a character with neither statTargets nor substats', () => {
+    useRoster.getState().setRoster({ furina: {} });
+    renderDetail('furina');
+    expect(screen.queryByText('Recommended Stats')).toBeNull();
+  });
+
+  it('omits the constellation card when no constellation guidance is curated', () => {
+    useRoster.getState().setRoster({ furina: {} });
+    renderDetail('furina');
+    expect(screen.queryByText('Constellations')).toBeNull();
+  });
+
+  it("shows a teammate's recommended gear inline in the team comp card", () => {
+    useRoster.getState().setRoster({
+      furina: { weaponKey: 'finale_of_the_deep' },
+      neuvillette: {},
+      kaedehara_kazuha: {},
+      bennett: {},
+    });
+    useWeaponInventory
+      .getState()
+      .setWeapons([
+        {
+          key: 'finale_of_the_deep',
+          level: 90,
+          refinement: 1,
+          location: 'furina',
+        },
+      ]);
+    renderDetail('furina');
+    // Neuvillette's top-ranked weapon and set requirement, shown under his slot.
+    expect(screen.getByText(/Tome of the Eternal Flow/i)).toBeInTheDocument();
   });
 });
