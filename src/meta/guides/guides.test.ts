@@ -317,6 +317,17 @@ describe('GUIDES data integrity', () => {
     sethos: 'bow',
     varesa: 'catalyst',
     yae_miko: 'catalyst',
+    albedo: 'sword',
+    chiori: 'sword',
+    gorou: 'bow',
+    illuga: 'polearm',
+    kachina: 'polearm',
+    linnea: 'bow',
+    ningguang: 'catalyst',
+    noelle: 'claymore',
+    xilonen: 'sword',
+    yun_jin: 'polearm',
+    zibai: 'sword',
   };
 
   it('every characterKey resolves against the dataset', () => {
