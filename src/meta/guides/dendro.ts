@@ -3,6 +3,7 @@ import type { CharacterGuide } from './types';
 export const dendro: Record<string, CharacterGuide> = {
   nahida: {
     source: 'https://keqingmains.com/nahida/',
+    role: 'Off-field Dendro applicator and Elemental Mastery buffer, enabling reaction-based teams.',
     build: {
       setRequirement: {
         kind: '4pc',
@@ -17,6 +18,30 @@ export const dendro: Record<string, CharacterGuide> = {
         em: 900,
       },
     },
+    substats: {
+      priority: ['er_pct', 'em', 'crit_rate', 'crit_dmg'],
+      floors: { em: 900 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Counts Pyro/Electro/Hydro teammates as extra elements for her Burst buff, boosting Skill damage in varied teams.',
+      },
+      {
+        level: 2,
+        note: 'Grants Dendro reaction damage the ability to CRIT, plus a DEF shred after Quicken — a major damage increase.',
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: 'Grants bonus Elemental Mastery based on marked enemies.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Enables extra reaction procs during her Burst from Normal/Charged Attacks — strong for an on-field Nahida.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'a_thousand_floating_dreams',

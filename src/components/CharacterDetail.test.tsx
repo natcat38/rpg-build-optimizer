@@ -126,16 +126,14 @@ describe('CharacterDetail', () => {
       kaedehara_kazuha: {},
       bennett: {},
     });
-    useWeaponInventory
-      .getState()
-      .setWeapons([
-        {
-          key: 'finale_of_the_deep',
-          level: 90,
-          refinement: 1,
-          location: 'furina',
-        },
-      ]);
+    useWeaponInventory.getState().setWeapons([
+      {
+        key: 'finale_of_the_deep',
+        level: 90,
+        refinement: 1,
+        location: 'furina',
+      },
+    ]);
     renderDetail('furina');
     expect(screen.getByText('Neuvillette')).toBeInTheDocument();
     expect(screen.getByText('Kaedehara Kazuha')).toBeInTheDocument();
@@ -153,7 +151,11 @@ describe('CharacterDetail', () => {
     useRoster.getState().setRoster({ furina: {} });
     renderDetail('furina');
     expect(screen.getByText('Furina')).toBeInTheDocument();
-    expect(screen.getByText('hydro')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_, el) => el?.tagName === 'P' && /^hydro/i.test(el.textContent ?? ''),
+      ),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /your roster/i }),
     ).toBeInTheDocument();
@@ -167,15 +169,23 @@ describe('CharacterDetail', () => {
   });
 
   it('omits the stat-targets card for a character with neither statTargets nor substats', () => {
-    useRoster.getState().setRoster({ furina: {} });
-    renderDetail('furina');
+    useRoster.getState().setRoster({ tartaglia: {} });
+    renderDetail('tartaglia');
     expect(screen.queryByText('Recommended Stats')).toBeNull();
   });
 
   it('omits the constellation card when no constellation guidance is curated', () => {
-    useRoster.getState().setRoster({ furina: {} });
-    renderDetail('furina');
+    useRoster.getState().setRoster({ tartaglia: {} });
+    renderDetail('tartaglia');
     expect(screen.queryByText('Constellations')).toBeNull();
+  });
+
+  it('shows curated constellation guidance, checked against the owned level', () => {
+    useRoster.getState().setRoster({ furina: { constellation: 2 } });
+    renderDetail('furina');
+    expect(screen.getByText('Constellations')).toBeInTheDocument();
+    expect(screen.getByText(/C2:/)).toBeInTheDocument();
+    expect(screen.getByText(/C6:/)).toBeInTheDocument();
   });
 
   it("shows a teammate's recommended gear inline in the team comp card", () => {
@@ -185,16 +195,14 @@ describe('CharacterDetail', () => {
       kaedehara_kazuha: {},
       bennett: {},
     });
-    useWeaponInventory
-      .getState()
-      .setWeapons([
-        {
-          key: 'finale_of_the_deep',
-          level: 90,
-          refinement: 1,
-          location: 'furina',
-        },
-      ]);
+    useWeaponInventory.getState().setWeapons([
+      {
+        key: 'finale_of_the_deep',
+        level: 90,
+        refinement: 1,
+        location: 'furina',
+      },
+    ]);
     renderDetail('furina');
     // Neuvillette's top-ranked weapon and set requirement, shown under his slot.
     expect(screen.getByText(/Tome of the Eternal Flow/i)).toBeInTheDocument();

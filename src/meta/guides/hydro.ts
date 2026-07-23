@@ -3,6 +3,7 @@ import type { CharacterGuide } from './types';
 export const hydro: Record<string, CharacterGuide> = {
   furina: {
     source: 'https://keqingmains.com/furina/',
+    role: 'Field-changing Hydro support/sub-DPS — buffs HP-scaling damage and enables Hydro application for the team.',
     build: {
       setRequirement: {
         kind: '4pc',
@@ -15,6 +16,30 @@ export const hydro: Record<string, CharacterGuide> = {
       erTarget: 130,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'hp_pct'],
+      floors: { er_pct: 130 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Raises the Fanfare cap and grants starting stacks — a solid personal-damage upgrade.',
+      },
+      {
+        level: 2,
+        note: 'Best stopping point: greatly increases Fanfare gain and converts overcapped Fanfare into team HP.',
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: 'Restores energy on Salon Member hits, easing the ER requirement.',
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'Enables an on-field, Hydro-infused playstyle with bonus healing and damage.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'splendor_of_tranquil_waters',
@@ -65,6 +90,7 @@ export const hydro: Record<string, CharacterGuide> = {
   },
   neuvillette: {
     source: 'https://keqingmains.com/neuvillette/',
+    role: 'Charged-attack on-field Hydro DPS with a HP-scaling kit and built-in team damage reduction.',
     build: {
       setRequirement: {
         kind: '4pc',
@@ -77,6 +103,29 @@ export const hydro: Record<string, CharacterGuide> = {
       critRatioTarget: 0.333,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['crit_rate', 'crit_dmg', 'hp_pct', 'er_pct'],
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Auto-grants a normal-attack stack on entering the field and boosts interruption resistance during charged attacks.',
+      },
+      {
+        level: 2,
+        note: 'Adds bonus CRIT DMG to enhanced charged attacks based on stack count.',
+      },
+      { level: 3, note: '+3 Normal Attack talent level.' },
+      {
+        level: 4,
+        note: 'Generates a Sourcewater Droplet whenever Neuvillette is healed.',
+      },
+      { level: 5, note: '+3 Elemental Burst talent level.' },
+      {
+        level: 6,
+        note: 'Extends charged-attack duration and adds extra damage instances by absorbing droplets mid-attack.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'tome_of_the_eternal_flow',

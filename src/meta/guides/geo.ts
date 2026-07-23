@@ -3,6 +3,7 @@ import type { CharacterGuide } from './types';
 export const geo: Record<string, CharacterGuide> = {
   navia: {
     source: 'https://keqingmains.com/navia/',
+    role: 'Explosive Geo burst DPS built around Shrapnel-charged Normal Attacks.',
     build: {
       setRequirement: {
         kind: '4pc',
@@ -16,6 +17,30 @@ export const geo: Record<string, CharacterGuide> = {
       critRatioTarget: 0.333,
       objective: 'crit_value',
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'atk_pct'],
+      floors: { er_pct: 140 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Consuming Crystal Shrapnel charges on her Skill restores energy and reduces Burst cooldown.',
+      },
+      {
+        level: 2,
+        note: 'Grants bonus Skill CRIT Rate based on Shrapnel consumed and triggers extra Cannon Fire Support shots.',
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: 'Reduces nearby opponents’ Geo RES for a short time when her Burst hits.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Grants bonus Skill CRIT DMG and returns consumed Shrapnel beyond the first few charges.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'verdict',

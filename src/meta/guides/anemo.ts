@@ -3,6 +3,7 @@ import type { CharacterGuide } from './types';
 export const anemo: Record<string, CharacterGuide> = {
   xiao: {
     source: 'https://keqingmains.com/xiao/',
+    role: 'Burst-window Anemo plunge DPS with high, self-inflicted HP drain.',
     build: {
       setRequirement: {
         kind: '4pc',
@@ -19,6 +20,27 @@ export const anemo: Record<string, CharacterGuide> = {
         crit_rate: 70,
       },
     },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'atk_pct'],
+      floors: { er_pct: 120 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Grants an extra Elemental Skill charge — a minor rotation convenience.',
+      },
+      {
+        level: 2,
+        note: 'Increases Energy Recharge while off-field — low value since Xiao is meant to stay on-field.',
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      { level: 4, note: 'Grants a DEF bonus below 50% HP — rarely relevant.' },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Changes his kit to favor Skill spam, strong in multi-target scenarios.',
+      },
+    ],
     weapons: [
       {
         weaponKey: 'primordial_jade_wingedspear',
