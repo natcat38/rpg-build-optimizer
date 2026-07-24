@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { GapSection } from './GapSection';
-import { META_TARGETS } from '../meta/metaTargets';
+import { GUIDES } from '../meta/guides';
 import type { OptimizeRequest, OptimizeResult } from '../game/types';
 
-const metaKey = Object.keys(META_TARGETS)[0];
+const metaKey = Object.entries(GUIDES).find(([, g]) => g.build)![0];
 
 function makeRequest(characterKey: string): OptimizeRequest {
   return {

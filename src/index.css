@@ -5,19 +5,12 @@
 @layer base {
   :root {
     color-scheme: dark;
-  }
-
-  /* Per-game reading signal. Values are "r g b" triplets so Tailwind's
-     rgb(var(--x) / <alpha-value>) color functions can apply opacity. */
-  [data-game='genshin'] {
+    /* Accent triplets ("r g b" so Tailwind's rgb(var(--x) / <alpha>) can
+       apply opacity). Formerly keyed off [data-game] — Genshin-only now
+       (ADR-0017), so they live on :root. */
     --accent: 242 182 76;
     --accent-bright: 255 207 118;
     --accent-deep: 185 133 38;
-  }
-  [data-game='wuwa'] {
-    --accent: 76 214 192;
-    --accent-bright: 126 228 212;
-    --accent-deep: 47 156 138;
   }
 
   html {

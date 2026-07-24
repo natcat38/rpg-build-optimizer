@@ -5,8 +5,6 @@ import { genshinAdapter } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
 import { useOptimizeRequest } from '../state/optimizeRequest';
-import { useGame } from '../state/game';
-import { getGame } from '../game/registry';
 import {
   formatSetName,
   isPctStat,
@@ -15,16 +13,7 @@ import {
   statLabel,
 } from '../ui/labels';
 import { Combobox } from './ui/Combobox';
-import {
-  META_TARGETS,
-  metaToConstraints,
-  type MetaTarget,
-} from '../meta/metaTargets';
-import {
-  TEAMMATES,
-  resolveTeammateName,
-  type TeammateRec,
-} from '../meta/teammates';
+import { GUIDES, metaToConstraints, type MetaTarget } from '../meta/guides';
 
 const OBJECTIVES: Objective[] = [
   'crit_value',
@@ -35,17 +24,23 @@ const OBJECTIVES: Objective[] = [
   'elemental_dmg',
 ];
 
-function setRequirementLabel(meta: MetaTarget): string {
+export function setRequirementLabel(meta: MetaTarget): string {
   const req = meta.setRequirement;
   if (req.kind === '2+2')
     return req.setKeys.map((k) => `2pc ${formatSetName(k)}`).join(' + ');
   return `${req.kind} ${formatSetName(req.setKey)}`;
 }
 
-/** Shared shell for the two read-only meta-recipe panels below (recipe
- *  summary, teammate recs) — same border/background/text treatment and a
- *  trailing "Source" link out to the guide it was curated from. */
-function InfoPanel({ href, children }: { href: string; children: ReactNode }) {
+/** Shared shell for read-only curated-data panels (recipe summary, weapon
+ *  rec, talent advice, team comp) — same border/background/text treatment
+ *  and a trailing "Source" link out to the guide it was curated from. */
+export function InfoPanel({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
   return (
     <div className="rounded-lg border border-white/5 bg-surface-900/40 p-3 text-xs text-muted">
       {children}
@@ -64,12 +59,18 @@ function InfoPanel({ href, children }: { href: string; children: ReactNode }) {
 /** Read-only preview of what "Use meta build" is about to apply — the recipe
  *  itself isn't editable, but every field it fills (constraints, ER floor)
  *  stays editable afterward via the fields above (ADR-0007). */
-function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
+function MetaTargetSummary({
+  meta,
+  source,
+}: {
+  meta: MetaTarget;
+  source: string;
+}) {
   const mainsEntries = (Object.keys(meta.mains) as Slot[]).filter(
     (s) => meta.mains[s],
   );
   return (
-    <InfoPanel href={meta.source}>
+    <InfoPanel href={source}>
       <p>
         <span className="font-semibold text-paper">
           {setRequirementLabel(meta)}
@@ -105,33 +106,6 @@ function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
   );
 }
 
-/** Curated "works well with" list (ADR-0007-style: static, sourced). Falls
- *  back to the raw character key rather than crashing if a teammate isn't
- *  in the frozen dataset. */
-function TeammatesSummary({
-  entry,
-  characters,
-}: {
-  entry: { recs: TeammateRec[]; source: string };
-  characters: { key: string; name: string }[];
-}) {
-  return (
-    <InfoPanel href={entry.source}>
-      <p className="mb-1.5 font-semibold text-paper">Works well with</p>
-      <ul className="space-y-1">
-        {entry.recs.map((r) => (
-          <li key={r.characterKey}>
-            <span className="font-medium text-paper">
-              {resolveTeammateName(r.characterKey, characters)}
-            </span>{' '}
-            <span className="text-muted">({r.role})</span> — {r.why}
-          </li>
-        ))}
-      </ul>
-    </InfoPanel>
-  );
-}
-
 export function OptimizePanel({
   onRun,
   running,
@@ -141,7 +115,6 @@ export function OptimizePanel({
 }) {
   const artifacts = useInventory((s) => s.artifacts);
   const rosterEntries = useRoster((s) => s.entries);
-  const game = getGame(useGame((s) => s.gameId));
   const chars = useMemo(() => genshinAdapter.characters(), []);
   const weapons = useMemo(() => genshinAdapter.weapons(), []);
 
@@ -181,12 +154,12 @@ export function OptimizePanel({
   const hasArtifacts = artifacts.length > 0;
   const canRun = hasArtifacts && !!characterKey;
   const hint = !hasArtifacts
-    ? `Add or import ${game.gearNounPlural.toLowerCase()} before optimising.`
+    ? 'Add or import artifacts before optimising.'
     : !characterKey
       ? 'Pick a character to start.'
       : null;
-  const meta = META_TARGETS[characterKey];
-  const teammates = TEAMMATES[characterKey];
+  const guide = GUIDES[characterKey];
+  const meta = guide?.build;
   // A character can't be de-leveled, so a rostered character's build level
   // is a floor, not just a suggestion — levels below it aren't achievable.
   const rosterBuildLevel = rosterEntries[characterKey]?.buildLevel;
@@ -258,8 +231,7 @@ export function OptimizePanel({
         </label>
       </div>
 
-      {meta && <MetaTargetSummary meta={meta} />}
-      {teammates && <TeammatesSummary entry={teammates} characters={chars} />}
+      {meta && <MetaTargetSummary meta={meta} source={guide.source} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
         {hint ? (
@@ -268,7 +240,7 @@ export function OptimizePanel({
           <p className="text-sm text-muted">
             Searching{' '}
             <span className="font-semibold text-paper">{artifacts.length}</span>{' '}
-            {game.gearNounPlural.toLowerCase()} for the exact optimum.
+            artifacts for the exact optimum.
           </p>
         )}
         <div className="flex gap-2">

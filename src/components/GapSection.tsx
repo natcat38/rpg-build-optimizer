@@ -1,5 +1,5 @@
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
-import { META_TARGETS } from '../meta/metaTargets';
+import { GUIDES } from '../meta/guides';
 import { computeGapReport } from '../meta/gap';
 import { GapReport } from './GapReport';
 import { ExplainBuild } from './ExplainBuild';
@@ -20,12 +20,12 @@ export function GapSection({
   artifacts: Artifact[];
   sharedArtifacts: Artifact[] | null;
 }) {
-  const meta = META_TARGETS[request.characterKey];
+  const meta = GUIDES[request.characterKey]?.build;
   // Only for meta characters on freshly-optimised (non-shared) builds.
   if (sharedArtifacts || !meta) return null;
 
   const build = result.status === 'ok' ? (result.builds[0] ?? null) : null;
-  const report = computeGapReport(meta, artifacts, build);
+  const report = computeGapReport(request.characterKey, meta, artifacts, build);
 
   return (
     <div className="mb-4">

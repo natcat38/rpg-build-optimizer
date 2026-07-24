@@ -1,7 +1,7 @@
 # RPG Build Optimizer — Gap Analysis (v1.1 §3) Design
 
 > **Status:** approved design, pre-build (2026-06-12).
-> **Implements:** §3 of `docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md`, per [ADR-0007](../../adr/0007-gap-analysis-with-frozen-meta-snapshot.md).
+> **Implements:** §3 of the v1.1 depth-layer design (that spec was removed as superseded — see [ADR-0018](../../adr/0018-character-guides-unified-model.md)), per [ADR-0007](../../adr/0007-gap-analysis-with-frozen-meta-snapshot.md).
 > **Goal:** the v1.1 centerpiece — compare a player's best **owned** build against a frozen **meta** build recipe and tell them what's missing and what to farm. Also the prerequisite for the later AI "Explain this build" feature.
 
 ---

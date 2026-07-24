@@ -138,26 +138,6 @@ describe('OptimizePanel meta prefill', () => {
   });
 });
 
-describe('OptimizePanel teammates', () => {
-  beforeEach(() => {
-    useInventory.getState().clear();
-    useOptimizeRequest.getState().reset();
-  });
-
-  it('shows "Works well with" recs for a covered character', () => {
-    useOptimizeRequest.getState().setCharacterKey('xiao');
-    render(<OptimizePanel onRun={() => {}} running={false} />);
-    expect(screen.getByText(/Works well with/i)).toBeInTheDocument();
-    expect(screen.getByText(/Faruzan/)).toBeInTheDocument();
-  });
-
-  it('omits the teammates section for a character without recs', () => {
-    useOptimizeRequest.getState().setCharacterKey('zzz_not_meta');
-    render(<OptimizePanel onRun={() => {}} running={false} />);
-    expect(screen.queryByText(/Works well with/i)).toBeNull();
-  });
-});
-
 describe('OptimizePanel roster prefill (ADR-0015)', () => {
   beforeEach(() => {
     useInventory.getState().clear();
