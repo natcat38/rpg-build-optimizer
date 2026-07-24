@@ -531,4 +531,863 @@ export const hydro: Record<string, CharacterGuide> = {
       },
     ],
   },
+  aino: {
+    source: 'https://keqingmains.com/q/aino-quickguide/',
+    build: {
+      setRequirement: {
+        kind: '4pc',
+        setKey: 'SilkenMoonsSerenade',
+      },
+      mains: {
+        sands: 'em',
+        goblet: 'em',
+      },
+      erTarget: 190,
+      objective: 'em',
+    },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'em'],
+      floors: { er_pct: 190 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Grants Aino and the active character bonus Elemental Mastery after her Skill or Burst.',
+      },
+      {
+        level: 2,
+        note: 'Her off-field Burst triggers coordinated water balls when the active character attacks.',
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: 'Restores Energy when her Skill hits opponents, greatly easing her ER requirement.',
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'Grants the active character a bonus reaction DMG buff depending on Moonsign level.',
+      },
+    ],
+    weapons: [
+      {
+        weaponKey: 'favonius_greatsword',
+        rank: 1,
+      },
+      {
+        weaponKey: 'makhaira_aquamarine',
+        rank: 2,
+        note: 'EM + team ATK buff',
+      },
+      {
+        weaponKey: 'flameforged_insight',
+        rank: 3,
+        note: 'high EM + flat energy',
+      },
+      {
+        weaponKey: 'master_key',
+        rank: 4,
+        note: 'craftable EM/ER',
+      },
+    ],
+    talents: {
+      priority: ['burst', 'skill', 'auto'],
+      levels: {
+        burst: 6,
+        skill: 1,
+        auto: 1,
+      },
+    },
+    teams: [
+      {
+        name: 'Aino Lunar-Charged',
+        slots: [
+          {
+            role: 'off-field Electro support',
+            options: ['flins'],
+          },
+          {
+            role: 'off-field Electro support',
+            options: ['ineffa'],
+          },
+          {
+            role: 'Anemo grouper/buffer',
+            options: ['sucrose'],
+          },
+        ],
+      },
+    ],
+  },
+  barbara: {
+    source: 'https://keqingmains.com/barbara/',
+    build: {
+      setRequirement: {
+        kind: '4pc',
+        setKey: 'MaidenBeloved',
+      },
+      mains: {
+        sands: 'hp_pct',
+        goblet: 'hp_pct',
+      },
+      objective: 'hp_pct',
+    },
+    substats: {
+      priority: ['hp_pct'],
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Restores a small amount of Energy periodically — minimal impact.',
+      },
+      {
+        level: 2,
+        note: 'Reduces her Elemental Skill cooldown and grants a Hydro DMG bonus while it is active.',
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: 'Restores Energy per enemy hit by her Charged Attack.',
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'Automatically revives a fallen teammate once per long cooldown.',
+      },
+    ],
+    weapons: [
+      {
+        weaponKey: 'everlasting_moonglow',
+        rank: 1,
+      },
+      {
+        weaponKey: 'prototype_amber',
+        rank: 2,
+        note: 'craftable alternative',
+      },
+      {
+        weaponKey: 'thrilling_tales_of_dragon_slayers',
+        rank: 3,
+        note: 'team ATK buff',
+      },
+    ],
+    talents: {
+      priority: ['skill', 'burst', 'auto'],
+      levels: {
+        skill: 6,
+        burst: 6,
+        auto: 1,
+      },
+    },
+    teams: [
+      {
+        name: 'Barbara Freeze Support',
+        slots: [
+          {
+            role: 'main Cryo DPS',
+            options: ['ganyu'],
+          },
+          {
+            role: 'Anemo grouper/buffer',
+            options: ['kaedehara_kazuha'],
+          },
+          {
+            role: 'ATK buffer',
+            options: ['bennett'],
+          },
+        ],
+      },
+    ],
+  },
+  candace: {
+    source: 'https://keqingmains.com/candace/',
+    build: {
+      setRequirement: {
+        kind: '4pc',
+        setKey: 'EmblemOfSeveredFate',
+      },
+      mains: {
+        sands: 'er_pct',
+        goblet: 'elemental_dmg',
+      },
+      erTarget: 260,
+      objective: 'crit_value',
+    },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'hp_pct'],
+      floors: { er_pct: 260 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Extends her buff duration, improving rotation flexibility.',
+      },
+      {
+        level: 2,
+        note: 'Grants a permanent HP buff after using her Elemental Skill.',
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: 'Equalizes her held and tapped Elemental Skill cooldowns — a quality-of-life improvement.',
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'Her off-field Elemental Burst triggers periodic bonus damage waves — a major boost to her support output.',
+      },
+    ],
+    weapons: [
+      {
+        weaponKey: 'staff_of_homa',
+        rank: 1,
+      },
+      {
+        weaponKey: 'staff_of_the_scarlet_sands',
+        rank: 2,
+      },
+      {
+        weaponKey: 'favonius_lance',
+        rank: 3,
+        note: 'arguably her 4-star BiS',
+      },
+      {
+        weaponKey: 'deathmatch',
+        rank: 4,
+      },
+    ],
+    talents: {
+      priority: ['burst', 'skill', 'auto'],
+      levels: {
+        burst: 6,
+        skill: 6,
+        auto: 1,
+      },
+    },
+    teams: [
+      {
+        name: 'Candace Reverse Vaporize',
+        slots: [
+          {
+            role: 'main Pyro DPS',
+            options: ['hu_tao'],
+          },
+          {
+            role: 'off-field Hydro application',
+            options: ['xingqiu'],
+          },
+          {
+            role: 'ATK buffer + healer',
+            options: ['bennett'],
+          },
+        ],
+      },
+    ],
+  },
+  columbina: {
+    source: 'https://keqingmains.com/q/columbina-quickguide/',
+    build: {
+      setRequirement: {
+        kind: '4pc',
+        setKey: 'SilkenMoonsSerenade',
+      },
+      mains: {
+        sands: 'er_pct',
+        goblet: 'hp_pct',
+      },
+      erTarget: 195,
+      objective: 'hp_pct',
+    },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'hp_pct', 'em'],
+      floors: { er_pct: 195 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Immediately triggers Gravity Interference on Skill cast, adding a minor Lunar Reaction DMG buff.',
+      },
+      {
+        level: 2,
+        note: 'Increases Gravity accumulation and grants a large HP buff on Interference trigger — a strong stopping point.',
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: 'Restores Energy per Gravity Interference and adds an HP-scaling damage boost.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Grants a large CRIT DMG bonus to matching elements after Lunar reactions.',
+      },
+    ],
+    weapons: [
+      {
+        weaponKey: "nocturne's_curtain_call",
+        rank: 1,
+        note: 'signature',
+      },
+      {
+        weaponKey: 'sacrificial_jade',
+        rank: 2,
+        note: 'second-best off-field',
+      },
+      {
+        weaponKey: 'prototype_amber',
+        rank: 3,
+        note: 'utility, healing',
+      },
+      {
+        weaponKey: 'favonius_codex',
+        rank: 4,
+        note: 'team energy support',
+      },
+    ],
+    talents: {
+      priority: ['skill', 'burst', 'auto'],
+      levels: {
+        skill: 6,
+        burst: 6,
+        auto: 1,
+      },
+    },
+    teams: [
+      {
+        name: 'Columbina Lunar-Charged',
+        slots: [
+          {
+            role: 'off-field Electro support',
+            options: ['ineffa'],
+          },
+          {
+            role: 'off-field Electro support',
+            options: ['flins'],
+          },
+          {
+            role: 'Anemo grouper/buffer',
+            options: ['sucrose'],
+          },
+        ],
+      },
+    ],
+  },
+  dahlia: {
+    source: 'https://keqingmains.com/q/dahlia-quickguide/',
+    build: {
+      setRequirement: {
+        kind: '4pc',
+        setKey: 'NoblesseOblige',
+      },
+      mains: {
+        sands: 'hp_pct',
+        goblet: 'hp_pct',
+      },
+      erTarget: 240,
+      objective: 'hp_pct',
+    },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'hp_pct'],
+      floors: { er_pct: 240 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Restores Energy, significantly easing her ER requirement.',
+      },
+      {
+        level: 2,
+        note: 'Increases her shield strength after it breaks.',
+      },
+      { level: 3, note: '+3 Elemental Burst level, increasing shield HP.' },
+      {
+        level: 4,
+        note: 'Extends her Favonian Favor buff duration.',
+      },
+      {
+        level: 5,
+        note: '+3 Elemental Skill level — a marginal damage increase.',
+      },
+      {
+        level: 6,
+        note: 'Grants a flat Attack SPD buff and an emergency revive.',
+      },
+    ],
+    weapons: [
+      {
+        weaponKey: 'favonius_sword',
+        rank: 1,
+        note: 'best for ER needs',
+      },
+      {
+        weaponKey: 'freedomsworn',
+        rank: 2,
+        note: 'DMG bonus on reaction trigger',
+      },
+      {
+        weaponKey: 'peak_patrol_song',
+        rank: 3,
+      },
+      {
+        weaponKey: 'key_of_khajnisut',
+        rank: 4,
+        note: 'HP stat stick',
+      },
+    ],
+    talents: {
+      priority: ['burst', 'skill', 'auto'],
+      levels: {
+        burst: 6,
+        skill: 1,
+        auto: 1,
+      },
+    },
+    teams: [
+      {
+        name: 'Dahlia Skirk Support',
+        slots: [
+          {
+            role: 'main Hydro/Cryo DPS',
+            options: ['skirk'],
+          },
+          {
+            role: 'off-field Cryo support',
+            options: ['escoffier'],
+          },
+          {
+            role: 'main Hydro DPS',
+            options: ['furina'],
+          },
+        ],
+      },
+    ],
+  },
+  kamisato_ayato: {
+    source: 'https://keqingmains.com/ayato/',
+    build: {
+      setRequirement: {
+        kind: '4pc',
+        setKey: 'HeartOfDepth',
+      },
+      mains: {
+        sands: 'atk_pct',
+        goblet: 'elemental_dmg',
+      },
+      erTarget: 140,
+      objective: 'crit_value',
+    },
+    substats: {
+      priority: ['er_pct', 'crit_rate', 'crit_dmg', 'atk_pct'],
+      floors: { er_pct: 140 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Grants bonus Shunsuiken damage against low-HP enemies.',
+      },
+      {
+        level: 2,
+        note: 'Increases his max Namisen stacks and grants a large Max HP buff at 3+ stacks.',
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: 'Grants the team a temporary Normal Attack SPD buff after his Burst.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: 'Adds two extra Shunsuiken strikes — his best constellation, though he performs excellently at C0.',
+      },
+    ],
+    weapons: [
+      {
+        weaponKey: 'haran_geppaku_futsu',
+        rank: 1,
+      },
+      {
+        weaponKey: 'primordial_jade_cutter',
+        rank: 2,
+      },
+      {
+        weaponKey: 'mistsplitter_reforged',
+        rank: 3,
+      },
+      {
+        weaponKey: 'the_black_sword',
+        rank: 4,
+        note: 'F2P baseline',
+      },
+    ],
+    talents: {
+      priority: ['skill', 'auto', 'burst'],
+      levels: {
+        skill: 9,
+        auto: 1,
+        burst: 6,
+      },
+    },
+    teams: [
+      {
+        name: 'Ayato Anemo Overvape',
+        slots: [
+          {
+            role: 'ATK buffer + healer',
+            options: ['bennett'],
+          },
+          {
+            role: 'Anemo grouper/buffer',
+            options: ['kaedehara_kazuha'],
+          },
+          {
+            role: 'off-field Electro DPS',
+            options: ['fischl'],
+          },
+        ],
+      },
+    ],
+  },
+  mona: {
+    source: 'https://keqingmains.com/mona/',
+    build: {
+      setRequirement: {
+        kind: '4pc',
+        setKey: 'HeartOfDepth',
+      },
+      mains: {
+        sands: 'atk_pct',
+        goblet: 'elemental_dmg',
+      },
+      objective: 'crit_value',
+    },
+    substats: {
+      priority: ['atk_pct', 'crit_rate', 'crit_dmg', 'em'],
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Enhances Hydro-related reactions against enemies affected by her Omen DMG buff.',
+      },
+      {
+        level: 2,
+        note: 'Normal Attacks have a chance to trigger a free Charged Attack with no stamina cost.',
+      },
+      { level: 3, note: '+3 Elemental Burst level.' },
+      {
+        level: 4,
+        note: 'Grants attackers of Omen-afflicted enemies a CRIT Rate bonus.',
+      },
+      { level: 5, note: '+3 Elemental Skill level.' },
+      {
+        level: 6,
+        note: 'Charged Attacks gain a stacking DMG bonus while sprinting.',
+      },
+    ],
+    weapons: [
+      {
+        weaponKey: 'skyward_atlas',
+        rank: 1,
+      },
+      {
+        weaponKey: 'lost_prayer_to_the_sacred_winds',
+        rank: 2,
+      },
+      {
+        weaponKey: 'memory_of_dust',
+        rank: 3,
+        note: 'shines with Zhongli shield',
+      },
+      {
+        weaponKey: 'the_widsith',
+        rank: 4,
+        note: 'best for vaporize DPS and nuke',
+      },
+    ],
+    talents: {
+      priority: ['burst', 'skill', 'auto'],
+      levels: {
+        burst: 9,
+        skill: 6,
+        auto: 1,
+      },
+    },
+    teams: [
+      {
+        name: 'Mona Vaporize Nuke',
+        slots: [
+          {
+            role: 'ATK buffer + healer',
+            options: ['bennett'],
+          },
+          {
+            role: 'Anemo grouper/buffer',
+            options: ['kaedehara_kazuha'],
+          },
+          {
+            role: 'main Pyro DPS',
+            options: ['klee'],
+          },
+        ],
+      },
+    ],
+  },
+  mualani: {
+    source: 'https://keqingmains.com/q/mualani-quickguide/',
+    build: {
+      setRequirement: {
+        kind: '4pc',
+        setKey: 'ObsidianCodex',
+      },
+      mains: {
+        sands: 'hp_pct',
+        goblet: 'elemental_dmg',
+      },
+      objective: 'hp_pct',
+    },
+    substats: {
+      priority: ['crit_rate', 'crit_dmg', 'hp_pct', 'em'],
+    },
+    constellations: [
+      {
+        level: 1,
+        note: "Increases her first Surging Bite's damage and reduces Phlogiston consumption.",
+      },
+      {
+        level: 2,
+        note: 'Grants Wave Momentum stacks on entering her Skill state and extra Nightsoul regeneration.',
+      },
+      { level: 3, note: '+3 Elemental Skill level.' },
+      {
+        level: 4,
+        note: 'Her Puffers restore Energy and boost her Burst damage.',
+      },
+      { level: 5, note: '+3 Elemental Burst level.' },
+      {
+        level: 6,
+        note: "Extends her C1 buff to all Sharky's Bites — limited practical value.",
+      },
+    ],
+    weapons: [
+      {
+        weaponKey: "surf's_up",
+        rank: 1,
+        note: 'signature',
+      },
+      {
+        weaponKey: 'tome_of_the_eternal_flow',
+        rank: 2,
+      },
+      {
+        weaponKey: 'the_widsith',
+        rank: 3,
+        note: 'best accessible option',
+      },
+      {
+        weaponKey: 'ring_of_yaxche',
+        rank: 4,
+        note: 'F2P craftable',
+      },
+    ],
+    talents: {
+      priority: ['skill', 'auto', 'burst'],
+      levels: {
+        skill: 9,
+        auto: 1,
+        burst: 1,
+      },
+    },
+    teams: [
+      {
+        name: 'Mualani Forward Vaporize',
+        slots: [
+          {
+            role: 'main Pyro DPS',
+            options: ['mavuika'],
+          },
+          {
+            role: 'off-field Geo/Nightsoul support',
+            options: ['xilonen'],
+          },
+          {
+            role: 'Anemo grouper/buffer',
+            options: ['sucrose'],
+          },
+        ],
+      },
+    ],
+  },
+  nilou: {
+    source: 'https://keqingmains.com/nilou/',
+    build: {
+      setRequirement: {
+        kind: '2+2',
+        setKeys: ['TenacityOfTheMillelith', 'VourukashasGlow'],
+      },
+      mains: {
+        sands: 'hp_pct',
+        goblet: 'hp_pct',
+      },
+      erTarget: 150,
+      objective: 'hp_pct',
+    },
+    substats: {
+      priority: ['hp_pct', 'em', 'er_pct'],
+      floors: { er_pct: 150 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Increases her Luminous Illusion damage and extends her Tranquility Aura duration.',
+      },
+      {
+        level: 2,
+        note: "Reduces the Hydro RES of enemies hit while under her Golden Chalice's Bounty buff.",
+      },
+      { level: 3, note: '+3 Elemental Burst level — minor for Bloom teams.' },
+      {
+        level: 4,
+        note: 'Restores Energy after her third Skill hit and boosts her Burst damage.',
+      },
+      { level: 5, note: '+3 Elemental Skill level — minor for Bloom teams.' },
+      {
+        level: 6,
+        note: 'Grants CRIT Rate and CRIT DMG scaling with her max HP, enabling Vaporize viability.',
+      },
+    ],
+    weapons: [
+      {
+        weaponKey: 'key_of_khajnisut',
+        rank: 1,
+        note: 'uncontested best-in-slot',
+      },
+      {
+        weaponKey: "the_dockhand's_assistant",
+        rank: 2,
+        note: 'best 4-star HP%',
+      },
+      {
+        weaponKey: "xiphos'_moonlight",
+        rank: 3,
+        note: 'best EM secondary',
+      },
+      {
+        weaponKey: 'iron_sting',
+        rank: 4,
+        note: 'F2P EM option',
+      },
+    ],
+    talents: {
+      priority: ['skill', 'burst', 'auto'],
+      levels: {
+        skill: 1,
+        burst: 1,
+        auto: 1,
+      },
+    },
+    teams: [
+      {
+        name: 'Nilou Double Hydro Bloom',
+        slots: [
+          {
+            role: 'off-field Hydro application/healer',
+            options: ['sangonomiya_kokomi'],
+          },
+          {
+            role: 'Dendro applicator/EM buffer',
+            options: ['nahida'],
+          },
+          {
+            role: 'off-field Dendro application',
+            options: ['collei'],
+          },
+        ],
+      },
+    ],
+  },
+  sangonomiya_kokomi: {
+    source: 'https://keqingmains.com/kokomi/',
+    build: {
+      setRequirement: {
+        kind: '4pc',
+        setKey: 'OceanHuedClam',
+      },
+      mains: {
+        sands: 'hp_pct',
+        goblet: 'elemental_dmg',
+      },
+      erTarget: 180,
+      objective: 'hp_pct',
+    },
+    substats: {
+      priority: ['er_pct', 'hp_pct', 'atk_pct', 'em'],
+      floors: { er_pct: 180 },
+    },
+    constellations: [
+      {
+        level: 1,
+        note: 'Fires an extra projectile on her final Normal Attack, improving Hydro application consistency.',
+      },
+      {
+        level: 2,
+        note: 'Grants bonus healing to allies below 50% HP — minimal value since she prevents low HP.',
+      },
+      { level: 3, note: '+3 Elemental Burst level — negligible impact.' },
+      {
+        level: 4,
+        note: 'Grants a Normal Attack SPD buff and restores Energy — a quality-of-life improvement.',
+      },
+      { level: 5, note: '+3 Elemental Skill level — low value.' },
+      {
+        level: 6,
+        note: 'Grants a large Hydro DMG bonus after healing a target above 80% HP.',
+      },
+    ],
+    weapons: [
+      {
+        weaponKey: 'everlasting_moonglow',
+        rank: 1,
+        note: 'signature',
+      },
+      {
+        weaponKey: 'prototype_amber',
+        rank: 2,
+        note: 'F2P',
+      },
+      {
+        weaponKey: 'hakushin_ring',
+        rank: 3,
+      },
+      {
+        weaponKey: 'thrilling_tales_of_dragon_slayers',
+        rank: 4,
+        note: 'support ATK buff',
+      },
+    ],
+    talents: {
+      priority: ['burst', 'skill', 'auto'],
+      levels: {
+        burst: 6,
+        skill: 6,
+        auto: 1,
+      },
+    },
+    teams: [
+      {
+        name: 'Kokomi Electro-Charged Driver',
+        slots: [
+          {
+            role: 'off-field Electro DPS',
+            options: ['beidou'],
+          },
+          {
+            role: 'off-field Electro DPS',
+            options: ['fischl'],
+          },
+          {
+            role: 'Anemo grouper/buffer',
+            options: ['kaedehara_kazuha'],
+          },
+        ],
+      },
+    ],
+  },
 };

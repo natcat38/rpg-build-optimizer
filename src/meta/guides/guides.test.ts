@@ -328,6 +328,16 @@ describe('GUIDES data integrity', () => {
     xilonen: 'sword',
     yun_jin: 'polearm',
     zibai: 'sword',
+    aino: 'claymore',
+    barbara: 'catalyst',
+    candace: 'polearm',
+    columbina: 'catalyst',
+    dahlia: 'sword',
+    kamisato_ayato: 'sword',
+    mona: 'catalyst',
+    mualani: 'catalyst',
+    nilou: 'sword',
+    sangonomiya_kokomi: 'catalyst',
   };
 
   it('every characterKey resolves against the dataset', () => {
