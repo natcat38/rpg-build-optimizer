@@ -338,6 +338,17 @@ describe('GUIDES data integrity', () => {
     mualani: 'catalyst',
     nilou: 'sword',
     sangonomiya_kokomi: 'catalyst',
+    amber: 'bow',
+    chevreuse: 'polearm',
+    dehya: 'claymore',
+    diluc: 'claymore',
+    durin: 'sword',
+    gaming: 'claymore',
+    lyney: 'bow',
+    mavuika: 'claymore',
+    thoma: 'polearm',
+    xinyan: 'claymore',
+    yanfei: 'catalyst',
   };
 
   it('every characterKey resolves against the dataset', () => {
