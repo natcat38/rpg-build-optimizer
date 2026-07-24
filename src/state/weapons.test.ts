@@ -5,11 +5,14 @@ describe('weapon inventory store', () => {
   beforeEach(() => useWeaponInventory.getState().clear());
 
   it('setWeapons replaces wholesale rather than merging', () => {
-    useWeaponInventory
-      .getState()
-      .setWeapons([
-        { key: 'the_catch', level: 90, refinement: 1, location: 'raiden_shogun' },
-      ]);
+    useWeaponInventory.getState().setWeapons([
+      {
+        key: 'the_catch',
+        level: 90,
+        refinement: 1,
+        location: 'raiden_shogun',
+      },
+    ]);
     useWeaponInventory
       .getState()
       .setWeapons([
@@ -21,11 +24,14 @@ describe('weapon inventory store', () => {
   });
 
   it('clear empties the inventory', () => {
-    useWeaponInventory
-      .getState()
-      .setWeapons([
-        { key: 'the_catch', level: 90, refinement: 1, location: 'raiden_shogun' },
-      ]);
+    useWeaponInventory.getState().setWeapons([
+      {
+        key: 'the_catch',
+        level: 90,
+        refinement: 1,
+        location: 'raiden_shogun',
+      },
+    ]);
     useWeaponInventory.getState().clear();
     expect(useWeaponInventory.getState().weapons).toEqual([]);
   });

@@ -61,15 +61,13 @@ export function RosterDashboard({
         // visibly lags at high curation coverage.
         const result = await optimize(req, artifacts);
         if (cancelled) return;
-        useBuildCache
-          .getState()
-          .setBuild(key, {
-            request: req,
-            result,
-            artifacts,
-            ownedWeapons,
-            rosterEntries,
-          });
+        useBuildCache.getState().setBuild(key, {
+          request: req,
+          result,
+          artifacts,
+          ownedWeapons,
+          rosterEntries,
+        });
         if (result.status === 'ok' && result.builds[0]) {
           const g = gradeBuild(result.builds[0].totals, meta.statTargets);
           setGrades((prev) => ({ ...prev, [key]: g?.grade ?? 'infeasible' }));
