@@ -26,6 +26,6 @@ block — an orientation gap, not an omission by the generator.
 | `src/ui` | 1 | UI-only presentation helpers layered on top of `src/labels.ts`'s domain-neutral labels — currently the per-slot display glyphs used in compact build lists. |
 | `src/workers` | 5 | Runs the branch-and-bound optimiser off the main thread: the Web Worker entry point, its request/response protocol, and the main-thread client that dispatches to it (falling back to a synchronous call where no worker is available). |
 | `api` | 4 | The serverless AI-explain proxy (`/api/explain`, Vercel functions): rate limiting by client IP via Upstash Redis, and the handler that forwards a validated explain payload to Anthropic and returns the explanation. |
-| `scripts` | 5 | Generate FILE-MAP.md — the directory index agents jump to instead of crawling. |
+| `scripts` | 5 | Repo tooling run through `tsx`, none of it shipped in the app bundle: baking the frozen reference dataset (build-dataset), gating ADR and knowledge-bundle consistency (check-docs), generating this directory index (gen-file-map), timing the optimiser (benchmark), and reporting character-guide coverage (meta-coverage). |
 
 17 source directories, 105 files, 0 without a declared purpose.

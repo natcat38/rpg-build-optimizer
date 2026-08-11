@@ -19,6 +19,15 @@
  *   npx tsx scripts/gen-file-map.ts            # rewrite FILE-MAP.md
  *   npx tsx scripts/gen-file-map.ts --check    # exit 1 if FILE-MAP.md is stale (CI)
  */
+
+/**
+ * Repo tooling run through `tsx`, none of it shipped in the app bundle: baking
+ * the frozen reference dataset (build-dataset), gating ADR and knowledge-bundle
+ * consistency (check-docs), generating this directory index (gen-file-map),
+ * timing the optimiser (benchmark), and reporting character-guide coverage
+ * (meta-coverage).
+ * @packageDocumentation
+ */
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -57,9 +66,14 @@ function tsDoc(dir: string): string {
     .sort();
   for (const f of files) {
     const src = fs.readFileSync(path.join(dir, f), 'utf-8');
-    const m = /^\s*\/\*\*(.*?)\*\//s.exec(src);
-    if (m && m[1].includes('@packageDocumentation')) {
-      const body = m[1].replace('@packageDocumentation', '');
+    // Every block comment, not just the first: a file may explain itself up top
+    // and carry the directory's package doc in a later block.
+    for (const m of src.matchAll(/\/\*\*(.*?)\*\//gs)) {
+      // The tag must sit on its own line to count. A substring test would also
+      // match a comment that merely mentions `@packageDocumentation` in prose —
+      // which is how this very file was once picked up as its directory's doc.
+      if (!/^\s*\*?\s*@packageDocumentation\s*$/m.test(m[1])) continue;
+      const body = m[1].replace(/^\s*\*?\s*@packageDocumentation\s*$/m, '');
       const lines = body
         .split('\n')
         .map((ln) => ln.trim().replace(/^\*/, '').trim());
