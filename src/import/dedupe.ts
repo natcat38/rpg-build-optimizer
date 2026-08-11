@@ -1,3 +1,10 @@
+/**
+ * GOOD inventory import: parsing and validating a GOOD export into
+ * artifacts/roster/weapon-inventory entries, content-hash dedupe against the
+ * existing inventory, and UID-based (Enka.Network) convenience import
+ * (ADR-0006).
+ * @packageDocumentation
+ */
 import type { Artifact } from '../game/types';
 
 /** Stable content hash for dedupe. Independent of `id`. */

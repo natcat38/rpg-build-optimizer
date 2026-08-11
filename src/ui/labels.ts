@@ -1,3 +1,9 @@
+/**
+ * UI-only presentation helpers layered on top of `src/labels.ts`'s
+ * domain-neutral labels — currently the per-slot display glyphs used in
+ * compact build lists.
+ * @packageDocumentation
+ */
 import type { Slot } from '../game/types';
 
 // Canonical labels live in src/labels.ts (neutral, no domain→ui dependency).

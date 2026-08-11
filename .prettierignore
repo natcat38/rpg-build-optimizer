@@ -1,6 +1,10 @@
 # Generated dataset (built by scripts/build-dataset.ts)
 src/game/genshin/data.generated.json
 
+# Generated directory index (built by scripts/gen-file-map.ts) — its LF-only
+# byte-identical output must not be reformatted by Prettier.
+FILE-MAP.md
+
 # Lockfile
 package-lock.json
 

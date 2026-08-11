@@ -1,3 +1,11 @@
+/**
+ * Character guides: the curated per-character `CharacterGuide` records
+ * (build recipe, substat priority, weapon rankings, talent targets,
+ * constellation guidance, team comps), split one file per element
+ * (anemo/cryo/dendro/electro/geo/hydro/pyro) and merged here into the
+ * `GUIDES` registry (ADR-0018).
+ * @packageDocumentation
+ */
 import type {
   OptimizeConstraints,
   OptimizeRequest,

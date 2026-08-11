@@ -1,3 +1,10 @@
+/**
+ * The React presentational layer: import/artifact-entry panels, the
+ * optimizer and gap-analysis results views, the roster dashboard and
+ * per-character guide (character detail) screens, and the AI-explain
+ * panel, wired together by the top-level `App` component.
+ * @packageDocumentation
+ */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ImportPanel } from './ImportPanel';
 import { ArtifactForm } from './ArtifactForm';

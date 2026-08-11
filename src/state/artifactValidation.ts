@@ -1,3 +1,10 @@
+/**
+ * Client-side Zustand stores for the app's persisted and session state:
+ * artifact inventory, weapon inventory, roster, the current optimize
+ * request, the non-persisted build cache, and manual-artifact-form
+ * validation.
+ * @packageDocumentation
+ */
 import type { StatKey, SubStat } from '../game/types';
 
 export interface ArtifactDraft {
