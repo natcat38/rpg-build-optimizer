@@ -235,7 +235,11 @@ export function App() {
     // afterward, but still compute it the first time sampleMode turns true
     // (e.g. a returning user who starts with real gear already loaded).
     if (hero || !sampleMode) return;
-    setHero(buildHeroExample());
+    // Handed to a macrotask rather than run in the effect body: the solve is
+    // the expensive part, and this keeps it off the commit that paints the
+    // page — which is the whole reason it isn't a useMemo.
+    const id = setTimeout(() => setHero(buildHeroExample()), 0);
+    return () => clearTimeout(id);
   }, [sampleMode, hero]);
 
   useEffect(() => {

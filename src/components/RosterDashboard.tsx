@@ -45,9 +45,23 @@ export function RosterDashboard({
 
   const ownedKeys = useMemo(() => Object.keys(rosterEntries), [rosterEntries]);
 
+  // Any change to a grading input invalidates every grade already computed.
+  // Collapsing the inputs into one identity lets the reset happen during
+  // render (React's adjust-state-on-change pattern) instead of as a
+  // synchronous setState at the top of the grading effect — same immediate
+  // clear, without the cascading-render hazard.
+  const gradingInputs = useMemo(
+    () => ({ ownedKeys, rosterEntries, artifacts, ownedWeapons }),
+    [ownedKeys, rosterEntries, artifacts, ownedWeapons],
+  );
+  const [gradedFor, setGradedFor] = useState(gradingInputs);
+  if (gradedFor !== gradingInputs) {
+    setGradedFor(gradingInputs);
+    setGrades({});
+  }
+
   useEffect(() => {
     let cancelled = false;
-    setGrades({});
     void (async () => {
       for (const key of ownedKeys) {
         const meta = GUIDES[key]?.build;

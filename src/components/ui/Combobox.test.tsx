@@ -55,6 +55,19 @@ describe('Combobox', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('resets the highlighted row when the query changes', async () => {
+    const onChange = vi.fn();
+    render(<Combobox options={OPTIONS} value="hu_tao" onChange={onChange} />);
+    await userEvent.click(screen.getByRole('button'));
+    // Highlight index 2 (Xiao), then narrow the list to a single option. The
+    // highlight has to fall back to 0, or Enter indexes past the filtered
+    // list and selects nothing.
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}');
+    await userEvent.type(screen.getByRole('textbox'), 'ra');
+    await userEvent.keyboard('{Enter}');
+    expect(onChange).toHaveBeenCalledWith('raiden');
+  });
+
   it('navigates the list with arrow keys and selects with Enter', async () => {
     const onChange = vi.fn();
     render(<Combobox options={OPTIONS} value="hu_tao" onChange={onChange} />);
