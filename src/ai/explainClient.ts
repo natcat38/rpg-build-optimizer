@@ -1,3 +1,9 @@
+/**
+ * The client side of the AI-explain feature: the fetch call to the
+ * serverless `/api/explain` proxy and the request/response shapes it shares
+ * with that proxy.
+ * @packageDocumentation
+ */
 import type { ExplainPayload } from './explainShared';
 
 /** Calls the serverless proxy. Throws on transport or shape errors. */

@@ -1,3 +1,9 @@
+/**
+ * Generic, domain-agnostic UI primitives shared across feature components
+ * (currently a filterable/typeable Combobox used for character and weapon
+ * pickers).
+ * @packageDocumentation
+ */
 import { useState, useRef, useEffect } from 'react';
 
 interface ComboboxOption {

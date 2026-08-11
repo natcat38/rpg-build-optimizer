@@ -1,3 +1,10 @@
+/**
+ * The `genshinAdapter`: the concrete object owning all Genshin-specific
+ * reference data (characters, weapons, artifact sets, base/main stats) and
+ * the universal game baselines, loaded from the frozen `data.generated.json`
+ * snapshot (ADR-0002, ADR-0009, ADR-0012).
+ * @packageDocumentation
+ */
 import type { StatKey, StatVec, BuildLevel, Element } from '../types';
 import { STAT_KEYS } from '../types';
 import type { Snapshot } from './snapshot';

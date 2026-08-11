@@ -1,3 +1,10 @@
+/**
+ * The exact branch-and-bound optimiser (ADR-0004): explores per-slot
+ * artifact pools, scores builds and constraint satisfaction, and returns the
+ * top-K valid builds by objective, plus the diagnostics and benchmark
+ * instrumentation that explain and measure the search.
+ * @packageDocumentation
+ */
 import type {
   Artifact,
   OptimizeContext,

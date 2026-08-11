@@ -1,3 +1,9 @@
+/**
+ * The serverless AI-explain proxy (`/api/explain`, Vercel functions): rate
+ * limiting by client IP via Upstash Redis, and the handler that forwards a
+ * validated explain payload to Anthropic and returns the explanation.
+ * @packageDocumentation
+ */
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
