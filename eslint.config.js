@@ -24,14 +24,6 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      // ponytail: react-hooks v7 turns on the React Compiler rules, and
-      // set-state-in-effect flags 3 pre-existing deliberate patterns
-      // (App.tsx defers hero computation past first paint; RosterDashboard
-      // and Combobox reset state when their inputs change). Kept as a warning
-      // so the eslint 10 bump does not hinge on rewriting render behaviour.
-      // Upgrade path: derive the state or key the component, then set to
-      // 'error'.
-      'react-hooks/set-state-in-effect': 'warn',
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },

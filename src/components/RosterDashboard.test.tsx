@@ -86,6 +86,28 @@ describe('RosterDashboard', () => {
     expect(useBuildCache.getState().builds.xiao).toBeDefined();
   });
 
+  it('clears already-computed grades when a grading input changes', async () => {
+    useRoster.getState().setRoster({
+      xiao: { weaponKey: 'black_tassel', buildLevel: 90 },
+    });
+    optimize.mockResolvedValueOnce(makeResult({ crit_rate: 80 }));
+    render(<RosterDashboard onSelect={() => {}} />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.getByText('S')).toBeInTheDocument();
+
+    // Regrading is in flight, so the stale S must not survive the change.
+    optimize.mockReturnValue(new Promise<OptimizeResult>(() => {}));
+    act(() => {
+      useRoster.getState().setRoster({
+        xiao: { weaponKey: 'black_tassel', buildLevel: 90 },
+        furina: {},
+      });
+    });
+    expect(screen.queryByText('S')).toBeNull();
+  });
+
   it('calls onSelect with the character key when a card is clicked', async () => {
     useRoster.getState().setRoster({ furina: {} });
     const onSelect = vi.fn();
