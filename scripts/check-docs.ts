@@ -3,8 +3,11 @@
  *
  * Guards against documentation drift that the existing CI does not catch:
  *   1. ADR numbering in docs/adr/ is contiguous (no gaps, no duplicates).
- *   2. knowledge/index.md lists every ADR (catches a stale knowledge bundle).
- *   3. Relative links in CONTEXT.md and docs/adr/*.md resolve to real files.
+ *   2. docs/adr/README.md lists every ADR, and knowledge/index.md still links
+ *      to docs/adr/ (catches a stale decision log, and a bundle that has lost
+ *      its route to one).
+ *   3. Relative links in CONTEXT.md, docs/adr/README.md and docs/adr/*.md
+ *      resolve to real files.
  *
  * Out of scope (owned by the OKF action, see .github/workflows/okf.yml):
  * the knowledge bundle's own root-relative `/domain/...` links.
@@ -16,6 +19,7 @@ import * as path from 'path';
 const root = process.cwd();
 const ADR_DIR = path.join(root, 'docs', 'adr');
 const KNOWLEDGE_INDEX = path.join(root, 'knowledge', 'index.md');
+const ADR_INDEX = path.join(ADR_DIR, 'README.md');
 const CONTEXT = path.join(root, 'CONTEXT.md');
 
 const errors: string[] = [];
@@ -40,16 +44,34 @@ for (let i = 1; i <= numbers.length; i++) {
   }
 }
 
-// 2. knowledge/index.md lists every ADR.
-const knowledgeIndex = fs.readFileSync(KNOWLEDGE_INDEX, 'utf-8');
+// 2. docs/adr/README.md lists every ADR.
+//
+// This index used to live in knowledge/index.md, but a catalog should link down
+// and stop rather than enumerate the level below it: the ADR titles are the
+// filenames, so listing all of them there stored the same fact twice and grew
+// the bundle index past the 60-line cap the OKF house standard enforces
+// (rule 10) at roughly ADR-0027. The list now lives with the ADRs themselves,
+// where it has no cap and only one home.
+const adrIndex = fs.readFileSync(ADR_INDEX, 'utf-8');
 for (const f of adrFiles) {
-  if (!knowledgeIndex.includes(f)) {
-    errors.push(`knowledge/index.md does not reference ADR file ${f}`);
+  if (!adrIndex.includes(f)) {
+    errors.push(`docs/adr/README.md does not reference ADR file ${f}`);
   }
 }
 
+// knowledge/index.md must still point AT the decision log, or the bundle loses
+// its route to it entirely.
+const knowledgeIndex = fs.readFileSync(KNOWLEDGE_INDEX, 'utf-8');
+if (!knowledgeIndex.includes('docs/adr/')) {
+  errors.push('knowledge/index.md does not link to docs/adr/');
+}
+
 // 3. Relative links resolve. Scan CONTEXT.md and every ADR.
-const linkSources = [CONTEXT, ...adrFiles.map((f) => path.join(ADR_DIR, f))];
+const linkSources = [
+  CONTEXT,
+  ADR_INDEX,
+  ...adrFiles.map((f) => path.join(ADR_DIR, f)),
+];
 const inlineLink = /\]\(([^)]+)\)/g;
 const refLink = /^\[[^\]]+\]:\s*(\S+)/gm;
 
