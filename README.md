@@ -7,8 +7,6 @@ A Genshin Impact account advisor: import your GOOD export and, for every charact
 
 **▶ Live demo:** https://rpg-build-optimizer.vercel.app
 
-<!-- If your Vercel production domain differs, replace the URL above. -->
-
 ![RPG Build Optimizer — import your artifacts, pick a character, and optimise](docs/screenshot.png)
 
 ---
