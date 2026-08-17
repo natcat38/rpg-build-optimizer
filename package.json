@@ -19,7 +19,9 @@
     "typecheck": "tsc -b && tsc --noEmit -p tsconfig.api.json",
     "build:data": "tsx scripts/build-dataset.ts",
     "bench": "tsx scripts/benchmark.ts",
-    "docs:check": "tsx scripts/check-docs.ts"
+    "docs:check": "tsx scripts/check-docs.ts",
+    "file-map": "tsx scripts/gen-file-map.ts",
+    "file-map:check": "tsx scripts/gen-file-map.ts --check"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",
