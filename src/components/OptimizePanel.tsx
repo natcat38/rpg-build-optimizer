@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import type { BuildLevel, Objective, Slot, StatKey } from '../game/types';
 import { BUILD_LEVELS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
@@ -190,6 +190,11 @@ export function OptimizePanel({
   // A character can't be de-leveled, so a rostered character's build level
   // is a floor, not just a suggestion — levels below it aren't achievable.
   const rosterBuildLevel = rosterEntries[characterKey]?.buildLevel;
+  useEffect(() => {
+    if (rosterBuildLevel != null && buildLevel < rosterBuildLevel) {
+      setBuildLevel(rosterBuildLevel);
+    }
+  }, [rosterBuildLevel, buildLevel, setBuildLevel]);
 
   return (
     <div className="panel space-y-5">

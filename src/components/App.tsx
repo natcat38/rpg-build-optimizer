@@ -66,7 +66,7 @@ function ThesisHero({ game }: { game: GameDescriptor }) {
  *  search proof — the thing this tool actually does. */
 function SolvedHero({ hero }: { hero: HeroExample }) {
   const reductionLabel = formatReduction(
-    hero.naive / Math.max(hero.explored, 1),
+    hero.explored > 0 ? hero.naive / hero.explored : 0,
   );
   return (
     <>
@@ -134,6 +134,18 @@ export function App() {
   );
   const [sharedError, setSharedError] = useState(false);
   const [optimizeError, setOptimizeError] = useState(false);
+
+  // Switching games invalidates any Genshin-specific result/request still held
+  // in state — without this, the ComingSoon gate is bypassed by a stale result.
+  useEffect(() => {
+    return useGame.subscribe((s, prev) => {
+      if (s.gameId !== prev.gameId) {
+        setResult(null);
+        setRequest(null);
+        setOptimizeError(false);
+      }
+    });
+  }, []);
 
   // The hero's demo solve is independent of the user's own inventory/state and
   // reasonably cheap (~tens of ms — see heroExample.ts), so it's computed in an

@@ -6,7 +6,7 @@ import type {
   StatKey,
   SubStat,
 } from '../game/types';
-import { ELEMENTS, SLOTS } from '../game/types';
+import { BUILD_LEVELS, ELEMENTS, SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { validateArtifactDraft } from '../state/artifactValidation';
 
@@ -27,13 +27,7 @@ const STAT_MAP: Record<string, StatKey> = {
   enerRech_: 'er_pct',
   critRate_: 'crit_rate',
   critDMG_: 'crit_dmg',
-  pyro_dmg_: 'elemental_dmg',
-  hydro_dmg_: 'elemental_dmg',
-  electro_dmg_: 'elemental_dmg',
-  cryo_dmg_: 'elemental_dmg',
-  anemo_dmg_: 'elemental_dmg',
-  geo_dmg_: 'elemental_dmg',
-  dendro_dmg_: 'elemental_dmg',
+  ...Object.fromEntries(ELEMENTS.map((el) => [`${el}_dmg_`, 'elemental_dmg'])),
   physical_dmg_: 'physical_dmg',
   heal_: 'healing',
 };
@@ -116,7 +110,7 @@ export interface RosterEntry {
 
 // Ascension 0..6 → max level cap. A character can't be de-leveled, so the cap
 // is the level the player is heading to — evaluate builds there (ADR-0015).
-const ASCENSION_CAP: BuildLevel[] = [20, 40, 50, 60, 70, 80, 90];
+const ASCENSION_CAP = BUILD_LEVELS.slice(1) as BuildLevel[];
 
 // Same wedge-guard rationale as MAX_ARTIFACTS; real accounts are ~100/150.
 const MAX_ROSTER = 1000;
