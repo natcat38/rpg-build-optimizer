@@ -17,7 +17,9 @@ vi.mock('@upstash/ratelimit', () => ({
   ),
 }));
 vi.mock('@upstash/redis', () => ({
-  Redis: vi.fn().mockImplementation((config: unknown) => ({ config })),
+  Redis: vi.fn().mockImplementation(function (config: unknown) {
+    return { config };
+  }),
 }));
 
 import { checkRateLimit } from './_ratelimit';
