@@ -145,7 +145,8 @@ export function App() {
     // afterward, but still compute it the first time sampleMode turns true
     // (e.g. a returning user who starts with real gear already loaded).
     if (hero || !isLive || !sampleMode) return;
-    setHero(buildHeroExample());
+    const id = setTimeout(() => setHero(buildHeroExample()), 0);
+    return () => clearTimeout(id);
   }, [isLive, sampleMode, hero]);
 
   useEffect(() => {

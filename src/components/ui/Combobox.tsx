@@ -31,9 +31,10 @@ export function Combobox({
     ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
     : options;
 
-  useEffect(() => {
+  function changeQuery(next: string) {
+    setQuery(next);
     setActiveIndex(0);
-  }, [query]);
+  }
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -44,7 +45,7 @@ export function Combobox({
     function onOutsideMouseDown(e: MouseEvent) {
       if (!containerRef.current?.contains(e.target as Node)) {
         setOpen(false);
-        setQuery('');
+        changeQuery('');
       }
     }
     document.addEventListener('mousedown', onOutsideMouseDown);
@@ -54,13 +55,13 @@ export function Combobox({
   function handleSelect(opt: ComboboxOption) {
     onChange(opt.value);
     setOpen(false);
-    setQuery('');
+    changeQuery('');
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') {
       setOpen(false);
-      setQuery('');
+      changeQuery('');
       return;
     }
     if (filtered.length === 0) return;
@@ -83,7 +84,7 @@ export function Combobox({
           ref={inputRef}
           className="field"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => changeQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Search…"
         />
