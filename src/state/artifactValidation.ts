@@ -1,3 +1,10 @@
+/**
+ * Client-side Zustand stores for the app's persisted and session state:
+ * artifact inventory, roster, the current optimize request, and
+ * manual-artifact-form validation.
+ * @packageDocumentation
+ */
+
 import type { StatKey, SubStat } from '../game/types';
 
 export interface ArtifactDraft {

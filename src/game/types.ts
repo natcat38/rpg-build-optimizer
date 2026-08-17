@@ -1,3 +1,9 @@
+/**
+ * Game-agnostic domain types (artifacts, slots, stat keys, build requests)
+ * plus the game display registry, kept separate from `game/genshin/`.
+ * @packageDocumentation
+ */
+
 export type Slot = 'flower' | 'plume' | 'sands' | 'goblet' | 'circlet';
 export const SLOTS: Slot[] = ['flower', 'plume', 'sands', 'goblet', 'circlet'];
 

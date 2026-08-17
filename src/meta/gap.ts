@@ -1,3 +1,10 @@
+/**
+ * Gap analysis: compares the best build the player can field from their own
+ * inventory against a curated meta target and reports feasibility gaps,
+ * numeric shortfalls, and one grounded action (ADR-0007).
+ * @packageDocumentation
+ */
+
 import type { Artifact, BuildResult, Slot, StatKey } from '../game/types';
 import { SLOTS } from '../game/types';
 import type { MetaTarget } from './metaTargets';

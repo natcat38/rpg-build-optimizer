@@ -1,3 +1,10 @@
+/**
+ * Self-contained share links (ADR-0005): encodes a `BuildSnapshot` (request,
+ * result, and the five full artifacts) into a URL and decodes it back, with
+ * no server-side state.
+ * @packageDocumentation
+ */
+
 import type {
   Artifact,
   BuildResult,

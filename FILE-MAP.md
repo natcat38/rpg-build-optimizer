@@ -10,21 +10,21 @@ block — an orientation gap, not an omission by the generator.
 
 | Directory | Source files | Purpose |
 | --- | ---: | --- |
-| `src` | 6 |  |
-| `src/ai` | 4 |  |
-| `src/components` | 22 |  |
-| `src/components/ui` | 2 |  |
-| `src/game` | 3 |  |
-| `src/game/genshin` | 3 |  |
-| `src/import` | 6 |  |
-| `src/meta` | 8 |  |
-| `src/optimizer` | 10 |  |
-| `src/sample` | 5 |  |
-| `src/share` | 2 |  |
-| `src/state` | 10 |  |
-| `src/ui` | 1 |  |
-| `src/workers` | 5 |  |
-| `api` | 4 |  |
+| `src` | 6 | The app's root: game-agnostic top-level types (`game/types.ts`) plus the `labels.ts`/`main.tsx`/`index.css` entry point that mounts the React tree. |
+| `src/ai` | 4 | The client side of the AI-explain feature: the fetch call to the serverless `/api/explain` proxy and the request/response shapes it shares with that proxy. |
+| `src/components` | 22 | The React presentational layer: import/artifact-entry panels, the optimizer and gap-analysis results views, and the AI-explain panel, wired together by the top-level `App` component. |
+| `src/components/ui` | 2 | Generic, domain-agnostic UI primitives shared across feature components (currently a filterable/typeable Combobox used for character and weapon pickers). |
+| `src/game` | 3 | Game-agnostic domain types (artifacts, slots, stat keys, build requests) plus the game display registry, kept separate from `game/genshin/`. |
+| `src/game/genshin` | 3 | The `genshinAdapter`: the concrete object owning all Genshin-specific reference data (characters, weapons, artifact sets, base/main stats) and the universal game baselines, loaded from the frozen `data.generated.json` snapshot (ADR-0002, ADR-0009, ADR-0012). |
+| `src/import` | 6 | GOOD inventory import: parsing and validating a GOOD export into artifacts/roster entries, content-hash dedupe against the existing inventory, and UID-based (Enka.Network) convenience import (ADR-0006). |
+| `src/meta` | 8 | Gap analysis: compares the best build the player can field from their own inventory against a curated meta target and reports feasibility gaps, numeric shortfalls, and one grounded action (ADR-0007). |
+| `src/optimizer` | 10 | The exact branch-and-bound optimiser (ADR-0004): explores per-slot artifact pools, scores builds and constraint satisfaction, and returns the top-K valid builds by objective, plus the diagnostics and benchmark instrumentation that explain and measure the search. |
+| `src/sample` | 5 | "Try with example gear" sample mode: the bundled deterministic sample inventory, curated presets that each demonstrate a different constraint mechanism, and the landing-page hero example solved live on mount. |
+| `src/share` | 2 | Self-contained share links (ADR-0005): encodes a `BuildSnapshot` (request, result, and the five full artifacts) into a URL and decodes it back, with no server-side state. |
+| `src/state` | 10 | Client-side Zustand stores for the app's persisted and session state: artifact inventory, roster, the current optimize request, and manual-artifact-form validation. |
+| `src/ui` | 1 | UI-only presentation helpers layered on top of `src/labels.ts`'s domain-neutral labels — currently the per-slot display glyphs used in compact build lists. |
+| `src/workers` | 5 | Runs the branch-and-bound optimiser off the main thread: the Web Worker entry point, its request/response protocol, and the main-thread client that dispatches to it (falling back to a synchronous call where no worker is available). |
+| `api` | 4 | The serverless AI-explain proxy (`/api/explain`, Vercel functions): rate limiting by client IP via Upstash Redis, and the handler that forwards a validated explain payload to Anthropic and returns the explanation. |
 | `scripts` | 4 | Repo tooling run through `tsx`, none of it shipped in the app bundle: baking the frozen reference dataset (build-dataset), gating ADR and knowledge-bundle consistency (check-docs), generating this directory index (gen-file-map), timing the optimiser (benchmark), and reporting character-guide coverage (meta-coverage). |
 
-16 source directories, 95 files, 15 without a declared purpose.
+16 source directories, 95 files, 0 without a declared purpose.
