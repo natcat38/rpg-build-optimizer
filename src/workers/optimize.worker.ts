@@ -5,6 +5,7 @@
  * is available).
  * @packageDocumentation
  */
+
 import { runSearchRequest } from './protocol';
 import type { WorkerRequest } from './protocol';
 

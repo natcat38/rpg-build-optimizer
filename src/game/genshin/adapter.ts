@@ -5,6 +5,7 @@
  * snapshot (ADR-0002, ADR-0009, ADR-0012).
  * @packageDocumentation
  */
+
 import type { StatKey, StatVec, BuildLevel, Element } from '../types';
 import { STAT_KEYS } from '../types';
 import type { Snapshot } from './snapshot';

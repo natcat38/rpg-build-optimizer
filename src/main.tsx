@@ -3,6 +3,7 @@
  * `labels.ts`/`main.tsx`/`index.css` entry point that mounts the React tree.
  * @packageDocumentation
  */
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './components/App';

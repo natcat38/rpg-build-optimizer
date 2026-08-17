@@ -1,13 +1,13 @@
 /**
  * Gap analysis: compares the best build the player can field from their own
  * inventory against a curated meta target and reports feasibility gaps,
- * numeric shortfalls, and one grounded action (ADR-0007), plus build
- * grading against a character's guide.
+ * numeric shortfalls, and one grounded action (ADR-0007).
  * @packageDocumentation
  */
+
 import type { Artifact, BuildResult, Slot, StatKey } from '../game/types';
 import { SLOTS } from '../game/types';
-import type { MetaTarget } from './guides/types';
+import type { MetaTarget } from './metaTargets';
 import {
   formatSetName,
   objectiveLabel,
@@ -64,7 +64,6 @@ function mainGaps(
 }
 
 export function computeGapReport(
-  characterKey: string,
   meta: MetaTarget,
   inventory: Artifact[],
   build: BuildResult | null,
@@ -134,5 +133,5 @@ export function computeGapReport(
       action = `Your ${SLOT_LABELS[weakest]} contributes least to ${objectiveLabel(meta.objective)} — upgrading it has the most upside.`;
   }
 
-  return { characterKey, feasibility, shortfalls, action };
+  return { characterKey: meta.characterKey, feasibility, shortfalls, action };
 }

@@ -1,4 +1,4 @@
-import type { Artifact, Slot, StatKey, SubStat } from '../game/types';
+import type { Artifact, Element, Slot, StatKey, SubStat } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 
 export type UidError = { error: 'NOT_FOUND' | 'NO_SHOWCASE' | 'NETWORK' };
@@ -31,6 +31,18 @@ const PROP_STAT: Record<string, StatKey> = {
   FIGHT_PROP_WIND_ADD_HURT: 'elemental_dmg',
   FIGHT_PROP_ROCK_ADD_HURT: 'elemental_dmg',
   FIGHT_PROP_GRASS_ADD_HURT: 'elemental_dmg',
+};
+
+// ADR-0014: extract goblet element from Enka prop IDs so off-element zeroing
+// works for UID-imported artifacts the same way it does for GOOD imports.
+const PROP_ELEMENT: Record<string, Element> = {
+  FIGHT_PROP_FIRE_ADD_HURT: 'pyro',
+  FIGHT_PROP_WATER_ADD_HURT: 'hydro',
+  FIGHT_PROP_ELEC_ADD_HURT: 'electro',
+  FIGHT_PROP_ICE_ADD_HURT: 'cryo',
+  FIGHT_PROP_WIND_ADD_HURT: 'anemo',
+  FIGHT_PROP_ROCK_ADD_HURT: 'geo',
+  FIGHT_PROP_GRASS_ADD_HURT: 'dendro',
 };
 
 export async function fetchUidArtifacts(
@@ -91,6 +103,10 @@ export async function fetchUidArtifacts(
         mainStat,
         mainStatValue: genshinAdapter.mainStatValue(mainStat, rarity, level),
         subStats,
+        element:
+          slot === 'goblet'
+            ? PROP_ELEMENT[reliquaryMainstat?.mainPropId ?? '']
+            : undefined,
       });
     }
   }

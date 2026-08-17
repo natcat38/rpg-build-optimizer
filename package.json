@@ -20,7 +20,6 @@
     "build:data": "tsx scripts/build-dataset.ts",
     "bench": "tsx scripts/benchmark.ts",
     "docs:check": "tsx scripts/check-docs.ts",
-    "meta:coverage": "tsx scripts/meta-coverage.ts",
     "file-map": "tsx scripts/gen-file-map.ts",
     "file-map:check": "tsx scripts/gen-file-map.ts --check"
   },

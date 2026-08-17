@@ -1,10 +1,10 @@
 /**
  * "Try with example gear" sample mode: the bundled deterministic sample
  * inventory, curated presets that each demonstrate a different constraint
- * mechanism, and the landing-page hero example solved live on mount
- * (v1.1).
+ * mechanism, and the landing-page hero example solved live on mount.
  * @packageDocumentation
  */
+
 import {
   makeInventory,
   naiveCount,

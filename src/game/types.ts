@@ -1,10 +1,9 @@
 /**
  * Game-agnostic domain types (artifacts, slots, stat keys, build requests)
- * plus the `GAME` display registry, kept separate from `game/genshin/` so a
- * second game could plug in behind the same shape — though the app is
- * explicitly Genshin-only today (ADR-0017).
+ * plus the game display registry, kept separate from `game/genshin/`.
  * @packageDocumentation
  */
+
 export type Slot = 'flower' | 'plume' | 'sands' | 'goblet' | 'circlet';
 export const SLOTS: Slot[] = ['flower', 'plume', 'sands', 'goblet', 'circlet'];
 
@@ -48,8 +47,6 @@ export type Element = (typeof ELEMENTS)[number];
 
 export type BuildLevel = 1 | 20 | 40 | 50 | 60 | 70 | 80 | 90;
 export const BUILD_LEVELS: BuildLevel[] = [1, 20, 40, 50, 60, 70, 80, 90];
-
-export type TalentSlot = 'auto' | 'skill' | 'burst';
 
 /** A sparse stat vector. Missing keys are treated as 0. */
 export type StatVec = Partial<Record<StatKey, number>>;

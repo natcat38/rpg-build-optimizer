@@ -4,6 +4,7 @@
  * compact build lists.
  * @packageDocumentation
  */
+
 import type { Slot } from '../game/types';
 
 // Canonical labels live in src/labels.ts (neutral, no domain→ui dependency).

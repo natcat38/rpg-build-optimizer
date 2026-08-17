@@ -5,6 +5,7 @@
  * instrumentation that explain and measure the search.
  * @packageDocumentation
  */
+
 import type {
   Artifact,
   OptimizeContext,
@@ -268,9 +269,10 @@ export function searchBuilds(
       pruned++;
       return;
     }
+    const hasRelevant = relevantSets.length > 0;
     for (const a of pools[SLOTS[slotIndex]]) {
       chosen.push(a);
-      const relIdx = relevantIndex.get(a.setKey);
+      const relIdx = hasRelevant ? relevantIndex.get(a.setKey) : undefined;
       if (relIdx !== undefined) matchedRelevant[relIdx]++;
       recurse(
         slotIndex + 1,

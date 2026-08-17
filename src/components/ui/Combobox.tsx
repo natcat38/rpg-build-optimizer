@@ -4,6 +4,7 @@
  * pickers).
  * @packageDocumentation
  */
+
 import { useState, useRef, useEffect } from 'react';
 
 interface ComboboxOption {
@@ -37,9 +38,6 @@ export function Combobox({
     ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
     : options;
 
-  // The highlighted row is only meaningful relative to the current filter, so
-  // every query change resets it. Done here rather than in an effect: the
-  // reset belongs to the same event that changed the query.
   function changeQuery(next: string) {
     setQuery(next);
     setActiveIndex(0);

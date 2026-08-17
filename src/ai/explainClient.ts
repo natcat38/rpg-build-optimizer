@@ -4,6 +4,7 @@
  * with that proxy.
  * @packageDocumentation
  */
+
 import type { ExplainPayload } from './explainShared';
 
 /** Calls the serverless proxy. Throws on transport or shape errors. */
