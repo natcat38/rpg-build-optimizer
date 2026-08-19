@@ -13,13 +13,19 @@ export function addInto(acc: StatVec, v: StatVec): void {
     acc[k] = (acc[k] ?? 0) + (v[k] ?? 0);
 }
 
+/** addInto's twin — used by the search to undo a push without reallocating. */
+export function subFrom(acc: StatVec, v: StatVec): void {
+  for (const k of Object.keys(v) as StatKey[])
+    acc[k] = (acc[k] ?? 0) - (v[k] ?? 0);
+}
+
 export function countSets(build: Artifact[]): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const a of build) counts[a.setKey] = (counts[a.setKey] ?? 0) + 1;
   return counts;
 }
 
-function artifactContribution(a: Artifact): StatVec {
+export function artifactContribution(a: Artifact): StatVec {
   const v: StatVec = {};
   v[a.mainStat] = (v[a.mainStat] ?? 0) + a.mainStatValue;
   for (const s of a.subStats) v[s.key] = (v[s.key] ?? 0) + s.value;
