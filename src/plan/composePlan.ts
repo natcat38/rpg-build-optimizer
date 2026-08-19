@@ -1,6 +1,13 @@
 /**
- * The plan: two recommended teams turned into eight exact optimisations plus
- * one farming list.
+ * The plan (ADR-0019): composes the recommended Abyss teams into an optimised
+ * build for each of the eight members over one shared inventory, plus a single
+ * farming list, and renders it.
+ * @packageDocumentation
+ */
+
+/**
+ * Two recommended teams turned into eight exact optimisations plus one farming
+ * list.
  *
  * Artifacts are allocated greedily — each member is optimised over what earlier
  * members left, and the winning build's five pieces leave the pool.
