@@ -83,6 +83,63 @@ describe('Combobox accessibility', () => {
     ).toBeInTheDocument();
   });
 
+  it('points aria-activedescendant at the option the arrow keys highlight', async () => {
+    render(
+      <Combobox
+        options={OPTIONS}
+        value="raiden"
+        onChange={() => {}}
+        label="Character"
+      />,
+    );
+    await userEvent.click(screen.getByRole('combobox', { name: 'Character' }));
+    const search = screen.getByRole('combobox', { name: 'Character' });
+    const active = () =>
+      document.getElementById(
+        search.getAttribute('aria-activedescendant') ?? '',
+      );
+    expect(active()).toHaveTextContent('Hu Tao');
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}');
+    expect(active()).toHaveTextContent('Xiao');
+  });
+
+  it('does not leave the empty state as a bare listbox child', async () => {
+    render(
+      <Combobox
+        options={OPTIONS}
+        value="raiden"
+        onChange={() => {}}
+        label="Character"
+      />,
+    );
+    await userEvent.click(screen.getByRole('combobox', { name: 'Character' }));
+    await userEvent.type(
+      screen.getByRole('combobox', { name: 'Character' }),
+      'zzz',
+    );
+    expect(screen.getByText('No results')).toHaveAttribute(
+      'role',
+      'presentation',
+    );
+    expect(
+      screen.getByRole('combobox', { name: 'Character' }),
+    ).not.toHaveAttribute('aria-activedescendant');
+  });
+
+  it('does not point the collapsed trigger at a list that is not rendered', () => {
+    render(
+      <Combobox
+        options={OPTIONS}
+        value="raiden"
+        onChange={() => {}}
+        label="Character"
+      />,
+    );
+    expect(
+      screen.getByRole('combobox', { name: 'Character' }),
+    ).not.toHaveAttribute('aria-controls');
+  });
+
   it('exposes the dropdown as a listbox with a selected option', async () => {
     render(
       <Combobox

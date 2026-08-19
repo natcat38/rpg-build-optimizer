@@ -31,6 +31,7 @@ export function Combobox({
   label,
 }: ComboboxProps) {
   const listId = useId(); // three of these render on one page — ids must differ
+  const optionId = (i: number) => `${listId}-opt-${i}`;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
@@ -100,6 +101,9 @@ export function Combobox({
           aria-label={label}
           aria-expanded="true"
           aria-controls={listId}
+          aria-activedescendant={
+            filtered[activeIndex] ? optionId(activeIndex) : undefined
+          }
           value={query}
           onChange={(e) => changeQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -111,7 +115,6 @@ export function Combobox({
           role="combobox"
           aria-label={label}
           aria-expanded="false"
-          aria-controls={listId}
           className="field flex w-full items-center justify-between text-left"
           onClick={() => setOpen(true)}
         >
@@ -139,11 +142,15 @@ export function Combobox({
           className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-surface-900 shadow-lg"
         >
           {filtered.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-muted">No results</li>
+            // role=presentation: a listbox may only own option/group children.
+            <li role="presentation" className="px-3 py-2 text-sm text-muted">
+              No results
+            </li>
           ) : (
             filtered.map((opt, i) => (
               <li
                 key={opt.value}
+                id={optionId(i)}
                 role="option"
                 aria-selected={opt.value === value}
                 className={[

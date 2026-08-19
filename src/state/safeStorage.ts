@@ -2,6 +2,13 @@ import type { StateStorage } from 'zustand/middleware';
 
 const memory = new Map<string, string>();
 
+/** Latched on the first localStorage failure. Without it, a browser that
+ *  reads fine but refuses to write (quota exceeded) would take writes into
+ *  `memory` and then keep serving the stale value from localStorage on read,
+ *  silently discarding what the user just imported. A storage that throws
+ *  once keeps throwing, so the latch never needs to unset. */
+let degraded = false;
+
 /**
  * The `storage` every persisted store uses. `localStorage` throws in Safari
  * private mode and when the quota is exceeded, and zustand only guards the
@@ -12,24 +19,35 @@ const memory = new Map<string, string>();
  */
 export const safeStorage: StateStorage = {
   getItem: (name) => {
-    try {
-      return localStorage.getItem(name);
-    } catch {
-      return memory.get(name) ?? null;
+    if (!degraded) {
+      try {
+        return localStorage.getItem(name);
+      } catch {
+        degraded = true;
+      }
     }
+    return memory.get(name) ?? null;
   },
   setItem: (name, value) => {
-    try {
-      localStorage.setItem(name, value);
-    } catch {
-      memory.set(name, value);
+    if (!degraded) {
+      try {
+        localStorage.setItem(name, value);
+        return;
+      } catch {
+        degraded = true;
+      }
     }
+    memory.set(name, value);
   },
   removeItem: (name) => {
-    try {
-      localStorage.removeItem(name);
-    } catch {
-      memory.delete(name);
+    if (!degraded) {
+      try {
+        localStorage.removeItem(name);
+        return;
+      } catch {
+        degraded = true;
+      }
     }
+    memory.delete(name);
   },
 };
