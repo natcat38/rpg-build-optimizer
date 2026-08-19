@@ -4,6 +4,7 @@
  */
 import { genshinAdapter } from '../game/genshin/adapter';
 import { COMP_ARCHETYPES } from '../teams/comps';
+import { ROLE_LABELS } from '../teams/types';
 import type { ArchetypeGap } from '../teams/recommend';
 import type { RosterEntry } from '../import/good';
 import { WEAPON_OBTAINABILITY, type Obtainability } from './obtainability';
@@ -70,7 +71,7 @@ export function adviseInvestments(
         headline: `Owning ${charName(candidate)} unlocks ${archName(
           gap.archetypeId,
         )} (+${gap.bestPossibleScore.toFixed(0)} team score)`,
-        detail: `They fill the ${gap.missingRole} slot that team is short. ${ROTATES}`,
+        detail: `They fill the ${ROLE_LABELS[gap.missingRole].toLowerCase()} slot that team is short. ${ROTATES}`,
         provenance: gap.archetypeId,
         upside: gap.bestPossibleScore,
       });

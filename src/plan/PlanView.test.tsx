@@ -109,4 +109,29 @@ describe('PlanView', () => {
       ).length,
     ).toBeGreaterThan(0);
   });
+
+  it('renders investment advice with provenance when there is any', async () => {
+    const user = userEvent.setup();
+    seed();
+    render(<PlanView runOptimize={run} />);
+    await user.click(
+      screen.getByRole('button', { name: /Build my Abyss plan/i }),
+    );
+    await screen.findByText('What to farm');
+    // The seeded roster is eight characters, so plenty of archetypes are one
+    // character short and yield advice.
+    expect(screen.getByText('Worth investing in')).toBeInTheDocument();
+    expect(screen.getAllByTestId('advice').length).toBeGreaterThan(0);
+  });
+
+  it('renders no advice heading when there is nothing to advise', async () => {
+    const user = userEvent.setup();
+    seed();
+    render(<PlanView runOptimize={run} advise={() => []} />);
+    await user.click(
+      screen.getByRole('button', { name: /Build my Abyss plan/i }),
+    );
+    await screen.findByText('What to farm');
+    expect(screen.queryByText('Worth investing in')).not.toBeInTheDocument();
+  });
 });

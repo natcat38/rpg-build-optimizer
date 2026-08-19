@@ -30,3 +30,13 @@ export interface CompArchetype {
   source: string;
   notes: string; // one line: why/when this comp
 }
+
+/** Display names for roles — user-visible copy lives here, not at each call site. */
+export const ROLE_LABELS: Record<Role, string> = {
+  'on-field-dps': 'On-field DPS',
+  'off-field-dps': 'Off-field DPS',
+  buffer: 'Buffer',
+  sustain: 'Sustain',
+  battery: 'Battery',
+  applicator: 'Applicator',
+};

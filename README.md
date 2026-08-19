@@ -29,6 +29,11 @@ This tool does one thing well: _given the artifacts you own, what's the best bui
 - **Provably optimal results** — an exact search returns the genuine top builds (not a heuristic guess), each with its full resulting stat sheet.
 - **Shareable links** — every build encodes into a self-contained URL. Open the link and you see the exact build — no account, nothing stored server-side.
 - **Try with example gear** — no inventory? One click loads a curated sample inventory, picks a character + a representative constraint, and runs the optimiser, landing you straight on ranked results.
+- **Endgame planner (v2)** — import an account and the app takes it from there:
+  - **Roster assessment** — a 0–100 build score for every owned character, broken down into level, talents, weapon, and equipped-artifact quality.
+  - **Abyss team recommendations** — two halves that share no character, matched from a curated database of comp archetypes with ranked substitutes.
+  - **Damage-ranked builds** — for characters with a curated damage profile, the optimiser maximises estimated average damage (a KQM-formula target function) instead of a proxy stat, and stays exact while doing it.
+  - **One plan** — an optimised build for all eight members over your shared inventory (carries get first pick), plus a single "what to farm" list and ranked "worth investing in" advice.
 
 ## How it works
 
