@@ -16,6 +16,7 @@ import { BuildCard } from '../components/BuildCard';
 import { optimize } from '../workers/optimizeClient';
 import { composePlan, type Plan, type RunOptimize } from './composePlan';
 import type { Artifact, OptimizeRequest } from '../game/types';
+import { SLOTS } from '../game/types';
 
 function MemberCard({
   characterKey,
@@ -24,11 +25,11 @@ function MemberCard({
   conflicts,
   weaponKey,
   buildLevel,
-  artifacts,
+  artifactsById,
 }: Plan['builds'][number] & {
   weaponKey: string;
   buildLevel: OptimizeRequest['buildLevel'];
-  artifacts: Artifact[];
+  artifactsById: Record<string, Artifact>;
 }) {
   const name = genshinAdapter.character(characterKey)?.name ?? characterKey;
   const request: OptimizeRequest = {
@@ -45,7 +46,9 @@ function MemberCard({
         <BuildCard
           build={result.builds[0]}
           request={request}
-          artifacts={artifacts}
+          artifacts={SLOTS.map(
+            (s) => artifactsById[result.builds[0].artifactIds[s]],
+          ).filter((a): a is Artifact => Boolean(a))}
         />
       ) : (
         <p className="panel text-sm text-muted">
@@ -75,6 +78,14 @@ export function PlanView({
   const [plan, setPlan] = useState<Plan | null>(null);
   const [progress, setProgress] = useState<[number, number] | null>(null);
   const [failed, setFailed] = useState(false);
+
+  // Resolves each member's chosen artifact ids back to Artifact objects for
+  // BuildCard — mirrors Results.tsx's artifactsFor.
+  const artifactsById = useMemo(() => {
+    const m: Record<string, Artifact> = {};
+    for (const a of artifacts) m[a.id] = a;
+    return m;
+  }, [artifacts]);
 
   const teams = useMemo(() => {
     const byLocation: Record<string, Artifact[]> = {};
@@ -156,7 +167,7 @@ export function PlanView({
                       {...b}
                       weaponKey={entries[b.characterKey]?.weaponKey ?? ''}
                       buildLevel={entries[b.characterKey]?.buildLevel ?? 90}
-                      artifacts={artifacts}
+                      artifactsById={artifactsById}
                     />
                   ))}
               </section>

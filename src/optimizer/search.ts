@@ -219,9 +219,13 @@ function setCeilingVector(
   const candidates =
     setRequirement?.kind === '2pc'
       ? // The required set's 2pc is guaranteed; the three free pieces can add
-        // at most one more 2pc (or upgrade the required set to 4pc).
-        [setRequirement.setKey, ...present]
-      : [...present];
+        // at most one more 2pc (or upgrade the required set to 4pc). A Set
+        // (not an array) so the required key isn't counted twice when it's
+        // already among `present` — that would double its own 2pc value into
+        // both "top1" and "top2" below instead of pairing it with a genuine
+        // second set.
+        new Set([setRequirement.setKey, ...present])
+      : present;
   for (const key of candidates) {
     const b = bonus(key);
     if (!b) continue;
