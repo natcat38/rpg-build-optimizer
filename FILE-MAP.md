@@ -14,7 +14,7 @@ block — an orientation gap, not an omission by the generator.
 | `src/ai` | 4 | The client side of the AI-explain feature: the fetch call to the serverless `/api/explain` proxy and the request/response shapes it shares with that proxy. |
 | `src/components` | 22 | The React presentational layer: import/artifact-entry panels, the optimizer and gap-analysis results views, and the AI-explain panel, wired together by the top-level `App` component. |
 | `src/components/ui` | 2 | Generic, domain-agnostic UI primitives shared across feature components (currently a filterable/typeable Combobox used for character and weapon pickers). |
-| `src/damage` | 3 |  |
+| `src/damage` | 5 |  |
 | `src/game` | 3 | Game-agnostic domain types (artifacts, slots, stat keys, build requests) plus the game display registry, kept separate from `game/genshin/`. |
 | `src/game/genshin` | 3 | The `genshinAdapter`: the concrete object owning all Genshin-specific reference data (characters, weapons, artifact sets, base/main stats) and the universal game baselines, loaded from the frozen `data.generated.json` snapshot (ADR-0002, ADR-0009, ADR-0012). |
 | `src/import` | 6 | GOOD inventory import: parsing and validating a GOOD export into artifacts/roster entries, content-hash dedupe against the existing inventory, and UID-based (Enka.Network) convenience import (ADR-0006). |
@@ -29,4 +29,4 @@ block — an orientation gap, not an omission by the generator.
 | `api` | 4 | The serverless AI-explain proxy (`/api/explain`, Vercel functions): rate limiting by client IP via Upstash Redis, and the handler that forwards a validated explain payload to Anthropic and returns the explanation. |
 | `scripts` | 4 | Repo tooling run through `tsx`, none of it shipped in the app bundle: baking the frozen reference dataset (build-dataset), gating ADR and knowledge-bundle consistency (check-docs), generating this directory index (gen-file-map), timing the optimiser (benchmark), and reporting character-guide coverage (meta-coverage). |
 
-18 source directories, 100 files, 1 without a declared purpose.
+18 source directories, 102 files, 1 without a declared purpose.
