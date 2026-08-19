@@ -17,9 +17,10 @@ export const STAT_LABELS: Record<StatKey, string> = {
   healing: 'Healing Bonus',
 };
 
-/** Display names for optimization objectives (stat keys plus crit value). */
+/** Display names for optimization objectives (stat keys plus the derived ones). */
 export const OBJECTIVE_LABELS: Record<Objective, string> = {
   crit_value: 'Crit Value',
+  avg_damage: 'Average damage (est.)',
   ...STAT_LABELS,
 };
 

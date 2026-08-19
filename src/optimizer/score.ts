@@ -6,6 +6,7 @@ import type {
   StatVec,
   StatKey,
 } from '../game/types';
+import { targetFunctionScore } from '../damage/formula';
 
 export function addInto(acc: StatVec, v: StatVec): void {
   for (const k of Object.keys(v) as StatKey[])
@@ -46,10 +47,29 @@ export function critValue(cr: number, cd: number): number {
   return cr * 2 + cd;
 }
 
-export function objectiveValue(t: StatVec, objective: Objective): number {
+export function objectiveValue(
+  t: StatVec,
+  objective: Exclude<Objective, 'avg_damage'>,
+): number {
   if (objective === 'crit_value')
     return critValue(t.crit_rate ?? 0, t.crit_dmg ?? 0);
   return t[objective] ?? 0;
+}
+
+/** The single objective evaluator every scorer must call — search, diagnostics
+ *  and gap grading alike. `avg_damage` needs the whole context (base stats +
+ *  damage profile), the stat-only objectives need just the totals. */
+export function evaluateObjective(
+  ctx: OptimizeContext,
+  objective: Objective,
+  t: StatVec,
+): number {
+  if (objective === 'avg_damage') {
+    if (!ctx.damage)
+      throw new Error('avg_damage objective requires ctx.damage');
+    return targetFunctionScore(ctx.base, t, ctx.damage);
+  }
+  return objectiveValue(t, objective);
 }
 
 function meetsSetRequirement(

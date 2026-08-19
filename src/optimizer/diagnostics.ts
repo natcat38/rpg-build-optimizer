@@ -8,7 +8,7 @@ import type {
   StatKey,
 } from '../game/types';
 import { SLOTS } from '../game/types';
-import { totals, objectiveValue } from './score';
+import { totals, evaluateObjective } from './score';
 import { statLabel } from '../labels';
 
 /** A minStat is "binding" when the build clears it by less than this fraction
@@ -37,11 +37,11 @@ export function buildDiagnostics(
   }
 
   const marginalBySlot: Partial<Record<Slot, number>> = {};
-  const fullObj = objectiveValue(totals(ctx, chosen), req.objective);
+  const fullObj = evaluateObjective(ctx, req.objective, totals(ctx, chosen));
   for (const slot of SLOTS) {
     const without = chosen.filter((a) => a.slot !== slot);
     marginalBySlot[slot] =
-      fullObj - objectiveValue(totals(ctx, without), req.objective);
+      fullObj - evaluateObjective(ctx, req.objective, totals(ctx, without));
   }
   return { bindingConstraints: binding, marginalBySlot, explored, pruned };
 }

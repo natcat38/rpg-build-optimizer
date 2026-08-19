@@ -8,6 +8,7 @@
 
 import type {
   Artifact,
+  Objective,
   OptimizeContext,
   OptimizeRequest,
   OptimizeResult,
@@ -18,6 +19,7 @@ import { SLOTS } from '../game/types';
 import {
   totals,
   objectiveValue,
+  evaluateObjective,
   satisfies,
   critRatioPenalty,
   critValue,
@@ -38,9 +40,13 @@ function poolsBySlot(
   return pools;
 }
 
+/** Objectives whose value is a plain sum over stat contributions, so the
+ *  scalar-additive pruning bound applies. `avg_damage` is not one of them. */
+type ScalarObjective = Exclude<Objective, 'avg_damage'>;
+
 function objectiveContribution(
   a: Artifact,
-  objective: OptimizeRequest['objective'],
+  objective: ScalarObjective,
 ): number {
   if (objective === 'crit_value') {
     let cr = 0,
@@ -86,7 +92,7 @@ interface RelevantSetBonus {
  *  so this list is typically tiny (0-5 entries) even across a full dataset. */
 function relevantSetBonuses(
   ctx: OptimizeContext,
-  objective: OptimizeRequest['objective'],
+  objective: ScalarObjective,
   pools: Record<Slot, Artifact[]>,
 ): RelevantSetBonus[] {
   const out: RelevantSetBonus[] = [];
@@ -142,7 +148,7 @@ function makeBuildResult(
   chosen: Artifact[],
 ): BuildResult {
   const t = totals(ctx, chosen);
-  const ov = objectiveValue(t, req.objective);
+  const ov = evaluateObjective(ctx, req.objective, t);
   const score = ov - critRatioPenalty(t, req.constraints.critRatioTarget);
   const ids = {} as Record<Slot, string>;
   for (const a of chosen) ids[a.slot] = a.id;
@@ -166,6 +172,12 @@ export function searchBuilds(
   ctx: OptimizeContext,
 ): OptimizeResult {
   const k = req.topK ?? 10;
+  // `avg_damage` is multiplicative in the totals, so the scalar-additive bound
+  // below does not hold for it. Until the vector bound lands the search is
+  // still exact for it — just unpruned on the objective (the set-requirement
+  // prunes and constraint checks are unaffected).
+  const scalarObjective: ScalarObjective | null =
+    req.objective === 'avg_damage' ? null : req.objective;
   const pools = poolsBySlot(inventory, req);
   if (SLOTS.some((s) => pools[s].length === 0)) {
     return { status: 'infeasible', explored: 0, pruned: 0 };
@@ -174,26 +186,36 @@ export function searchBuilds(
   // Surface high-contribution pieces first so the kept list fills with strong
   // builds early and the admissible bound tightens sooner. Iteration order only —
   // the returned optimum is unchanged (covered by the brute-force equivalence test).
-  for (const s of SLOTS) {
-    pools[s].sort(
-      (a, b) =>
-        objectiveContribution(b, req.objective) -
-        objectiveContribution(a, req.objective),
-    );
+  if (scalarObjective) {
+    for (const s of SLOTS) {
+      pools[s].sort(
+        (a, b) =>
+          objectiveContribution(b, scalarObjective) -
+          objectiveContribution(a, scalarObjective),
+      );
+    }
   }
 
-  const maxBySlot = SLOTS.map((s) =>
-    Math.max(...pools[s].map((a) => objectiveContribution(a, req.objective))),
-  );
   const suffixMax: number[] = new Array(SLOTS.length + 1).fill(0);
-  for (let i = SLOTS.length - 1; i >= 0; i--)
-    suffixMax[i] = suffixMax[i + 1] + maxBySlot[i];
-  const relevantSets = relevantSetBonuses(ctx, req.objective, pools);
+  if (scalarObjective) {
+    const maxBySlot = SLOTS.map((s) =>
+      Math.max(
+        ...pools[s].map((a) => objectiveContribution(a, scalarObjective)),
+      ),
+    );
+    for (let i = SLOTS.length - 1; i >= 0; i--)
+      suffixMax[i] = suffixMax[i + 1] + maxBySlot[i];
+  }
+  const relevantSets = scalarObjective
+    ? relevantSetBonuses(ctx, scalarObjective, pools)
+    : [];
   const relevantIndex = new Map(relevantSets.map((r, i) => [r.key, i]));
   const matchedRelevant: number[] = new Array(relevantSets.length).fill(0);
   // The base stats always contribute to the objective (e.g. crit_rate/crit_dmg from character/weapon).
   // Include this in the upper bound so pruning remains admissible.
-  const baseObjective = objectiveValue(ctx.base, req.objective);
+  const baseObjective = scalarObjective
+    ? objectiveValue(ctx.base, scalarObjective)
+    : 0;
 
   // A setRequirement (e.g. 4pc) is otherwise only checked at the leaf via
   // satisfies(), so on an inventory spanning many sets almost every branch is
@@ -252,14 +274,16 @@ export function searchBuilds(
       offer(makeBuildResult(ctx, req, [...chosen]));
       return;
     }
-    const upper =
-      baseObjective +
-      runningObjective +
-      suffixMax[slotIndex] +
-      setBonusCeilingAt(relevantSets, matchedRelevant, slotIndex);
-    if (upper <= minKeptScore()) {
-      pruned++;
-      return;
+    if (scalarObjective) {
+      const upper =
+        baseObjective +
+        runningObjective +
+        suffixMax[slotIndex] +
+        setBonusCeilingAt(relevantSets, matchedRelevant, slotIndex);
+      if (upper <= minKeptScore()) {
+        pruned++;
+        return;
+      }
     }
     if (remainingA && matchedA + remainingA[slotIndex] < neededA) {
       pruned++;
@@ -276,7 +300,8 @@ export function searchBuilds(
       if (relIdx !== undefined) matchedRelevant[relIdx]++;
       recurse(
         slotIndex + 1,
-        runningObjective + objectiveContribution(a, req.objective),
+        runningObjective +
+          (scalarObjective ? objectiveContribution(a, scalarObjective) : 0),
         matchedA + (setKeyA && a.setKey === setKeyA ? 1 : 0),
         matchedB + (setKeyB && a.setKey === setKeyB ? 1 : 0),
       );
