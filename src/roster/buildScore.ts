@@ -1,4 +1,11 @@
 /**
+ * Roster assessment: how built each owned character is. Turns an imported
+ * roster entry plus the artifacts equipped on it into an explainable 0-100
+ * build score, and renders the roster ranked by it.
+ * @packageDocumentation
+ */
+
+/**
  * Build score: how built a roster character is, 0–100, with the components
  * spelled out so the number is explainable rather than an oracle.
  *
