@@ -45,6 +45,8 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0014 — element-aware goblet scoring](../docs/adr/0014-element-aware-goblet-scoring.md)
 - [ADR-0015 — GOOD roster import](../docs/adr/0015-good-roster-import.md)
 - [ADR-0016 — damage engine as an optimisation objective](../docs/adr/0016-damage-engine-objective.md) _(supersedes ADR-0003)_
+- [ADR-0017 — curated comp-archetype database](../docs/adr/0017-curated-comp-database.md)
+- [ADR-0018 — mode-aware team recommendation](../docs/adr/0018-mode-aware-team-recommendation.md)
 
 ## In progress
 
