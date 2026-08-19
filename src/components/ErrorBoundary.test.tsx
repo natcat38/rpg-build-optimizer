@@ -26,7 +26,9 @@ describe('ErrorBoundary', () => {
         <Boom />
       </ErrorBoundary>,
     );
-    expect(screen.getByRole('alert')).toHaveTextContent(/something went wrong/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      /something went wrong/i,
+    );
     expect(screen.getByRole('button', { name: /reload/i })).toBeInTheDocument();
   });
 });

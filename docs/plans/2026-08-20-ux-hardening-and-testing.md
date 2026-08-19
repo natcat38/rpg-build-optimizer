@@ -27,6 +27,7 @@ Skipped deliberately (YAGNI, note in commit): cancel button for in-flight runs (
 Run `preview_start` with the `launch.json` dev server (port 5173), then walk every path using the Browser pane tools. After EACH step: `read_console_messages` (onlyErrors) — zero uncaught errors is the pass condition.
 
 Good paths:
+
 - Sample gear preset → optimize → results render, share link copies.
 - Manual artifact entry (ArtifactForm) → optimize.
 - GOOD file import (make a small valid fixture JSON, upload) → optimize.
@@ -35,6 +36,7 @@ Good paths:
 - Game switcher → ComingSoon renders for non-live game.
 
 Bad paths:
+
 - Upload a non-JSON file and a valid-JSON-wrong-schema file → specific alert, no console error.
 - UID fetch: bogus UID → "not found" message (from Phase 1 fix). Block network (devtools offline not available — use an unroutable state or skip) → NETWORK message.
 - Malformed share link (`?b=garbage`) → "couldn't be read" banner.
@@ -43,6 +45,7 @@ Bad paths:
 - Force a render throw temporarily (dev-only) → error boundary fallback appears, reload recovers. Revert the throw.
 
 Accessibility pass (via `read_page` accessibility tree + keyboard):
+
 - Every input in OptimizePanel/ArtifactForm/ImportPanel has a programmatic label (name in a11y tree).
 - All error messages appear in the tree as alerts (they use `role="alert"` — verify each new one from Phase 1 does too).
 - Keyboard-only: tab through import → form → optimize → results; Optimise reachable and activatable via Enter/Space; visible focus ring (screenshot check).
