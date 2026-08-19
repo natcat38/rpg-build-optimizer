@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { loadOwnerGOOD } from './ownerAccount';
+import { hasOwnerGOOD, loadOwnerGOOD } from './ownerAccount';
 import { parseGOOD, parseGOODRoster } from '../import/good';
 
-describe('owner account fixture', () => {
+// The export is the owner's real account and is gitignored, so this whole
+// block is a local-only sanity check on the importer.
+describe.skipIf(!hasOwnerGOOD())('owner account fixture', () => {
   it('imports the full artifact inventory', () => {
     const arts = parseGOOD(loadOwnerGOOD());
     expect(Array.isArray(arts)).toBe(true);
