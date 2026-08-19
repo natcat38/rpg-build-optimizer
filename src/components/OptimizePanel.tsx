@@ -25,6 +25,7 @@ import {
   resolveTeammateName,
   type TeammateRec,
 } from '../meta/teammates';
+import { getDamageProfile } from '../damage/profiles';
 
 const OBJECTIVES: Objective[] = [
   'crit_value',
@@ -186,6 +187,17 @@ export function OptimizePanel({
       ? 'Pick a character to start.'
       : null;
   const meta = META_TARGETS[characterKey];
+  // `avg_damage` needs a curated profile, so it is offered per character. If the
+  // user switches to a character without one, drop the selection — otherwise
+  // buildContext would throw on the next run.
+  const damageProfile = getDamageProfile(characterKey);
+  const objectives = damageProfile
+    ? [...OBJECTIVES, 'avg_damage' as const]
+    : OBJECTIVES;
+  useEffect(() => {
+    if (!damageProfile && objective === 'avg_damage')
+      setObjective('crit_value');
+  }, [damageProfile, objective, setObjective]);
   const teammates = TEAMMATES[characterKey];
   // A character can't be de-leveled, so a rostered character's build level
   // is a floor, not just a suggestion — levels below it aren't achievable.
@@ -241,9 +253,20 @@ export function OptimizePanel({
           <select
             className="field"
             value={objective}
-            onChange={(e) => setObjective(e.target.value as Objective)}
+            onChange={(e) => {
+              const next = e.target.value as Objective;
+              setObjective(next);
+              // Pre-fill the profile's ER floor, leaving anything the user
+              // already typed alone (same spirit as "Use meta build").
+              if (
+                next === 'avg_damage' &&
+                damageProfile?.erRequirement != null &&
+                erFloor == null
+              )
+                setMinER(String(damageProfile.erRequirement));
+            }}
           >
-            {OBJECTIVES.map((o) => (
+            {objectives.map((o) => (
               <option key={o} value={o}>
                 {objectiveLabel(o)}
                 {meta?.objective === o ? ' (Recommended)' : ''}

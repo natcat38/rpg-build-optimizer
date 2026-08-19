@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { OptimizePanel } from './OptimizePanel';
@@ -257,5 +257,39 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
       'option',
     ) as HTMLOptionElement[];
     expect(options.every((o) => !o.disabled)).toBe(true);
+  });
+});
+
+describe('avg_damage objective', () => {
+  beforeEach(() => {
+    useInventory.getState().clear();
+    useOptimizeRequest.getState().reset();
+    addFlower();
+  });
+
+  it('offers Average damage only for characters with a damage profile', async () => {
+    const user = userEvent.setup();
+    render(<OptimizePanel onRun={() => {}} running={false} />);
+    const maximise = screen.getByLabelText(/Maximise/i);
+
+    act(() => useOptimizeRequest.getState().setCharacterKey('neuvillette'));
+    expect(
+      within(maximise).queryByRole('option', { name: /Average damage/i }),
+    ).toBeInTheDocument();
+
+    // Selecting it pre-fills the profile's ER floor.
+    await user.selectOptions(maximise, 'avg_damage');
+    expect(useOptimizeRequest.getState().objective).toBe('avg_damage');
+    expect(useOptimizeRequest.getState().constraints.minStats?.er_pct).toBe(
+      110,
+    );
+
+    // A profileless character both hides the option and drops the selection,
+    // so the request can never ask for damage the engine has no profile for.
+    act(() => useOptimizeRequest.getState().setCharacterKey('amber'));
+    expect(
+      within(maximise).queryByRole('option', { name: /Average damage/i }),
+    ).not.toBeInTheDocument();
+    expect(useOptimizeRequest.getState().objective).not.toBe('avg_damage');
   });
 });

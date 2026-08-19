@@ -72,6 +72,11 @@ export function BuildCard({
             <p className="font-mono text-2xl font-bold leading-tight text-accent-bright">
               {build.objectiveValue.toFixed(1)}
             </p>
+            {request.objective === 'avg_damage' && (
+              <p className="text-[0.7rem] text-muted">
+                estimated — for comparing builds, not matching in-game numbers
+              </p>
+            )}
           </div>
           {grade && (
             <span
