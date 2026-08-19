@@ -69,6 +69,9 @@ export interface Artifact {
   /** Which element an elemental_dmg goblet's main stat is (ADR-0014). Set only
    *  when mainStat === 'elemental_dmg'; unset means "unknown" (treated as on-element). */
   element?: Element;
+  /** Dataset character key currently wearing this piece, from a GOOD export's
+   *  `location`. Unset for hand-entered or unequipped pieces. */
+  location?: string;
 }
 
 export type SetRequirement =
