@@ -169,6 +169,18 @@ export function OptimizePanel({
     if (entry?.buildLevel) setBuildLevel(entry.buildLevel);
   }
 
+  function onObjectiveChange(next: Objective) {
+    setObjective(next);
+    // Pre-fill the profile's ER floor, leaving anything the user already typed
+    // alone (same spirit as "Use meta build").
+    if (
+      next === 'avg_damage' &&
+      damageProfile?.erRequirement != null &&
+      erFloor == null
+    )
+      setMinER(String(damageProfile.erRequirement));
+  }
+
   const charOptions = useMemo(() => {
     const owned = (key: string) => key in rosterEntries;
     const opts = chars.map((c) => ({
@@ -198,6 +210,12 @@ export function OptimizePanel({
     if (!damageProfile && objective === 'avg_damage')
       setObjective('crit_value');
   }, [damageProfile, objective, setObjective]);
+  // The effect above corrects the *store* after the commit; render from the
+  // clamped value too, so the select never paints a value none of its options
+  // carry (the frame after switching to a profile-less character).
+  const shownObjective = objectives.includes(objective)
+    ? objective
+    : 'crit_value';
   const teammates = TEAMMATES[characterKey];
   // A character can't be de-leveled, so a rostered character's build level
   // is a floor, not just a suggestion — levels below it aren't achievable.
@@ -252,19 +270,8 @@ export function OptimizePanel({
           <span className="field-label">Maximise</span>
           <select
             className="field"
-            value={objective}
-            onChange={(e) => {
-              const next = e.target.value as Objective;
-              setObjective(next);
-              // Pre-fill the profile's ER floor, leaving anything the user
-              // already typed alone (same spirit as "Use meta build").
-              if (
-                next === 'avg_damage' &&
-                damageProfile?.erRequirement != null &&
-                erFloor == null
-              )
-                setMinER(String(damageProfile.erRequirement));
-            }}
+            value={shownObjective}
+            onChange={(e) => onObjectiveChange(e.target.value as Objective)}
           >
             {objectives.map((o) => (
               <option key={o} value={o}>

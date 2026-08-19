@@ -3,6 +3,7 @@ import type {
   OptimizeContext,
   OptimizeConstraints,
   Objective,
+  ScalarObjective,
   StatVec,
   StatKey,
 } from '../game/types';
@@ -53,10 +54,7 @@ export function critValue(cr: number, cd: number): number {
   return cr * 2 + cd;
 }
 
-export function objectiveValue(
-  t: StatVec,
-  objective: Exclude<Objective, 'avg_damage'>,
-): number {
+export function objectiveValue(t: StatVec, objective: ScalarObjective): number {
   if (objective === 'crit_value')
     return critValue(t.crit_rate ?? 0, t.crit_dmg ?? 0);
   return t[objective] ?? 0;

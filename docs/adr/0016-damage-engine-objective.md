@@ -32,7 +32,9 @@ Add `avg_damage` as a third kind of **objective**, alongside the stat keys and
 - A **damage profile** (`src/damage/profiles.ts`) is a weighted list of stand-in
   hits per character. The **target function** is `Σ weight × hit damage`.
 - `evaluateObjective(ctx, objective, totals)` in `src/optimizer/score.ts` is the
-  single evaluator every scorer calls — search, diagnostics and gap grading.
+  single evaluator that scores a build — the search and the diagnostics both go
+  through it, so no second scoring path can drift from it. (Gap analysis reads
+  the totals and diagnostics it produced rather than scoring anything itself.)
 - The optimiser stays **exact** ([0004](0004-exact-branch-and-bound-optimisation.md)).
   The scalar-additive pruning bound does not hold for a multiplicative objective,
   so `avg_damage` searches run the same recursion in **vector mode**: the bound

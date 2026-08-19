@@ -33,7 +33,7 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 - **Reference data** — the game "rulebook" (characters, weapons, sets, stat tables) from a frozen `genshin-db` snapshot. Never reads a player's account. See [ADR-0002](docs/adr/0002-frozen-bundled-reference-dataset.md).
 - **Constraint** — a hard requirement a build must satisfy (set requirement, minimum stats, per-slot main-stat lock). Infeasible constraints → `NO_FEASIBLE_BUILD`.
 - **Main-stat lock** — a constraint fixing a slot's main stat (e.g. sands = `atk_pct`).
-- **Objective** — the single stat to maximise (a stat key or `crit_value`).
+- **Objective** — what the optimiser maximises: a stat key, `crit_value`, or `avg_damage` (the v2 damage **target function**, available only for characters with a curated **damage profile**). See [ADR-0016](docs/adr/0016-damage-engine-objective.md).
 - **Optimiser** — the exact branch-and-bound search returning the **top-K** valid builds by objective score. Always exact, never approximate. See [ADR-0004](docs/adr/0004-exact-branch-and-bound-optimisation.md).
 - **Diagnostics** — per-build data the optimiser emits: binding constraints, per-slot marginal contribution, explored/pruned counts.
 - **Anti-clone cap** — the v1.0 results rule preventing near-identical builds from filling the top-K.
