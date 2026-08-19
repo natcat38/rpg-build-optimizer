@@ -14,6 +14,8 @@ import type {
   OptimizeResult,
   BuildResult,
   Slot,
+  StatKey,
+  StatVec,
 } from '../game/types';
 import { SLOTS } from '../game/types';
 import {
@@ -23,6 +25,9 @@ import {
   satisfies,
   critRatioPenalty,
   critValue,
+  addInto,
+  subFrom,
+  artifactContribution,
 } from './score';
 import { buildDiagnostics } from './diagnostics';
 
@@ -142,6 +147,68 @@ function setBonusCeilingAt(
   return Math.max(bestSingle, top1 + top2);
 }
 
+function maxInto(acc: StatVec, v: StatVec): void {
+  for (const k of Object.keys(v) as StatKey[])
+    acc[k] = Math.max(acc[k] ?? 0, v[k] ?? 0);
+}
+
+/** Per-slot statwise-max contribution, summed over slots i..end. Every real
+ *  completion's added stats are ≤ this vector statwise, so feeding it to a
+ *  per-stat monotone objective yields an admissible bound (ADR-0004). */
+function suffixMaxVectors(pools: Record<Slot, Artifact[]>): StatVec[] {
+  const perSlot = SLOTS.map((s) => {
+    const m: StatVec = {};
+    for (const a of pools[s]) maxInto(m, artifactContribution(a));
+    return m;
+  });
+  const suffix: StatVec[] = new Array(SLOTS.length + 1);
+  suffix[SLOTS.length] = {};
+  for (let i = SLOTS.length - 1; i >= 0; i--) {
+    const v: StatVec = { ...suffix[i + 1] };
+    addInto(v, perSlot[i]);
+    suffix[i] = v;
+  }
+  return suffix;
+}
+
+/**
+ * Statwise ceiling on what any reachable set-bonus layout can add: per stat,
+ * the better of one set's 2pc+4pc and the two best 2pc bonuses (a 2+2 build).
+ * Only sets actually present in the pools are considered.
+ * // ponytail: root-constant ceiling — tighten per node like setBonusCeilingAt
+ * // if damage searches ever prove too slow.
+ */
+function setCeilingVector(
+  ctx: OptimizeContext,
+  pools: Record<Slot, Artifact[]>,
+): StatVec {
+  const present = new Set<string>();
+  for (const s of SLOTS) for (const a of pools[s]) present.add(a.setKey);
+  const ceil: StatVec = {};
+  const top1: StatVec = {};
+  const top2: StatVec = {};
+  for (const key of present) {
+    const b = ctx.setBonuses[key];
+    if (!b) continue;
+    const single: StatVec = {};
+    if (b.two) addInto(single, b.two);
+    if (b.four) addInto(single, b.four);
+    maxInto(ceil, single);
+    for (const k of Object.keys(b.two ?? {}) as StatKey[]) {
+      const v = b.two?.[k] ?? 0;
+      if (v > (top1[k] ?? 0)) {
+        top2[k] = top1[k] ?? 0;
+        top1[k] = v;
+      } else if (v > (top2[k] ?? 0)) {
+        top2[k] = v;
+      }
+    }
+  }
+  for (const k of Object.keys(top1) as StatKey[])
+    ceil[k] = Math.max(ceil[k] ?? 0, (top1[k] ?? 0) + (top2[k] ?? 0));
+  return ceil;
+}
+
 function makeBuildResult(
   ctx: OptimizeContext,
   req: OptimizeRequest,
@@ -205,6 +272,28 @@ export function searchBuilds(
     );
     for (let i = SLOTS.length - 1; i >= 0; i--)
       suffixMax[i] = suffixMax[i + 1] + maxBySlot[i];
+  }
+  // Vector mode (avg_damage): the objective is multiplicative in the totals, so
+  // the scalar-additive bound above does not apply. Bound instead by evaluating
+  // the objective on an optimistic *stat vector* — the running totals plus the
+  // statwise-max of everything still selectable. Admissible because the damage
+  // function is monotone in every stat it reads (proved in formula.test.ts).
+  const suffixMaxVec = scalarObjective ? null : suffixMaxVectors(pools);
+  const setCeilVec = scalarObjective ? null : setCeilingVector(ctx, pools);
+  const runningVec: StatVec = {};
+  if (!scalarObjective) {
+    // Ordering heuristic only (the oracle test proves the optimum is unchanged):
+    // rank each piece by the damage it adds on its own.
+    const baseDamage = evaluateObjective(ctx, 'avg_damage', ctx.base);
+    const gain = new Map<string, number>();
+    for (const s of SLOTS)
+      for (const a of pools[s]) {
+        const t: StatVec = { ...ctx.base };
+        addInto(t, artifactContribution(a));
+        gain.set(a.id, evaluateObjective(ctx, 'avg_damage', t) - baseDamage);
+      }
+    for (const s of SLOTS)
+      pools[s].sort((a, b) => (gain.get(b.id) ?? 0) - (gain.get(a.id) ?? 0));
   }
   const relevantSets = scalarObjective
     ? relevantSetBonuses(ctx, scalarObjective, pools)
@@ -284,6 +373,15 @@ export function searchBuilds(
         pruned++;
         return;
       }
+    } else {
+      const optimistic: StatVec = { ...ctx.base };
+      addInto(optimistic, runningVec);
+      addInto(optimistic, suffixMaxVec![slotIndex]);
+      addInto(optimistic, setCeilVec!);
+      if (evaluateObjective(ctx, 'avg_damage', optimistic) <= minKeptScore()) {
+        pruned++;
+        return;
+      }
     }
     if (remainingA && matchedA + remainingA[slotIndex] < neededA) {
       pruned++;
@@ -296,6 +394,8 @@ export function searchBuilds(
     const hasRelevant = relevantSets.length > 0;
     for (const a of pools[SLOTS[slotIndex]]) {
       chosen.push(a);
+      const contribution = scalarObjective ? null : artifactContribution(a);
+      if (contribution) addInto(runningVec, contribution);
       const relIdx = hasRelevant ? relevantIndex.get(a.setKey) : undefined;
       if (relIdx !== undefined) matchedRelevant[relIdx]++;
       recurse(
@@ -306,6 +406,7 @@ export function searchBuilds(
         matchedB + (setKeyB && a.setKey === setKeyB ? 1 : 0),
       );
       if (relIdx !== undefined) matchedRelevant[relIdx]--;
+      if (contribution) subFrom(runningVec, contribution);
       chosen.pop();
     }
   }

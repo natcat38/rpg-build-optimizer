@@ -8,6 +8,7 @@ import type {
   Slot,
 } from '../game/types';
 import { SLOTS } from '../game/types';
+import type { DamageProfile } from '../damage/types';
 
 /** Narrow a search result to its feasible variant; fails the test (with a
  *  clear message) instead of a TS error if the search was unexpectedly
@@ -383,5 +384,141 @@ describe('searchBuilds', () => {
     );
     expect(new Set(tuples).size).toBe(tuples.length); // no exact duplicates returned
     expect(r.builds).toHaveLength(1); // the two identical-id paths collapse to one
+  });
+});
+
+describe('searchBuilds with the avg_damage objective', () => {
+  const profile: DamageProfile = {
+    characterKey: 'test',
+    source: 'https://example.test/',
+    hits: [
+      {
+        name: 'skill',
+        scaling: 'atk',
+        multiplier: 250,
+        bonus: 'elemental',
+        reaction: 'vaporize-2x',
+        weight: 1,
+      },
+      {
+        name: 'burst',
+        scaling: 'atk',
+        multiplier: 400,
+        bonus: 'elemental',
+        reaction: 'none',
+        weight: 0.5,
+      },
+    ],
+  };
+  const dmgCtx: OptimizeContext = {
+    base: { atk: 900, crit_rate: 5, crit_dmg: 50, er_pct: 100 },
+    setBonuses: {
+      SetA: { two: { atk_pct: 18 } },
+      SetB: { two: { elemental_dmg: 15 } },
+    },
+    damage: { profile, enemy: { level: 100, res: 0.1 }, charLevel: 90 },
+  };
+  const dmgReq: OptimizeRequest = {
+    characterKey: 'x',
+    weaponKey: 'w',
+    buildLevel: 90,
+    constraints: {},
+    objective: 'avg_damage',
+    topK: 1,
+  };
+
+  /** Deterministic mixed-stat inventory — the same LCG idiom the oracle tests
+   *  above use, but rolling every damage-relevant stat so the vector bound is
+   *  exercised on all of its components. */
+  function randomInventory(seed: number, perSlot: number): Artifact[] {
+    let n = seed * 7919 + 1;
+    const rnd = () => {
+      n = (n * 1103515245 + 12345) & 0x7fffffff;
+      return n;
+    };
+    const mains = [
+      'atk',
+      'atk_pct',
+      'crit_rate',
+      'crit_dmg',
+      'elemental_dmg',
+      'em',
+    ] as const;
+    const subs = [
+      'atk',
+      'atk_pct',
+      'crit_rate',
+      'crit_dmg',
+      'em',
+      'er_pct',
+    ] as const;
+    const inv: Artifact[] = [];
+    let id = 0;
+    for (const slot of SLOTS) {
+      for (let i = 0; i < perSlot; i++) {
+        const main = mains[rnd() % mains.length];
+        inv.push({
+          id: `d${seed}-${id++}`,
+          setKey: rnd() % 2 === 0 ? 'SetA' : 'SetB',
+          slot,
+          rarity: 5,
+          level: 20,
+          mainStat: main,
+          mainStatValue: 5 + (rnd() % 40),
+          subStats: [
+            { key: subs[rnd() % subs.length], value: 1 + (rnd() % 20) },
+            { key: subs[rnd() % subs.length], value: 1 + (rnd() % 20) },
+          ].filter(
+            (s, i, a) =>
+              a.findIndex((x) => x.key === s.key) === i && s.key !== main,
+          ),
+        });
+      }
+    }
+    return inv;
+  }
+
+  it('avg_damage: branch-and-bound matches brute force on randomized inventories', () => {
+    let totalPruned = 0;
+    for (let seed = 0; seed < 20; seed++) {
+      const inv = randomInventory(seed, 8);
+      const fast = expectOk(searchBuilds(dmgReq, inv, dmgCtx));
+      const slow = expectOk(bruteForce(dmgReq, inv, dmgCtx));
+      expect(fast.builds[0].score).toBeCloseTo(slow.builds[0].score, 6);
+      totalPruned += fast.pruned;
+    }
+    // The bound has to actually engage — an unpruned exhaustive walk would
+    // also match brute force, which is not what ADR-0004 promises.
+    expect(totalPruned).toBeGreaterThan(0);
+  });
+
+  it('avg_damage honours constraints (ER floor + 4pc) exactly', () => {
+    const constrained: OptimizeRequest = {
+      ...dmgReq,
+      constraints: {
+        minStats: { er_pct: 110 },
+        setRequirement: { kind: '4pc', setKey: 'SetA' },
+      },
+    };
+    let checked = 0;
+    for (let seed = 0; seed < 20; seed++) {
+      const inv = randomInventory(seed, 8);
+      const fast = searchBuilds(constrained, inv, dmgCtx);
+      const slow = bruteForce(constrained, inv, dmgCtx);
+      expect(fast.status).toBe(slow.status);
+      if (fast.status === 'ok' && slow.status === 'ok') {
+        expect(fast.builds[0].score).toBeCloseTo(slow.builds[0].score, 6);
+        for (const b of fast.builds) {
+          expect(b.totals.er_pct ?? 0).toBeGreaterThanOrEqual(110);
+          const ids = SLOTS.map((s) => b.artifactIds[s]);
+          const setA = ids.filter(
+            (id) => inv.find((a) => a.id === id)!.setKey === 'SetA',
+          );
+          expect(setA.length).toBeGreaterThanOrEqual(4);
+        }
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 });
