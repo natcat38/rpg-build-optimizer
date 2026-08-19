@@ -98,3 +98,28 @@ describe('avg_damage caveat', () => {
     expect(screen.queryByText(/estimated —/)).not.toBeInTheDocument();
   });
 });
+
+describe('BuildCard non-finite scores', () => {
+  it('renders a dash instead of NaN for a non-finite objective and totals', () => {
+    const req: OptimizeRequest = {
+      characterKey: 'unknown-character',
+      weaponKey: 'w',
+      buildLevel: 90,
+      constraints: {},
+      objective: 'crit_value',
+    };
+    render(
+      <BuildCard
+        build={{
+          ...build,
+          objectiveValue: NaN,
+          totals: { crit_rate: Infinity, crit_dmg: 100 },
+        }}
+        request={req}
+        artifacts={artifacts}
+      />,
+    );
+    expect(screen.queryByText(/NaN|Infinity/)).not.toBeInTheDocument();
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+  });
+});

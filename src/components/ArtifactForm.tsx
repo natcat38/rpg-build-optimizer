@@ -52,6 +52,7 @@ export function ArtifactForm() {
               .map((s) => ({ value: s.key, label: formatSetName(s.name) }))}
             value={setKey}
             onChange={setSetKey}
+            label="Set"
           />
         </div>
         <label className="block">

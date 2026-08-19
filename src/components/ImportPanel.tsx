@@ -1,13 +1,24 @@
 import { useState } from 'react';
 import { type ChangeEvent } from 'react';
 import { parseGOOD, parseGOODRoster } from '../import/good';
-import { fetchUidArtifacts } from '../import/uid';
+import { fetchUidArtifacts, type UidError } from '../import/uid';
 import { mergeNew } from '../import/dedupe';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
 import { useGame } from '../state/game';
 import { getGame } from '../game/registry';
 import type { Artifact } from '../game/types';
+
+// WCAG 3.3.1: describe what actually went wrong. fetchUidArtifacts already
+// distinguishes the three cases; collapsing them into one message left the
+// user guessing which of three unrelated fixes to try.
+const UID_ERRORS: Record<UidError['error'], string> = {
+  NETWORK:
+    "Couldn't reach Enka — check your connection and try again in a moment.",
+  NOT_FOUND: "Couldn't find that UID — check the digits and your server.",
+  NO_SHOWCASE:
+    'No artifacts on showcase — turn on Character Showcase in-game and add characters to it.',
+};
 
 export function ImportPanel() {
   const { artifacts, addMany } = useInventory();
@@ -64,9 +75,7 @@ export function ImportPanel() {
     const out = await fetchUidArtifacts(uid.trim());
     setBusy(false);
     if ('error' in out) {
-      setErr(
-        "Couldn't find that UID, or no characters are showcased. Check the UID and that Character Showcase is on.",
-      );
+      setErr(UID_ERRORS[out.error]);
       return;
     }
     mergeDedupe(out);

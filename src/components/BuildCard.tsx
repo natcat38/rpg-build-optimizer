@@ -7,6 +7,7 @@ import type {
 } from '../game/types';
 import { SLOTS } from '../game/types';
 import {
+  formatScore,
   formatSetName,
   isPctStat,
   objectiveLabel,
@@ -70,7 +71,7 @@ export function BuildCard({
               {objectiveLabel(request.objective)}
             </p>
             <p className="font-mono text-2xl font-bold leading-tight text-accent-bright">
-              {build.objectiveValue.toFixed(1)}
+              {formatScore(build.objectiveValue)}
             </p>
             {request.objective === 'avg_damage' && (
               <p className="text-[0.7rem] text-muted">
@@ -100,11 +101,11 @@ export function BuildCard({
               const unit = isPctStat(s.key) ? '%' : '';
               return (
                 <span key={s.key}>
-                  {statLabel(s.key)} {s.have.toFixed(0)}
-                  {unit}/{s.target.toFixed(0)}
+                  {statLabel(s.key)} {formatScore(s.have, 0)}
+                  {unit}/{formatScore(s.target, 0)}
                   {unit}{' '}
                   <span className={s.pct >= 1 ? 'text-jade' : 'text-paper/80'}>
-                    ({(s.pct * 100).toFixed(0)}%)
+                    ({formatScore(s.pct * 100, 0)}%)
                   </span>
                 </span>
               );
@@ -124,7 +125,7 @@ export function BuildCard({
           <div key={k} className="flex items-baseline justify-between gap-2">
             <dt className="text-muted">{statLabel(k)}</dt>
             <dd className="font-mono tabular-nums text-paper">
-              {(build.totals[k] ?? 0).toFixed(1)}
+              {formatScore(build.totals[k] ?? 0)}
             </dd>
           </div>
         ))}

@@ -40,6 +40,9 @@ describe('formula pieces', () => {
     expect(evCritMult({ crit_rate: 50, crit_dmg: 100 })).toBeCloseTo(1.5, 10);
     expect(evCritMult({ crit_rate: 120, crit_dmg: 100 })).toBeCloseTo(2.0, 10);
     expect(evCritMult({})).toBeCloseTo(1, 10);
+    // crit_dmg is clamped at 0 like crit_rate: a negative one must not make
+    // the expected multiplier drop below 1.
+    expect(evCritMult({ crit_rate: 50, crit_dmg: -100 })).toBeCloseTo(1, 10);
   });
   it('def multiplier at 90 vs 100', () => {
     expect(defMult(90, 100)).toBeCloseTo(190 / 390, 10);

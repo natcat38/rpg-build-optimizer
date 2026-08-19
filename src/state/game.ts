@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { safeStorage } from './safeStorage';
 import type { GameId } from '../game/registry';
 
 interface GameState {
@@ -13,7 +14,10 @@ export const useGame = create<GameState>()(
       gameId: 'genshin',
       setGameId: (gameId) => set({ gameId }),
     }),
-    { name: 'rpg-build-optimizer/game' },
+    {
+      name: 'rpg-build-optimizer/game',
+      storage: createJSONStorage(() => safeStorage),
+    },
   ),
 );
 

@@ -38,7 +38,9 @@ export function Results({
     );
 
   const total = result.explored + result.pruned;
-  const exploredPct = total > 0 ? (result.explored / total) * 100 : 100;
+  const rawPct = total > 0 ? (result.explored / total) * 100 : 100;
+  // A non-finite width is invalid CSS and silently drops the bar.
+  const exploredPct = Number.isFinite(rawPct) ? rawPct : 0;
 
   return (
     <div className="space-y-4">
