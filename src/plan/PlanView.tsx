@@ -15,6 +15,7 @@ import { COMP_ARCHETYPES } from '../teams/comps';
 import { BuildCard } from '../components/BuildCard';
 import { optimize } from '../workers/optimizeClient';
 import { composePlan, type Plan, type RunOptimize } from './composePlan';
+import { adviseInvestments, type Advice } from '../invest/advise';
 import type { Artifact, OptimizeRequest } from '../game/types';
 import { SLOTS } from '../game/types';
 
@@ -69,9 +70,11 @@ function MemberCard({
 
 export function PlanView({
   runOptimize = optimize,
+  advise = adviseInvestments,
 }: {
   /** Injected in tests; the app runs the real worker client. */
   runOptimize?: RunOptimize;
+  advise?: typeof adviseInvestments;
 }) {
   const entries = useRoster((s) => s.entries);
   const artifacts = useInventory((s) => s.artifacts);
@@ -87,15 +90,19 @@ export function PlanView({
     return m;
   }, [artifacts]);
 
-  const teams = useMemo(() => {
+  const { teams, advice } = useMemo(() => {
     const byLocation: Record<string, Artifact[]> = {};
     for (const a of artifacts)
       if (a.location) (byLocation[a.location] ??= []).push(a);
     const scores: Record<string, number> = {};
     for (const [key, entry] of Object.entries(entries))
       scores[key] = computeBuildScore(entry, byLocation[key] ?? []).total;
-    return recommendAbyss(scores).teams;
-  }, [entries, artifacts]);
+    const rec = recommendAbyss(scores);
+    return {
+      teams: rec.teams,
+      advice: advise(rec.gaps, entries, scores) as Advice[],
+    };
+  }, [entries, artifacts, advise]);
 
   async function build() {
     if (!teams) return;
@@ -173,6 +180,25 @@ export function PlanView({
               </section>
             );
           })}
+
+          {advice.length > 0 && (
+            <div className="panel space-y-2">
+              <h2 className="font-display text-base font-bold text-paper">
+                Worth investing in
+              </h2>
+              <ul className="space-y-2 text-sm">
+                {advice.map((a) => (
+                  <li
+                    key={`${a.kind}:${a.subjectKey}:${a.provenance}`}
+                    data-testid="advice"
+                  >
+                    <p className="text-paper">{a.headline}</p>
+                    <p className="text-xs text-muted">{a.detail}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {plan.farming.length > 0 && (
             <div className="panel space-y-2">

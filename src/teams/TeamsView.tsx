@@ -15,22 +15,14 @@ import {
   type ArchetypeGap,
 } from './recommend';
 import type { Artifact } from '../game/types';
-import type { EndgameMode, Role } from './types';
+import { ROLE_LABELS } from './types';
+import type { EndgameMode } from './types';
 
 const MODES: { id: EndgameMode; label: string; live: boolean }[] = [
   { id: 'abyss', label: 'Spiral Abyss', live: true },
   { id: 'theater', label: 'Imaginarium Theater', live: false },
   { id: 'stygian', label: 'Stygian Onslaught', live: false },
 ];
-
-const ROLE_LABELS: Record<Role, string> = {
-  'on-field-dps': 'On-field DPS',
-  'off-field-dps': 'Off-field DPS',
-  buffer: 'Buffer',
-  sustain: 'Sustain',
-  battery: 'Battery',
-  applicator: 'Applicator',
-};
 
 const BAND_STYLE: Record<Band, string> = {
   built: 'border-jade/40 bg-jade/10 text-jade',
