@@ -44,3 +44,7 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0013 — per-IP rate limiting on the AI explain proxy](../docs/adr/0013-rate-limit-ai-proxy.md)
 - [ADR-0014 — element-aware goblet scoring](../docs/adr/0014-element-aware-goblet-scoring.md)
 - [ADR-0015 — GOOD roster import](../docs/adr/0015-good-roster-import.md)
+
+## In progress
+
+- [v2 Endgame Planner spec](../docs/superpowers/specs/2026-08-20-endgame-planner-spec.md) — roster assessment → Abyss teams → per-member builds → shopping list.

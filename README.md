@@ -103,6 +103,14 @@ v1.0 shipped the lean optimiser. The **v1.1 depth layer** is landing incremental
 
 See [`docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md`](./docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md).
 
+### v2: Endgame Planner
+
+v2 turns the single-character optimiser into an **endgame planner**: import your
+account, see how built each character is, get recommended Spiral Abyss teams,
+optimised builds for all eight members (damage-ranked where a damage profile
+exists), and one shopping list of what to farm and pull for. See
+[`docs/superpowers/specs/2026-08-20-endgame-planner-spec.md`](./docs/superpowers/specs/2026-08-20-endgame-planner-spec.md).
+
 ## AI: Explain this build
 
 For supported meta characters, an optional **"Explain this build"** button sits
