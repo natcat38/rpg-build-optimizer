@@ -8,7 +8,7 @@
 
 import type {
   Artifact,
-  Objective,
+  ScalarObjective,
   OptimizeContext,
   OptimizeRequest,
   OptimizeResult,
@@ -44,10 +44,6 @@ function poolsBySlot(
   }
   return pools;
 }
-
-/** Objectives whose value is a plain sum over stat contributions, so the
- *  scalar-additive pruning bound applies. `avg_damage` is not one of them. */
-type ScalarObjective = Exclude<Objective, 'avg_damage'>;
 
 function objectiveContribution(
   a: Artifact,
@@ -281,7 +277,13 @@ export function searchBuilds(
   const suffixMaxVec = scalarObjective ? null : suffixMaxVectors(pools);
   const setCeilVec = scalarObjective ? null : setCeilingVector(ctx, pools);
   const runningVec: StatVec = {};
+  // Contributions are a pure function of the artifact, but `recurse` reaches
+  // the same artifact once per surviving path above it — compute them once.
+  const contributions = new Map<string, StatVec>();
   if (!scalarObjective) {
+    for (const s of SLOTS)
+      for (const a of pools[s])
+        contributions.set(a.id, artifactContribution(a));
     // Ordering heuristic only (the oracle test proves the optimum is unchanged):
     // rank each piece by the damage it adds on its own.
     const baseDamage = evaluateObjective(ctx, 'avg_damage', ctx.base);
@@ -289,7 +291,7 @@ export function searchBuilds(
     for (const s of SLOTS)
       for (const a of pools[s]) {
         const t: StatVec = { ...ctx.base };
-        addInto(t, artifactContribution(a));
+        addInto(t, contributions.get(a.id)!);
         gain.set(a.id, evaluateObjective(ctx, 'avg_damage', t) - baseDamage);
       }
     for (const s of SLOTS)
@@ -392,9 +394,13 @@ export function searchBuilds(
       return;
     }
     const hasRelevant = relevantSets.length > 0;
+    // `chosen`, `runningVec` and `matchedRelevant` are three pieces of state
+    // pushed before the recursive call and popped after it. Any early return
+    // added inside this loop must undo all three, or the bound silently stops
+    // being admissible.
     for (const a of pools[SLOTS[slotIndex]]) {
       chosen.push(a);
-      const contribution = scalarObjective ? null : artifactContribution(a);
+      const contribution = contributions.get(a.id) ?? null;
       if (contribution) addInto(runningVec, contribution);
       const relIdx = hasRelevant ? relevantIndex.get(a.setKey) : undefined;
       if (relIdx !== undefined) matchedRelevant[relIdx]++;

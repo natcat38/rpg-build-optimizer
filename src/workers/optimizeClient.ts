@@ -75,7 +75,7 @@ function dispatch(
  * over an inventory. Owns context assembly + worker dispatch + sync fallback, so
  * callers wire nothing.
  */
-export function optimize(
+export async function optimize(
   request: OptimizeRequest,
   inventory: Artifact[],
 ): Promise<OptimizeResult> {

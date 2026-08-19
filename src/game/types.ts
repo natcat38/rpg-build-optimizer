@@ -85,6 +85,10 @@ export interface OptimizeConstraints {
 
 export type Objective = StatKey | 'crit_value' | 'avg_damage';
 
+/** Objectives whose value is a plain sum over stat contributions, so the
+ *  scalar-additive pruning bound applies. `avg_damage` is not one of them. */
+export type ScalarObjective = Exclude<Objective, 'avg_damage'>;
+
 export function isObjective(x: unknown): x is Objective {
   return x === 'crit_value' || x === 'avg_damage' || isStatKey(x);
 }
