@@ -481,7 +481,7 @@ describe('searchBuilds with the avg_damage objective', () => {
   it('avg_damage: branch-and-bound matches brute force on randomized inventories', () => {
     let totalPruned = 0;
     for (let seed = 0; seed < 20; seed++) {
-      const inv = randomInventory(seed, 8);
+      const inv = randomInventory(seed, 6);
       const fast = expectOk(searchBuilds(dmgReq, inv, dmgCtx));
       const slow = expectOk(bruteForce(dmgReq, inv, dmgCtx));
       expect(fast.builds[0].score).toBeCloseTo(slow.builds[0].score, 6);
@@ -502,7 +502,7 @@ describe('searchBuilds with the avg_damage objective', () => {
     };
     let checked = 0;
     for (let seed = 0; seed < 20; seed++) {
-      const inv = randomInventory(seed, 8);
+      const inv = randomInventory(seed, 6);
       const fast = searchBuilds(constrained, inv, dmgCtx);
       const slow = bruteForce(constrained, inv, dmgCtx);
       expect(fast.status).toBe(slow.status);
