@@ -235,6 +235,7 @@ export function OptimizePanel({
             options={charOptions}
             value={characterKey}
             onChange={onCharacterChange}
+            label="Character"
           />
         </div>
         <div className="block">
@@ -243,6 +244,7 @@ export function OptimizePanel({
             options={weapons.map((w) => ({ value: w.key, label: w.name }))}
             value={weaponKey}
             onChange={setWeaponKey}
+            label="Weapon"
           />
         </div>
         <label className="block">

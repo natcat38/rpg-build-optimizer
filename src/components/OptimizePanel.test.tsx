@@ -173,16 +173,19 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
     render(<OptimizePanel onRun={() => {}} running={false} />);
 
     // Default character trigger shows the first adapter entry ("Aino").
-    await user.click(screen.getByRole('button', { name: /Aino/i }));
-    await user.type(screen.getByRole('textbox'), 'Raiden Shogun');
+    await user.click(screen.getByRole('combobox', { name: 'Character' }));
+    await user.type(
+      screen.getByRole('combobox', { name: 'Character' }),
+      'Raiden Shogun',
+    );
     await user.click(screen.getByText(/Raiden Shogun/i));
 
     expect(useOptimizeRequest.getState().characterKey).toBe('raiden_shogun');
     expect(useOptimizeRequest.getState().weaponKey).toBe('the_catch');
     expect(useOptimizeRequest.getState().buildLevel).toBe(90);
-    expect(
-      screen.getByRole('button', { name: /The Catch/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Weapon' })).toHaveTextContent(
+      /The Catch/i,
+    );
   });
 
   it('a manual weapon override after roster auto-fill is not clobbered by a re-render', async () => {
@@ -194,23 +197,29 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
       <OptimizePanel onRun={() => {}} running={false} />,
     );
 
-    await user.click(screen.getByRole('button', { name: /Aino/i }));
-    await user.type(screen.getByRole('textbox'), 'Raiden Shogun');
+    await user.click(screen.getByRole('combobox', { name: 'Character' }));
+    await user.type(
+      screen.getByRole('combobox', { name: 'Character' }),
+      'Raiden Shogun',
+    );
     await user.click(screen.getByText(/Raiden Shogun/i));
     expect(useOptimizeRequest.getState().weaponKey).toBe('the_catch');
 
     // Manually override the auto-filled weapon.
-    await user.click(screen.getByRole('button', { name: /The Catch/i }));
-    await user.type(screen.getByRole('textbox'), 'Engulfing Lightning');
+    await user.click(screen.getByRole('combobox', { name: 'Weapon' }));
+    await user.type(
+      screen.getByRole('combobox', { name: 'Weapon' }),
+      'Engulfing Lightning',
+    );
     await user.click(screen.getByText(/Engulfing Lightning/i));
     expect(useOptimizeRequest.getState().weaponKey).toBe('engulfing_lightning');
 
     // An unrelated re-render must not revert the manual override.
     rerender(<OptimizePanel onRun={() => {}} running={false} />);
     expect(useOptimizeRequest.getState().weaponKey).toBe('engulfing_lightning');
-    expect(
-      screen.getByRole('button', { name: /Engulfing Lightning/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Weapon' })).toHaveTextContent(
+      /Engulfing Lightning/i,
+    );
   });
 
   it('sorts owned characters first with an "Owned" marker', async () => {
@@ -218,8 +227,8 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
     const user = userEvent.setup();
     render(<OptimizePanel onRun={() => {}} running={false} />);
 
-    await user.click(screen.getByRole('button', { name: /Aino/i }));
-    const items = screen.getAllByRole('listitem');
+    await user.click(screen.getByRole('combobox', { name: 'Character' }));
+    const items = screen.getAllByRole('option');
     expect(items[0]).toHaveTextContent(/Raiden Shogun.*Owned/i);
   });
 
@@ -227,8 +236,8 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
     const user = userEvent.setup();
     render(<OptimizePanel onRun={() => {}} running={false} />);
 
-    await user.click(screen.getByRole('button', { name: /Aino/i }));
-    const items = screen.getAllByRole('listitem');
+    await user.click(screen.getByRole('combobox', { name: 'Character' }));
+    const items = screen.getAllByRole('option');
     expect(items[0]).toHaveTextContent('Aino');
     expect(items[0]).not.toHaveTextContent('Owned');
   });

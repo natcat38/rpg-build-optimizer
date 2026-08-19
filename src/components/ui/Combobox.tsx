@@ -5,7 +5,7 @@
  * @packageDocumentation
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useId, useState, useRef, useEffect } from 'react';
 
 interface ComboboxOption {
   value: string;
@@ -17,6 +17,10 @@ interface ComboboxProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  /** What this picker selects ("Character", "Weapon", …). Without it the
+   *  control's only accessible name is its current value, so a screen-reader
+   *  user hears "Raiden Shogun, button" with no idea what it sets. */
+  label?: string;
 }
 
 export function Combobox({
@@ -24,7 +28,9 @@ export function Combobox({
   value,
   onChange,
   placeholder,
+  label,
 }: ComboboxProps) {
+  const listId = useId(); // three of these render on one page — ids must differ
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
@@ -90,6 +96,10 @@ export function Combobox({
         <input
           ref={inputRef}
           className="field"
+          role="combobox"
+          aria-label={label}
+          aria-expanded="true"
+          aria-controls={listId}
           value={query}
           onChange={(e) => changeQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -98,6 +108,10 @@ export function Combobox({
       ) : (
         <button
           type="button"
+          role="combobox"
+          aria-label={label}
+          aria-expanded="false"
+          aria-controls={listId}
           className="field flex w-full items-center justify-between text-left"
           onClick={() => setOpen(true)}
         >
@@ -118,13 +132,20 @@ export function Combobox({
         </button>
       )}
       {open && (
-        <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-surface-900 shadow-lg">
+        <ul
+          id={listId}
+          role="listbox"
+          aria-label={label}
+          className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-surface-900 shadow-lg"
+        >
           {filtered.length === 0 ? (
             <li className="px-3 py-2 text-sm text-muted">No results</li>
           ) : (
             filtered.map((opt, i) => (
               <li
                 key={opt.value}
+                role="option"
+                aria-selected={opt.value === value}
                 className={[
                   'cursor-pointer px-3 py-2 text-sm',
                   opt.value === value ? 'text-accent' : 'text-paper',
