@@ -24,11 +24,11 @@ block — an orientation gap, not an omission by the generator.
 | `src/sample` | 5 | "Try with example gear" sample mode: the bundled deterministic sample inventory, curated presets that each demonstrate a different constraint mechanism, and the landing-page hero example solved live on mount. |
 | `src/share` | 2 | Self-contained share links (ADR-0005): encodes a `BuildSnapshot` (request, result, and the five full artifacts) into a URL and decodes it back, with no server-side state. |
 | `src/state` | 10 | Client-side Zustand stores for the app's persisted and session state: artifact inventory, roster, the current optimize request, and manual-artifact-form validation. |
-| `src/teams` | 7 |  |
+| `src/teams` | 7 | Endgame team recommendation (ADR-0017/0018): the curated comp-archetype vocabulary, the database itself, the roster-to-archetype matching that fields two disjoint Spiral Abyss halves, and the view that shows them. |
 | `src/test-fixtures` | 2 | Test-only fixtures. |
 | `src/ui` | 1 | UI-only presentation helpers layered on top of `src/labels.ts`'s domain-neutral labels — currently the per-slot display glyphs used in compact build lists. |
 | `src/workers` | 5 | Runs the branch-and-bound optimiser off the main thread: the Web Worker entry point, its request/response protocol, and the main-thread client that dispatches to it (falling back to a synchronous call where no worker is available). |
 | `api` | 4 | The serverless AI-explain proxy (`/api/explain`, Vercel functions): rate limiting by client IP via Upstash Redis, and the handler that forwards a validated explain payload to Anthropic and returns the explanation. |
 | `scripts` | 4 | Repo tooling run through `tsx`, none of it shipped in the app bundle: baking the frozen reference dataset (build-dataset), gating ADR and knowledge-bundle consistency (check-docs), generating this directory index (gen-file-map), timing the optimiser (benchmark), and reporting character-guide coverage (meta-coverage). |
 
-20 source directories, 113 files, 1 without a declared purpose.
+20 source directories, 113 files, 0 without a declared purpose.

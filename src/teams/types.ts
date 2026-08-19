@@ -1,3 +1,9 @@
+/**
+ * Endgame team recommendation (ADR-0017/0018): the curated comp-archetype
+ * vocabulary, the database itself, the roster-to-archetype matching that fields
+ * two disjoint Spiral Abyss halves, and the view that shows them.
+ * @packageDocumentation
+ */
 export type EndgameMode = 'abyss' | 'theater' | 'stygian';
 
 export type Role =
