@@ -18,7 +18,7 @@ block — an orientation gap, not an omission by the generator.
 | `src/game` | 3 | Game-agnostic domain types (artifacts, slots, stat keys, build requests) plus the game display registry, kept separate from `game/genshin/`. |
 | `src/game/genshin` | 3 | The `genshinAdapter`: the concrete object owning all Genshin-specific reference data (characters, weapons, artifact sets, base/main stats) and the universal game baselines, loaded from the frozen `data.generated.json` snapshot (ADR-0002, ADR-0009, ADR-0012). |
 | `src/import` | 6 | GOOD inventory import: parsing and validating a GOOD export into artifacts/roster entries, content-hash dedupe against the existing inventory, and UID-based (Enka.Network) convenience import (ADR-0006). |
-| `src/invest` | 3 |  |
+| `src/invest` | 3 | Investment advice: what to pull for and what to craft next, ranked from the near-miss archetypes the Abyss recommender reports, plus the curated table of how obtainable each notable weapon is. |
 | `src/meta` | 8 | Gap analysis: compares the best build the player can field from their own inventory against a curated meta target and reports feasibility gaps, numeric shortfalls, and one grounded action (ADR-0007). |
 | `src/optimizer` | 10 | The exact branch-and-bound optimiser (ADR-0004): explores per-slot artifact pools, scores builds and constraint satisfaction, and returns the top-K valid builds by objective, plus the diagnostics and benchmark instrumentation that explain and measure the search. |
 | `src/plan` | 4 | The plan (ADR-0019): composes the recommended Abyss teams into an optimised build for each of the eight members over one shared inventory, plus a single farming list, and renders it. |
@@ -33,4 +33,4 @@ block — an orientation gap, not an omission by the generator.
 | `api` | 4 | The serverless AI-explain proxy (`/api/explain`, Vercel functions): rate limiting by client IP via Upstash Redis, and the handler that forwards a validated explain payload to Anthropic and returns the explanation. |
 | `scripts` | 4 | Repo tooling run through `tsx`, none of it shipped in the app bundle: baking the frozen reference dataset (build-dataset), gating ADR and knowledge-bundle consistency (check-docs), generating this directory index (gen-file-map), timing the optimiser (benchmark), and reporting character-guide coverage (meta-coverage). |
 
-22 source directories, 120 files, 1 without a declared purpose.
+22 source directories, 120 files, 0 without a declared purpose.

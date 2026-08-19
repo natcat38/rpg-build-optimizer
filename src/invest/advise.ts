@@ -1,6 +1,8 @@
 /**
- * Investment advice: what to pull for and what to craft, derived from the
- * near-miss archetypes the Abyss recommender reports.
+ * Investment advice: what to pull for and what to craft next, ranked from the
+ * near-miss archetypes the Abyss recommender reports, plus the curated table of
+ * how obtainable each notable weapon is.
+ * @packageDocumentation
  */
 import { genshinAdapter } from '../game/genshin/adapter';
 import { COMP_ARCHETYPES } from '../teams/comps';
