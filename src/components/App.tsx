@@ -13,8 +13,10 @@ import { Results } from './Results';
 import { SampleGear } from './SampleGear';
 import { GapSection } from './GapSection';
 import { GameSwitcher } from './GameSwitcher';
+import { RosterView } from '../roster/RosterView';
 import { decodeBuild } from '../share/url';
 import { useInventory } from '../state/inventory';
+import { useRoster } from '../state/roster';
 import { useOptimizeRequest, currentRequest } from '../state/optimizeRequest';
 import { useGame } from '../state/game';
 import { getGame, type GameDescriptor } from '../game/registry';
@@ -131,6 +133,7 @@ export function App() {
   const isLive = game.availability === 'live';
 
   const artifacts = useInventory((s) => s.artifacts);
+  const rosterEntries = useRoster((s) => s.entries);
   const sampleMode =
     artifacts.length === 0 ||
     artifacts.every((a) => a.id.startsWith('sample-'));
@@ -255,6 +258,11 @@ export function App() {
 
   const showSolvedHero = isLive && sampleMode && hero;
 
+  // The roster section only exists once a GOOD import has produced one, so the
+  // later sections' numbers shift with it.
+  const hasRoster = Object.keys(rosterEntries).length > 0;
+  const optimiseN = hasRoster ? 3 : 2;
+
   return (
     <div className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
       <header className="mb-10 animate-fade-up">
@@ -330,8 +338,19 @@ export function App() {
               </details>
             </Section>
 
+            {hasRoster && (
+              <Section
+                n={2}
+                title="Your roster"
+                hint="How built each owned character is, best first."
+                delay="0.08s"
+              >
+                <RosterView />
+              </Section>
+            )}
+
             <Section
-              n={2}
+              n={optimiseN}
               title="Optimise"
               hint="Choose a character, weapon, and what to maximise."
               delay="0.1s"
@@ -341,7 +360,7 @@ export function App() {
 
             {result && request && (
               <div id="results-section">
-                <Section n={3} title="Results" delay="0s">
+                <Section n={optimiseN + 1} title="Results" delay="0s">
                   <GapSection
                     result={result}
                     request={request}
