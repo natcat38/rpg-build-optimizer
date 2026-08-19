@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { instantiate, recommendAbyss } from './recommend';
 import { COMP_ARCHETYPES } from './comps';
-import { loadOwnerGOOD } from '../test-fixtures/ownerAccount';
+import { hasOwnerGOOD, loadOwnerGOOD } from '../test-fixtures/ownerAccount';
 import { parseGOOD, parseGOODRoster } from '../import/good';
 import { computeBuildScore } from '../roster/buildScore';
 import type { Artifact } from '../game/types';
@@ -177,32 +177,37 @@ describe('recommendAbyss', () => {
   });
 });
 
-describe('recommendAbyss on the owner account fixture', () => {
-  it('fields two disjoint teams from a real roster', () => {
-    const roster = parseGOODRoster(loadOwnerGOOD());
-    const artifacts = parseGOOD(loadOwnerGOOD()) as Artifact[];
-    const byLocation: Record<string, Artifact[]> = {};
-    for (const a of artifacts)
-      if (a.location) (byLocation[a.location] ??= []).push(a);
-    const scores: Record<string, number> = {};
-    for (const [key, entry] of Object.entries(roster))
-      scores[key] = computeBuildScore(entry, byLocation[key] ?? []).total;
+// Gated like the other fixture tests: the export is the owner's real account
+// and is gitignored, so CI never has it.
+describe.skipIf(!hasOwnerGOOD())(
+  'recommendAbyss on the owner account fixture',
+  () => {
+    it('fields two disjoint teams from a real roster', () => {
+      const roster = parseGOODRoster(loadOwnerGOOD());
+      const artifacts = parseGOOD(loadOwnerGOOD()) as Artifact[];
+      const byLocation: Record<string, Artifact[]> = {};
+      for (const a of artifacts)
+        if (a.location) (byLocation[a.location] ??= []).push(a);
+      const scores: Record<string, number> = {};
+      for (const [key, entry] of Object.entries(roster))
+        scores[key] = computeBuildScore(entry, byLocation[key] ?? []).total;
 
-    const out = recommendAbyss(scores);
-    expect(out.teams).not.toBeNull();
-    const [first, second] = out.teams!;
-    expect(first.score).toBeGreaterThan(0);
-    expect(second.score).toBeGreaterThan(0);
-    const keys = [...first.members, ...second.members].map(
-      (m) => m.characterKey,
-    );
-    expect(new Set(keys).size).toBe(8);
-    // Snapshot the chosen archetypes so meta/curation drift shows as a diff.
-    expect([first.archetypeId, second.archetypeId]).toMatchInlineSnapshot(`
+      const out = recommendAbyss(scores);
+      expect(out.teams).not.toBeNull();
+      const [first, second] = out.teams!;
+      expect(first.score).toBeGreaterThan(0);
+      expect(second.score).toBeGreaterThan(0);
+      const keys = [...first.members, ...second.members].map(
+        (m) => m.characterKey,
+      );
+      expect(new Set(keys).size).toBe(8);
+      // Snapshot the chosen archetypes so meta/curation drift shows as a diff.
+      expect([first.archetypeId, second.archetypeId]).toMatchInlineSnapshot(`
       [
         "hu-tao-vape",
         "ayaka-freeze",
       ]
     `);
-  });
-});
+    });
+  },
+);
