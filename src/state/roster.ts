@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { safeStorage } from './safeStorage';
 import type { RosterEntry } from '../import/good';
 
 interface RosterState {
@@ -18,6 +19,9 @@ export const useRoster = create<RosterState>()(
       setRoster: (entries) => set({ entries }),
       clear: () => set({ entries: {} }),
     }),
-    { name: 'rpg-build-optimizer/roster' },
+    {
+      name: 'rpg-build-optimizer/roster',
+      storage: createJSONStorage(() => safeStorage),
+    },
   ),
 );

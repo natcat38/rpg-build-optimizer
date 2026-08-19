@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { safeStorage } from './safeStorage';
 import type { Artifact } from '../game/types';
 
 interface InventoryState {
@@ -18,6 +19,9 @@ export const useInventory = create<InventoryState>()(
         set((s) => ({ artifacts: [...s.artifacts, ...items] })),
       clear: () => set({ artifacts: [] }),
     }),
-    { name: 'rpg-build-optimizer/inventory' },
+    {
+      name: 'rpg-build-optimizer/inventory',
+      storage: createJSONStorage(() => safeStorage),
+    },
   ),
 );
