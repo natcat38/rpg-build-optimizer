@@ -48,3 +48,16 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 - **Sample preset** (a.k.a. **Sample build**) — one curated "Try with example gear" entry: a character plus a representative **constraint**, that loads the **sample inventory** and auto-runs the **optimiser**. Each preset demonstrates a different constraint mechanism (min stats, set requirement, main-stat lock).
 - **Sample mode** — the app state where "Try with example gear" presets are offered: an empty inventory, or one containing only `sample-` artifacts. Importing real gear leaves sample mode, so a preset click can never overwrite owned artifacts.
 - **Speed report** — the committed, reproducible benchmark (`docs/speed-report.md`, regenerated via `npm run bench`) showing how small a fraction of the brute-force build space the **optimiser** explores while still returning the exact optimum. See [ADR-0004](docs/adr/0004-exact-branch-and-bound-optimisation.md).
+
+### v2 domain (endgame planner)
+
+- **Damage profile** — a weighted set of stand-in hits approximating a character's rotation (multipliers transcribed at talent lv9). The input to the `avg_damage` objective.
+- **Target function** — Σ weight × hit damage over a **damage profile**'s hits; the value the `avg_damage` **objective** maximises.
+- **Enemy config** — the assumptions damage is computed against (enemy level and RES); default level 100 / 10% RES.
+- **Build score** — a 0–100 composite of how built a roster character is (level, talents, weapon, artifact count, artifact quality), with explainable components.
+- **Comp archetype** — a curated 4-slot team recipe: one **role** per slot with ranked substitute characters.
+- **Role** — a slot's function in a **comp archetype**: `on-field-dps | off-field-dps | buffer | sustain | battery | applicator`.
+- **Team recommendation** — a **comp archetype** instantiated from the player's roster (real characters filling its slots).
+- **Endgame mode** — the endgame content a plan targets: `abyss | theater | stygian`. Spiral Abyss first.
+- **Plan** — the composed output: **team recommendations** → per-member optimised builds → **shopping list**.
+- **Shopping list** — the aggregated farming and investment advice derived from the **plan**'s gaps.
