@@ -70,11 +70,12 @@ function objectiveContribution(
  *  set-matching pieces could still be picked from here on. */
 function suffixSetPotential(
   pools: Record<Slot, Artifact[]>,
+  order: Slot[],
   setKey: string,
 ): number[] {
-  const flags = SLOTS.map((s) => pools[s].some((a) => a.setKey === setKey));
-  const suffix = new Array(SLOTS.length + 1).fill(0);
-  for (let i = SLOTS.length - 1; i >= 0; i--)
+  const flags = order.map((s) => pools[s].some((a) => a.setKey === setKey));
+  const suffix = new Array(order.length + 1).fill(0);
+  for (let i = order.length - 1; i >= 0; i--)
     suffix[i] = suffix[i + 1] + (flags[i] ? 1 : 0);
   return suffix;
 }
@@ -95,6 +96,7 @@ function relevantSetBonuses(
   ctx: OptimizeContext,
   objective: ScalarObjective,
   pools: Record<Slot, Artifact[]>,
+  order: Slot[],
 ): RelevantSetBonus[] {
   const out: RelevantSetBonus[] = [];
   for (const key of Object.keys(ctx.setBonuses)) {
@@ -102,7 +104,12 @@ function relevantSetBonuses(
     const two = b.two ? objectiveValue(b.two, objective) : 0;
     const four = b.four ? objectiveValue(b.four, objective) : 0;
     if (two || four) {
-      out.push({ key, two, four, remaining: suffixSetPotential(pools, key) });
+      out.push({
+        key,
+        two,
+        four,
+        remaining: suffixSetPotential(pools, order, key),
+      });
     }
   }
   return out;
@@ -151,15 +158,18 @@ function maxInto(acc: StatVec, v: StatVec): void {
 /** Per-slot statwise-max contribution, summed over slots i..end. Every real
  *  completion's added stats are ≤ this vector statwise, so feeding it to a
  *  per-stat monotone objective yields an admissible bound (ADR-0004). */
-function suffixMaxVectors(pools: Record<Slot, Artifact[]>): StatVec[] {
-  const perSlot = SLOTS.map((s) => {
+function suffixMaxVectors(
+  pools: Record<Slot, Artifact[]>,
+  order: Slot[],
+): StatVec[] {
+  const perSlot = order.map((s) => {
     const m: StatVec = {};
     for (const a of pools[s]) maxInto(m, artifactContribution(a));
     return m;
   });
-  const suffix: StatVec[] = new Array(SLOTS.length + 1);
-  suffix[SLOTS.length] = {};
-  for (let i = SLOTS.length - 1; i >= 0; i--) {
+  const suffix: StatVec[] = new Array(order.length + 1);
+  suffix[order.length] = {};
+  for (let i = order.length - 1; i >= 0; i--) {
     const v: StatVec = { ...suffix[i + 1] };
     addInto(v, perSlot[i]);
     suffix[i] = v;
@@ -168,28 +178,54 @@ function suffixMaxVectors(pools: Record<Slot, Artifact[]>): StatVec[] {
 }
 
 /**
- * Statwise ceiling on what any reachable set-bonus layout can add: per stat,
- * the better of one set's 2pc+4pc and the two best 2pc bonuses (a 2+2 build).
- * Only sets actually present in the pools are considered.
+ * Statwise ceiling on what any reachable set-bonus layout can add.
+ *
+ * A `setRequirement` bounds this hard, so honour it: with a 4pc requirement the
+ * fifth piece can never reach a second 2pc, and a 2+2 pins both halves. Without
+ * one, fall back to the best single set (2pc+4pc) versus the two best 2pc
+ * bonuses, per stat, over the sets actually present in the pools.
  * // ponytail: root-constant ceiling — tighten per node like setBonusCeilingAt
- * // if damage searches ever prove too slow.
+ * // if damage searches ever prove too slow again.
  */
 function setCeilingVector(
   ctx: OptimizeContext,
   pools: Record<Slot, Artifact[]>,
+  setRequirement: OptimizeRequest['constraints']['setRequirement'],
 ): StatVec {
   const present = new Set<string>();
   for (const s of SLOTS) for (const a of pools[s]) present.add(a.setKey);
+  const bonus = (key: string) => ctx.setBonuses[key];
+
+  const sum = (...vs: (StatVec | undefined)[]): StatVec => {
+    const out: StatVec = {};
+    for (const v of vs) if (v) addInto(out, v);
+    return out;
+  };
+
+  if (setRequirement?.kind === '4pc') {
+    // Four pieces of one set plus a single free piece: only this set's bonuses
+    // can ever be active.
+    const b = bonus(setRequirement.setKey);
+    return sum(b?.two, b?.four);
+  }
+  if (setRequirement?.kind === '2+2') {
+    const [a, b] = setRequirement.setKeys;
+    return sum(bonus(a)?.two, bonus(b)?.two);
+  }
+
   const ceil: StatVec = {};
   const top1: StatVec = {};
   const top2: StatVec = {};
-  for (const key of present) {
-    const b = ctx.setBonuses[key];
+  const candidates =
+    setRequirement?.kind === '2pc'
+      ? // The required set's 2pc is guaranteed; the three free pieces can add
+        // at most one more 2pc (or upgrade the required set to 4pc).
+        [setRequirement.setKey, ...present]
+      : [...present];
+  for (const key of candidates) {
+    const b = bonus(key);
     if (!b) continue;
-    const single: StatVec = {};
-    if (b.two) addInto(single, b.two);
-    if (b.four) addInto(single, b.four);
-    maxInto(ceil, single);
+    maxInto(ceil, sum(b.two, b.four));
     for (const k of Object.keys(b.two ?? {}) as StatKey[]) {
       const v = b.two?.[k] ?? 0;
       if (v > (top1[k] ?? 0)) {
@@ -246,11 +282,18 @@ export function searchBuilds(
     return { status: 'infeasible', explored: 0, pruned: 0 };
   }
 
+  // Decide the most constrained slots first: with a 17-piece sands and a
+  // 115-piece flower, choosing the sands early lets the set-requirement and
+  // objective bounds reject whole subtrees before the big pools are ever
+  // walked. Iteration order only — the returned optimum is unchanged (covered
+  // by the brute-force equivalence tests).
+  const order = [...SLOTS].sort((a, b) => pools[a].length - pools[b].length);
+
   // Surface high-contribution pieces first so the kept list fills with strong
   // builds early and the admissible bound tightens sooner. Iteration order only —
   // the returned optimum is unchanged (covered by the brute-force equivalence test).
   if (scalarObjective) {
-    for (const s of SLOTS) {
+    for (const s of order) {
       pools[s].sort(
         (a, b) =>
           objectiveContribution(b, scalarObjective) -
@@ -259,14 +302,14 @@ export function searchBuilds(
     }
   }
 
-  const suffixMax: number[] = new Array(SLOTS.length + 1).fill(0);
+  const suffixMax: number[] = new Array(order.length + 1).fill(0);
   if (scalarObjective) {
-    const maxBySlot = SLOTS.map((s) =>
+    const maxBySlot = order.map((s) =>
       Math.max(
         ...pools[s].map((a) => objectiveContribution(a, scalarObjective)),
       ),
     );
-    for (let i = SLOTS.length - 1; i >= 0; i--)
+    for (let i = order.length - 1; i >= 0; i--)
       suffixMax[i] = suffixMax[i + 1] + maxBySlot[i];
   }
   // Vector mode (avg_damage): the objective is multiplicative in the totals, so
@@ -274,31 +317,36 @@ export function searchBuilds(
   // the objective on an optimistic *stat vector* — the running totals plus the
   // statwise-max of everything still selectable. Admissible because the damage
   // function is monotone in every stat it reads (proved in formula.test.ts).
-  const suffixMaxVec = scalarObjective ? null : suffixMaxVectors(pools);
-  const setCeilVec = scalarObjective ? null : setCeilingVector(ctx, pools);
+  // Statwise reachability data. Vector-mode bounding needs it; so does the
+  // minStats prune below, which applies to every objective.
+  const suffixMaxVec = suffixMaxVectors(pools, order);
+  const setCeilVec = setCeilingVector(
+    ctx,
+    pools,
+    req.constraints.setRequirement,
+  );
   const runningVec: StatVec = {};
   // Contributions are a pure function of the artifact, but `recurse` reaches
   // the same artifact once per surviving path above it — compute them once.
   const contributions = new Map<string, StatVec>();
+  for (const s of order)
+    for (const a of pools[s]) contributions.set(a.id, artifactContribution(a));
   if (!scalarObjective) {
-    for (const s of SLOTS)
-      for (const a of pools[s])
-        contributions.set(a.id, artifactContribution(a));
     // Ordering heuristic only (the oracle test proves the optimum is unchanged):
     // rank each piece by the damage it adds on its own.
     const baseDamage = evaluateObjective(ctx, 'avg_damage', ctx.base);
     const gain = new Map<string, number>();
-    for (const s of SLOTS)
+    for (const s of order)
       for (const a of pools[s]) {
         const t: StatVec = { ...ctx.base };
         addInto(t, contributions.get(a.id)!);
         gain.set(a.id, evaluateObjective(ctx, 'avg_damage', t) - baseDamage);
       }
-    for (const s of SLOTS)
+    for (const s of order)
       pools[s].sort((a, b) => (gain.get(b.id) ?? 0) - (gain.get(a.id) ?? 0));
   }
   const relevantSets = scalarObjective
-    ? relevantSetBonuses(ctx, scalarObjective, pools)
+    ? relevantSetBonuses(ctx, scalarObjective, pools, order)
     : [];
   const relevantIndex = new Map(relevantSets.map((r, i) => [r.key, i]));
   const matchedRelevant: number[] = new Array(relevantSets.length).fill(0);
@@ -326,12 +374,32 @@ export function searchBuilds(
       [setKeyA, setKeyB] = setReq.setKeys;
       neededA = 2;
       neededB = 2;
-      remainingB = suffixSetPotential(pools, setKeyB);
+      remainingB = suffixSetPotential(pools, order, setKeyB);
     } else {
       setKeyA = setReq.setKey;
       neededA = setReq.kind === '4pc' ? 4 : 2;
     }
-    remainingA = suffixSetPotential(pools, setKeyA);
+    remainingA = suffixSetPotential(pools, order, setKeyA);
+  }
+
+  // A minStats floor is otherwise only checked at the leaf, so on a large
+  // inventory almost every branch is walked to full depth just to be rejected
+  // for, say, missing an ER target. This mirrors the set-requirement bound:
+  // "could the remaining picks still reach this floor at all?" — admissible,
+  // because no real completion can beat the statwise maximum.
+  const minKeys = Object.keys(req.constraints.minStats ?? {}) as StatKey[];
+  const minNeed = minKeys.map((k) => req.constraints.minStats?.[k] ?? 0);
+  const minBase = minKeys.map((k) => (ctx.base[k] ?? 0) + (setCeilVec[k] ?? 0));
+  const minSuffix = minKeys.map((k) => suffixMaxVec.map((v) => v[k] ?? 0));
+  const runningMin = new Array<number>(minKeys.length).fill(0);
+  /** The same contributions, projected onto just the constrained stats. */
+  const minContrib = new Map<string, number[]>();
+  if (minKeys.length > 0) {
+    for (const [id, c] of contributions)
+      minContrib.set(
+        id,
+        minKeys.map((k) => c[k] ?? 0),
+      );
   }
 
   const kept: BuildResult[] = [];
@@ -358,7 +426,7 @@ export function searchBuilds(
     matchedA: number,
     matchedB: number,
   ) {
-    if (slotIndex === SLOTS.length) {
+    if (slotIndex === order.length) {
       explored++;
       const t = totals(ctx, chosen);
       if (!satisfies(req.constraints, chosen, t)) return;
@@ -378,9 +446,15 @@ export function searchBuilds(
     } else {
       const optimistic: StatVec = { ...ctx.base };
       addInto(optimistic, runningVec);
-      addInto(optimistic, suffixMaxVec![slotIndex]);
-      addInto(optimistic, setCeilVec!);
+      addInto(optimistic, suffixMaxVec[slotIndex]);
+      addInto(optimistic, setCeilVec);
       if (evaluateObjective(ctx, 'avg_damage', optimistic) <= minKeptScore()) {
+        pruned++;
+        return;
+      }
+    }
+    for (let j = 0; j < minKeys.length; j++) {
+      if (minBase[j] + runningMin[j] + minSuffix[j][slotIndex] < minNeed[j]) {
         pruned++;
         return;
       }
@@ -394,14 +468,18 @@ export function searchBuilds(
       return;
     }
     const hasRelevant = relevantSets.length > 0;
-    // `chosen`, `runningVec` and `matchedRelevant` are three pieces of state
-    // pushed before the recursive call and popped after it. Any early return
-    // added inside this loop must undo all three, or the bound silently stops
-    // being admissible.
-    for (const a of pools[SLOTS[slotIndex]]) {
+    // `chosen`, `runningVec`, `runningMin` and `matchedRelevant` are pushed
+    // before the recursive call and popped after it. Any early return added
+    // inside this loop must undo all four, or the bounds silently stop being
+    // admissible.
+    for (const a of pools[order[slotIndex]]) {
       chosen.push(a);
-      const contribution = contributions.get(a.id) ?? null;
+      const contribution = scalarObjective
+        ? null
+        : (contributions.get(a.id) ?? null);
       if (contribution) addInto(runningVec, contribution);
+      const mc = minContrib.get(a.id);
+      if (mc) for (let j = 0; j < mc.length; j++) runningMin[j] += mc[j];
       const relIdx = hasRelevant ? relevantIndex.get(a.setKey) : undefined;
       if (relIdx !== undefined) matchedRelevant[relIdx]++;
       recurse(
@@ -413,6 +491,7 @@ export function searchBuilds(
       );
       if (relIdx !== undefined) matchedRelevant[relIdx]--;
       if (contribution) subFrom(runningVec, contribution);
+      if (mc) for (let j = 0; j < mc.length; j++) runningMin[j] -= mc[j];
       chosen.pop();
     }
   }

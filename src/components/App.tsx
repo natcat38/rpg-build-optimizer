@@ -15,6 +15,7 @@ import { GapSection } from './GapSection';
 import { GameSwitcher } from './GameSwitcher';
 import { RosterView } from '../roster/RosterView';
 import { TeamsView } from '../teams/TeamsView';
+import { PlanView } from '../plan/PlanView';
 import { decodeBuild } from '../share/url';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
@@ -262,7 +263,7 @@ export function App() {
   // The roster section only exists once a GOOD import has produced one, so the
   // later sections' numbers shift with it.
   const hasRoster = Object.keys(rosterEntries).length > 0;
-  const optimiseN = hasRoster ? 4 : 2;
+  const optimiseN = hasRoster ? 5 : 2;
 
   return (
     <div className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
@@ -358,6 +359,17 @@ export function App() {
                 delay="0.09s"
               >
                 <TeamsView />
+              </Section>
+            )}
+
+            {hasRoster && (
+              <Section
+                n={4}
+                title="Your plan"
+                hint="An optimised build for all eight members, plus one farming list."
+                delay="0.1s"
+              >
+                <PlanView />
               </Section>
             )}
 

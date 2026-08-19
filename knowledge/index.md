@@ -47,6 +47,7 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0016 — damage engine as an optimisation objective](../docs/adr/0016-damage-engine-objective.md) _(supersedes ADR-0003)_
 - [ADR-0017 — curated comp-archetype database](../docs/adr/0017-curated-comp-database.md)
 - [ADR-0018 — mode-aware team recommendation](../docs/adr/0018-mode-aware-team-recommendation.md)
+- [ADR-0019 — the Plan page](../docs/adr/0019-plan-output.md)
 
 ## In progress
 
