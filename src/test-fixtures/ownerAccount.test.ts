@@ -19,4 +19,12 @@ describe.skipIf(!hasOwnerGOOD())('owner account fixture', () => {
     expect(roster['neuvillette']).toBeDefined();
     expect(roster['kaedehara_kazuha']).toBeDefined();
   });
+
+  it('carries the v2 fields the roster view needs', () => {
+    const roster = parseGOODRoster(loadOwnerGOOD());
+    const withTalents = Object.values(roster).filter((e) => e.talents);
+    expect(withTalents.length).toBeGreaterThan(50);
+    const arts = parseGOOD(loadOwnerGOOD()) as { location?: string }[];
+    expect(arts.filter((a) => a.location).length).toBeGreaterThan(300);
+  });
 });

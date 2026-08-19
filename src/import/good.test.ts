@@ -317,3 +317,73 @@ describe('parseGOODRoster', () => {
     });
   });
 });
+
+describe('parseGOODRoster — richer entries (v2)', () => {
+  it('captures level, constellation, talents and weapon refinement', () => {
+    const out = parseGOODRoster({
+      format: 'GOOD',
+      characters: [
+        {
+          key: 'Neuvillette',
+          level: 90,
+          constellation: 0,
+          ascension: 6,
+          talent: { auto: 9, skill: 9, burst: 9 },
+        },
+      ],
+      weapons: [
+        {
+          key: 'SplendorOfTranquilWaters',
+          level: 90,
+          refinement: 1,
+          location: 'Neuvillette',
+        },
+      ],
+    });
+    expect(out['neuvillette']).toEqual({
+      buildLevel: 90,
+      level: 90,
+      constellation: 0,
+      talents: { auto: 9, skill: 9, burst: 9 },
+      weaponKey: 'splendor_of_tranquil_waters',
+      weaponLevel: 90,
+      weaponRefinement: 1,
+    });
+  });
+
+  it('drops malformed fields one by one, still creating the entry', () => {
+    const out = parseGOODRoster({
+      format: 'GOOD',
+      characters: [
+        {
+          key: 'Neuvillette',
+          level: '90',
+          constellation: 9,
+          talent: { auto: 99, skill: 9, burst: 9 },
+        },
+      ],
+    });
+    expect(out['neuvillette']).toEqual({});
+  });
+});
+
+describe('parseGOOD — artifact location (v2)', () => {
+  const withLocation = (location: unknown) =>
+    parseGOOD({
+      ...goodFile,
+      artifacts: [{ ...goodFile.artifacts[0], location }],
+    });
+
+  it('resolves an equipped artifact to a dataset character key', () => {
+    const out = withLocation('Neuvillette');
+    expect(Array.isArray(out)).toBe(true);
+    expect((out as { location?: string }[])[0].location).toBe('neuvillette');
+  });
+
+  it('leaves location undefined when empty, missing or unresolvable', () => {
+    for (const loc of ['', undefined, 'NotACharacter', 42]) {
+      const out = withLocation(loc) as { location?: string }[];
+      expect(out[0].location).toBeUndefined();
+    }
+  });
+});

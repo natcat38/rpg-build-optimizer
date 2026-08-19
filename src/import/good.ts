@@ -39,6 +39,22 @@ const ELEMENT_KEYS: Record<string, Element> = Object.fromEntries(
   ELEMENTS.map((el) => [`${el}_dmg_`, el]),
 ) as Record<string, Element>;
 
+const normalizeKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/** GOOD keys ("RaidenShogun") and dataset keys ("raiden_shogun", "amos'_bow")
+ *  are matched by normalizing both to alphanumeric lowercase. Built once and
+ *  shared by the artifact and roster parsers. */
+const charByNorm = new Map(
+  genshinAdapter.characters().map((c) => [normalizeKey(c.key), c.key]),
+);
+
+/** The dataset character key a GOOD `location` names, or undefined when the
+ *  field is empty, absent or unresolvable (e.g. a Traveler variant). */
+function resolveLocation(location: unknown): string | undefined {
+  if (typeof location !== 'string' || location === '') return undefined;
+  return charByNorm.get(normalizeKey(location));
+}
+
 interface GoodArtifact {
   setKey: string;
   slotKey: string;
@@ -46,6 +62,7 @@ interface GoodArtifact {
   level: number;
   mainStatKey: string;
   substats: { key: string; value: number }[];
+  location?: string;
 }
 
 export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
@@ -98,6 +115,7 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
       ),
       subStats,
       element: slot === 'goblet' ? ELEMENT_KEYS[raw.mainStatKey] : undefined,
+      location: resolveLocation(raw.location),
     });
   }
   return out;
@@ -105,7 +123,22 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
 
 export interface RosterEntry {
   buildLevel?: BuildLevel;
+  /** Current character level from GOOD (1..90), distinct from the ascension-
+   *  derived buildLevel the optimiser evaluates at. */
+  level?: number;
+  constellation?: number;
+  talents?: { auto: number; skill: number; burst: number };
   weaponKey?: string;
+  weaponLevel?: number;
+  weaponRefinement?: number;
+}
+
+/** Range-guarded integer read: out-of-range or non-integer values are dropped
+ *  field-wise, matching the surrounding skip-don't-throw contract. */
+function intInRange(v: unknown, min: number, max: number): number | undefined {
+  return typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max
+    ? v
+    : undefined;
 }
 
 // Ascension 0..6 → max level cap. A character can't be de-leveled, so the cap
@@ -114,8 +147,6 @@ const ASCENSION_CAP = BUILD_LEVELS.slice(1) as BuildLevel[];
 
 // Same wedge-guard rationale as MAX_ARTIFACTS; real accounts are ~100/150.
 const MAX_ROSTER = 1000;
-
-const normalizeKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 /** Owned-roster extraction from a GOOD export: which characters the player
  *  owns, what weapon each has equipped, and the build level implied by their
@@ -135,9 +166,6 @@ export function parseGOODRoster(json: unknown): Record<string, RosterEntry> {
     : [];
   if (rawChars.length === 0 && rawWeapons.length === 0) return {};
 
-  const charByNorm = new Map(
-    genshinAdapter.characters().map((c) => [normalizeKey(c.key), c.key]),
-  );
   const weaponByNorm = new Map(
     genshinAdapter.weapons().map((w) => [normalizeKey(w.key), w.key]),
   );
@@ -145,32 +173,55 @@ export function parseGOODRoster(json: unknown): Record<string, RosterEntry> {
   const entries: Record<string, RosterEntry> = {};
   for (const raw of rawChars) {
     if (typeof raw !== 'object' || raw === null) continue;
-    const { key, ascension } = raw as { key?: unknown; ascension?: unknown };
+    const { key, ascension, level, constellation, talent } = raw as {
+      key?: unknown;
+      ascension?: unknown;
+      level?: unknown;
+      constellation?: unknown;
+      talent?: unknown;
+    };
     if (typeof key !== 'string') continue;
     const ours = charByNorm.get(normalizeKey(key));
     if (!ours) continue;
     const entry: RosterEntry = {};
-    if (
-      typeof ascension === 'number' &&
-      Number.isInteger(ascension) &&
-      ascension >= 0 &&
-      ascension <= 6
-    ) {
-      entry.buildLevel = ASCENSION_CAP[ascension];
+    const asc = intInRange(ascension, 0, 6);
+    if (asc !== undefined) entry.buildLevel = ASCENSION_CAP[asc];
+    const lvl = intInRange(level, 1, 90);
+    if (lvl !== undefined) entry.level = lvl;
+    const cons = intInRange(constellation, 0, 6);
+    if (cons !== undefined) entry.constellation = cons;
+    if (typeof talent === 'object' && talent !== null) {
+      const t = talent as Record<string, unknown>;
+      const auto = intInRange(t.auto, 1, 15);
+      const skill = intInRange(t.skill, 1, 15);
+      const burst = intInRange(t.burst, 1, 15);
+      // All three or none — a partial talent triple would silently understate
+      // the build score rather than admit the export was incomplete.
+      if (auto !== undefined && skill !== undefined && burst !== undefined)
+        entry.talents = { auto, skill, burst };
     }
     entries[ours] = entry;
   }
   for (const raw of rawWeapons) {
     if (typeof raw !== 'object' || raw === null) continue;
-    const { key, location } = raw as { key?: unknown; location?: unknown };
-    if (typeof key !== 'string' || typeof location !== 'string') continue;
-    if (location === '') continue; // unequipped
-    const ourChar = charByNorm.get(normalizeKey(location));
+    const { key, location, level, refinement } = raw as {
+      key?: unknown;
+      location?: unknown;
+      level?: unknown;
+      refinement?: unknown;
+    };
+    if (typeof key !== 'string') continue;
+    const ourChar = resolveLocation(location);
     const ourWeapon = weaponByNorm.get(normalizeKey(key));
     if (!ourChar || !ourWeapon) continue;
     // A weapon equipped on a character missing from characters[] still
     // implies ownership — create the entry.
-    (entries[ourChar] ??= {}).weaponKey = ourWeapon;
+    const entry = (entries[ourChar] ??= {});
+    entry.weaponKey = ourWeapon;
+    const wl = intInRange(level, 1, 90);
+    if (wl !== undefined) entry.weaponLevel = wl;
+    const ref = intInRange(refinement, 1, 5);
+    if (ref !== undefined) entry.weaponRefinement = ref;
   }
   return entries;
 }
