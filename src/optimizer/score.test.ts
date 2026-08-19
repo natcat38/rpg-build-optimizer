@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   totals,
   objectiveValue,
+  evaluateObjective,
   satisfies,
   critRatioPenalty,
   countSets,
@@ -169,5 +170,44 @@ describe('critRatioPenalty', () => {
   });
   it('is zero when target is undefined', () => {
     expect(critRatioPenalty({ crit_rate: 10, crit_dmg: 200 })).toBe(0);
+  });
+});
+
+describe('evaluateObjective', () => {
+  it('routes avg_damage through the target function', () => {
+    const dmgCtx: OptimizeContext = {
+      base: { atk: 800 },
+      setBonuses: {},
+      damage: {
+        profile: {
+          characterKey: 'x',
+          source: 't',
+          hits: [
+            {
+              name: 'h',
+              scaling: 'atk',
+              multiplier: 100,
+              bonus: 'elemental',
+              reaction: 'none',
+              weight: 1,
+            },
+          ],
+        },
+        enemy: { level: 100, res: 0.1 },
+        charLevel: 90,
+      },
+    };
+    const t = { atk: 800, crit_rate: 0, crit_dmg: 0 };
+    // 800 * 1 * 1 * (190/390) * 0.9
+    expect(evaluateObjective(dmgCtx, 'avg_damage', t)).toBeCloseTo(
+      800 * (190 / 390) * 0.9,
+      3,
+    );
+    expect(() =>
+      evaluateObjective({ base: {}, setBonuses: {} }, 'avg_damage', t),
+    ).toThrow();
+    expect(
+      evaluateObjective(dmgCtx, 'crit_value', { crit_rate: 10, crit_dmg: 20 }),
+    ).toBe(40);
   });
 });

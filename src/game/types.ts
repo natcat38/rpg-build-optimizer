@@ -3,6 +3,7 @@
  * plus the game display registry, kept separate from `game/genshin/`.
  * @packageDocumentation
  */
+import type { DamageContext } from '../damage/types';
 
 export type Slot = 'flower' | 'plume' | 'sands' | 'goblet' | 'circlet';
 export const SLOTS: Slot[] = ['flower', 'plume', 'sands', 'goblet', 'circlet'];
@@ -82,10 +83,10 @@ export interface OptimizeConstraints {
   critRatioTarget?: number; // soft tiebreak only
 }
 
-export type Objective = StatKey | 'crit_value';
+export type Objective = StatKey | 'crit_value' | 'avg_damage';
 
 export function isObjective(x: unknown): x is Objective {
-  return x === 'crit_value' || isStatKey(x);
+  return x === 'crit_value' || x === 'avg_damage' || isStatKey(x);
 }
 
 export interface OptimizeRequest {
@@ -103,6 +104,8 @@ export interface OptimizeContext {
   base: StatVec;
   /** scored flat-stat set bonuses, elemental bonuses pre-resolved to elemental_dmg. */
   setBonuses: Record<string, { two?: StatVec; four?: StatVec }>;
+  /** damage profile + enemy assumptions; required by the `avg_damage` objective. */
+  damage?: DamageContext;
 }
 
 export interface BuildDiagnostics {
