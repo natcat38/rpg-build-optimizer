@@ -101,6 +101,31 @@ describe('ImportPanel', () => {
     );
   });
 
+  it('tells the user the network is the problem when the fetch rejects', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+    await user.type(screen.getByLabelText('UID'), '700000000');
+    await user.click(screen.getByRole('button', { name: /fetch/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /couldn't reach enka/i,
+    );
+  });
+
+  it('tells the user to turn the showcase on when the UID has no showcase', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) }),
+    );
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+    await user.type(screen.getByLabelText('UID'), '700000000');
+    await user.click(screen.getByRole('button', { name: /fetch/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /no artifacts on showcase/i,
+    );
+  });
+
   it('imports showcased artifacts from a UID', async () => {
     vi.stubGlobal(
       'fetch',
