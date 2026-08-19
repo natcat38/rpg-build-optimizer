@@ -1,6 +1,6 @@
 # 0003. Stat-only model, no damage engine
 
-- Status: Accepted
+- Status: Superseded by [0016](0016-damage-engine-objective.md) (stat-only model remains the fallback objective)
 - Date: 2026-06-06
 
 ## Context
