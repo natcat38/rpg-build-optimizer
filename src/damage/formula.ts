@@ -56,7 +56,8 @@ export function effectiveStat(
 /** Expected-value crit multiplier (for ranking, not a single roll). */
 export function evCritMult(t: StatVec): number {
   const cr = Math.min(Math.max(t.crit_rate ?? 0, 0), 100);
-  return 1 + (cr / 100) * ((t.crit_dmg ?? 0) / 100);
+  const cd = Math.max(t.crit_dmg ?? 0, 0);
+  return 1 + (cr / 100) * (cd / 100);
 }
 
 export function defMult(charLevel: number, enemyLevel: number): number {

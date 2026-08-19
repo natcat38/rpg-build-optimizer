@@ -64,3 +64,13 @@ export function formatSetName(setKey: string): string {
     .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
     .trim();
 }
+
+/**
+ * Every number the results UI shows goes through here. The damage formula is
+ * pure arithmetic over user-supplied stats, so a pathological build can hand
+ * the UI a NaN or an Infinity — guarding at the display seam keeps the maths
+ * honest and still never renders the literal word "NaN".
+ */
+export function formatScore(n: number, digits = 1): string {
+  return Number.isFinite(n) ? n.toFixed(digits) : '—';
+}

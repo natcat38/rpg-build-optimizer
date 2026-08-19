@@ -3,6 +3,7 @@ import {
   statLabel,
   objectiveLabel,
   formatSetName,
+  formatScore,
   SLOT_LABELS,
 } from './labels';
 
@@ -19,6 +20,14 @@ describe('labels', () => {
 
   it('spaces a PascalCase set key', () => {
     expect(formatSetName('EmblemOfSeveredFate')).toBe('Emblem Of Severed Fate');
+  });
+
+  it('formats finite scores and renders a dash for non-finite ones', () => {
+    expect(formatScore(12.34)).toBe('12.3');
+    expect(formatScore(70, 0)).toBe('70');
+    expect(formatScore(NaN)).toBe('—');
+    expect(formatScore(Infinity)).toBe('—');
+    expect(formatScore(-Infinity)).toBe('—');
   });
 
   it('has a label for every slot', () => {
