@@ -51,12 +51,12 @@ lineups: hand-curate from here into a small TS table each cycle.
 
 ### Cooked APIs (all weaker options)
 
-| Source | Verdict |
-|---|---|
-| `genshin-db` (npm, already our snapshot source) | **No tower/abyss folder** — cannot cover this. |
-| Project Amber (`ambr.top` → `gi.yatta.moe`) | Tower page reportedly backed by third-party `api.lunaris.moe`; site 403'd automated fetch. Re-check manually before relying on it. |
-| Hakush.in | Has an abyss page; unverified (DNS failure in test env); wrapper docs say beta-data focus. |
-| enka.network / genshin.dev / akasha / spiralabyss.org | Player records or no abyss schedule data — not useful. |
+| Source                                                | Verdict                                                                                                                            |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `genshin-db` (npm, already our snapshot source)       | **No tower/abyss folder** — cannot cover this.                                                                                     |
+| Project Amber (`ambr.top` → `gi.yatta.moe`)           | Tower page reportedly backed by third-party `api.lunaris.moe`; site 403'd automated fetch. Re-check manually before relying on it. |
+| Hakush.in                                             | Has an abyss page; unverified (DNS failure in test env); wrapper docs say beta-data focus.                                         |
+| enka.network / genshin.dev / akasha / spiralabyss.org | Player records or no abyss schedule data — not useful.                                                                             |
 
 ### Reference parsers (not dependencies)
 

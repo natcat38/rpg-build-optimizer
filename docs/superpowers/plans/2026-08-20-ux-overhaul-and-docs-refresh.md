@@ -39,6 +39,7 @@
 ### Task 1: Collapse the roster wall
 
 **Files:**
+
 - Modify: `src/roster/RosterView.tsx:116-129`
 - Test: `src/roster/RosterView.test.tsx`
 
@@ -68,14 +69,17 @@ const visible = showAll ? rows : rows.slice(0, COLLAPSED_COUNT);
 Replace `rows.map` with `visible.map`, and after the `</ul>` add (styled per the frontend-design critique: reuse the app's existing `▶` disclosure idiom from `App.tsx:330-336` and the `.field-label` tracking, not a new "Load more" button style):
 
 ```tsx
-{rows.length > COLLAPSED_COUNT && !showAll && (
-  <button
-    className="flex min-h-11 w-full items-center justify-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-muted transition hover:text-paper"
-    onClick={() => setShowAll(true)}
-  >
-    <span aria-hidden="true">▶</span> Show all {rows.length} characters, sorted by score
-  </button>
-)}
+{
+  rows.length > COLLAPSED_COUNT && !showAll && (
+    <button
+      className="flex min-h-11 w-full items-center justify-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-muted transition hover:text-paper"
+      onClick={() => setShowAll(true)}
+    >
+      <span aria-hidden="true">▶</span> Show all {rows.length} characters,
+      sorted by score
+    </button>
+  );
+}
 ```
 
 - [ ] **Step 4: Run tests** — `npm test -- RosterView` — expect PASS (all tests in file).
@@ -84,11 +88,13 @@ Replace `rows.map` with `visible.map`, and after the `</ul>` add (styled per the
 ### Task 2: Stable section ids, sticky step nav, scroll-to-roster on import
 
 **Files:**
+
 - Modify: `src/components/App.tsx` (Section component :30-57, section usages :323-383)
 - Modify: `src/components/ImportPanel.tsx:56-62`
 - Test: `src/components/App.test.tsx`
 
 **Interfaces:**
+
 - Produces: DOM ids `step-load`, `step-roster`, `step-teams`, `step-plan`, `step-optimise` (Task 9's drawer also scrolls to `step-optimise`).
 
 - [ ] **Step 1: Failing test** (append to `App.test.tsx`, mirroring its existing render setup):
@@ -99,7 +105,9 @@ it('renders a sticky step nav with anchors when a roster exists', () => {
   render(<App />);
   const nav = screen.getByRole('navigation', { name: /steps/i });
   ['Load', 'Roster', 'Teams', 'Plan', 'Optimise'].forEach((label) =>
-    expect(within(nav).getByRole('link', { name: new RegExp(label, 'i') })).toBeInTheDocument(),
+    expect(
+      within(nav).getByRole('link', { name: new RegExp(label, 'i') }),
+    ).toBeInTheDocument(),
   );
 });
 ```
@@ -133,8 +141,7 @@ it('renders a sticky step nav with anchors when a roster exists', () => {
 </nav>
 ```
 
-(Nice-to-have if cheap: track the section nearest the viewport top with an IntersectionObserver and give that chip `border-accent/30 bg-accent/10 text-accent-bright` — the `.section-badge` formula. Skip if it doesn't fit the task budget; the nav is useful without it.)
-  4. Add a tiny scroll helper (in `App.tsx` or a new `src/ui/scroll.ts`) that respects reduced motion — the audit found `scrollIntoView({ behavior: 'smooth' })` at `App.tsx:255-257` bypasses the CSS `prefers-reduced-motion` override because explicit `behavior` wins over CSS:
+(Nice-to-have if cheap: track the section nearest the viewport top with an IntersectionObserver and give that chip `border-accent/30 bg-accent/10 text-accent-bright` — the `.section-badge` formula. Skip if it doesn't fit the task budget; the nav is useful without it.) 4. Add a tiny scroll helper (in `App.tsx` or a new `src/ui/scroll.ts`) that respects reduced motion — the audit found `scrollIntoView({ behavior: 'smooth' })` at `App.tsx:255-257` bypasses the CSS `prefers-reduced-motion` override because explicit `behavior` wins over CSS:
 
 ```ts
 export function scrollToId(id: string) {
@@ -158,6 +165,7 @@ if (rosterCount > 0) setTimeout(() => scrollToId('step-roster'), 150);
 ### Task 3: Rewrite the infeasible-plan message
 
 **Files:**
+
 - Modify: `src/plan/PlanView.tsx:54-59`
 - Test: `src/plan/PlanView.test.tsx` (update any assertion on the old string)
 
@@ -165,10 +173,10 @@ if (rosterCount > 0) setTimeout(() => scrollToId('step-roster'), 150);
 
 ```tsx
 <p className="panel text-sm text-muted">
-  Couldn&apos;t gear {name}: teammates earlier in the plan had first pick of
-  the shared inventory, and the artifacts left don&apos;t meet{' '}
-  {name}&apos;s recommended loadout (required set, main stats and ER). The
-  notes below show which pieces went where.
+  Couldn&apos;t gear {name}: teammates earlier in the plan had first pick of the
+  shared inventory, and the artifacts left don&apos;t meet {name}&apos;s
+  recommended loadout (required set, main stats and ER). The notes below show
+  which pieces went where.
 </p>
 ```
 
@@ -177,24 +185,27 @@ if (rosterCount > 0) setTimeout(() => scrollToId('step-roster'), 150);
 
 ```tsx
 <p className="text-xs text-muted">
-  No curated recipe for {name} yet — this is the highest raw Crit Value from
-  the remaining pieces, ignoring set bonuses. Treat it as a stat-stick draft,
-  not a real build.
+  No curated recipe for {name} yet — this is the highest raw Crit Value from the
+  remaining pieces, ignoring set bonuses. Treat it as a stat-stick draft, not a
+  real build.
 </p>
 ```
 
-  2. **Audit the gap.** Cross-check every `characterKey` appearing in `COMP_ARCHETYPES` slot options against `META_TARGETS` keys (a 10-line script or test). Add a vitest guard in `src/teams/comps.test.ts` that reports the uncovered list, and add curated recipes (from each character's KQM guide, same format as existing entries) for any character who is a weight-1.0 "ideal" pick in any archetype — those are the ones the plan will actually select. Lower-weight substitutes may stay uncovered but now carry the label from (1).
+2. **Audit the gap.** Cross-check every `characterKey` appearing in `COMP_ARCHETYPES` slot options against `META_TARGETS` keys (a 10-line script or test). Add a vitest guard in `src/teams/comps.test.ts` that reports the uncovered list, and add curated recipes (from each character's KQM guide, same format as existing entries) for any character who is a weight-1.0 "ideal" pick in any archetype — those are the ones the plan will actually select. Lower-weight substitutes may stay uncovered but now carry the label from (1).
+
 - [ ] **Step 3:** `npm test -- PlanView` — fix any test asserting the old copy (search for "could be formed"), expect PASS.
 - [ ] **Step 4: Commit** — `fix: explain infeasible + un-recipe'd plan builds; cover comp picks in META_TARGETS`
 
 ### Task 4: Explain the headline metric (objectiveHint)
 
 **Files:**
+
 - Modify: `src/labels.ts` (canonical labels; `src/ui/labels.ts` re-exports it)
 - Modify: `src/components/BuildCard.tsx:70-81`
 - Test: `src/labels.test.ts`, `src/components/BuildCard.test.tsx`
 
 **Interfaces:**
+
 - Produces: `objectiveHint(o: Objective): string` exported from `src/labels.ts` (and via `src/ui/labels.ts`). Note `Objective = StatKey | 'crit_value' | 'avg_damage'` (`src/game/types.ts:89`), so this is a function with a fallback, not a Record.
 
 - [ ] **Step 1: Failing test** (append to `labels.test.ts`):
@@ -252,17 +263,20 @@ and add `objectiveHint` to the import from `'../ui/labels'`.
 ### Task 5: UID Fetch hint
 
 **Files:**
+
 - Modify: `src/components/ImportPanel.tsx:131-148`
 - Test: `src/components/ImportPanel.test.tsx`
 
 - [ ] **Step 1:** After the `<div className="flex gap-2">…</div>` input row, add:
 
 ```tsx
-{!uid && (
-  <p id="uid-hint" className="mt-2 text-xs text-muted">
-    Enter your UID to enable Fetch.
-  </p>
-)}
+{
+  !uid && (
+    <p id="uid-hint" className="mt-2 text-xs text-muted">
+      Enter your UID to enable Fetch.
+    </p>
+  );
+}
 ```
 
 and on the UID `<input>` add `aria-describedby="uid-hint"`.
@@ -272,7 +286,9 @@ and on the UID `<input>` add `aria-describedby="uid-hint"`.
 ```tsx
 it('explains why Fetch is disabled until a UID is entered', async () => {
   render(<ImportPanel />);
-  expect(screen.getByText(/enter your uid to enable fetch/i)).toBeInTheDocument();
+  expect(
+    screen.getByText(/enter your uid to enable fetch/i),
+  ).toBeInTheDocument();
   await userEvent.type(screen.getByLabelText('UID'), '700000001');
   expect(screen.queryByText(/enter your uid/i)).not.toBeInTheDocument();
 });
@@ -283,6 +299,7 @@ it('explains why Fetch is disabled until a UID is entered', async () => {
 ### Task 6: 44px tap targets + endgame-mode pills
 
 **Files:**
+
 - Modify: `src/index.css:113-151` (`.field`, `.btn-primary`, `.btn-ghost`)
 - Modify: `src/teams/TeamsView.tsx:139-157`
 - Test: `src/teams/TeamsView.test.tsx` (radios must stay findable by role)
@@ -291,25 +308,27 @@ it('explains why Fetch is disabled until a UID is entered', async () => {
 - [ ] **Step 2:** In `TeamsView`, restyle the mode radios as pills — keep real radio inputs for semantics, visually hide them, style the label by checked state:
 
 ```tsx
-{MODES.map((m) => (
-  <label
-    key={m.id}
-    className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm transition
+{
+  MODES.map((m) => (
+    <label
+      key={m.id}
+      className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm transition
       ${m.live ? 'border-white/15 text-paper has-[:checked]:border-accent/60 has-[:checked]:bg-accent/10 has-[:checked]:text-accent-bright' : 'cursor-not-allowed border-white/5 text-muted'}`}
-  >
-    <input
-      type="radio"
-      name="endgame-mode"
-      value={m.id}
-      defaultChecked={m.live}
-      disabled={!m.live}
-      className="sr-only"
-      aria-label={m.label}
-    />
-    {m.label}
-    {!m.live && ' (coming soon)'}
-  </label>
-))}
+    >
+      <input
+        type="radio"
+        name="endgame-mode"
+        value={m.id}
+        defaultChecked={m.live}
+        disabled={!m.live}
+        className="sr-only"
+        aria-label={m.label}
+      />
+      {m.label}
+      {!m.live && ' (coming soon)'}
+    </label>
+  ));
+}
 ```
 
 (`has-[:checked]` works on Tailwind 3.4. Delete the old inner `<span>`.)
@@ -324,11 +343,13 @@ it('explains why Fetch is disabled until a UID is entered', async () => {
 ### Task 7: Drawer primitive (vaul)
 
 **Files:**
+
 - Create: `src/components/ui/Drawer.tsx`
 - Modify: `package.json` (add dep)
 - Test: `src/components/ui/Drawer.test.tsx`
 
 **Interfaces:**
+
 - Produces: `<AppDrawer open onClose title>{children}</AppDrawer>` — left panel ≥768px, bottom sheet below. Consumed by Task 8/9.
 
 - [ ] **Step 1:** `npm install vaul@^1.1.2`
@@ -404,13 +425,20 @@ export function AppDrawer({
           }
         >
           {!desktop && (
-            <div aria-hidden="true" className="mx-auto mb-3 h-1 w-9 rounded-full bg-white/15" />
+            <div
+              aria-hidden="true"
+              className="mx-auto mb-3 h-1 w-9 rounded-full bg-white/15"
+            />
           )}
           <div className="mb-4 flex items-center justify-between gap-3">
             <Vaul.Title className="font-display text-lg font-bold text-paper">
               {title}
             </Vaul.Title>
-            <button className="btn-ghost min-h-11" onClick={onClose} aria-label="Close">
+            <button
+              className="btn-ghost min-h-11"
+              onClick={onClose}
+              aria-label="Close"
+            >
               ✕
             </button>
           </div>
@@ -429,10 +457,12 @@ Art-direction constraints (from the frontend-design critique — follow, don't i
 ### Task 8: CharacterDetail content with tabs
 
 **Files:**
+
 - Create: `src/roster/CharacterDetail.tsx`
 - Test: `src/roster/CharacterDetail.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `computeBuildScore(entry, artifacts)` (`src/roster/buildScore.ts`), `META_TARGETS` + `MetaTarget` (`src/meta/metaTargets.ts:16-28` — fields `setRequirement: SetRequirement`, `mains: Partial<Record<Slot, StatKey>>`, `erTarget?`, `objective`, `source`, `statTargets?`), `SetRequirement` (`src/game/types.ts:77-80` — `{kind:'4pc',setKey}` | `{kind:'2+2',setKeys:[a,b]}` | `{kind:'2pc',setKey}`), `COMP_ARCHETYPES` (`src/teams/comps.ts` — `{id,name,tier,notes,slots:[{role,options:[{characterKey,weight}]}]}`), `RosterEntry` (`src/import/good.ts:124-134`), `formatSetName`/`statLabel`/`objectiveHint` from `'../ui/labels'`, `genshinAdapter`.
 - Produces: `<CharacterDetail characterKey entry artifacts />` — consumed by Task 9.
 
@@ -440,8 +470,17 @@ Art-direction constraints (from the frontend-design critique — follow, don't i
 
 ```tsx
 it('shows Overview by default and switches tabs with clicks', async () => {
-  render(<CharacterDetail characterKey="ayaka" entry={fixtureEntry} artifacts={[]} />);
-  expect(screen.getByRole('tab', { name: /overview/i })).toHaveAttribute('aria-selected', 'true');
+  render(
+    <CharacterDetail
+      characterKey="ayaka"
+      entry={fixtureEntry}
+      artifacts={[]}
+    />,
+  );
+  expect(screen.getByRole('tab', { name: /overview/i })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
   await userEvent.click(screen.getByRole('tab', { name: /recommended/i }));
   expect(screen.getByRole('tabpanel')).toHaveTextContent(/blizzard/i);
 });
@@ -460,7 +499,12 @@ import { META_TARGETS } from '../meta/metaTargets';
 import { COMP_ARCHETYPES } from '../teams/comps';
 import { ROLE_LABELS } from '../teams/types';
 import { getDamageProfile } from '../damage/profiles';
-import { formatSetName, statLabel, objectiveHint, SLOT_LABELS } from '../ui/labels';
+import {
+  formatSetName,
+  statLabel,
+  objectiveHint,
+  SLOT_LABELS,
+} from '../ui/labels';
 import type { RosterEntry } from '../import/good';
 import type { Artifact, SetRequirement } from '../game/types';
 import { SLOTS } from '../game/types';
@@ -485,13 +529,20 @@ export function CharacterDetail({
 }) {
   const [tab, setTab] = useState<Tab>('Overview');
   const char = genshinAdapter.character(characterKey);
-  const weapon = entry.weaponKey ? genshinAdapter.weapon?.(entry.weaponKey) : undefined;
-  const score = useMemo(() => computeBuildScore(entry, artifacts), [entry, artifacts]);
+  const weapon = entry.weaponKey
+    ? genshinAdapter.weapon?.(entry.weaponKey)
+    : undefined;
+  const score = useMemo(
+    () => computeBuildScore(entry, artifacts),
+    [entry, artifacts],
+  );
   const meta = META_TARGETS[characterKey];
   const comps = useMemo(
     () =>
       COMP_ARCHETYPES.filter((a) =>
-        a.slots.some((s) => s.options.some((o) => o.characterKey === characterKey)),
+        a.slots.some((s) =>
+          s.options.some((o) => o.characterKey === characterKey),
+        ),
       ),
     [characterKey],
   );
@@ -499,7 +550,8 @@ export function CharacterDetail({
   function onKeys(e: React.KeyboardEvent) {
     const i = TABS.indexOf(tab);
     if (e.key === 'ArrowRight') setTab(TABS[(i + 1) % TABS.length]);
-    if (e.key === 'ArrowLeft') setTab(TABS[(i + TABS.length - 1) % TABS.length]);
+    if (e.key === 'ArrowLeft')
+      setTab(TABS[(i + TABS.length - 1) % TABS.length]);
   }
 
   return (
@@ -521,7 +573,9 @@ export function CharacterDetail({
             tabIndex={tab === t ? 0 : -1}
             onClick={() => setTab(t)}
             className={`min-h-11 flex-1 rounded-md px-3 text-sm font-semibold transition ${
-              tab === t ? 'bg-accent/15 text-accent-bright' : 'text-muted hover:text-paper'
+              tab === t
+                ? 'bg-accent/15 text-accent-bright'
+                : 'text-muted hover:text-paper'
             }`}
           >
             {t}
@@ -533,22 +587,29 @@ export function CharacterDetail({
         {tab === 'Overview' && (
           <>
             <p className="text-muted">
-              {[char?.element, weapon?.name ?? 'No weapon equipped'].filter(Boolean).join(' · ')}
+              {[char?.element, weapon?.name ?? 'No weapon equipped']
+                .filter(Boolean)
+                .join(' · ')}
               {entry.level != null && ` · Lv ${entry.level}`}
               {entry.constellation != null && ` · C${entry.constellation}`}
             </p>
             <p className="font-mono text-3xl font-bold text-accent-bright">
-              {score.total.toFixed(0)}<span className="text-base text-muted"> / 100</span>
+              {score.total.toFixed(0)}
+              <span className="text-base text-muted"> / 100</span>
             </p>
             <dl className="grid gap-1 text-xs">
               {score.components.map((c) => (
                 <div key={c.label} className="flex justify-between gap-4">
                   <dt className="text-muted">{c.label}</dt>
-                  <dd className="font-mono text-paper">{c.points.toFixed(1)} / {c.max}</dd>
+                  <dd className="font-mono text-paper">
+                    {c.points.toFixed(1)} / {c.max}
+                  </dd>
                 </div>
               ))}
             </dl>
-            <p className="text-xs text-muted">{objectiveHint(meta?.objective ?? 'crit_value')}</p>
+            <p className="text-xs text-muted">
+              {objectiveHint(meta?.objective ?? 'crit_value')}
+            </p>
           </>
         )}
 
@@ -557,8 +618,13 @@ export function CharacterDetail({
             {SLOTS.map((s) => {
               const a = artifacts.find((x) => x.slot === s);
               return (
-                <li key={s} className="rounded-lg border border-white/5 bg-surface-900/30 px-3 py-2">
-                  <span className="mr-2 text-xs uppercase text-muted">{SLOT_LABELS[s]}</span>
+                <li
+                  key={s}
+                  className="rounded-lg border border-white/5 bg-surface-900/30 px-3 py-2"
+                >
+                  <span className="mr-2 text-xs uppercase text-muted">
+                    {SLOT_LABELS[s]}
+                  </span>
                   {a ? (
                     <span>
                       {formatSetName(a.setKey)} · {statLabel(a.mainStat)}{' '}
@@ -576,14 +642,23 @@ export function CharacterDetail({
         {tab === 'Recommended' &&
           (meta ? (
             <>
-              <p><span className="text-muted">Set:</span> {setReqLabel(meta.setRequirement)}</p>
+              <p>
+                <span className="text-muted">Set:</span>{' '}
+                {setReqLabel(meta.setRequirement)}
+              </p>
               {Object.entries(meta.mains).map(([slot, stat]) => (
                 <p key={slot}>
-                  <span className="text-muted">{SLOT_LABELS[slot as keyof typeof SLOT_LABELS]}:</span>{' '}
+                  <span className="text-muted">
+                    {SLOT_LABELS[slot as keyof typeof SLOT_LABELS]}:
+                  </span>{' '}
                   {statLabel(stat)}
                 </p>
               ))}
-              {meta.erTarget && <p><span className="text-muted">ER floor:</span> {meta.erTarget}%</p>}
+              {meta.erTarget && (
+                <p>
+                  <span className="text-muted">ER floor:</span> {meta.erTarget}%
+                </p>
+              )}
               {meta.statTargets && (
                 <p className="text-xs text-muted">
                   Endgame targets:{' '}
@@ -592,30 +667,44 @@ export function CharacterDetail({
                     .join(', ')}
                 </p>
               )}
-              <a className="text-xs text-flux-bright underline" href={meta.source} target="_blank" rel="noreferrer">
+              <a
+                className="text-xs text-flux-bright underline"
+                href={meta.source}
+                target="_blank"
+                rel="noreferrer"
+              >
                 Source guide (KQM)
               </a>
               {!getDamageProfile(characterKey) && (
                 <p className="text-xs text-muted">
-                  No curated damage profile yet — builds for this character are ranked by{' '}
-                  {statLabel(meta.objective as never) || 'Crit Value'} instead of estimated damage.
+                  No curated damage profile yet — builds for this character are
+                  ranked by {statLabel(meta.objective as never) || 'Crit Value'}{' '}
+                  instead of estimated damage.
                 </p>
               )}
             </>
           ) : (
-            <p className="text-muted">No curated recipe for this character yet.</p>
+            <p className="text-muted">
+              No curated recipe for this character yet.
+            </p>
           ))}
 
         {tab === 'Teams' &&
           (comps.length ? (
             <ul className="space-y-2">
               {comps.map((a) => (
-                <li key={a.id} className="rounded-lg border border-white/5 bg-surface-900/30 px-3 py-2">
+                <li
+                  key={a.id}
+                  className="rounded-lg border border-white/5 bg-surface-900/30 px-3 py-2"
+                >
                   <p className="font-semibold text-paper">{a.name}</p>
                   <p className="text-xs text-muted">{a.notes}</p>
                   <p className="mt-1 text-xs text-muted">
                     {a.slots
-                      .map((s) => `${ROLE_LABELS[s.role]}: ${s.options[0]?.characterKey ?? '—'}`)
+                      .map(
+                        (s) =>
+                          `${ROLE_LABELS[s.role]}: ${s.options[0]?.characterKey ?? '—'}`,
+                      )
                       .join(' · ')}
                   </p>
                 </li>
@@ -631,18 +720,21 @@ export function CharacterDetail({
 ```
 
 Implementation notes for this task (verify while coding, adjust only these):
-  - `genshinAdapter.weapon(key)` — confirm the adapter's singular-lookup name in `src/game/genshin/adapter.ts` (characters/weapons list methods exist; a `character(key)` lookup is used in `PlanView.tsx:35`). If there is no `weapon(key)`, build a `Map` from `genshinAdapter.weapons()` like `RosterView.tsx:88`.
-  - `getDamageProfile` import path/name — as used in `composePlan.ts:110-117`.
-  - Show real character names in Teams tab via the `useCharacterNames()` pattern from `TeamsView.tsx:33-38` rather than raw keys.
+
+- `genshinAdapter.weapon(key)` — confirm the adapter's singular-lookup name in `src/game/genshin/adapter.ts` (characters/weapons list methods exist; a `character(key)` lookup is used in `PlanView.tsx:35`). If there is no `weapon(key)`, build a `Map` from `genshinAdapter.weapons()` like `RosterView.tsx:88`.
+- `getDamageProfile` import path/name — as used in `composePlan.ts:110-117`.
+- Show real character names in Teams tab via the `useCharacterNames()` pattern from `TeamsView.tsx:33-38` rather than raw keys.
 - [ ] **Step 3: Run** — `npm test -- CharacterDetail` — PASS. **Commit** — `feat: character detail tabs (overview/gear/recommended/teams)`
 
 ### Task 9: Wire the drawer into the roster (and prefill Optimise)
 
 **Files:**
+
 - Modify: `src/roster/RosterView.tsx` (Row :18-77 and list :116-129)
 - Test: `src/roster/RosterView.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `AppDrawer` (Task 7), `CharacterDetail` (Task 8), `useOptimizeRequest.setCharacterKey/setWeaponKey` (`src/state/optimizeRequest.ts:44-45`), id `step-optimise` (Task 2).
 
 - [ ] **Step 1: Failing test:**
@@ -663,35 +755,40 @@ it('opens the character drawer on row click', async () => {
   3. After the `</ul>`, render:
 
 ```tsx
-{openKey && entries[openKey] && (
-  <AppDrawer
-    open
-    onClose={() => setOpenKey(null)}
-    title={rows.find((r) => r.characterKey === openKey)?.name ?? openKey}
-  >
-    <CharacterDetail
-      characterKey={openKey}
-      entry={entries[openKey]}
-      artifacts={byLocation[openKey] ?? []}
-    />
-    <button
-      className="btn-primary mt-4 w-full"
-      onClick={() => {
-        const s = useOptimizeRequest.getState();
-        s.setCharacterKey(openKey);
-        const w = entries[openKey]?.weaponKey;
-        if (w) s.setWeaponKey(w);
-        setOpenKey(null);
-        document.getElementById('step-optimise')?.scrollIntoView({ behavior: 'smooth' });
-      }}
+{
+  openKey && entries[openKey] && (
+    <AppDrawer
+      open
+      onClose={() => setOpenKey(null)}
+      title={rows.find((r) => r.characterKey === openKey)?.name ?? openKey}
     >
-      Optimise this character
-    </button>
-  </AppDrawer>
-)}
+      <CharacterDetail
+        characterKey={openKey}
+        entry={entries[openKey]}
+        artifacts={byLocation[openKey] ?? []}
+      />
+      <button
+        className="btn-primary mt-4 w-full"
+        onClick={() => {
+          const s = useOptimizeRequest.getState();
+          s.setCharacterKey(openKey);
+          const w = entries[openKey]?.weaponKey;
+          if (w) s.setWeaponKey(w);
+          setOpenKey(null);
+          document
+            .getElementById('step-optimise')
+            ?.scrollIntoView({ behavior: 'smooth' });
+        }}
+      >
+        Optimise this character
+      </button>
+    </AppDrawer>
+  );
+}
 ```
 
-  4. Update `RosterView.test.tsx`: the old `breakdown-…` testid assertions move to drawer-based assertions.
+4. Update `RosterView.test.tsx`: the old `breakdown-…` testid assertions move to drawer-based assertions.
+
 - [ ] **Step 3: Run** — `npm test -- RosterView` — PASS. Then `npm run dev`: click a roster row on desktop (left panel) and at 375px (bottom sheet); click "Optimise this character" and confirm the Optimise panel shows that character.
 - [ ] **Step 4: Run full gates** — `npm test && npm run lint && npm run typecheck` — all PASS.
 - [ ] **Step 5: Commit** — `feat: roster rows open the character drawer; prefill optimise`
@@ -703,6 +800,7 @@ it('opens the character drawer on row click', async () => {
 ### Task 10: README slim-down + CONTRIBUTING.md + stale fixes
 
 **Files:**
+
 - Modify: `README.md`
 - Create: `CONTRIBUTING.md`
 - Modify: `docs/superpowers/specs/2026-06-09-speed-report-design.md`, `2026-06-11-example-gear-design.md`, `2026-06-12-gap-analysis-design.md`, `docs/superpowers/plans/2026-06-06-v1.0-artifact-optimizer.md` (dead-link fix only)
@@ -718,11 +816,9 @@ npm install
 npm run dev
 ```
 
-  plus one sentence: "See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev workflow, and [FILE-MAP.md](FILE-MAP.md) (auto-generated) for the code layout."
-  5. **How it works** — two sentences: exact branch-and-bound in a Web Worker; decisions live in `docs/adr/`. Delete the per-ADR rationale bullets, the hand-copied project-structure tree, the Performance numbers (replace with "see [docs/speed-report.md](docs/speed-report.md), regenerated by `npm run bench`"), and the Roadmap section entirely.
-  6. **AI explain** — one line ("optional, serverless proxy; setup in CONTRIBUTING.md").
-  7. **Data & license** — keep, one line each, linking `DATA_LICENSE`/`LICENSE`.
-  While editing: fix "React 18" → "React 19"; delete the "1 in 89,043" claim; remove the link to the nonexistent `2026-06-05-depth-layer-and-portfolio-design.md`.
+plus one sentence: "See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev workflow, and [FILE-MAP.md](FILE-MAP.md) (auto-generated) for the code layout." 5. **How it works** — two sentences: exact branch-and-bound in a Web Worker; decisions live in `docs/adr/`. Delete the per-ADR rationale bullets, the hand-copied project-structure tree, the Performance numbers (replace with "see [docs/speed-report.md](docs/speed-report.md), regenerated by `npm run bench`"), and the Roadmap section entirely. 6. **AI explain** — one line ("optional, serverless proxy; setup in CONTRIBUTING.md"). 7. **Data & license** — keep, one line each, linking `DATA_LICENSE`/`LICENSE`.
+While editing: fix "React 18" → "React 19"; delete the "1 in 89,043" claim; remove the link to the nonexistent `2026-06-05-depth-layer-and-portfolio-design.md`.
+
 - [ ] **Step 2:** Create `CONTRIBUTING.md` containing (moved, not rewritten): the full npm-script table, the AI-proxy local setup (env vars `ANTHROPIC_API_KEY`, `VITE_AI_ENABLED`, `UPSTASH_REDIS_REST_URL/TOKEN`, `vercel dev` note — lift the section removed from README), test/lint/typecheck workflow, the CRLF/prettier note, and a pointer to `docs/agents/issue-tracker.md` for issue conventions.
 - [ ] **Step 3:** In the four docs listed above, replace the dead `2026-06-05-depth-layer-and-portfolio-design.md` link with plain text "(design doc was never written)" — do not delete surrounding prose.
 - [ ] **Step 4:** `npm run docs:check && npm run file-map:check` — both PASS. **Commit** — `docs: slim README, add CONTRIBUTING, fix stale claims and dead links`
@@ -730,6 +826,7 @@ npm run dev
 ### Task 11: knowledge/ bundle catch-up
 
 **Files:**
+
 - Modify: `knowledge/domain/objective.md`, `knowledge/index.md`
 
 - [ ] **Step 1:** Update `objective.md`: add `avg_damage` as an objective (one paragraph: curated damage profile → estimated rotation damage, ADR-0016; falls back to meta-recipe stat, then crit_value), alongside the existing Crit Value/EM text.
@@ -739,6 +836,7 @@ npm run dev
 ### Task 12: Per-patch data-refresh runbook + patch visibility
 
 **Files:**
+
 - Create: `docs/runbooks/patch-refresh.md`
 - Modify: `src/teams/TeamsView.tsx` (one hint line), `CLAUDE.md` (one pointer line)
 
@@ -748,7 +846,7 @@ npm run dev
   3. Re-verify each hand-curated table against its `source` URL and the patch notes: `src/meta/metaTargets.ts`, `src/teams/comps.ts` (new Abyss blessings can change which archetypes are top-tier — re-rank `tier`s), `src/damage/profiles.ts`, `src/meta/teammates.ts`.
   4. Add recipes/profiles/comps for new characters.
   5. `npm test && npm run bench` (commit the regenerated `docs/speed-report.md` if it changed).
-  Include the explicit note: **team recommendations are per-patch by design** — Abyss blessings, Theater element restrictions and Stygian bosses change every patch, so this runbook (not code) is what keeps them honest, until per-mode modifiers are modelled (see Deferred D2).
+     Include the explicit note: **team recommendations are per-patch by design** — Abyss blessings, Theater element restrictions and Stygian bosses change every patch, so this runbook (not code) is what keeps them honest, until per-mode modifiers are modelled (see Deferred D2).
 - [ ] **Step 2:** In `TeamsView`, make staleness visible — add under the mode fieldset:
 
 ```tsx
@@ -759,6 +857,7 @@ npm run dev
 ```
 
 (Import `useGame`/`getGame` as `App.tsx` does; simpler: pass nothing and read `genshinAdapter`'s `PATCH` if exported — use whichever the file already has access to with fewer imports.)
+
 - [ ] **Step 3:** Add one line to `CLAUDE.md` under Domain docs: "Per-patch data refresh: `docs/runbooks/patch-refresh.md`."
 - [ ] **Step 4:** `npm test -- TeamsView` PASS. **Commit** — `docs: per-patch refresh runbook; surface curation patch in Teams UI`
 
@@ -771,6 +870,7 @@ Run this workstream AFTER Workstream A (Tasks 6's CSS edits and Task 4's labels 
 ### Task 13: Combobox keyboard fixes (BLOCKER first)
 
 **Files:**
+
 - Modify: `src/components/ui/Combobox.tsx`
 - Test: `src/components/ui/Combobox.test.tsx`
 
@@ -805,13 +905,17 @@ it('closes the listbox when focus leaves the component', async () => {
 ### Task 14: Landmarks, headings, radiogroup semantics
 
 **Files:**
+
 - Modify: `src/components/App.tsx:269`, `src/components/GapReport.tsx:8`, `src/plan/PlanView.tsx:165-168,186,205`, `src/components/GameSwitcher.tsx:12-42`
 - Test: `src/components/App.test.tsx`, existing component tests
 
 - [ ] **Step 1:** `App.tsx`: change the page wrapper `<div className="relative z-10 …">` to `<main>` (same classes), and add as the first child of the page a skip link:
 
 ```tsx
-<a href="#step-load" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface-700 focus:px-4 focus:py-2 focus:text-paper">
+<a
+  href="#step-load"
+  className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface-700 focus:px-4 focus:py-2 focus:text-paper"
+>
   Skip to content
 </a>
 ```
@@ -823,6 +927,7 @@ it('closes the listbox when focus leaves the component', async () => {
 ### Task 15: Async status feedback (aria-busy, live regions, plan progress bar)
 
 **Files:**
+
 - Modify: `src/components/ImportPanel.tsx:141-147`, `src/components/OptimizePanel.tsx:329-336`, `src/plan/PlanView.tsx:132-147`, `src/components/ExplainBuild.tsx:45-56`
 - Test: `src/plan/PlanView.test.tsx`
 
@@ -830,17 +935,24 @@ it('closes the listbox when focus leaves the component', async () => {
 - [ ] **Step 2:** PlanView: wrap the progress in a live region AND give the 8-solve run a visible bar (reuse the track style of `Results.tsx:62-67`). Below the button row:
 
 ```tsx
-{running && (
-  <div role="status" aria-live="polite" className="space-y-1">
-    <p className="text-xs text-muted">Optimising member {progress[0]} of {progress[1]}…</p>
-    <div aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-white/5">
+{
+  running && (
+    <div role="status" aria-live="polite" className="space-y-1">
+      <p className="text-xs text-muted">
+        Optimising member {progress[0]} of {progress[1]}…
+      </p>
       <div
-        className="h-full rounded-full bg-accent/70 transition-[width]"
-        style={{ width: `${(progress[0] / progress[1]) * 100}%` }}
-      />
+        aria-hidden="true"
+        className="h-1.5 overflow-hidden rounded-full bg-white/5"
+      >
+        <div
+          className="h-full rounded-full bg-accent/70 transition-[width]"
+          style={{ width: `${(progress[0] / progress[1]) * 100}%` }}
+        />
+      </div>
     </div>
-  </div>
-)}
+  );
+}
 ```
 
 - [ ] **Step 3:** ExplainBuild: wrap the explanation output panel in `aria-live="polite"` (persistent container so the announcement fires when content arrives), wrap the `✨` as `<span aria-hidden="true">✨</span>`.
@@ -850,6 +962,7 @@ it('closes the listbox when focus leaves the component', async () => {
 ### Task 16: Theming + consistency polish (all one-liners, one commit)
 
 **Files:**
+
 - Modify: `src/index.css`, `src/components/Results.tsx:49`, `src/roster/buildScore.ts`, `src/roster/RosterView.tsx:12-16`, `src/teams/TeamsView.tsx:27-31`, `src/components/BuildCard.tsx:98,140`, `src/components/OptimizePanel.tsx:51`, `src/components/ImportPanel.tsx:103,124`
 
 - [ ] **Step 1: Per-game select chevron** — replace the single `select.field` `background-image` (`index.css:123`) with two `[data-game]`-scoped rules (gold `%23f2b64c` for genshin, teal `%234cd6c0` for wuwa — same SVG data-URI, different `stroke`). This fixes the theming break where WuWa mode shows a gold arrow.
@@ -862,6 +975,7 @@ it('closes the listbox when focus leaves the component', async () => {
 ### Task 17: Form validation (ArtifactForm + UID)
 
 **Files:**
+
 - Modify: `src/components/ArtifactForm.tsx:23-26,103-121`, `src/components/ImportPanel.tsx:131-149`
 - Test: `src/components/ArtifactForm.test.tsx`, `src/components/ImportPanel.test.tsx`
 
@@ -875,13 +989,17 @@ it('closes the listbox when focus leaves the component', async () => {
 ### Task 18: Score visualisation (bullet bars + roster bars)
 
 **Files:**
+
 - Modify: `src/components/BuildCard.tsx:97-121`, `src/roster/RosterView.tsx:36-59`, `src/teams/TeamsView.tsx:63-82`
 - Test: `src/components/BuildCard.test.tsx`, `src/roster/RosterView.test.tsx`
 
 - [ ] **Step 1:** BuildCard grade panel: keep each stat's text line (`ATK 700/900 (78%)` stays — text is primary), add under each a 2px bullet track:
 
 ```tsx
-<div aria-hidden="true" className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-white/5">
+<div
+  aria-hidden="true"
+  className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-white/5"
+>
   <div
     className={`h-full rounded-full ${s.pct >= 1 ? 'bg-jade/70' : 'bg-accent/60'}`}
     style={{ width: `${Math.min(s.pct, 1) * 100}%` }}
@@ -890,6 +1008,7 @@ it('closes the listbox when focus leaves the component', async () => {
 ```
 
 (Change the wrapping `<p className="flex flex-wrap gap-x-3">` of `grade.perStat` into a small grid so each stat owns a block with its bar.) Also per the frontend-design note: prefix met targets with a text glyph (`✓`) so "met" isn't hue-only when the bar is glanced without the numbers.
+
 - [ ] **Step 2:** RosterView rows: behind/beside the score number, a thin proportional bar (`score.total / 100`), same track style, `aria-hidden="true"` (the number is the accessible value).
 - [ ] **Step 3:** TeamsView member rows: add the numeric score next to the band chip (`<span className="font-mono text-xs text-muted">{m.buildScore.toFixed(0)}</span>`) so the same score reads the same in both sections.
 - [ ] **Step 4:** `npm test -- BuildCard RosterView TeamsView` — PASS. Full gates: `npm test && npm run lint && npm run typecheck`. **Commit** — `feat: bullet bars for stat targets, roster score bars`

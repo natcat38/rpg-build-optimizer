@@ -124,15 +124,15 @@ iwintolose.com/calculator tool). To reproduce the tables we need:
 
 ## 5. Data sources
 
-| Dataset | Source | Status |
-|---|---|---|
-| Talent multipliers per level | `genshin-db` `talents` (combatN.parameters) | available; we currently freeze at lvl 9 |
-| Char base stats/curves | `genshin-db` | already in data.generated.json |
-| Weapon base/substat/passive per refinement | `genshin-db` | numbers available; conditional semantics need hand-structuring |
-| Artifact set effects | `genshin-db` | text + params; needs structuring into stat/conditional records |
-| Enemy stats/RES | `genshin-db` + KQM Lv100/10% convention | fine |
-| Reaction level multipliers | KQM TCL table | small constant table |
-| Frame/animation data | only gcsim/community docs | NOT needed for deterministic rotations with assumed durations |
+| Dataset                                    | Source                                      | Status                                                         |
+| ------------------------------------------ | ------------------------------------------- | -------------------------------------------------------------- |
+| Talent multipliers per level               | `genshin-db` `talents` (combatN.parameters) | available; we currently freeze at lvl 9                        |
+| Char base stats/curves                     | `genshin-db`                                | already in data.generated.json                                 |
+| Weapon base/substat/passive per refinement | `genshin-db`                                | numbers available; conditional semantics need hand-structuring |
+| Artifact set effects                       | `genshin-db`                                | text + params; needs structuring into stat/conditional records |
+| Enemy stats/RES                            | `genshin-db` + KQM Lv100/10% convention     | fine                                                           |
+| Reaction level multipliers                 | KQM TCL table                               | small constant table                                           |
+| Frame/animation data                       | only gcsim/community docs                   | NOT needed for deterministic rotations with assumed durations  |
 
 ## Recommendation
 
