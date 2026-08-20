@@ -117,6 +117,8 @@
     @apply w-full rounded-lg border border-white/10 bg-surface-900/70 px-3 py-2 text-sm text-paper
       outline-none transition placeholder:text-muted/60
       focus:border-accent/60 focus:ring-2 focus:ring-accent/25;
+    min-height: 2.75rem; /* 44px: the minimum comfortable touch target */
+    touch-action: manipulation; /* no double-tap-zoom delay on mobile */
   }
   select.field {
     @apply cursor-pointer appearance-none bg-no-repeat pr-9;
@@ -140,6 +142,8 @@
       rgb(var(--accent)) 60%,
       rgb(var(--accent-deep))
     );
+    min-height: 2.75rem;
+    touch-action: manipulation;
   }
 
   /* Secondary action — the constraint signal, ghosted. */
@@ -148,6 +152,8 @@
       text-sm font-semibold text-flux-bright transition
       hover:border-flux/60 hover:bg-flux/10
       disabled:cursor-not-allowed disabled:opacity-40;
+    min-height: 2.75rem;
+    touch-action: manipulation;
   }
 
   .chip {
