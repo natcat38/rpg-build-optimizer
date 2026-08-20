@@ -333,13 +333,13 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     source: 'https://keqingmains.com/q/chevreuse-quickguide/',
     statTargets: { hp: 40000 },
   },
-  // KQM lists "EM | Cryo DMG" for the goblet without ranking them; four
-  // independent second sources put EM first, so EM it is. Circlet stays free —
-  // the em objective picks an EM circlet when the inventory has one anyway.
+  // Goblet: KQM lists "EM | Cryo DMG" unranked; five second sources put EM first.
+  // Sands is deliberately unlocked — every source lists it as EM-or-ER, and an ER
+  // sands is often what meets the 175 floor, so a lock would fight erTarget.
   citlali: {
     characterKey: 'citlali',
     setRequirement: { kind: '4pc', setKey: 'ScrollOfTheHeroOfCinderCity' },
-    mains: { sands: 'em', goblet: 'em' },
+    mains: { goblet: 'em' },
     erTarget: 175,
     objective: 'em',
     source: 'https://keqingmains.com/q/citlali-quickguide/',
@@ -353,10 +353,12 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     objective: 'crit_value',
     source: 'https://keqingmains.com/q/emilie-quickguide/',
   },
+  // Sands unlocked: KQM says ATK%, Prydwen prefers ER% to reach the requirement.
+  // With a 150 floor in play, let the search pick whichever clears it.
   escoffier: {
     characterKey: 'escoffier',
     setRequirement: { kind: '4pc', setKey: 'GoldenTroupe' },
-    mains: { sands: 'atk_pct', goblet: 'elemental_dmg' },
+    mains: { goblet: 'elemental_dmg' },
     erTarget: 150,
     critRatioTarget: 0.333,
     objective: 'crit_value',
@@ -460,9 +462,12 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     source: 'https://keqingmains.com/q/shenhe-quickguide/',
   },
   // No erTarget: her Burst runs on Serpent's Subtlety, not Energy.
+  // Finale over Marechaussee: KQM ranks Marechaussee first *in Furina teams*,
+  // Prydwen calls Finale her best "regardless of how Skirk is played". We don't
+  // know the team here, so the unconditional answer wins.
   skirk: {
     characterKey: 'skirk',
-    setRequirement: { kind: '4pc', setKey: 'MarechausseeHunter' },
+    setRequirement: { kind: '4pc', setKey: 'FinaleOfTheDeepGalleries' },
     mains: { sands: 'atk_pct', goblet: 'elemental_dmg' },
     critRatioTarget: 0.333,
     objective: 'crit_value',

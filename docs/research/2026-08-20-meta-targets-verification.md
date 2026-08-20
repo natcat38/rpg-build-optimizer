@@ -9,8 +9,13 @@ re-run this verification per the [patch-refresh runbook](../runbooks/patch-refre
 
 Primary source is KeqingMains throughout. `ororon` and `citlali` came back at only
 medium confidence and were re-checked against four non-KQM sources each (Game8,
-GameWith, Icy Veins, the Genshin Builds helper-team site); Prydwen and the Fandom wiki
-both refuse automated fetches and could not be used.
+GameWith, Icy Veins, the Genshin Builds helper-team site), then against **Prydwen** via
+a real browser session — Prydwen blocks automated fetches, so it needed a driven Chrome
+tab rather than a plain HTTP get.
+
+**The Fandom wiki is not a build source.** Its character pages carry talents,
+constellations and ascension data but no artifact recommendations at all. Do not spend
+time on it next patch.
 
 ## Encoding decisions
 
@@ -42,9 +47,9 @@ Guides give ranges and alternatives; `MetaTarget` holds one recipe. The rules ap
 | charlotte          | 4pc Noblesse Oblige                   | ER%   | ATK%        | Healing | 200 | atk_pct    | high        |
 | chasca             | 4pc Obsidian Codex                    | ATK%  | ATK%        | free    | 110 | crit_value | high        |
 | chevreuse          | 4pc Noblesse Oblige                   | HP%   | HP%         | HP%     | 100 | hp_pct     | high        |
-| citlali            | 4pc Scroll of the Hero of Cinder City | EM    | EM          | free    | 175 | em         | medium→high |
+| citlali            | 4pc Scroll of the Hero of Cinder City | free  | EM          | free    | 175 | em         | high        |
 | emilie             | 4pc Unfinished Reverie                | ATK%  | Dendro DMG  | free    | 140 | crit_value | high        |
-| escoffier          | 4pc Golden Troupe                     | ATK%  | Cryo DMG    | free    | 150 | crit_value | high        |
+| escoffier          | 4pc Golden Troupe                     | free  | Cryo DMG    | free    | 150 | crit_value | high        |
 | fischl             | 4pc Golden Troupe                     | ATK%  | Electro DMG | free    | 130 | crit_value | high        |
 | gorou              | 4pc Scroll of the Hero of Cinder City | ER%   | Geo DMG     | free    | 220 | crit_value | high        |
 | kamisato_ayato     | 4pc Heart of Depth                    | ATK%  | Hydro DMG   | free    | 140 | crit_value | high        |
@@ -55,7 +60,7 @@ Guides give ranges and alternatives; `MetaTarget` holds one recipe. The rules ap
 | ororon             | 4pc Scroll of the Hero of Cinder City | ATK%  | Electro DMG | free    | 140 | crit_value | medium→high |
 | sangonomiya_kokomi | 4pc Ocean-Hued Clam                   | HP%   | Hydro DMG   | Healing | 220 | hp_pct     | high        |
 | shenhe             | 4pc Noblesse Oblige                   | ATK%  | ATK%        | ATK%    | 160 | atk_pct    | high        |
-| skirk              | 4pc Marechaussee Hunter               | ATK%  | Cryo DMG    | free    | —   | crit_value | high        |
+| skirk              | 4pc Finale of the Deep Galleries      | ATK%  | Cryo DMG    | free    | —   | crit_value | high        |
 | xianyun            | 4pc Noblesse Oblige                   | ER%   | ATK%        | ATK%    | 230 | atk_pct    | high        |
 | xilonen            | 4pc Scroll of the Hero of Cinder City | DEF%  | DEF%        | DEF%    | 150 | def_pct    | high        |
 | yae_miko           | 4pc Disenchantment in Deep Shadow     | ATK%  | ATK%        | free    | —   | crit_value | high        |
@@ -111,13 +116,39 @@ ranges, for whoever re-verifies next patch:
 - shenhe 145–200 (Favonius Lance lowers it) · xianyun 190–300 solo Anemo, 100–130 in Xiao/C6-Faruzan
 - xilonen 100–105 double-Geo up to 170–190 solo-Geo
 
+## Third-source pass (Prydwen, via a driven browser)
+
+Prydwen was reachable through a real Chrome session and changed three entries:
+
+- **skirk** — KQM ranks Marechaussee Hunter first _in Furina teams_; Prydwen calls
+  Finale of the Deep Galleries her best "regardless of how Skirk is played", with
+  Marechaussee explicitly conditional on having Furina. We never know the team at solve
+  time, so the unconditional answer wins. Reverted to Finale.
+- **citlali** — Prydwen gives Sands as "Energy Recharge / Elemental Mastery", noting an
+  ER sands is "a decently common occurrence" to meet her requirement. Locking sands to
+  EM while also demanding a 175% ER floor makes the recipe fight itself, so the sands
+  lock is dropped. Goblet EM confirmed (Prydwen: "Elemental Mastery / Anything").
+- **escoffier** — Golden Troupe confirmed as her top set by a second source, and Finale
+  of the Deep Galleries again does not appear. Sands lock dropped for the same
+  floor-vs-lock reason (Prydwen ranks "Energy Recharge > ATK%").
+
+**ororon fully confirmed.** Prydwen's usage data has 4pc Scroll of the Hero of Cinder
+City at 57.6%, ATK% sands at 58.7%, Electro DMG goblet at 54.3%. His circlet usage
+splits CRIT Rate 51.8% / CRIT DMG 19.6% — real-world evidence for the no-crit-circlet-
+lock rule, since locking to either would delete most of the field.
+
+This produced a further encoding rule: **where sources disagree on a main stat, leave it
+unlocked.** A lock is a hard filter; the objective and the ER floor already encode what
+the guide was aiming at, and the exact search will pick the piece that satisfies both.
+
 ## Open items
 
 - **ororon C4** — the claim that C4 cuts his ER requirement 30–40% appears in the KQM
   quick guide but in none of the four second sources. Unverified, not contradicted.
 - **ororon sands** — several second sources treat ER% as co-equal with ATK%. ATK% kept
   as the majority pick.
-- **citlali / ororon** — Prydwen and the Fandom wiki block automated fetches, so a third
-  independent opinion is still missing for both.
+- **escoffier / skirk sands and goblet** — KQM and Prydwen disagree on ATK% vs ER% vs
+  Cryo DMG. Left unlocked rather than guessed; revisit if the damage engine ever scores
+  these builds directly.
 - The KQM guides for ororon and escoffier are quick-guides only; their long-form pages
   are unwritten or empty.
