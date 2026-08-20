@@ -37,6 +37,11 @@ export function Combobox({
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  // Open/closed swap <input> for <button> at the same position, so React
+  // unmounts whichever element had focus and it lands on <body>. Track that
+  // the user was in here to hand focus back to the trigger on close.
+  const wasOpen = useRef(false);
 
   const selectedLabel =
     options.find((o) => o.value === value)?.label ?? placeholder ?? '';
@@ -52,6 +57,8 @@ export function Combobox({
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
+    else if (wasOpen.current) triggerRef.current?.focus();
+    wasOpen.current = open;
   }, [open]);
 
   useEffect(() => {
@@ -91,8 +98,18 @@ export function Combobox({
     }
   }
 
+  // Tabbing out of the input (or clicking past it) must close the listbox —
+  // mousedown-outside alone leaves it open under keyboard navigation.
+  function onBlur(e: React.FocusEvent) {
+    if (!containerRef.current?.contains(e.relatedTarget as Node | null)) {
+      wasOpen.current = false; // focus left deliberately; don't yank it back
+      setOpen(false);
+      changeQuery('');
+    }
+  }
+
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative" onBlur={onBlur}>
       {open ? (
         <input
           ref={inputRef}
@@ -100,6 +117,7 @@ export function Combobox({
           role="combobox"
           aria-label={label}
           aria-expanded="true"
+          aria-autocomplete="list"
           aria-controls={listId}
           aria-activedescendant={
             filtered[activeIndex] ? optionId(activeIndex) : undefined
@@ -111,20 +129,22 @@ export function Combobox({
         />
       ) : (
         <button
+          ref={triggerRef}
           type="button"
           role="combobox"
           aria-label={label}
           aria-expanded="false"
-          className="field flex w-full items-center justify-between text-left"
+          className="field flex w-full items-center justify-between gap-2 text-left"
           onClick={() => setOpen(true)}
         >
-          <span>{selectedLabel}</span>
+          <span className="min-w-0 truncate">{selectedLabel}</span>
           <svg
+            className="flex-none text-accent"
             width="14"
             height="14"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#e9c46a"
+            stroke="currentColor"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -139,6 +159,9 @@ export function Combobox({
           id={listId}
           role="listbox"
           aria-label={label}
+          // Keep focus in the input while an option is clicked; otherwise the
+          // blur-close below fires first and the click lands on nothing.
+          onMouseDown={(e) => e.preventDefault()}
           className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-surface-900 shadow-lg"
         >
           {filtered.length === 0 ? (
