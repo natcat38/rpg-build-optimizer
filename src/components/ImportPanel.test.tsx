@@ -277,4 +277,14 @@ describe('ImportPanel', () => {
     await user.type(screen.getByLabelText('UID'), '700000001');
     expect(screen.queryByText(/enter your uid/i)).not.toBeInTheDocument();
   });
+
+  it('rejects a malformed UID before fetching', async () => {
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+    await user.type(screen.getByLabelText('UID'), '123');
+    expect(screen.getByText(/9–10 digits/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /fetch/i })).toBeDisabled();
+    await user.type(screen.getByLabelText('UID'), '456789');
+    expect(screen.getByRole('button', { name: /fetch/i })).toBeEnabled();
+  });
 });
