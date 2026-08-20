@@ -48,7 +48,7 @@ function setRequirementLabel(meta: MetaTarget): string {
  *  trailing "Source" link out to the guide it was curated from. */
 function InfoPanel({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <div className="rounded-lg border border-white/5 bg-surface-900/40 p-3 text-xs text-muted">
+    <div className="well p-3 text-xs text-muted">
       {children}
       <a
         className="mt-1.5 inline-block text-accent hover:underline"
