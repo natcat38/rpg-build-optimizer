@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
 import { genshinAdapter } from '../game/genshin/adapter';
-import { computeBuildScore, band, type Band } from '../roster/buildScore';
+import { computeBuildScore, band, BAND_STYLE } from '../roster/buildScore';
 import { COMP_ARCHETYPES } from './comps';
 import {
   recommendAbyss,
@@ -23,12 +23,6 @@ const MODES: { id: EndgameMode; label: string; live: boolean }[] = [
   { id: 'theater', label: 'Imaginarium Theater', live: false },
   { id: 'stygian', label: 'Stygian Onslaught', live: false },
 ];
-
-const BAND_STYLE: Record<Band, string> = {
-  built: 'border-jade/40 bg-jade/10 text-jade',
-  partial: 'border-flux/40 bg-flux/10 text-flux-bright',
-  unbuilt: 'border-muted/40 bg-muted/10 text-muted',
-};
 
 function useCharacterNames() {
   return useMemo(

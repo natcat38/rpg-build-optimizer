@@ -1,19 +1,17 @@
 /**
  * Roster assessment: every owned character with a build score, banded and
- * sorted, with the score's components on expand.
+ * sorted. A row opens the character's detail drawer.
  */
 import { useMemo, useState } from 'react';
 import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
+import { useOptimizeRequest } from '../state/optimizeRequest';
 import { genshinAdapter } from '../game/genshin/adapter';
-import { computeBuildScore, band, type Band } from './buildScore';
+import { computeBuildScore, band, BAND_STYLE } from './buildScore';
+import { AppDrawer } from '../components/ui/Drawer';
+import { CharacterDetail } from './CharacterDetail';
+import { scrollToId } from '../ui/scroll';
 import type { Artifact } from '../game/types';
-
-const BAND_STYLE: Record<Band, string> = {
-  built: 'border-jade/40 bg-jade/10 text-jade',
-  partial: 'border-flux/40 bg-flux/10 text-flux-bright',
-  unbuilt: 'border-muted/40 bg-muted/10 text-muted',
-};
 
 function Row({
   characterKey,
@@ -21,23 +19,21 @@ function Row({
   element,
   weaponName,
   total,
-  components,
+  onOpen,
 }: {
   characterKey: string;
   name: string;
   element?: string;
   weaponName?: string;
   total: number;
-  components: { label: string; points: number; max: number }[];
+  onOpen: (characterKey: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const b = band(total);
   return (
     <li className="rounded-xl border border-white/10 bg-surface-700/40">
       <button
         className="flex w-full items-center gap-3 px-4 py-3 text-left"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => onOpen(characterKey)}
       >
         <div className="min-w-0 flex-1">
           <h3 className="truncate font-display text-sm font-bold text-paper">
@@ -57,21 +53,6 @@ function Row({
           {b}
         </span>
       </button>
-      {open && (
-        <dl
-          className="grid gap-1 border-t border-white/5 px-4 py-3 text-xs"
-          data-testid={`breakdown-${characterKey}`}
-        >
-          {components.map((c) => (
-            <div key={c.label} className="flex justify-between gap-4">
-              <dt className="text-muted">{c.label}</dt>
-              <dd className="font-mono text-paper">
-                {c.points.toFixed(1)} / {c.max}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      )}
     </li>
   );
 }
@@ -84,11 +65,15 @@ export function RosterView() {
   const entries = useRoster((s) => s.entries);
   const artifacts = useInventory((s) => s.artifacts);
   const [showAll, setShowAll] = useState(false);
+  const [openKey, setOpenKey] = useState<string | null>(null);
+
+  const byLocation = useMemo(() => {
+    const m: Record<string, Artifact[]> = {};
+    for (const a of artifacts) if (a.location) (m[a.location] ??= []).push(a);
+    return m;
+  }, [artifacts]);
 
   const rows = useMemo(() => {
-    const byLocation: Record<string, Artifact[]> = {};
-    for (const a of artifacts)
-      if (a.location) (byLocation[a.location] ??= []).push(a);
     const chars = new Map(genshinAdapter.characters().map((c) => [c.key, c]));
     const weapons = new Map(genshinAdapter.weapons().map((w) => [w.key, w]));
     return Object.entries(entries)
@@ -102,11 +87,10 @@ export function RosterView() {
             ? weapons.get(entry.weaponKey)?.name
             : undefined,
           total: score.total,
-          components: score.components,
         };
       })
       .sort((a, b) => b.total - a.total);
-  }, [entries, artifacts]);
+  }, [entries, byLocation]);
 
   if (rows.length === 0) {
     return (
@@ -119,6 +103,7 @@ export function RosterView() {
   }
 
   const visible = showAll ? rows : rows.slice(0, COLLAPSED_COUNT);
+  const openEntry = openKey ? entries[openKey] : undefined;
 
   return (
     <div className="panel space-y-3">
@@ -129,7 +114,7 @@ export function RosterView() {
       </p>
       <ul className="space-y-2">
         {visible.map((r) => (
-          <Row key={r.characterKey} {...r} />
+          <Row key={r.characterKey} {...r} onOpen={setOpenKey} />
         ))}
       </ul>
       {rows.length > COLLAPSED_COUNT && !showAll && (
@@ -140,6 +125,33 @@ export function RosterView() {
           <span aria-hidden="true">▶</span> Show all {rows.length} characters,
           sorted by score
         </button>
+      )}
+
+      {openKey && openEntry && (
+        <AppDrawer
+          open
+          onClose={() => setOpenKey(null)}
+          title={rows.find((r) => r.characterKey === openKey)?.name ?? openKey}
+        >
+          <CharacterDetail
+            characterKey={openKey}
+            entry={openEntry}
+            artifacts={byLocation[openKey] ?? []}
+          />
+          <button
+            className="btn-primary mt-4 w-full"
+            onClick={() => {
+              const s = useOptimizeRequest.getState();
+              s.setCharacterKey(openKey);
+              const w = openEntry.weaponKey;
+              if (w) s.setWeaponKey(w);
+              setOpenKey(null);
+              scrollToId('step-optimise');
+            }}
+          >
+            Optimise this character
+          </button>
+        </AppDrawer>
       )}
     </div>
   );

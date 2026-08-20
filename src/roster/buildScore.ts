@@ -75,3 +75,10 @@ export function band(total: number): Band {
   if (total >= 40) return 'partial';
   return 'unbuilt';
 }
+
+/** Band chip colours — one definition, shared by every view that shows a band. */
+export const BAND_STYLE: Record<Band, string> = {
+  built: 'border-jade/40 bg-jade/10 text-jade',
+  partial: 'border-flux/40 bg-flux/10 text-flux-bright',
+  unbuilt: 'border-muted/40 bg-muted/10 text-muted',
+};

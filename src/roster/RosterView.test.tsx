@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { RosterView } from './RosterView';
 import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
+import { useOptimizeRequest } from '../state/optimizeRequest';
 import type { Artifact } from '../game/types';
 
 function equipped(id: string, location: string): Artifact {
@@ -68,8 +69,38 @@ describe('RosterView', () => {
 
     expect(screen.queryByText('Artifact quality')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Neuvillette/ }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Talents')).toBeInTheDocument();
     expect(screen.getByText('Artifact quality')).toBeInTheDocument();
+  });
+
+  it('opens the character drawer on row click', async () => {
+    const user = userEvent.setup();
+    useRoster.getState().setRoster({ neuvillette: { level: 90 }, amber: {} });
+
+    render(<RosterView />);
+    await user.click(screen.getByRole('button', { name: /Neuvillette/ }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /overview/i })).toBeInTheDocument();
+  });
+
+  it('prefills the optimise request from the drawer', async () => {
+    const user = userEvent.setup();
+    useOptimizeRequest.getState().reset();
+    useRoster.getState().setRoster({
+      neuvillette: { level: 90, weaponKey: 'the_first_great_magic' },
+    });
+
+    render(<RosterView />);
+    await user.click(screen.getByRole('button', { name: /Neuvillette/ }));
+    await user.click(
+      screen.getByRole('button', { name: /optimise this character/i }),
+    );
+    expect(useOptimizeRequest.getState().characterKey).toBe('neuvillette');
+    expect(useOptimizeRequest.getState().weaponKey).toBe(
+      'the_first_great_magic',
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('shows only the top 12 characters until "Show all" is clicked', async () => {
