@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
-import { genshinAdapter } from '../game/genshin/adapter';
+import { genshinAdapter, PATCH } from '../game/genshin/adapter';
 import { computeBuildScore, band, BAND_STYLE } from '../roster/buildScore';
 import { COMP_ARCHETYPES } from './comps';
 import {
@@ -159,6 +159,11 @@ export function TeamsView() {
           </label>
         ))}
       </fieldset>
+
+      <p className="text-xs text-muted">
+        Curated from KQM guides for patch {PATCH} — Abyss blessings change each
+        patch, so treat these as archetypes, not answers.
+      </p>
 
       {rec.teams ? (
         <div className="grid gap-3 sm:grid-cols-2">
