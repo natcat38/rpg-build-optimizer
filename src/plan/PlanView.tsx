@@ -13,6 +13,7 @@ import { computeBuildScore } from '../roster/buildScore';
 import { recommendAbyss } from '../teams/recommend';
 import { COMP_ARCHETYPES } from '../teams/comps';
 import { META_TARGETS } from '../meta/metaTargets';
+import { objectiveLabel } from '../ui/labels';
 import { BuildCard } from '../components/BuildCard';
 import { optimize } from '../workers/optimizeClient';
 import { composePlan, type Plan, type RunOptimize } from './composePlan';
@@ -46,9 +47,9 @@ function MemberCard({
       <h4 className="font-display text-sm font-bold text-paper">{name}</h4>
       {!META_TARGETS[characterKey] && (
         <p className="text-xs text-muted">
-          No curated recipe for {name} yet — this is the highest raw Crit Value
-          from the remaining pieces, ignoring set bonuses. Treat it as a
-          stat-stick draft, not a real build.
+          No curated recipe for {name} yet — this is the highest raw{' '}
+          {objectiveLabel(objective)} from the remaining pieces, ignoring set
+          bonuses. Treat it as a stat-stick draft, not a real build.
         </p>
       )}
       {result.status === 'ok' ? (
