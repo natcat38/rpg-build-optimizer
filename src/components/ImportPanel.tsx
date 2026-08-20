@@ -142,6 +142,7 @@ export function ImportPanel() {
               onChange={(e) => setUid(e.target.value)}
               placeholder="700000000"
               aria-label="UID"
+              aria-describedby="uid-hint"
               inputMode="numeric"
             />
             <button
@@ -152,6 +153,11 @@ export function ImportPanel() {
               {busy ? 'Fetching…' : 'Fetch'}
             </button>
           </div>
+          {!uid && (
+            <p id="uid-hint" className="mt-2 text-xs text-muted">
+              Enter your UID to enable Fetch.
+            </p>
+          )}
         </div>
       </div>
 

@@ -267,4 +267,14 @@ describe('ImportPanel', () => {
     );
     expect(useRoster.getState().entries).toEqual({});
   });
+
+  it('explains why Fetch is disabled until a UID is entered', async () => {
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+    expect(
+      screen.getByText(/enter your uid to enable fetch/i),
+    ).toBeInTheDocument();
+    await user.type(screen.getByLabelText('UID'), '700000001');
+    expect(screen.queryByText(/enter your uid/i)).not.toBeInTheDocument();
+  });
 });
