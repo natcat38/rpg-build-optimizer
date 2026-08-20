@@ -156,6 +156,12 @@
     touch-action: manipulation;
   }
 
+  /* Recessed well — the one inset-panel treatment, for nested lists and
+     read-only detail blocks inside a .panel. */
+  .well {
+    @apply rounded-lg border border-white/5 bg-surface-900/40;
+  }
+
   .chip {
     @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1
       font-mono text-[0.7rem] tracking-wide text-muted;
