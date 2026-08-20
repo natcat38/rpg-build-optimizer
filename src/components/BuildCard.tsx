@@ -97,21 +97,38 @@ export function BuildCard({
 
       {grade && (
         <div className="well px-3 py-2 text-xs text-muted">
-          <p className="flex flex-wrap gap-x-3">
+          <div className="grid gap-x-4 gap-y-1.5 sm:grid-cols-2">
             {grade.perStat.map((s) => {
               const unit = isPctStat(s.key) ? '%' : '';
+              const met = s.pct >= 1;
               return (
-                <span key={s.key}>
-                  {statLabel(s.key)} {formatScore(s.have, 0)}
-                  {unit}/{formatScore(s.target, 0)}
-                  {unit}{' '}
-                  <span className={s.pct >= 1 ? 'text-jade' : 'text-paper/80'}>
-                    ({formatScore(s.pct * 100, 0)}%)
-                  </span>
-                </span>
+                <div key={s.key}>
+                  <p>
+                    {/* Glyph, not hue alone: the bar below is decorative, so
+                        "met" has to survive a colour-blind read of the text. */}
+                    {met && <span className="text-jade">✓ </span>}
+                    {statLabel(s.key)} {formatScore(s.have, 0)}
+                    {unit}/{formatScore(s.target, 0)}
+                    {unit}{' '}
+                    <span className={met ? 'text-jade' : 'text-paper/80'}>
+                      ({formatScore(s.pct * 100, 0)}%)
+                    </span>
+                  </p>
+                  <div
+                    aria-hidden="true"
+                    className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-white/5"
+                  >
+                    <div
+                      className={`h-full rounded-full ${met ? 'bg-jade/70' : 'bg-accent/60'}`}
+                      style={{
+                        width: `${Math.min(Math.max(s.pct, 0), 1) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
               );
             })}
-          </p>
+          </div>
           {weakest && weakest.pct < 1 && (
             <p className="mt-1 text-paper/80">
               Weakest: {statLabel(weakest.key)} — upgrading it helps your grade

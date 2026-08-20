@@ -66,6 +66,9 @@ function TeamCard({
                 {names.get(m.characterKey) ?? m.characterKey}
               </span>
               <span className="text-xs text-muted">{ROLE_LABELS[m.role]}</span>
+              <span className="font-mono text-xs text-muted">
+                {m.buildScore.toFixed(0)}
+              </span>
               <span
                 className={`rounded-lg border px-2 py-0.5 text-[0.7rem] font-semibold ${BAND_STYLE[b]}`}
               >
