@@ -1,6 +1,10 @@
 # Brief: should the curated game data live somewhere other than TypeScript literals?
 
-**Status:** problem statement, not a decision. Written for a fresh session to
+**Status:** superseded — the open questions are answered and a direction picked in
+[2026-08-20-curated-data-store-next-step.md](./2026-08-20-curated-data-store-next-step.md);
+execute from there. Original framing kept below for the reasoning record.
+
+**Original status:** problem statement, not a decision. Written for a fresh session to
 investigate. **Do not start implementing from this doc** — it deliberately stops at
 options and open questions, because the right answer depends on things only the
 maintainer can decide (see [Open questions](#open-questions)).
