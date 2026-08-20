@@ -115,15 +115,22 @@
   }
   .field {
     @apply w-full rounded-lg border border-white/10 bg-surface-900/70 px-3 py-2 text-sm text-paper
-      outline-none transition placeholder:text-muted/60
-      focus:border-accent/60 focus:ring-2 focus:ring-accent/25;
+      outline-none transition-colors placeholder:text-muted/60
+      focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-accent/25;
     min-height: 2.75rem; /* 44px: the minimum comfortable touch target */
     touch-action: manipulation; /* no double-tap-zoom delay on mobile */
   }
+  /* A CSS background-image can't read a custom property, so the chevron is
+     duplicated per game rather than themed by --accent like everything else. */
   select.field {
     @apply cursor-pointer appearance-none bg-no-repeat pr-9;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f2b64c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
     background-position: right 0.75rem center;
+  }
+  [data-game='genshin'] select.field {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f2b64c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  }
+  [data-game='wuwa'] select.field {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234cd6c0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   }
   select.field option {
     background-color: #1b1e27;
@@ -133,7 +140,7 @@
   /* Primary action — the accent reading, made actionable. */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold
-      text-surface-900 shadow-glow-accent transition
+      text-surface-900 shadow-glow-accent transition-[transform,filter]
       hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0
       disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:brightness-100;
     background: linear-gradient(
@@ -149,7 +156,7 @@
   /* Secondary action — the constraint signal, ghosted. */
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-lg border border-flux/30 bg-flux/5 px-4 py-2
-      text-sm font-semibold text-flux-bright transition
+      text-sm font-semibold text-flux-bright transition-colors
       hover:border-flux/60 hover:bg-flux/10
       disabled:cursor-not-allowed disabled:opacity-40;
     min-height: 2.75rem;

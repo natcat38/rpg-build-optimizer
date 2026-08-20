@@ -106,7 +106,7 @@ export function ImportPanel() {
 
       <div className="grid gap-5 sm:grid-cols-2">
         {/* GOOD file upload */}
-        <div className="rounded-xl border border-white/5 bg-surface-900/40 p-4">
+        <div className="well rounded-xl p-4">
           <label className="field-label" htmlFor="good-file">
             Upload GOOD export
           </label>
@@ -126,7 +126,7 @@ export function ImportPanel() {
         </div>
 
         {/* UID import */}
-        <div className="rounded-xl border border-white/5 bg-surface-900/40 p-4">
+        <div className="well rounded-xl p-4">
           <label className="field-label" htmlFor="uid-input">
             Import by UID
           </label>

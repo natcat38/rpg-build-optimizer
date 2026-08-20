@@ -96,7 +96,7 @@ export function BuildCard({
       </div>
 
       {grade && (
-        <div className="rounded-lg border border-white/5 bg-surface-900/30 px-3 py-2 text-xs text-muted">
+        <div className="well px-3 py-2 text-xs text-muted">
           <p className="flex flex-wrap gap-x-3">
             {grade.perStat.map((s) => {
               const unit = isPctStat(s.key) ? '%' : '';
@@ -136,10 +136,7 @@ export function BuildCard({
         {SLOTS.map((s) => {
           const a = bySlot.get(s);
           return (
-            <li
-              key={s}
-              className="rounded-lg border border-white/5 bg-surface-900/30 px-3 py-2"
-            >
+            <li key={s} className="well px-3 py-2">
               <div className="flex items-center gap-3 text-sm text-paper/90">
                 <span className="grid h-6 w-6 flex-none place-items-center rounded-md bg-white/5 text-xs text-accent">
                   {SLOT_GLYPH[s]}
