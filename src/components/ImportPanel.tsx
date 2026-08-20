@@ -88,6 +88,9 @@ export function ImportPanel() {
   }
 
   const count = artifacts.length;
+  // Enka UIDs are 9 digits (10 on some servers); anything else is a typo, not
+  // a lookup worth a round-trip.
+  const uidOk = /^\d{9,10}$/.test(uid.trim());
 
   return (
     <div className="panel space-y-5">
@@ -147,7 +150,7 @@ export function ImportPanel() {
             <button
               className="btn-primary flex-none"
               aria-busy={busy}
-              disabled={busy || !uid}
+              disabled={busy || !uidOk}
               onClick={() => void onUid()}
             >
               {busy ? 'Fetching…' : 'Fetch'}
@@ -156,6 +159,11 @@ export function ImportPanel() {
           {!uid && (
             <p id="uid-hint" className="mt-2 text-xs text-muted">
               Enter your UID to enable Fetch.
+            </p>
+          )}
+          {uid && !uidOk && (
+            <p id="uid-hint" className="mt-2 text-xs text-rose">
+              A UID is 9–10 digits.
             </p>
           )}
         </div>

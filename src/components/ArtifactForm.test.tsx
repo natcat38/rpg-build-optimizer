@@ -23,4 +23,16 @@ describe('ArtifactForm', () => {
       'Level must be between 0 and 20.',
     );
   });
+
+  it('flags an out-of-range level on blur and links the message to the field', async () => {
+    const user = userEvent.setup();
+    render(<ArtifactForm />);
+    const level = screen.getByLabelText(/level/i);
+    await user.clear(level);
+    await user.type(level, '25');
+    await user.tab();
+    const err = await screen.findByRole('alert');
+    expect(err).toHaveTextContent(/between 0 and 20/i);
+    expect(level).toHaveAttribute('aria-describedby', err.id);
+  });
 });
