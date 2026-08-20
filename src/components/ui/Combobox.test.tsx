@@ -159,4 +159,31 @@ describe('Combobox accessibility', () => {
       'false',
     );
   });
+
+  it('returns focus to the trigger after selecting an option', async () => {
+    render(<Combobox options={OPTIONS} value="hu_tao" onChange={() => {}} />);
+    await userEvent.click(screen.getByRole('combobox'));
+    await userEvent.click(screen.getAllByRole('option')[0]);
+    expect(screen.getByRole('combobox')).toHaveFocus();
+  });
+
+  it('returns focus to the trigger after Escape', async () => {
+    render(<Combobox options={OPTIONS} value="hu_tao" onChange={() => {}} />);
+    await userEvent.click(screen.getByRole('combobox'));
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByRole('combobox')).toHaveFocus();
+  });
+
+  it('closes the listbox when focus leaves the component', async () => {
+    render(
+      <>
+        <Combobox options={OPTIONS} value="hu_tao" onChange={() => {}} />
+        <button>after</button>
+      </>,
+    );
+    await userEvent.click(screen.getByRole('combobox'));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    await userEvent.tab();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
 });
