@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, act, within } from '@testing-library/react';
 import { App } from './App';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest } from '../state/optimizeRequest';
+import { useRoster } from '../state/roster';
 import type { Artifact, BuildResult, OptimizeResult } from '../game/types';
 import { SLOTS } from '../game/types';
 
@@ -107,5 +108,29 @@ describe('App — overlapping optimise runs', () => {
       await pendingA;
     });
     expect(screen.getByText(/explored/i)).toHaveTextContent('222');
+  });
+});
+
+describe('App — step nav', () => {
+  beforeEach(() => {
+    useInventory.getState().clear();
+    useRoster.getState().clear();
+  });
+  afterEach(() => useRoster.getState().clear());
+
+  it('renders a sticky step nav with anchors when a roster exists', () => {
+    useRoster.getState().setRoster({ amber: { level: 90 } });
+    render(<App />);
+    const nav = screen.getByRole('navigation', { name: /steps/i });
+    ['Load', 'Roster', 'Teams', 'Plan', 'Optimise'].forEach((label) =>
+      expect(
+        within(nav).getByRole('link', { name: new RegExp(label, 'i') }),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it('has no step nav before an import', () => {
+    render(<App />);
+    expect(screen.queryByRole('navigation', { name: /steps/i })).toBeNull();
   });
 });

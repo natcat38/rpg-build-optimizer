@@ -25,23 +25,30 @@ import { getGame, type GameDescriptor } from '../game/registry';
 import { optimize } from '../workers/optimizeClient';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
 import { formatReduction } from '../optimizer/benchmark';
+import { scrollToId } from '../ui/scroll';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 
 function Section({
   n,
+  id,
   title,
   hint,
   delay,
   children,
 }: {
   n: number;
+  id?: string;
   title: string;
   hint?: string;
   delay: string;
   children: ReactNode;
 }) {
   return (
-    <section className="animate-fade-up" style={{ animationDelay: delay }}>
+    <section
+      id={id}
+      className="scroll-mt-20 animate-fade-up"
+      style={{ animationDelay: delay }}
+    >
       <div className="mb-3 flex items-center gap-3">
         <span className="section-badge">{String(n).padStart(2, '0')}</span>
         <div>
@@ -127,6 +134,15 @@ function ComingSoon({ game }: { game: GameDescriptor }) {
     </div>
   );
 }
+
+/** Step chips for the sticky nav — ids match the Section ids below. */
+const STEPS: [id: string, n: string, label: string][] = [
+  ['step-load', '01', 'Load'],
+  ['step-roster', '02', 'Roster'],
+  ['step-teams', '03', 'Teams'],
+  ['step-plan', '04', 'Plan'],
+  ['step-optimise', '05', 'Optimise'],
+];
 
 export function App() {
   const gameId = useGame((s) => s.gameId);
@@ -252,9 +268,7 @@ export function App() {
   useEffect(() => {
     if (result && result !== lastScrolled.current) {
       lastScrolled.current = result;
-      document
-        .getElementById('results-section')
-        ?.scrollIntoView({ behavior: 'smooth' });
+      scrollToId('results-section');
     }
   }, [result]);
 
@@ -286,6 +300,23 @@ export function App() {
           <ThesisHero game={game} />
         )}
       </header>
+
+      {hasRoster && (
+        <nav
+          aria-label="Steps"
+          className="sticky top-0 z-20 -mx-5 mb-6 flex gap-1 overflow-x-auto border-b border-white/5 bg-surface-800/80 px-5 py-2 backdrop-blur-md [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]"
+        >
+          {STEPS.map(([id, n, label]) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              className="chip min-h-11 items-center whitespace-nowrap hover:border-accent/40 hover:text-paper"
+            >
+              <span className="font-mono text-accent-bright">{n}</span> {label}
+            </a>
+          ))}
+        </nav>
+      )}
 
       {/* A decoded shared build (?b=) or its decode error must stay visible even
           when the active game is coming-soon — the link may point at content
@@ -322,6 +353,7 @@ export function App() {
             )}
             <Section
               n={1}
+              id="step-load"
               title={`Load your ${game.gearNounPlural.toLowerCase()}`}
               hint="Import a full inventory, fetch from a UID, or add pieces by hand."
               delay="0.05s"
@@ -343,6 +375,7 @@ export function App() {
             {hasRoster && (
               <Section
                 n={2}
+                id="step-roster"
                 title="Your roster"
                 hint="How built each owned character is, best first."
                 delay="0.08s"
@@ -354,6 +387,7 @@ export function App() {
             {hasRoster && (
               <Section
                 n={3}
+                id="step-teams"
                 title="Endgame teams"
                 hint="Two Abyss halves that share no character, matched from your roster."
                 delay="0.09s"
@@ -365,6 +399,7 @@ export function App() {
             {hasRoster && (
               <Section
                 n={4}
+                id="step-plan"
                 title="Your plan"
                 hint="An optimised build for all eight members, plus one farming list."
                 delay="0.1s"
@@ -375,6 +410,7 @@ export function App() {
 
             <Section
               n={optimiseN}
+              id="step-optimise"
               title="Optimise"
               hint="Choose a character, weapon, and what to maximise."
               delay="0.1s"
