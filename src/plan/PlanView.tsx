@@ -43,7 +43,7 @@ function MemberCard({
   };
   return (
     <div data-testid="plan-member" className="space-y-2">
-      <h3 className="font-display text-sm font-bold text-paper">{name}</h3>
+      <h4 className="font-display text-sm font-bold text-paper">{name}</h4>
       {!META_TARGETS[characterKey] && (
         <p className="text-xs text-muted">
           No curated recipe for {name} yet — this is the highest raw Crit Value
@@ -172,10 +172,10 @@ export function PlanView({
             const members = new Set(team.members.map((m) => m.characterKey));
             return (
               <section key={team.archetypeId} className="space-y-3">
-                <h2 className="font-display text-base font-bold text-paper">
+                <h3 className="font-display text-base font-bold text-paper">
                   {i === 0 ? 'First half' : 'Second half'} —{' '}
                   {arch?.name ?? team.archetypeId}
-                </h2>
+                </h3>
                 {plan.builds
                   .filter((b) => members.has(b.characterKey))
                   .map((b) => (
@@ -193,9 +193,9 @@ export function PlanView({
 
           {advice.length > 0 && (
             <div className="panel space-y-2">
-              <h2 className="font-display text-base font-bold text-paper">
+              <h3 className="font-display text-base font-bold text-paper">
                 Worth investing in
-              </h2>
+              </h3>
               <ul className="space-y-2 text-sm">
                 {advice.map((a) => (
                   <li
@@ -212,9 +212,9 @@ export function PlanView({
 
           {plan.farming.length > 0 && (
             <div className="panel space-y-2">
-              <h2 className="font-display text-base font-bold text-paper">
+              <h3 className="font-display text-base font-bold text-paper">
                 What to farm
-              </h2>
+              </h3>
               <ul className="space-y-1 text-sm text-paper/90">
                 {plan.farming.map((line, i) => (
                   <li key={i}>• {line}</li>

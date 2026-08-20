@@ -284,7 +284,13 @@ export function App() {
   const optimiseN = hasRoster ? 5 : 2;
 
   return (
-    <div className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
+    <main className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
+      <a
+        href="#step-load"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface-700 focus:px-4 focus:py-2 focus:text-paper"
+      >
+        Skip to content
+      </a>
       <header className="mb-10 animate-fade-up">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <p className="eyebrow">RPG Build Optimizer</p>
@@ -453,6 +459,6 @@ export function App() {
         )}{' '}
         · Not affiliated with the game&apos;s publisher.
       </footer>
-    </div>
+    </main>
   );
 }
