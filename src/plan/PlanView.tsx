@@ -12,6 +12,7 @@ import { genshinAdapter } from '../game/genshin/adapter';
 import { computeBuildScore } from '../roster/buildScore';
 import { recommendAbyss } from '../teams/recommend';
 import { COMP_ARCHETYPES } from '../teams/comps';
+import { META_TARGETS } from '../meta/metaTargets';
 import { BuildCard } from '../components/BuildCard';
 import { optimize } from '../workers/optimizeClient';
 import { composePlan, type Plan, type RunOptimize } from './composePlan';
@@ -43,6 +44,13 @@ function MemberCard({
   return (
     <div data-testid="plan-member" className="space-y-2">
       <h3 className="font-display text-sm font-bold text-paper">{name}</h3>
+      {!META_TARGETS[characterKey] && (
+        <p className="text-xs text-muted">
+          No curated recipe for {name} yet — this is the highest raw Crit Value
+          from the remaining pieces, ignoring set bonuses. Treat it as a
+          stat-stick draft, not a real build.
+        </p>
+      )}
       {result.status === 'ok' ? (
         <BuildCard
           build={result.builds[0]}
@@ -53,8 +61,10 @@ function MemberCard({
         />
       ) : (
         <p className="panel text-sm text-muted">
-          No build could be formed for {name} from what&apos;s left of your
-          inventory under their meta recipe.
+          Couldn&apos;t gear {name}: teammates earlier in the plan had first
+          pick of the shared inventory, and the artifacts left don&apos;t meet{' '}
+          {name}&apos;s recommended loadout (required set, main stats and ER).
+          The notes below show which pieces went where.
         </p>
       )}
       {conflicts.length > 0 && (

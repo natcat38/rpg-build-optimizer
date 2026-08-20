@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { COMP_ARCHETYPES } from './comps';
+import { META_TARGETS } from '../meta/metaTargets';
 import { genshinAdapter } from '../game/genshin/adapter';
 
 describe('COMP_ARCHETYPES', () => {
@@ -40,6 +41,28 @@ describe('COMP_ARCHETYPES', () => {
         }
       }
     }
+  });
+
+  // The plan solves every ideal pick with its meta recipe; an uncovered one
+  // falls back to an unconstrained crit_value solve that returns a rainbow
+  // stat-stick, which users read as a bug. Substitutes may stay uncovered —
+  // PlanView labels those — but ideals must have a curated recipe.
+  it('has a curated META_TARGETS recipe for every ideal (weight 1) pick', () => {
+    const uncovered = [
+      ...new Set(
+        COMP_ARCHETYPES.flatMap((a) =>
+          a.slots.flatMap((s) =>
+            s.options
+              .filter((o) => o.weight === 1 && !META_TARGETS[o.characterKey])
+              .map((o) => o.characterKey),
+          ),
+        ),
+      ),
+    ].sort();
+    expect(
+      uncovered,
+      `no META_TARGETS entry for: ${uncovered.join(', ')}`,
+    ).toEqual([]);
   });
 
   it('has four distinct characters in every ideal lineup', () => {
