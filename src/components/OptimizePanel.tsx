@@ -57,6 +57,7 @@ function InfoPanel({ href, children }: { href: string; children: ReactNode }) {
         rel="noreferrer"
       >
         Source
+        <span className="sr-only"> (opens in new tab)</span>
       </a>
     </div>
   );
@@ -328,6 +329,7 @@ export function OptimizePanel({
           )}
           <button
             className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
+            aria-busy={running}
             disabled={!canRun || running}
             onClick={() => void onRun()}
           >

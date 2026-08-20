@@ -42,18 +42,32 @@ export function ExplainBuild({
 
   return (
     <div className="mt-3">
-      {explanation ? (
-        <div className="panel space-y-2">
-          <p className="field-label">AI explanation</p>
-          <p className="text-sm leading-relaxed text-paper/90">{explanation}</p>
-        </div>
-      ) : (
+      {/* Persistent live region: announcing only works if the container is in
+          the DOM before the text arrives. */}
+      <div aria-live="polite">
+        {explanation && (
+          <div className="panel space-y-2">
+            <p className="field-label">AI explanation</p>
+            <p className="text-sm leading-relaxed text-paper/90">
+              {explanation}
+            </p>
+          </div>
+        )}
+      </div>
+      {!explanation && (
         <button
           className="btn-ghost"
           onClick={() => void run()}
+          aria-busy={loading}
           disabled={loading}
         >
-          {loading ? 'Thinking…' : '✨ Explain this build'}
+          {loading ? (
+            'Thinking…'
+          ) : (
+            <>
+              <span aria-hidden="true">✨</span> Explain this build
+            </>
+          )}
         </button>
       )}
       {error && (

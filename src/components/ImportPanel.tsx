@@ -118,7 +118,6 @@ export function ImportPanel() {
             type="file"
             accept="application/json,.json"
             onChange={(e) => void onFile(e)}
-            aria-label="GOOD file"
             className="block w-full cursor-pointer text-xs text-muted
               file:mr-3 file:cursor-pointer file:rounded-md file:border-0
               file:bg-accent/15 file:px-3 file:py-2 file:font-semibold file:text-accent-bright
@@ -147,6 +146,7 @@ export function ImportPanel() {
             />
             <button
               className="btn-primary flex-none"
+              aria-busy={busy}
               disabled={busy || !uid}
               onClick={() => void onUid()}
             >

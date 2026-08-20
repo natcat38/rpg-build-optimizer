@@ -68,7 +68,7 @@ describe('ImportPanel', () => {
     // jsdom + user-event don't reliably surface File.text(); pin it so the
     // onFile -> parseGOOD path is exercised deterministically.
     Object.defineProperty(file, 'text', { value: async () => goodJson });
-    await user.upload(screen.getByLabelText('GOOD file'), file);
+    await user.upload(screen.getByLabelText(/Upload GOOD export/i), file);
     expect(await screen.findByRole('status')).toHaveTextContent(
       /Imported 1 artifacts/i,
     );
@@ -81,7 +81,7 @@ describe('ImportPanel', () => {
       type: 'application/json',
     });
     Object.defineProperty(file, 'text', { value: async () => 'not json{{' });
-    await user.upload(screen.getByLabelText('GOOD file'), file);
+    await user.upload(screen.getByLabelText(/Upload GOOD export/i), file);
     expect(await screen.findByRole('alert')).toHaveTextContent(
       /recognised inventory export/i,
     );
@@ -175,7 +175,7 @@ describe('ImportPanel', () => {
       type: 'application/json',
     });
     Object.defineProperty(file, 'text', { value: async () => goodJson });
-    await user.upload(screen.getByLabelText('GOOD file'), file);
+    await user.upload(screen.getByLabelText(/Upload GOOD export/i), file);
     expect(await screen.findByRole('status')).toHaveTextContent(
       /Imported 1 artifacts/i,
     );
@@ -244,7 +244,7 @@ describe('ImportPanel', () => {
       type: 'application/json',
     });
     Object.defineProperty(file, 'text', { value: async () => rosterJson });
-    await user.upload(screen.getByLabelText('GOOD file'), file);
+    await user.upload(screen.getByLabelText(/Upload GOOD export/i), file);
     expect(await screen.findByRole('status')).toHaveTextContent(
       /Roster: 1 characters/i,
     );
@@ -261,7 +261,7 @@ describe('ImportPanel', () => {
       type: 'application/json',
     });
     Object.defineProperty(file, 'text', { value: async () => goodJson });
-    await user.upload(screen.getByLabelText('GOOD file'), file);
+    await user.upload(screen.getByLabelText(/Upload GOOD export/i), file);
     expect(await screen.findByRole('status')).toHaveTextContent(
       /Imported 1 artifacts/i,
     );
