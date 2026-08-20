@@ -103,11 +103,7 @@ describe('PlanView', () => {
     const cards = screen.getAllByTestId('plan-member');
     expect(cards).toHaveLength(8);
     // Damage-objective members carry the estimate caveat.
-    expect(
-      screen.getAllByText(
-        'estimated — for comparing builds, not matching in-game numbers',
-      ).length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/estimated damage/i).length).toBeGreaterThan(0);
   });
 
   it('renders investment advice with provenance when there is any', async () => {
