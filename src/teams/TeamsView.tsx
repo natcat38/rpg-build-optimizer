@@ -139,19 +139,26 @@ export function TeamsView() {
       <fieldset className="flex flex-wrap gap-4">
         <legend className="field-label">Endgame mode</legend>
         {MODES.map((m) => (
-          <label key={m.id} className="flex items-center gap-2 text-sm">
+          <label
+            key={m.id}
+            className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm transition
+              ${
+                m.live
+                  ? 'border-white/15 text-paper has-[:checked]:border-accent/60 has-[:checked]:bg-accent/10 has-[:checked]:text-accent-bright'
+                  : 'cursor-not-allowed border-white/5 text-muted'
+              }`}
+          >
             <input
               type="radio"
               name="endgame-mode"
               value={m.id}
               defaultChecked={m.live}
               disabled={!m.live}
+              className="sr-only"
               aria-label={m.label}
             />
-            <span className={m.live ? 'text-paper' : 'text-muted'}>
-              {m.label}
-              {!m.live && ' (coming soon)'}
-            </span>
+            {m.label}
+            {!m.live && ' (coming soon)'}
           </label>
         ))}
       </fieldset>
