@@ -1,5 +1,17 @@
 # UX Overhaul & Docs Refresh Implementation Plan
 
+> **STATUS: IMPLEMENTED — 2026-08-20.** All 18 tasks (Workstreams A–D) are done.
+> Workstreams A, B and D are on `feat/ux-overhaul`; Workstream C is on `docs/refresh`,
+> which is stacked on top of it. Neither branch is pushed yet.
+>
+> Task 3's 22 `META_TARGETS` recipes were first written from memory, then found to be
+> wrong in 10 of 22 cases and replaced with guide-verified data — see
+> [the verification record](../../research/2026-08-20-meta-targets-verification.md).
+> That exercise raised a follow-on question about where this curated data should live,
+> written up as [a separate brief](../../research/2026-08-20-curated-data-store-brief.md).
+>
+> The Deferred section (D1/D2/D3) below is still open and is the live part of this doc.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Fix the post-import scroll wall, add a character detail drawer with tabs, explain the app's numbers to users in plain language, and bring the docs (README, knowledge bundle) back in sync with the code.
@@ -45,7 +57,7 @@
 
 **Interfaces:** none new — presentation-only change inside `RosterView`.
 
-- [ ] **Step 1: Write the failing test** (append to `RosterView.test.tsx`, reusing the file's existing render/fixture helpers for entries — read the top of the file and mirror how existing tests seed `useRoster`/`useInventory`):
+- [x] **Step 1: Write the failing test** (append to `RosterView.test.tsx`, reusing the file's existing render/fixture helpers for entries — read the top of the file and mirror how existing tests seed `useRoster`/`useInventory`):
 
 ```tsx
 it('shows only the top 12 characters until "Show all" is clicked', async () => {
@@ -57,8 +69,8 @@ it('shows only the top 12 characters until "Show all" is clicked', async () => {
 });
 ```
 
-- [ ] **Step 2: Run it** — `npm test -- RosterView` — expect FAIL (15 listitems rendered).
-- [ ] **Step 3: Implement.** In `RosterView`, above the `return`:
+- [x] **Step 2: Run it** — `npm test -- RosterView` — expect FAIL (15 listitems rendered).
+- [x] **Step 3: Implement.** In `RosterView`, above the `return`:
 
 ```tsx
 const [showAll, setShowAll] = useState(false);
@@ -82,8 +94,8 @@ Replace `rows.map` with `visible.map`, and after the `</ul>` add (styled per the
 }
 ```
 
-- [ ] **Step 4: Run tests** — `npm test -- RosterView` — expect PASS (all tests in file).
-- [ ] **Step 5: Commit** — `feat: collapse roster to top 12 with show-all toggle`
+- [x] **Step 4: Run tests** — `npm test -- RosterView` — expect PASS (all tests in file).
+- [x] **Step 5: Commit** — `feat: collapse roster to top 12 with show-all toggle`
 
 ### Task 2: Stable section ids, sticky step nav, scroll-to-roster on import
 
@@ -97,7 +109,7 @@ Replace `rows.map` with `visible.map`, and after the `</ul>` add (styled per the
 
 - Produces: DOM ids `step-load`, `step-roster`, `step-teams`, `step-plan`, `step-optimise` (Task 9's drawer also scrolls to `step-optimise`).
 
-- [ ] **Step 1: Failing test** (append to `App.test.tsx`, mirroring its existing render setup):
+- [x] **Step 1: Failing test** (append to `App.test.tsx`, mirroring its existing render setup):
 
 ```tsx
 it('renders a sticky step nav with anchors when a roster exists', () => {
@@ -112,8 +124,8 @@ it('renders a sticky step nav with anchors when a roster exists', () => {
 });
 ```
 
-- [ ] **Step 2: Run** — `npm test -- App.test` — expect FAIL.
-- [ ] **Step 3: Implement.**
+- [x] **Step 2: Run** — `npm test -- App.test` — expect FAIL.
+- [x] **Step 3: Implement.**
   1. Add `id?: string` to `Section`'s props and spread onto the `<section id={id} className="scroll-mt-20 animate-fade-up" …>` (the `scroll-mt-20` offsets the sticky bar).
   2. Give each Section its id: `id="step-load"`, `"step-roster"`, `"step-teams"`, `"step-plan"`, `"step-optimise"`.
   3. Insert the nav directly under `<header>` (inside the fragment at App.tsx:297), rendered only `{hasRoster && (…)}`. Styling per the frontend-design critique: this is chrome, not content — full-bleed, no rounded container, `.chip` items with a mini mono number, active-section chip using the `.section-badge` color formula, horizontal-scroll edge fade via mask instead of arrows:
@@ -159,8 +171,8 @@ Use it for the existing results scroll (`App.tsx:251-259`) AND the new import sc
 if (rosterCount > 0) setTimeout(() => scrollToId('step-roster'), 150);
 ```
 
-- [ ] **Step 4: Run** — `npm test -- App.test` and `npm test -- ImportPanel` — expect PASS.
-- [ ] **Step 5: Commit** — `feat: sticky step nav + scroll to roster after import`
+- [x] **Step 4: Run** — `npm test -- App.test` and `npm test -- ImportPanel` — expect PASS.
+- [x] **Step 5: Commit** — `feat: sticky step nav + scroll to roster after import`
 
 ### Task 3: Rewrite the infeasible-plan message
 
@@ -169,7 +181,7 @@ if (rosterCount > 0) setTimeout(() => scrollToId('step-roster'), 150);
 - Modify: `src/plan/PlanView.tsx:54-59`
 - Test: `src/plan/PlanView.test.tsx` (update any assertion on the old string)
 
-- [ ] **Step 1:** Replace the paragraph body with:
+- [x] **Step 1:** Replace the paragraph body with:
 
 ```tsx
 <p className="panel text-sm text-muted">
@@ -180,7 +192,7 @@ if (rosterCount > 0) setTimeout(() => scrollToId('step-roster'), 150);
 </p>
 ```
 
-- [ ] **Step 2 (rainbow-build coverage gap):** Plan members with NO `META_TARGETS` entry (e.g. Kamisato Ayato — in `comps.ts` but not `metaTargets.ts`) get an unconstrained `crit_value` solve: no set requirement, no main-stat locks, and since set bonuses add ~no crit, the "optimal" result is five mismatched sets and often an off-stat goblet. Users read this as a bug. Two fixes, both in this task:
+- [x] **Step 2 (rainbow-build coverage gap):** Plan members with NO `META_TARGETS` entry (e.g. Kamisato Ayato — in `comps.ts` but not `metaTargets.ts`) get an unconstrained `crit_value` solve: no set requirement, no main-stat locks, and since set bonuses add ~no crit, the "optimal" result is five mismatched sets and often an off-stat goblet. Users read this as a bug. Two fixes, both in this task:
   1. **Label it.** In `MemberCard` (`PlanView.tsx:22-69`), when `META_TARGETS[characterKey]` is undefined, render above the BuildCard:
 
 ```tsx
@@ -193,8 +205,8 @@ if (rosterCount > 0) setTimeout(() => scrollToId('step-roster'), 150);
 
 2. **Audit the gap.** Cross-check every `characterKey` appearing in `COMP_ARCHETYPES` slot options against `META_TARGETS` keys (a 10-line script or test). Add a vitest guard in `src/teams/comps.test.ts` that reports the uncovered list, and add curated recipes (from each character's KQM guide, same format as existing entries) for any character who is a weight-1.0 "ideal" pick in any archetype — those are the ones the plan will actually select. Lower-weight substitutes may stay uncovered but now carry the label from (1).
 
-- [ ] **Step 3:** `npm test -- PlanView` — fix any test asserting the old copy (search for "could be formed"), expect PASS.
-- [ ] **Step 4: Commit** — `fix: explain infeasible + un-recipe'd plan builds; cover comp picks in META_TARGETS`
+- [x] **Step 3:** `npm test -- PlanView` — fix any test asserting the old copy (search for "could be formed"), expect PASS.
+- [x] **Step 4: Commit** — `fix: explain infeasible + un-recipe'd plan builds; cover comp picks in META_TARGETS`
 
 ### Task 4: Explain the headline metric (objectiveHint)
 
@@ -208,7 +220,7 @@ if (rosterCount > 0) setTimeout(() => scrollToId('step-roster'), 150);
 
 - Produces: `objectiveHint(o: Objective): string` exported from `src/labels.ts` (and via `src/ui/labels.ts`). Note `Objective = StatKey | 'crit_value' | 'avg_damage'` (`src/game/types.ts:89`), so this is a function with a fallback, not a Record.
 
-- [ ] **Step 1: Failing test** (append to `labels.test.ts`):
+- [x] **Step 1: Failing test** (append to `labels.test.ts`):
 
 ```ts
 it('objectiveHint explains every objective in one sentence', () => {
@@ -219,8 +231,8 @@ it('objectiveHint explains every objective in one sentence', () => {
 });
 ```
 
-- [ ] **Step 2: Run** — `npm test -- labels` — FAIL (`objectiveHint` not exported).
-- [ ] **Step 3: Implement** in `src/labels.ts`, next to `objectiveLabel`:
+- [x] **Step 2: Run** — `npm test -- labels` — FAIL (`objectiveHint` not exported).
+- [x] **Step 3: Implement** in `src/labels.ts`, next to `objectiveLabel`:
 
 ```ts
 /** One-sentence explanation of why a build is ranked by this metric —
@@ -244,7 +256,7 @@ export function objectiveHint(o: Objective): string {
 
 (Import `Objective` if not already imported in the file; match the file's existing quote style.)
 
-- [ ] **Step 4:** In `BuildCard.tsx`, replace the `avg_damage`-only note (lines 76-80) with the general hint:
+- [x] **Step 4:** In `BuildCard.tsx`, replace the `avg_damage`-only note (lines 76-80) with the general hint:
 
 ```tsx
 <p className="max-w-xs text-[0.7rem] text-muted">
@@ -254,11 +266,11 @@ export function objectiveHint(o: Objective): string {
 
 and add `objectiveHint` to the import from `'../ui/labels'`.
 
-- [ ] **Step 5 (ui-ux-pro-max H1):** Extend the same treatment to the two other unexplained numbers a beginner meets first:
+- [x] **Step 5 (ui-ux-pro-max H1):** Extend the same treatment to the two other unexplained numbers a beginner meets first:
   - Hero (`App.tsx:94-96`): under "Crit Value, one real solve", add `<p className="text-[0.7rem] text-muted">{objectiveHint('crit_value')}</p>`.
   - Grade badge (`BuildCard.tsx:82-88`): add `aria-label={`Grade ${grade.grade} — how close this build is to endgame stat targets`}` and `title` with the same text to the badge `<span>`.
-- [ ] **Step 6: Run** — `npm test -- labels`, `npm test -- BuildCard`, `npm test -- App.test` (update the old "estimated —" assertion if one exists) — PASS.
-- [ ] **Step 7: Commit** — `feat: explain ranking metric, hero Crit Value, and grade badges`
+- [x] **Step 6: Run** — `npm test -- labels`, `npm test -- BuildCard`, `npm test -- App.test` (update the old "estimated —" assertion if one exists) — PASS.
+- [x] **Step 7: Commit** — `feat: explain ranking metric, hero Crit Value, and grade badges`
 
 ### Task 5: UID Fetch hint
 
@@ -267,7 +279,7 @@ and add `objectiveHint` to the import from `'../ui/labels'`.
 - Modify: `src/components/ImportPanel.tsx:131-148`
 - Test: `src/components/ImportPanel.test.tsx`
 
-- [ ] **Step 1:** After the `<div className="flex gap-2">…</div>` input row, add:
+- [x] **Step 1:** After the `<div className="flex gap-2">…</div>` input row, add:
 
 ```tsx
 {
@@ -281,7 +293,7 @@ and add `objectiveHint` to the import from `'../ui/labels'`.
 
 and on the UID `<input>` add `aria-describedby="uid-hint"`.
 
-- [ ] **Step 2: Test** (append):
+- [x] **Step 2: Test** (append):
 
 ```tsx
 it('explains why Fetch is disabled until a UID is entered', async () => {
@@ -294,7 +306,7 @@ it('explains why Fetch is disabled until a UID is entered', async () => {
 });
 ```
 
-- [ ] **Step 3: Run** — `npm test -- ImportPanel` — PASS. **Commit** — `fix: hint why Fetch is disabled without a UID`
+- [x] **Step 3: Run** — `npm test -- ImportPanel` — PASS. **Commit** — `fix: hint why Fetch is disabled without a UID`
 
 ### Task 6: 44px tap targets + endgame-mode pills
 
@@ -304,8 +316,8 @@ it('explains why Fetch is disabled until a UID is entered', async () => {
 - Modify: `src/teams/TeamsView.tsx:139-157`
 - Test: `src/teams/TeamsView.test.tsx` (radios must stay findable by role)
 
-- [ ] **Step 1:** In `index.css` add to `.btn-primary`, `.btn-ghost`, and `.field` (plain CSS lines inside each rule, after the `@apply`): `min-height: 2.75rem;` (44px) and `touch-action: manipulation;` (audit item: avoids mobile double-tap-zoom/tap-delay on controls).
-- [ ] **Step 2:** In `TeamsView`, restyle the mode radios as pills — keep real radio inputs for semantics, visually hide them, style the label by checked state:
+- [x] **Step 1:** In `index.css` add to `.btn-primary`, `.btn-ghost`, and `.field` (plain CSS lines inside each rule, after the `@apply`): `min-height: 2.75rem;` (44px) and `touch-action: manipulation;` (audit item: avoids mobile double-tap-zoom/tap-delay on controls).
+- [x] **Step 2:** In `TeamsView`, restyle the mode radios as pills — keep real radio inputs for semantics, visually hide them, style the label by checked state:
 
 ```tsx
 {
@@ -333,8 +345,8 @@ it('explains why Fetch is disabled until a UID is entered', async () => {
 
 (`has-[:checked]` works on Tailwind 3.4. Delete the old inner `<span>`.)
 
-- [ ] **Step 3: Run** — `npm test -- TeamsView` — PASS (radios still `getByRole('radio')`-able). Visually verify via `npm run dev` at 375px width: no control under 44px in the main flow.
-- [ ] **Step 4: Commit** — `fix: 44px tap targets and pill-styled endgame mode selector`
+- [x] **Step 3: Run** — `npm test -- TeamsView` — PASS (radios still `getByRole('radio')`-able). Visually verify via `npm run dev` at 375px width: no control under 44px in the main flow.
+- [x] **Step 4: Commit** — `fix: 44px tap targets and pill-styled endgame mode selector`
 
 ---
 
@@ -352,8 +364,8 @@ it('explains why Fetch is disabled until a UID is entered', async () => {
 
 - Produces: `<AppDrawer open onClose title>{children}</AppDrawer>` — left panel ≥768px, bottom sheet below. Consumed by Task 8/9.
 
-- [ ] **Step 1:** `npm install vaul@^1.1.2`
-- [ ] **Step 2: Failing test:**
+- [x] **Step 1:** `npm install vaul@^1.1.2`
+- [x] **Step 2: Failing test:**
 
 ```tsx
 import { render, screen } from '@testing-library/react';
@@ -376,7 +388,7 @@ it('renders children in a dialog when open and closes via the close button', asy
 
 (jsdom lacks `window.matchMedia` — add the standard stub in the test file or reuse the repo's test setup if it already has one; check `vite.config.ts` test.setupFiles.)
 
-- [ ] **Step 3: Implement `src/components/ui/Drawer.tsx`:**
+- [x] **Step 3: Implement `src/components/ui/Drawer.tsx`:**
 
 ```tsx
 /** App-wide detail drawer: slides from the left on desktop, from the bottom on
@@ -452,7 +464,7 @@ export function AppDrawer({
 
 Art-direction constraints (from the frontend-design critique — follow, don't improvise): do NOT give the drawer `.panel`'s `::before` accent-gradient hairline (that's the signature of primary content panels; the drawer's signature is the solid `border-l-2 border-l-accent/50` edge on desktop and the drag handle on mobile). If adding an enter animation beyond vaul's default, use the existing `cubic-bezier(0.22, 1, 0.36, 1)` easing from `tailwind.config.js` at ~200–240ms; plain CSS transitions inherit the global `prefers-reduced-motion` kill-switch automatically.
 
-- [ ] **Step 4: Run** — `npm test -- Drawer` — PASS. **Commit** — `feat: AppDrawer primitive (vaul, left/bottom by viewport)`
+- [x] **Step 4: Run** — `npm test -- Drawer` — PASS. **Commit** — `feat: AppDrawer primitive (vaul, left/bottom by viewport)`
 
 ### Task 8: CharacterDetail content with tabs
 
@@ -466,7 +478,7 @@ Art-direction constraints (from the frontend-design critique — follow, don't i
 - Consumes: `computeBuildScore(entry, artifacts)` (`src/roster/buildScore.ts`), `META_TARGETS` + `MetaTarget` (`src/meta/metaTargets.ts:16-28` — fields `setRequirement: SetRequirement`, `mains: Partial<Record<Slot, StatKey>>`, `erTarget?`, `objective`, `source`, `statTargets?`), `SetRequirement` (`src/game/types.ts:77-80` — `{kind:'4pc',setKey}` | `{kind:'2+2',setKeys:[a,b]}` | `{kind:'2pc',setKey}`), `COMP_ARCHETYPES` (`src/teams/comps.ts` — `{id,name,tier,notes,slots:[{role,options:[{characterKey,weight}]}]}`), `RosterEntry` (`src/import/good.ts:124-134`), `formatSetName`/`statLabel`/`objectiveHint` from `'../ui/labels'`, `genshinAdapter`.
 - Produces: `<CharacterDetail characterKey entry artifacts />` — consumed by Task 9.
 
-- [ ] **Step 1: Failing test:** render with a fixture entry + artifacts (mirror `RosterView.test.tsx` fixtures) and assert the four tabs exist and switch:
+- [x] **Step 1: Failing test:** render with a fixture entry + artifacts (mirror `RosterView.test.tsx` fixtures) and assert the four tabs exist and switch:
 
 ```tsx
 it('shows Overview by default and switches tabs with clicks', async () => {
@@ -486,7 +498,7 @@ it('shows Overview by default and switches tabs with clicks', async () => {
 });
 ```
 
-- [ ] **Step 2: Implement.** Hand-rolled ARIA tabs + four panels, all from existing data:
+- [x] **Step 2: Implement.** Hand-rolled ARIA tabs + four panels, all from existing data:
 
 ```tsx
 /** Drawer body for one character: what they have, what the meta wants, and
@@ -724,7 +736,7 @@ Implementation notes for this task (verify while coding, adjust only these):
 - `genshinAdapter.weapon(key)` — confirm the adapter's singular-lookup name in `src/game/genshin/adapter.ts` (characters/weapons list methods exist; a `character(key)` lookup is used in `PlanView.tsx:35`). If there is no `weapon(key)`, build a `Map` from `genshinAdapter.weapons()` like `RosterView.tsx:88`.
 - `getDamageProfile` import path/name — as used in `composePlan.ts:110-117`.
 - Show real character names in Teams tab via the `useCharacterNames()` pattern from `TeamsView.tsx:33-38` rather than raw keys.
-- [ ] **Step 3: Run** — `npm test -- CharacterDetail` — PASS. **Commit** — `feat: character detail tabs (overview/gear/recommended/teams)`
+- [x] **Step 3: Run** — `npm test -- CharacterDetail` — PASS. **Commit** — `feat: character detail tabs (overview/gear/recommended/teams)`
 
 ### Task 9: Wire the drawer into the roster (and prefill Optimise)
 
@@ -737,7 +749,7 @@ Implementation notes for this task (verify while coding, adjust only these):
 
 - Consumes: `AppDrawer` (Task 7), `CharacterDetail` (Task 8), `useOptimizeRequest.setCharacterKey/setWeaponKey` (`src/state/optimizeRequest.ts:44-45`), id `step-optimise` (Task 2).
 
-- [ ] **Step 1: Failing test:**
+- [x] **Step 1: Failing test:**
 
 ```tsx
 it('opens the character drawer on row click', async () => {
@@ -749,7 +761,7 @@ it('opens the character drawer on row click', async () => {
 });
 ```
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
   1. In `RosterView`, add `const [openKey, setOpenKey] = useState<string | null>(null);` and compute `byLocation` once (hoist the existing memo logic — it already builds `byLocation` inside `rows`).
   2. `Row`'s button now calls `onOpen(characterKey)` instead of toggling local state; delete the inline `<dl>` accordion and `open` state (the breakdown lives in the drawer's Overview tab now).
   3. After the `</ul>`, render:
@@ -789,9 +801,9 @@ it('opens the character drawer on row click', async () => {
 
 4. Update `RosterView.test.tsx`: the old `breakdown-…` testid assertions move to drawer-based assertions.
 
-- [ ] **Step 3: Run** — `npm test -- RosterView` — PASS. Then `npm run dev`: click a roster row on desktop (left panel) and at 375px (bottom sheet); click "Optimise this character" and confirm the Optimise panel shows that character.
-- [ ] **Step 4: Run full gates** — `npm test && npm run lint && npm run typecheck` — all PASS.
-- [ ] **Step 5: Commit** — `feat: roster rows open the character drawer; prefill optimise`
+- [x] **Step 3: Run** — `npm test -- RosterView` — PASS. Then `npm run dev`: click a roster row on desktop (left panel) and at 375px (bottom sheet); click "Optimise this character" and confirm the Optimise panel shows that character.
+- [x] **Step 4: Run full gates** — `npm test && npm run lint && npm run typecheck` — all PASS.
+- [x] **Step 5: Commit** — `feat: roster rows open the character drawer; prefill optimise`
 
 ---
 
@@ -805,7 +817,7 @@ it('opens the character drawer on row click', async () => {
 - Create: `CONTRIBUTING.md`
 - Modify: `docs/superpowers/specs/2026-06-09-speed-report-design.md`, `2026-06-11-example-gear-design.md`, `2026-06-12-gap-analysis-design.md`, `docs/superpowers/plans/2026-06-06-v1.0-artifact-optimizer.md` (dead-link fix only)
 
-- [ ] **Step 1:** Rewrite `README.md` to ~550 words with exactly these sections, in order:
+- [x] **Step 1:** Rewrite `README.md` to ~550 words with exactly these sections, in order:
   1. Title + badges + live-demo link + `docs/screenshot.png` (keep as-is).
   2. The existing one-paragraph problem hook (keep verbatim).
   3. **Features** — current bullets, each trimmed to one line; add one line for investment advice ("tells you which characters are worth investing in, from your roster's gaps").
@@ -819,9 +831,9 @@ npm run dev
 plus one sentence: "See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev workflow, and [FILE-MAP.md](FILE-MAP.md) (auto-generated) for the code layout." 5. **How it works** — two sentences: exact branch-and-bound in a Web Worker; decisions live in `docs/adr/`. Delete the per-ADR rationale bullets, the hand-copied project-structure tree, the Performance numbers (replace with "see [docs/speed-report.md](docs/speed-report.md), regenerated by `npm run bench`"), and the Roadmap section entirely. 6. **AI explain** — one line ("optional, serverless proxy; setup in CONTRIBUTING.md"). 7. **Data & license** — keep, one line each, linking `DATA_LICENSE`/`LICENSE`.
 While editing: fix "React 18" → "React 19"; delete the "1 in 89,043" claim; remove the link to the nonexistent `2026-06-05-depth-layer-and-portfolio-design.md`.
 
-- [ ] **Step 2:** Create `CONTRIBUTING.md` containing (moved, not rewritten): the full npm-script table, the AI-proxy local setup (env vars `ANTHROPIC_API_KEY`, `VITE_AI_ENABLED`, `UPSTASH_REDIS_REST_URL/TOKEN`, `vercel dev` note — lift the section removed from README), test/lint/typecheck workflow, the CRLF/prettier note, and a pointer to `docs/agents/issue-tracker.md` for issue conventions.
-- [ ] **Step 3:** In the four docs listed above, replace the dead `2026-06-05-depth-layer-and-portfolio-design.md` link with plain text "(design doc was never written)" — do not delete surrounding prose.
-- [ ] **Step 4:** `npm run docs:check && npm run file-map:check` — both PASS. **Commit** — `docs: slim README, add CONTRIBUTING, fix stale claims and dead links`
+- [x] **Step 2:** Create `CONTRIBUTING.md` containing (moved, not rewritten): the full npm-script table, the AI-proxy local setup (env vars `ANTHROPIC_API_KEY`, `VITE_AI_ENABLED`, `UPSTASH_REDIS_REST_URL/TOKEN`, `vercel dev` note — lift the section removed from README), test/lint/typecheck workflow, the CRLF/prettier note, and a pointer to `docs/agents/issue-tracker.md` for issue conventions.
+- [x] **Step 3:** In the four docs listed above, replace the dead `2026-06-05-depth-layer-and-portfolio-design.md` link with plain text "(design doc was never written)" — do not delete surrounding prose.
+- [x] **Step 4:** `npm run docs:check && npm run file-map:check` — both PASS. **Commit** — `docs: slim README, add CONTRIBUTING, fix stale claims and dead links`
 
 ### Task 11: knowledge/ bundle catch-up
 
@@ -829,9 +841,9 @@ While editing: fix "React 18" → "React 19"; delete the "1 in 89,043" claim; re
 
 - Modify: `knowledge/domain/objective.md`, `knowledge/index.md`
 
-- [ ] **Step 1:** Update `objective.md`: add `avg_damage` as an objective (one paragraph: curated damage profile → estimated rotation damage, ADR-0016; falls back to meta-recipe stat, then crit_value), alongside the existing Crit Value/EM text.
-- [ ] **Step 2:** In `knowledge/index.md`, replace the "In progress" section with a "v2 (shipped)" note listing Damage profile, Comp archetype, Team recommendation, Plan, Shopping list — each as a one-line pointer to its `CONTEXT.md` glossary entry rather than new entity cards (CONTEXT.md is the canonical glossary; don't duplicate it).
-- [ ] **Step 3:** `npm run docs:check` — PASS. **Commit** — `docs: bring knowledge bundle up to v2`
+- [x] **Step 1:** Update `objective.md`: add `avg_damage` as an objective (one paragraph: curated damage profile → estimated rotation damage, ADR-0016; falls back to meta-recipe stat, then crit_value), alongside the existing Crit Value/EM text.
+- [x] **Step 2:** In `knowledge/index.md`, replace the "In progress" section with a "v2 (shipped)" note listing Damage profile, Comp archetype, Team recommendation, Plan, Shopping list — each as a one-line pointer to its `CONTEXT.md` glossary entry rather than new entity cards (CONTEXT.md is the canonical glossary; don't duplicate it).
+- [x] **Step 3:** `npm run docs:check` — PASS. **Commit** — `docs: bring knowledge bundle up to v2`
 
 ### Task 12: Per-patch data-refresh runbook + patch visibility
 
@@ -840,14 +852,14 @@ While editing: fix "React 18" → "React 19"; delete the "1 in 89,043" claim; re
 - Create: `docs/runbooks/patch-refresh.md`
 - Modify: `src/teams/TeamsView.tsx` (one hint line), `CLAUDE.md` (one pointer line)
 
-- [ ] **Step 1:** Write `docs/runbooks/patch-refresh.md` — a checklist to run every game patch:
+- [x] **Step 1:** Write `docs/runbooks/patch-refresh.md` — a checklist to run every game patch:
   1. `npm run build:data` (refresh `data.generated.json` from the updated `genshin-db`; bump the dep first if needed).
   2. Bump `PATCH` in `src/game/genshin/adapter.ts`.
   3. Re-verify each hand-curated table against its `source` URL and the patch notes: `src/meta/metaTargets.ts`, `src/teams/comps.ts` (new Abyss blessings can change which archetypes are top-tier — re-rank `tier`s), `src/damage/profiles.ts`, `src/meta/teammates.ts`.
   4. Add recipes/profiles/comps for new characters.
   5. `npm test && npm run bench` (commit the regenerated `docs/speed-report.md` if it changed).
      Include the explicit note: **team recommendations are per-patch by design** — Abyss blessings, Theater element restrictions and Stygian bosses change every patch, so this runbook (not code) is what keeps them honest, until per-mode modifiers are modelled (see Deferred D2).
-- [ ] **Step 2:** In `TeamsView`, make staleness visible — add under the mode fieldset:
+- [x] **Step 2:** In `TeamsView`, make staleness visible — add under the mode fieldset:
 
 ```tsx
 <p className="text-xs text-muted">
@@ -858,8 +870,8 @@ While editing: fix "React 18" → "React 19"; delete the "1 in 89,043" claim; re
 
 (Import `useGame`/`getGame` as `App.tsx` does; simpler: pass nothing and read `genshinAdapter`'s `PATCH` if exported — use whichever the file already has access to with fewer imports.)
 
-- [ ] **Step 3:** Add one line to `CLAUDE.md` under Domain docs: "Per-patch data refresh: `docs/runbooks/patch-refresh.md`."
-- [ ] **Step 4:** `npm test -- TeamsView` PASS. **Commit** — `docs: per-patch refresh runbook; surface curation patch in Teams UI`
+- [x] **Step 3:** Add one line to `CLAUDE.md` under Domain docs: "Per-patch data refresh: `docs/runbooks/patch-refresh.md`."
+- [x] **Step 4:** `npm test -- TeamsView` PASS. **Commit** — `docs: per-patch refresh runbook; surface curation patch in Teams UI`
 
 ---
 
@@ -876,7 +888,7 @@ Run this workstream AFTER Workstream A (Tasks 6's CSS edits and Task 4's labels 
 
 The audit's one blocker: the component conditionally renders `<input>` (open) vs `<button>` (closed) at the same position (`Combobox.tsx:96-136`), so React swaps elements and **focus drops to `<body>` after every selection or Escape**. Also: no blur-close, missing `aria-autocomplete`, hardcoded third-gold chevron, label overflow.
 
-- [ ] **Step 1: Failing tests** (append):
+- [x] **Step 1: Failing tests** (append):
 
 ```tsx
 it('returns focus to the trigger after selecting an option', async () => {
@@ -894,13 +906,13 @@ it('closes the listbox when focus leaves the component', async () => {
 });
 ```
 
-- [ ] **Step 2: Implement** (smallest fix that passes — do NOT rewrite the component to a single persistent input unless the focus test can't pass otherwise):
+- [x] **Step 2: Implement** (smallest fix that passes — do NOT rewrite the component to a single persistent input unless the focus test can't pass otherwise):
   1. Add a `triggerRef` on the closed-state `<button>`; in a `useEffect` keyed on `open` flipping to `false`, call `triggerRef.current?.focus()`.
   2. Add `onBlur` on the container: close when `e.relatedTarget` is outside `containerRef.current` (`!containerRef.current?.contains(e.relatedTarget as Node)`).
   3. Add `aria-autocomplete="list"` to the open-state `<input>`.
   4. Chevron (line ~127): replace `stroke="#e9c46a"` with `stroke="currentColor"` and add `className="text-accent"` + `aria-hidden="true"` to the `<svg>`.
   5. Add `min-w-0 truncate` to the trigger's label `<span>` (line ~121).
-- [ ] **Step 3:** `npm test -- Combobox` — PASS. **Commit** — `fix: combobox focus return, blur close, themed chevron`
+- [x] **Step 3:** `npm test -- Combobox` — PASS. **Commit** — `fix: combobox focus return, blur close, themed chevron`
 
 ### Task 14: Landmarks, headings, radiogroup semantics
 
@@ -909,7 +921,7 @@ it('closes the listbox when focus leaves the component', async () => {
 - Modify: `src/components/App.tsx:269`, `src/components/GapReport.tsx:8`, `src/plan/PlanView.tsx:165-168,186,205`, `src/components/GameSwitcher.tsx:12-42`
 - Test: `src/components/App.test.tsx`, existing component tests
 
-- [ ] **Step 1:** `App.tsx`: change the page wrapper `<div className="relative z-10 …">` to `<main>` (same classes), and add as the first child of the page a skip link:
+- [x] **Step 1:** `App.tsx`: change the page wrapper `<div className="relative z-10 …">` to `<main>` (same classes), and add as the first child of the page a skip link:
 
 ```tsx
 <a
@@ -920,9 +932,9 @@ it('closes the listbox when focus leaves the component', async () => {
 </a>
 ```
 
-- [ ] **Step 2:** Demote nested headings: `GapReport.tsx:8` `<h2>`→`<h3>`; PlanView's three `<h2>`s ("First half —…", "Worth investing in", "What to farm") → `<h3>` (they nest inside the Section's `<h2>`).
-- [ ] **Step 3:** `GameSwitcher`: roving tabindex — checked button gets `tabIndex={0}`, others `-1`; `onKeyDown` for ArrowLeft/ArrowRight moves selection (mirror the `onKeys` pattern from Task 8's tablist).
-- [ ] **Step 4:** `npm test` for the touched components — PASS (update any heading-role queries). **Commit** — `fix: main landmark, skip link, heading levels, radiogroup arrows`
+- [x] **Step 2:** Demote nested headings: `GapReport.tsx:8` `<h2>`→`<h3>`; PlanView's three `<h2>`s ("First half —…", "Worth investing in", "What to farm") → `<h3>` (they nest inside the Section's `<h2>`).
+- [x] **Step 3:** `GameSwitcher`: roving tabindex — checked button gets `tabIndex={0}`, others `-1`; `onKeyDown` for ArrowLeft/ArrowRight moves selection (mirror the `onKeys` pattern from Task 8's tablist).
+- [x] **Step 4:** `npm test` for the touched components — PASS (update any heading-role queries). **Commit** — `fix: main landmark, skip link, heading levels, radiogroup arrows`
 
 ### Task 15: Async status feedback (aria-busy, live regions, plan progress bar)
 
@@ -931,8 +943,8 @@ it('closes the listbox when focus leaves the component', async () => {
 - Modify: `src/components/ImportPanel.tsx:141-147`, `src/components/OptimizePanel.tsx:329-336`, `src/plan/PlanView.tsx:132-147`, `src/components/ExplainBuild.tsx:45-56`
 - Test: `src/plan/PlanView.test.tsx`
 
-- [ ] **Step 1:** Add `aria-busy={busy}` to ImportPanel's Fetch button and `aria-busy={running}` to OptimizePanel's Optimise button and PlanView's plan button (SampleGear already does this — this closes the inconsistency).
-- [ ] **Step 2:** PlanView: wrap the progress in a live region AND give the 8-solve run a visible bar (reuse the track style of `Results.tsx:62-67`). Below the button row:
+- [x] **Step 1:** Add `aria-busy={busy}` to ImportPanel's Fetch button and `aria-busy={running}` to OptimizePanel's Optimise button and PlanView's plan button (SampleGear already does this — this closes the inconsistency).
+- [x] **Step 2:** PlanView: wrap the progress in a live region AND give the 8-solve run a visible bar (reuse the track style of `Results.tsx:62-67`). Below the button row:
 
 ```tsx
 {
@@ -955,9 +967,9 @@ it('closes the listbox when focus leaves the component', async () => {
 }
 ```
 
-- [ ] **Step 3:** ExplainBuild: wrap the explanation output panel in `aria-live="polite"` (persistent container so the announcement fires when content arrives), wrap the `✨` as `<span aria-hidden="true">✨</span>`.
-- [ ] **Step 4:** Also from the audit's nice-to-haves, same commit: `aria-hidden="true"` on Results' decorative explored/pruned bar (`Results.tsx:62-67`); drop the redundant `aria-label="GOOD file"` on the labelled file input (`ImportPanel.tsx:115`); add a visually-hidden `<span className="sr-only"> (opens in new tab)</span>` inside OptimizePanel's external `Source` links (`OptimizePanel.tsx:53-60`).
-- [ ] **Step 5:** `npm test -- PlanView` etc. — PASS. **Commit** — `fix: busy states, live regions, plan progress bar`
+- [x] **Step 3:** ExplainBuild: wrap the explanation output panel in `aria-live="polite"` (persistent container so the announcement fires when content arrives), wrap the `✨` as `<span aria-hidden="true">✨</span>`.
+- [x] **Step 4:** Also from the audit's nice-to-haves, same commit: `aria-hidden="true"` on Results' decorative explored/pruned bar (`Results.tsx:62-67`); drop the redundant `aria-label="GOOD file"` on the labelled file input (`ImportPanel.tsx:115`); add a visually-hidden `<span className="sr-only"> (opens in new tab)</span>` inside OptimizePanel's external `Source` links (`OptimizePanel.tsx:53-60`).
+- [x] **Step 5:** `npm test -- PlanView` etc. — PASS. **Commit** — `fix: busy states, live regions, plan progress bar`
 
 ### Task 16: Theming + consistency polish (all one-liners, one commit)
 
@@ -965,12 +977,12 @@ it('closes the listbox when focus leaves the component', async () => {
 
 - Modify: `src/index.css`, `src/components/Results.tsx:49`, `src/roster/buildScore.ts`, `src/roster/RosterView.tsx:12-16`, `src/teams/TeamsView.tsx:27-31`, `src/components/BuildCard.tsx:98,140`, `src/components/OptimizePanel.tsx:51`, `src/components/ImportPanel.tsx:103,124`
 
-- [ ] **Step 1: Per-game select chevron** — replace the single `select.field` `background-image` (`index.css:123`) with two `[data-game]`-scoped rules (gold `%23f2b64c` for genshin, teal `%234cd6c0` for wuwa — same SVG data-URI, different `stroke`). This fixes the theming break where WuWa mode shows a gold arrow.
-- [ ] **Step 2: One recessed-well class** — add `.well { @apply rounded-lg border border-white/5 bg-surface-900/40; }` to `index.css` and swap the drifting `bg-surface-900/30|40` wells in BuildCard (98, 140), OptimizePanel (51), ImportPanel (103, 124) onto it. (Also use `.well` in Task 8's Gear/Teams list items.)
-- [ ] **Step 3: De-duplicate `BAND_STYLE`** — export it from `src/roster/buildScore.ts` (next to `band`), delete the identical local copies in `RosterView.tsx:12-16` and `TeamsView.tsx:27-31`.
-- [ ] **Step 4: Tracking normalisation** — `Results.tsx:49` `tracking-[0.14em]` → `tracking-[0.18em]` (`.eyebrow`'s `0.4em` stays — it's the intentionally wider page-level variant).
-- [ ] **Step 5: Focus + transition hygiene** — in `index.css`: `.field`'s `focus:` ring/border variants → `focus-visible:`; narrow `@apply transition` to what each rule actually animates (`transition-colors` on `.field`/`.btn-ghost`; `transition-[transform,filter]` on `.btn-primary` which animates translate + brightness).
-- [ ] **Step 6:** `npm test && npm run lint` — PASS. Visual spot-check both games' accents via the GameSwitcher in `npm run dev`. **Commit** — `fix: per-game chevrons, well class, band-style dedupe, focus-visible`
+- [x] **Step 1: Per-game select chevron** — replace the single `select.field` `background-image` (`index.css:123`) with two `[data-game]`-scoped rules (gold `%23f2b64c` for genshin, teal `%234cd6c0` for wuwa — same SVG data-URI, different `stroke`). This fixes the theming break where WuWa mode shows a gold arrow.
+- [x] **Step 2: One recessed-well class** — add `.well { @apply rounded-lg border border-white/5 bg-surface-900/40; }` to `index.css` and swap the drifting `bg-surface-900/30|40` wells in BuildCard (98, 140), OptimizePanel (51), ImportPanel (103, 124) onto it. (Also use `.well` in Task 8's Gear/Teams list items.)
+- [x] **Step 3: De-duplicate `BAND_STYLE`** — export it from `src/roster/buildScore.ts` (next to `band`), delete the identical local copies in `RosterView.tsx:12-16` and `TeamsView.tsx:27-31`.
+- [x] **Step 4: Tracking normalisation** — `Results.tsx:49` `tracking-[0.14em]` → `tracking-[0.18em]` (`.eyebrow`'s `0.4em` stays — it's the intentionally wider page-level variant).
+- [x] **Step 5: Focus + transition hygiene** — in `index.css`: `.field`'s `focus:` ring/border variants → `focus-visible:`; narrow `@apply transition` to what each rule actually animates (`transition-colors` on `.field`/`.btn-ghost`; `transition-[transform,filter]` on `.btn-primary` which animates translate + brightness).
+- [x] **Step 6:** `npm test && npm run lint` — PASS. Visual spot-check both games' accents via the GameSwitcher in `npm run dev`. **Commit** — `fix: per-game chevrons, well class, band-style dedupe, focus-visible`
 
 ### Task 17: Form validation (ArtifactForm + UID)
 
@@ -979,12 +991,12 @@ it('closes the listbox when focus leaves the component', async () => {
 - Modify: `src/components/ArtifactForm.tsx:23-26,103-121`, `src/components/ImportPanel.tsx:131-149`
 - Test: `src/components/ArtifactForm.test.tsx`, `src/components/ImportPanel.test.tsx`
 
-- [ ] **Step 1: Failing test** (ArtifactForm): blur the level field with `25` typed → an error message appears, and the input's `aria-describedby` points at it.
-- [ ] **Step 2: Implement:**
+- [x] **Step 1: Failing test** (ArtifactForm): blur the level field with `25` typed → an error message appears, and the input's `aria-describedby` points at it.
+- [x] **Step 2: Implement:**
   1. Level input (`ArtifactForm.tsx:103-112`): add `min={0} max={20}` (verify the real bounds against `src/state/artifactValidation.ts` — use whatever `validateArtifactDraft` enforces) and helper text under the label stating the range.
   2. On blur of the level input, run the existing `validateArtifactDraft` and, if the failure concerns level, render the message in a `<p id="level-error" role="alert">` adjacent to the field with `aria-describedby="level-error"` on the input. Keep the existing submit-time banner for everything else — do not build a full per-field validation framework (ponytail: one field gets inline treatment because it's the one users actually fumble; extend if evidence says otherwise).
   3. UID (`ImportPanel.tsx`): gate Fetch on format, not just presence — `const uidOk = /^\d{9,10}$/.test(uid.trim());`, `disabled={busy || !uidOk}`, and when `uid && !uidOk` show `<p className="text-xs text-rose">A UID is 9–10 digits.</p>` (Task 5's empty-state hint stays for the empty case).
-- [ ] **Step 3:** `npm test -- ArtifactForm ImportPanel` — PASS. **Commit** — `fix: inline level/UID validation with linked errors`
+- [x] **Step 3:** `npm test -- ArtifactForm ImportPanel` — PASS. **Commit** — `fix: inline level/UID validation with linked errors`
 
 ### Task 18: Score visualisation (bullet bars + roster bars)
 
@@ -993,7 +1005,7 @@ it('closes the listbox when focus leaves the component', async () => {
 - Modify: `src/components/BuildCard.tsx:97-121`, `src/roster/RosterView.tsx:36-59`, `src/teams/TeamsView.tsx:63-82`
 - Test: `src/components/BuildCard.test.tsx`, `src/roster/RosterView.test.tsx`
 
-- [ ] **Step 1:** BuildCard grade panel: keep each stat's text line (`ATK 700/900 (78%)` stays — text is primary), add under each a 2px bullet track:
+- [x] **Step 1:** BuildCard grade panel: keep each stat's text line (`ATK 700/900 (78%)` stays — text is primary), add under each a 2px bullet track:
 
 ```tsx
 <div
@@ -1009,9 +1021,9 @@ it('closes the listbox when focus leaves the component', async () => {
 
 (Change the wrapping `<p className="flex flex-wrap gap-x-3">` of `grade.perStat` into a small grid so each stat owns a block with its bar.) Also per the frontend-design note: prefix met targets with a text glyph (`✓`) so "met" isn't hue-only when the bar is glanced without the numbers.
 
-- [ ] **Step 2:** RosterView rows: behind/beside the score number, a thin proportional bar (`score.total / 100`), same track style, `aria-hidden="true"` (the number is the accessible value).
-- [ ] **Step 3:** TeamsView member rows: add the numeric score next to the band chip (`<span className="font-mono text-xs text-muted">{m.buildScore.toFixed(0)}</span>`) so the same score reads the same in both sections.
-- [ ] **Step 4:** `npm test -- BuildCard RosterView TeamsView` — PASS. Full gates: `npm test && npm run lint && npm run typecheck`. **Commit** — `feat: bullet bars for stat targets, roster score bars`
+- [x] **Step 2:** RosterView rows: behind/beside the score number, a thin proportional bar (`score.total / 100`), same track style, `aria-hidden="true"` (the number is the accessible value).
+- [x] **Step 3:** TeamsView member rows: add the numeric score next to the band chip (`<span className="font-mono text-xs text-muted">{m.buildScore.toFixed(0)}</span>`) so the same score reads the same in both sections.
+- [x] **Step 4:** `npm test -- BuildCard RosterView TeamsView` — PASS. Full gates: `npm test && npm run lint && npm run typecheck`. **Commit** — `feat: bullet bars for stat targets, roster score bars`
 
 ---
 
