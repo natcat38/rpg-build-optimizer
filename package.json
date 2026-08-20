@@ -29,6 +29,7 @@
     "@upstash/redis": "^1.38.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "vaul": "^1.1.2",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
