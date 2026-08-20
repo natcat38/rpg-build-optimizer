@@ -44,9 +44,21 @@ function Row({
               'No weapon equipped'}
           </p>
         </div>
-        <span className="font-mono text-lg font-bold text-accent-bright">
-          {total.toFixed(0)}
-        </span>
+        <div className="flex-none">
+          <span className="font-mono text-lg font-bold text-accent-bright">
+            {total.toFixed(0)}
+          </span>
+          {/* The number is the accessible value; this is the same figure again. */}
+          <div
+            aria-hidden="true"
+            className="mt-0.5 h-0.5 w-12 overflow-hidden rounded-full bg-white/5"
+          >
+            <div
+              className="h-full rounded-full bg-accent/60"
+              style={{ width: `${Math.min(Math.max(total, 0), 100)}%` }}
+            />
+          </div>
+        </div>
         <span
           className={`rounded-lg border px-2 py-0.5 text-[0.7rem] font-semibold ${BAND_STYLE[b]}`}
         >
