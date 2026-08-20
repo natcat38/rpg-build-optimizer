@@ -49,6 +49,18 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0018 — mode-aware team recommendation](../docs/adr/0018-mode-aware-team-recommendation.md)
 - [ADR-0019 — the Plan page](../docs/adr/0019-plan-output.md)
 
-## In progress
+## v2 (shipped)
 
-- [v2 Endgame Planner spec](../docs/superpowers/specs/2026-08-20-endgame-planner-spec.md) — roster assessment → Abyss teams → per-member builds → shopping list.
+The [v2 Endgame Planner](../docs/superpowers/specs/2026-08-20-endgame-planner-spec.md)
+turned the single-character optimiser into an account-level planner. Its vocabulary is
+defined in the canonical glossary rather than duplicated here — see
+[`CONTEXT.md`](../CONTEXT.md) for:
+
+- **Damage profile** — a character's curated rotation, the input to the `avg_damage` objective.
+- **Comp archetype** — a 4-slot team recipe with ranked substitutes ([ADR-0017](../docs/adr/0017-curated-comp-database.md)).
+- **Team recommendation** — two Abyss halves sharing no character ([ADR-0018](../docs/adr/0018-mode-aware-team-recommendation.md)).
+- **Plan** — optimised builds for all eight members over one shared inventory ([ADR-0019](../docs/adr/0019-plan-output.md)).
+- **Shopping list** — the farming and investment advice derived from the plan's gaps.
+
+Team and meta data are hand-curated per patch; the refresh checklist is
+[`docs/runbooks/patch-refresh.md`](../docs/runbooks/patch-refresh.md).
