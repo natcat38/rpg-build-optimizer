@@ -57,6 +57,24 @@ export function objectiveLabel(obj: Objective): string {
   return OBJECTIVE_LABELS[obj] ?? obj;
 }
 
+/** One-sentence explanation of why a build is ranked by this metric — shown
+ *  under the headline number so the metric changing per character reads as
+ *  intentional, not a bug. */
+export function objectiveHint(o: Objective): string {
+  switch (o) {
+    case 'avg_damage':
+      return 'Estimated damage from this character’s curated rotation — for comparing builds, not matching in-game numbers.';
+    case 'crit_value':
+      return 'Crit Value = 2×Crit Rate + Crit DMG — a gear-quality proxy for crit-scaling damage dealers.';
+    case 'hp_pct':
+      return 'This character’s kit scales off HP, so builds are ranked by it instead of damage.';
+    case 'em':
+      return 'This character’s kit scales off Elemental Mastery, so builds are ranked by it instead of damage.';
+    default:
+      return `Builds are ranked by ${objectiveLabel(o)} — the stat this character’s role values most.`;
+  }
+}
+
 /** Turn a PascalCase set key (e.g. "EmblemOfSeveredFate") into spaced words. */
 export function formatSetName(setKey: string): string {
   return setKey

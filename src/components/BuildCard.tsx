@@ -14,6 +14,7 @@ import {
   SLOT_GLYPH,
   SLOT_LABELS,
   statLabel,
+  objectiveHint,
 } from '../ui/labels';
 import { META_TARGETS } from '../meta/metaTargets';
 import { gradeBuild, type Grade } from '../meta/grade';
@@ -73,15 +74,15 @@ export function BuildCard({
             <p className="font-mono text-2xl font-bold leading-tight text-accent-bright">
               {formatScore(build.objectiveValue)}
             </p>
-            {request.objective === 'avg_damage' && (
-              <p className="text-[0.7rem] text-muted">
-                estimated — for comparing builds, not matching in-game numbers
-              </p>
-            )}
+            <p className="max-w-xs text-[0.7rem] text-muted">
+              {objectiveHint(request.objective)}
+            </p>
           </div>
           {grade && (
             <span
               className={`grid h-8 w-8 flex-none place-items-center rounded-lg border font-display text-sm font-bold ${GRADE_STYLE[grade.grade]}`}
+              aria-label={`Grade ${grade.grade} — how close this build is to endgame stat targets`}
+              title={`Grade ${grade.grade} — how close this build is to endgame stat targets`}
             >
               {grade.grade}
             </span>

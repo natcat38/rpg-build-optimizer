@@ -26,6 +26,7 @@ import { optimize } from '../workers/optimizeClient';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
 import { formatReduction } from '../optimizer/benchmark';
 import { scrollToId } from '../ui/scroll';
+import { objectiveHint } from '../ui/labels';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 
 function Section({
@@ -103,6 +104,9 @@ function SolvedHero({ hero }: { hero: HeroExample }) {
           </p>
           <p className="font-mono text-5xl font-bold leading-none text-accent-bright">
             {hero.build.objectiveValue.toFixed(1)}
+          </p>
+          <p className="mt-1 max-w-xs text-[0.7rem] text-muted">
+            {objectiveHint('crit_value')}
           </p>
         </div>
         <p className="max-w-sm font-mono text-xs leading-relaxed text-muted">
