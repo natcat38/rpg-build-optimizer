@@ -76,9 +76,14 @@ function Row({
   );
 }
 
+/** Long rosters scroll past everything below them, so only the best-scored
+ *  slice shows until the user asks for the rest. */
+const COLLAPSED_COUNT = 12;
+
 export function RosterView() {
   const entries = useRoster((s) => s.entries);
   const artifacts = useInventory((s) => s.artifacts);
+  const [showAll, setShowAll] = useState(false);
 
   const rows = useMemo(() => {
     const byLocation: Record<string, Artifact[]> = {};
@@ -113,6 +118,8 @@ export function RosterView() {
     );
   }
 
+  const visible = showAll ? rows : rows.slice(0, COLLAPSED_COUNT);
+
   return (
     <div className="panel space-y-3">
       <p className="text-sm text-muted">
@@ -121,10 +128,19 @@ export function RosterView() {
         each has equipped.
       </p>
       <ul className="space-y-2">
-        {rows.map((r) => (
+        {visible.map((r) => (
           <Row key={r.characterKey} {...r} />
         ))}
       </ul>
+      {rows.length > COLLAPSED_COUNT && !showAll && (
+        <button
+          className="flex min-h-11 w-full items-center justify-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-muted transition hover:text-paper"
+          onClick={() => setShowAll(true)}
+        >
+          <span aria-hidden="true">▶</span> Show all {rows.length} characters,
+          sorted by score
+        </button>
+      )}
     </div>
   );
 }
