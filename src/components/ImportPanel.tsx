@@ -7,6 +7,7 @@ import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
 import { useGame } from '../state/game';
 import { getGame } from '../game/registry';
+import { scrollToId } from '../ui/scroll';
 import type { Artifact } from '../game/types';
 
 // WCAG 3.3.1: describe what actually went wrong. fetchUidArtifacts already
@@ -55,7 +56,12 @@ export function ImportPanel() {
       }
       const roster = parseGOODRoster(json);
       const rosterCount = Object.keys(roster).length;
-      if (rosterCount > 0) useRoster.getState().setRoster(roster);
+      if (rosterCount > 0) {
+        useRoster.getState().setRoster(roster);
+        // The roster section renders below the fold; without a nudge the user
+        // sees an unchanged import panel and assumes nothing happened.
+        setTimeout(() => scrollToId('step-roster'), 150);
+      }
       mergeDedupe(
         out,
         rosterCount > 0 ? ` Roster: ${rosterCount} characters.` : '',
