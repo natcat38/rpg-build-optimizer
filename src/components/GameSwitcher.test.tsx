@@ -22,3 +22,21 @@ describe('GameSwitcher', () => {
     expect(useGame.getState().gameId).toBe('wuwa');
   });
 });
+
+describe('GameSwitcher keyboard', () => {
+  beforeEach(() => useGame.setState({ gameId: 'genshin' }));
+
+  it('moves selection with arrow keys and keeps one tab stop', async () => {
+    const user = userEvent.setup();
+    render(<GameSwitcher />);
+    const [first, second] = screen.getAllByRole('radio');
+    expect(first).toHaveAttribute('tabindex', '0');
+    expect(second).toHaveAttribute('tabindex', '-1');
+    first.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getAllByRole('radio')[1]).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+  });
+});
