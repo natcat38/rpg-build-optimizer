@@ -21,129 +21,42 @@ This tool does one thing well: _given the artifacts you own, what's the best bui
 
 ## Features
 
-- **Optimise over your real inventory** — import it three ways:
-  - **GOOD file** — upload a standard inventory-export `.json` (from any community scanner) for your _entire_ collection.
-  - **UID** — fetch the artifacts on your _showcased_ characters via [Enka.Network](https://enka.network) (no login; showcased characters only).
-  - **Manual entry** — add/edit artifacts by hand.
-- **Define what "best" means** — pick a character, weapon, and build level; set constraints (minimum Energy Recharge, etc.); choose one stat to **maximise** (Crit Value, Elemental Mastery, ATK%, …).
-- **Provably optimal results** — an exact search returns the genuine top builds (not a heuristic guess), each with its full resulting stat sheet.
-- **Shareable links** — every build encodes into a self-contained URL. Open the link and you see the exact build — no account, nothing stored server-side.
-- **Try with example gear** — no inventory? One click loads a curated sample inventory, picks a character + a representative constraint, and runs the optimiser, landing you straight on ranked results.
-- **Endgame planner (v2)** — import an account and the app takes it from there:
-  - **Roster assessment** — a 0–100 build score for every owned character, broken down into level, talents, weapon, and equipped-artifact quality.
-  - **Abyss team recommendations** — two halves that share no character, matched from a curated database of comp archetypes with ranked substitutes.
-  - **Damage-ranked builds** — for characters with a curated damage profile, the optimiser maximises estimated average damage (a KQM-formula target function) instead of a proxy stat, and stays exact while doing it.
-  - **One plan** — an optimised build for all eight members over your shared inventory (carries get first pick), plus a single "what to farm" list and ranked "worth investing in" advice.
+- **Optimise over your real inventory** — import a GOOD-format `.json`, fetch showcased characters by UID via [Enka.Network](https://enka.network), or add pieces by hand.
+- **Define what "best" means** — pick a character, weapon, and build level, set constraints, and choose the stat to maximise.
+- **Provably optimal results** — an exact search returns the genuine top builds, each with its full stat sheet.
+- **Shareable links** — every build encodes into a self-contained URL; no account, nothing stored server-side.
+- **Try with example gear** — one click loads a curated sample inventory and runs the optimiser.
+- **Roster assessment** — a 0–100 build score for every owned character, broken down into level, talents, weapon, and artifact quality.
+- **Abyss team recommendations** — two halves that share no character, matched from curated comp archetypes.
+- **Damage-ranked builds** — where a curated damage profile exists, the optimiser maximises estimated average damage instead of a proxy stat, and stays exact.
+- **One plan** — optimised builds for all eight members over your shared inventory, plus a "what to farm" list.
+- **Investment advice** — which characters and weapons are worth levelling next, from your roster's gaps.
 
-## How it works
-
-The interesting part is the optimiser. Brute-forcing every five-piece combination explodes for large inventories (40 per slot ≈ 100M combinations). Instead the app uses a **pruned branch-and-bound search**: it walks the slots in order and skips any branch whose best _possible_ completion can't beat the current top-K — collapsing the search to a few thousand explored nodes while still returning the **exact** optimum.
-
-Correctness isn't assumed — it's tested: a brute-force oracle is run against the optimiser across many randomised inventories (including a set-bonus edge case) to prove the pruning never discards the true best build.
-
-A few deliberate design decisions (full rationale in [`docs/adr/`](./docs/adr)):
-
-- **100% client-side** ([ADR-0001](./docs/adr/0001-client-side-only-architecture.md)) — no backend, no accounts; the heavy search runs in a **Web Worker** so the UI never blocks.
-- **Stat-only model by default** ([ADR-0003](./docs/adr/0003-stat-only-model-no-damage-engine.md), superseded in part by [ADR-0016](./docs/adr/0016-damage-engine-objective.md)) — it maximises a chosen _stat_ under constraints rather than modelling in-game DPS. This keeps it fast, explainable, and correct for every character with zero per-character maintenance. (Consequence: conditional/non-stat 4-piece set effects are honoured as a _constraint_ but not _scored_.) v2 adds an opt-in `avg_damage` objective for characters with a curated damage profile; every figure it produces is labelled _estimated — for comparing builds, not matching in-game numbers_.
-- **Frozen reference data behind a concrete adapter** ([ADR-0002](./docs/adr/0002-frozen-bundled-reference-dataset.md), [ADR-0012](./docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md)) — a bundled `genshin-db` snapshot, exposed to the optimiser through the `genshinAdapter` object. (Originally a multi-game `GameAdapter` interface, [ADR-0008](./docs/adr/0008-gameadapter-seam-for-multi-game.md); collapsed to a concrete adapter once it was clear only one game would ship.)
-- **Self-contained share links** ([ADR-0005](./docs/adr/0005-self-contained-share-links.md)) — the five full artifacts are embedded (deflate + base64url), so a recipient who doesn't own your inventory still sees the exact pieces.
-
-Domain vocabulary is defined once in [`CONTEXT.md`](./CONTEXT.md).
-
-## Tech stack
-
-Vite · React 18 · TypeScript (strict) · Tailwind CSS · Zustand (state) · Web Workers · Vitest + Testing Library · native `CompressionStream` (URL compression). Deployed static on Vercel; CI via GitHub Actions (typecheck + lint + test + build).
-
-## Local development
+## Quick start
 
 ```bash
 npm install
-npm run dev        # start the dev server
-npm test           # run the unit-test suite
-npm run typecheck  # tsc -b (strict, project references)
-npm run lint
-npm run build      # production build -> dist/
-npm run build:data # regenerate the frozen genshin-db snapshot (build-time only)
-npm run bench      # regenerate docs/speed-report.md from the benchmark harness
+npm run dev
 ```
 
-## Project structure
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev workflow, and [FILE-MAP.md](FILE-MAP.md) (auto-generated) for the code layout.
 
-```
-src/
-  game/        # domain types + frozen Genshin dataset & genshinAdapter
-  optimizer/   # pure scoring, feasibility, and the exact branch-and-bound search
-  workers/     # the optimise Web Worker + a promise/sync-fallback client
-  import/      # GOOD-file parser, Enka UID import, content-hash dedupe
-  state/       # Zustand inventory store + artifact validation
-  share/       # self-contained build-snapshot URL encode/decode
-  components/  # ImportPanel, ArtifactForm, OptimizePanel, Results, BuildCard, App
-scripts/
-  build-dataset.ts   # extracts the frozen snapshot from genshin-db
-docs/
-  adr/         # architecture decision records
-  superpowers/ # design spec + implementation plan
-```
+## How it works
 
-## Performance
+The optimiser is an exact branch-and-bound search running in a Web Worker: it walks the slots in order and prunes any branch whose best possible completion can't beat the current top-K, so it returns the provably optimal build while evaluating a sliver of the brute-force space (see [docs/speed-report.md](docs/speed-report.md), regenerated by `npm run bench`). A brute-force oracle test proves the pruning never drops the true optimum.
 
-The optimiser is an exact branch-and-bound search: it returns the provably optimal
-build while evaluating only a sliver of the brute-force space. On a synthetic
-800-artifact inventory it explores roughly **1 in 89,043** of the ~105 billion possible
-crit-value builds — and a randomised correctness test confirms the pruning never
-drops the true optimum.
+Every architectural decision and its rationale lives in [`docs/adr/`](./docs/adr); the domain vocabulary is defined once in [`CONTEXT.md`](./CONTEXT.md).
 
-See [docs/speed-report.md](docs/speed-report.md) for the full numbers, regenerated
-any time with `npm run bench`.
+## Tech stack
 
-## Roadmap
-
-v1.0 shipped the lean optimiser. The **v1.1 depth layer** is landing incrementally:
-
-- ✅ **"Try with example gear"** — one-click sample builds that load a curated inventory and auto-run the optimiser (no import required).
-- ✅ **Benchmark / speed report** — a committed, reproducible report (`npm run bench`) proving how little of the brute-force space the search explores.
-- ✅ **Gap analysis** — compare your best owned build against a meta target and tell you _what to farm_ to close the gap (the centrepiece).
-- ✅ **AI: Explain this build** — an optional Claude-powered plain-English explanation of the optimised build (see below).
-- _(planned)_ an end-to-end test and a live "watch it search" visualisation.
-
-See [`docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md`](./docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md).
-
-### v2: Endgame Planner
-
-v2 turns the single-character optimiser into an **endgame planner**: import your
-account, see how built each character is, get recommended Spiral Abyss teams,
-optimised builds for all eight members (damage-ranked where a damage profile
-exists), and one shopping list of what to farm and pull for. See
-[`docs/superpowers/specs/2026-08-20-endgame-planner-spec.md`](./docs/superpowers/specs/2026-08-20-endgame-planner-spec.md).
+Vite · React 19 · TypeScript (strict) · Tailwind CSS · Zustand · Web Workers · Vitest + Testing Library · native `CompressionStream`. Deployed static on Vercel; CI via GitHub Actions.
 
 ## AI: Explain this build
 
-For supported meta characters, an optional **"Explain this build"** button sits
-below the gap report. It sends the best build's stats and the gap report to a
-Vercel serverless function (`api/explain.ts`), which calls Claude
-(`claude-haiku-4-5`) and returns a 2–3 sentence plain-English explanation. No
-personal data is sent (no UID, no inventory).
+An optional Claude-powered plain-English explanation of the optimised build, served through a Vercel serverless function so the API key stays server-side ([ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md)). No personal data is sent; setup is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-**Why a serverless proxy?** The Anthropic API key stays server-side. A
-`VITE_`-prefixed key would be inlined into the public bundle and leak — see
-[ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md).
+## Data & license
 
-### Setup / local testing
+Game reference data is derived at build time from [genshin-db](https://github.com/theBowja/genshin-db) and bundled as a frozen snapshot — numeric data only, no game assets ([`DATA_LICENSE`](./DATA_LICENSE)).
 
-- Set `ANTHROPIC_API_KEY` as a Vercel project environment variable (server-side).
-- Set `VITE_AI_ENABLED=true` to render the button (build-time flag — keep it off
-  until the key is deployed).
-- Set a spend cap in the Anthropic console (the feature's hard cost ceiling).
-- Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (from an
-  [Upstash](https://upstash.com) Redis database) to enable per-IP rate
-  limiting (10 requests/60s — see [ADR-0013](docs/adr/0013-rate-limit-ai-proxy.md)).
-  Without them the endpoint still works, just unthrottled.
-- Locally, run `vercel dev` (not `npm run dev`) to serve the `/api` function.
-
-## Data & attribution
-
-Game reference data is derived at build time from the [genshin-db](https://github.com/theBowja/genshin-db) project and bundled as a frozen snapshot. Genshin Impact and all related data are property of HoYoverse; this project bundles only numeric stat/reference data and ships no game assets. See [`DATA_LICENSE`](./DATA_LICENSE).
-
-## License
-
-[MIT](./LICENSE)
+Code is [MIT](./LICENSE) licensed. Not affiliated with HoYoverse.

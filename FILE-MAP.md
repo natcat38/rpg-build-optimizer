@@ -13,7 +13,7 @@ block — an orientation gap, not an omission by the generator.
 | `src` | 6 | The app's root: game-agnostic top-level types (`game/types.ts`) plus the `labels.ts`/`main.tsx`/`index.css` entry point that mounts the React tree. |
 | `src/ai` | 4 | The client side of the AI-explain feature: the fetch call to the serverless `/api/explain` proxy and the request/response shapes it shares with that proxy. |
 | `src/components` | 24 | The React presentational layer: import/artifact-entry panels, the optimizer and gap-analysis results views, and the AI-explain panel, wired together by the top-level `App` component. |
-| `src/components/ui` | 2 | Generic, domain-agnostic UI primitives shared across feature components (currently a filterable/typeable Combobox used for character and weapon pickers). |
+| `src/components/ui` | 4 | Generic, domain-agnostic UI primitives shared across feature components (currently a filterable/typeable Combobox used for character and weapon pickers). |
 | `src/damage` | 5 | The damage engine (ADR-0016): the KQM damage formula as pure functions, plus the curated per-character damage profiles that turn it into the `avg_damage` optimisation objective. |
 | `src/game` | 3 | Game-agnostic domain types (artifacts, slots, stat keys, build requests) plus the game display registry, kept separate from `game/genshin/`. |
 | `src/game/genshin` | 3 | The `genshinAdapter`: the concrete object owning all Genshin-specific reference data (characters, weapons, artifact sets, base/main stats) and the universal game baselines, loaded from the frozen `data.generated.json` snapshot (ADR-0002, ADR-0009, ADR-0012). |
@@ -22,15 +22,15 @@ block — an orientation gap, not an omission by the generator.
 | `src/meta` | 8 | Gap analysis: compares the best build the player can field from their own inventory against a curated meta target and reports feasibility gaps, numeric shortfalls, and one grounded action (ADR-0007). |
 | `src/optimizer` | 10 | The exact branch-and-bound optimiser (ADR-0004): explores per-slot artifact pools, scores builds and constraint satisfaction, and returns the top-K valid builds by objective, plus the diagnostics and benchmark instrumentation that explain and measure the search. |
 | `src/plan` | 4 | The plan (ADR-0019): composes the recommended Abyss teams into an optimised build for each of the eight members over one shared inventory, plus a single farming list, and renders it. |
-| `src/roster` | 4 | Roster assessment: how built each owned character is. |
+| `src/roster` | 6 | Drawer body for one character: what they have, what the meta wants, and which curated teams they slot into. |
 | `src/sample` | 5 | "Try with example gear" sample mode: the bundled deterministic sample inventory, curated presets that each demonstrate a different constraint mechanism, and the landing-page hero example solved live on mount. |
 | `src/share` | 2 | Self-contained share links (ADR-0005): encodes a `BuildSnapshot` (request, result, and the five full artifacts) into a URL and decodes it back, with no server-side state. |
 | `src/state` | 12 | Client-side Zustand stores for the app's persisted and session state: artifact inventory, roster, the current optimize request, and manual-artifact-form validation. |
 | `src/teams` | 7 | Endgame team recommendation (ADR-0017/0018): the curated comp-archetype vocabulary, the database itself, the roster-to-archetype matching that fields two disjoint Spiral Abyss halves, and the view that shows them. |
 | `src/test-fixtures` | 2 | Test-only fixtures. |
-| `src/ui` | 1 | UI-only presentation helpers layered on top of `src/labels.ts`'s domain-neutral labels — currently the per-slot display glyphs used in compact build lists. |
+| `src/ui` | 2 | UI-only presentation helpers layered on top of `src/labels.ts`'s domain-neutral labels — currently the per-slot display glyphs used in compact build lists. |
 | `src/workers` | 5 | Runs the branch-and-bound optimiser off the main thread: the Web Worker entry point, its request/response protocol, and the main-thread client that dispatches to it (falling back to a synchronous call where no worker is available). |
 | `api` | 4 | The serverless AI-explain proxy (`/api/explain`, Vercel functions): rate limiting by client IP via Upstash Redis, and the handler that forwards a validated explain payload to Anthropic and returns the explanation. |
 | `scripts` | 4 | Repo tooling run through `tsx`, none of it shipped in the app bundle: baking the frozen reference dataset (build-dataset), gating ADR and knowledge-bundle consistency (check-docs), generating this directory index (gen-file-map), timing the optimiser (benchmark), and reporting character-guide coverage (meta-coverage). |
 
-22 source directories, 124 files, 0 without a declared purpose.
+22 source directories, 129 files, 0 without a declared purpose.

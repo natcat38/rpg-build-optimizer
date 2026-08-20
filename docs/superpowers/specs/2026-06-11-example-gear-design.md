@@ -1,7 +1,7 @@
 # RPG Build Optimizer — "Try with example gear" (v1.1 §4.1) Design
 
 > **Status:** approved design (lineup + shared-inventory + one-click), pre-build (2026-06-11).
-> **Implements:** §4.1 of `docs/superpowers/specs/2026-06-05-depth-layer-and-portfolio-design.md`.
+> **Implements:** §4.1 of the v1.1 depth-layer design (design doc was never written).
 > **Goal:** remove the import wall — a first-time visitor (recruiter) lands on ranked results in one click, and can flip between several showcase builds over the same sample account.
 
 ---
