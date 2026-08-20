@@ -172,8 +172,20 @@ if (rosterCount > 0) setTimeout(() => scrollToId('step-roster'), 150);
 </p>
 ```
 
-- [ ] **Step 2:** `npm test -- PlanView` — fix any test asserting the old copy (search for "could be formed"), expect PASS.
-- [ ] **Step 3: Commit** — `fix: explain infeasible plan builds in plain language`
+- [ ] **Step 2 (rainbow-build coverage gap):** Plan members with NO `META_TARGETS` entry (e.g. Kamisato Ayato — in `comps.ts` but not `metaTargets.ts`) get an unconstrained `crit_value` solve: no set requirement, no main-stat locks, and since set bonuses add ~no crit, the "optimal" result is five mismatched sets and often an off-stat goblet. Users read this as a bug. Two fixes, both in this task:
+  1. **Label it.** In `MemberCard` (`PlanView.tsx:22-69`), when `META_TARGETS[characterKey]` is undefined, render above the BuildCard:
+
+```tsx
+<p className="text-xs text-muted">
+  No curated recipe for {name} yet — this is the highest raw Crit Value from
+  the remaining pieces, ignoring set bonuses. Treat it as a stat-stick draft,
+  not a real build.
+</p>
+```
+
+  2. **Audit the gap.** Cross-check every `characterKey` appearing in `COMP_ARCHETYPES` slot options against `META_TARGETS` keys (a 10-line script or test). Add a vitest guard in `src/teams/comps.test.ts` that reports the uncovered list, and add curated recipes (from each character's KQM guide, same format as existing entries) for any character who is a weight-1.0 "ideal" pick in any archetype — those are the ones the plan will actually select. Lower-weight substitutes may stay uncovered but now carry the label from (1).
+- [ ] **Step 3:** `npm test -- PlanView` — fix any test asserting the old copy (search for "could be formed"), expect PASS.
+- [ ] **Step 4: Commit** — `fix: explain infeasible + un-recipe'd plan builds; cover comp picks in META_TARGETS`
 
 ### Task 4: Explain the headline metric (objectiveHint)
 
