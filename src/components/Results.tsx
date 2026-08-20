@@ -46,7 +46,7 @@ export function Results({
     <div className="space-y-4">
       <div className="panel space-y-2 px-4 py-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 font-mono text-xs">
-          <span className="uppercase tracking-[0.14em] text-muted">
+          <span className="uppercase tracking-[0.18em] text-muted">
             Exact search
           </span>
           <span>
@@ -59,7 +59,10 @@ export function Results({
             subtrees before the optimum was proven.
           </span>
         </div>
-        <div className="h-1 w-full overflow-hidden rounded-full bg-white/5">
+        <div
+          aria-hidden="true"
+          className="h-1 w-full overflow-hidden rounded-full bg-white/5"
+        >
           <div
             className="h-full bg-accent/70"
             style={{ width: `${exploredPct}%` }}

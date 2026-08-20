@@ -147,6 +147,7 @@ export function PlanView({
         </p>
         <button
           className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
+          aria-busy={running}
           disabled={!teams || running}
           onClick={() => void build()}
         >
@@ -155,6 +156,23 @@ export function PlanView({
             : 'Build my Abyss plan'}
         </button>
       </div>
+
+      {running && (
+        <div role="status" aria-live="polite" className="space-y-1">
+          <p className="text-xs text-muted">
+            Optimising member {progress[0]} of {progress[1]}…
+          </p>
+          <div
+            aria-hidden="true"
+            className="h-1.5 overflow-hidden rounded-full bg-white/5"
+          >
+            <div
+              className="h-full rounded-full bg-accent/70 transition-[width]"
+              style={{ width: `${(progress[0] / progress[1]) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {failed && (
         <div
