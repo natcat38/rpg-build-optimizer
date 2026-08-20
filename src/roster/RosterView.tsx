@@ -73,6 +73,9 @@ function Row({
  *  slice shows until the user asks for the rest. */
 const COLLAPSED_COUNT = 12;
 
+/** Long enough to outlast vaul's close animation and its scroll-lock release. */
+const DRAWER_EXIT_MS = 400;
+
 export function RosterView() {
   const entries = useRoster((s) => s.entries);
   const artifacts = useInventory((s) => s.artifacts);
@@ -158,7 +161,11 @@ export function RosterView() {
               const w = openEntry.weaponKey;
               if (w) s.setWeaponKey(w);
               setOpenKey(null);
-              scrollToId('step-optimise');
+              // The drawer holds a body scroll lock (overflow:hidden) until it
+              // has finished animating out, so scrolling synchronously here is
+              // a no-op. ponytail: fixed delay rather than watching for the
+              // lock to lift — revisit if vaul's exit timing changes.
+              setTimeout(() => scrollToId('step-optimise'), DRAWER_EXIT_MS);
             }}
           >
             Optimise this character

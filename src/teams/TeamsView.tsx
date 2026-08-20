@@ -141,8 +141,8 @@ export function TeamsView() {
             className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm transition
               ${
                 m.live
-                  ? 'border-white/15 text-paper has-[:checked]:border-accent/60 has-[:checked]:bg-accent/10 has-[:checked]:text-accent-bright'
-                  : 'cursor-not-allowed border-white/5 text-muted'
+                  ? 'border-white/15 text-paper has-[:checked]:border-accent/60 has-[:checked]:bg-accent/10 has-[:checked]:text-accent-bright has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/50'
+                  : 'cursor-not-allowed border-white/5 text-muted has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-white/30'
               }`}
           >
             <input

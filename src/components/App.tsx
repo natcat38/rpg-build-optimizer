@@ -282,11 +282,14 @@ export function App() {
   // later sections' numbers shift with it.
   const hasRoster = Object.keys(rosterEntries).length > 0;
   const optimiseN = hasRoster ? 5 : 2;
+  // A coming-soon game replaces every numbered Section with the ComingSoon panel,
+  // so the step nav and skip link would point at ids that aren't in the document.
+  const sectionsVisible = isLive || Boolean(result) || sharedError;
 
   return (
     <main className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
       <a
-        href="#step-load"
+        href="#content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface-700 focus:px-4 focus:py-2 focus:text-paper"
       >
         Skip to content
@@ -311,7 +314,7 @@ export function App() {
         )}
       </header>
 
-      {hasRoster && (
+      {hasRoster && sectionsVisible && (
         <nav
           aria-label="Steps"
           className="sticky top-0 z-20 -mx-5 mb-6 flex gap-1 overflow-x-auto border-b border-white/5 bg-surface-800/80 px-5 py-2 backdrop-blur-md [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]"
@@ -332,122 +335,124 @@ export function App() {
           when the active game is coming-soon — the link may point at content
           from the (live) game it was shared for, independent of the current
           GameSwitcher selection. */}
-      {!isLive && !result && !sharedError ? (
-        <ComingSoon game={game} />
-      ) : (
-        <>
-          {sharedError && (
-            <div
-              role="alert"
-              className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
-            >
-              This shared build couldn&apos;t be read — it may be from a newer
-              version.
-            </div>
-          )}
-
-          {optimizeError && (
-            <div
-              role="alert"
-              className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
-            >
-              Optimisation failed — please try again.
-            </div>
-          )}
-
-          <div className="space-y-10">
-            {sampleMode && (
-              <div className="animate-fade-up">
-                <SampleGear onRun={runCurrent} running={running} />
+      <div id="content" tabIndex={-1}>
+        {!isLive && !result && !sharedError ? (
+          <ComingSoon game={game} />
+        ) : (
+          <>
+            {sharedError && (
+              <div
+                role="alert"
+                className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
+              >
+                This shared build couldn&apos;t be read — it may be from a newer
+                version.
               </div>
             )}
-            <Section
-              n={1}
-              id="step-load"
-              title={`Load your ${game.gearNounPlural.toLowerCase()}`}
-              hint="Import a full inventory, fetch from a UID, or add pieces by hand."
-              delay="0.05s"
-            >
-              <ImportPanel />
-              <details className="group mt-3">
-                <summary className="inline-flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-flux-bright transition hover:text-flux">
-                  <span className="text-xs transition group-open:rotate-90">
-                    ▶
-                  </span>
-                  Or add one manually
-                </summary>
-                <div className="mt-3">
-                  <ArtifactForm />
+
+            {optimizeError && (
+              <div
+                role="alert"
+                className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
+              >
+                Optimisation failed — please try again.
+              </div>
+            )}
+
+            <div className="space-y-10">
+              {sampleMode && (
+                <div className="animate-fade-up">
+                  <SampleGear onRun={runCurrent} running={running} />
                 </div>
-              </details>
-            </Section>
-
-            {hasRoster && (
+              )}
               <Section
-                n={2}
-                id="step-roster"
-                title="Your roster"
-                hint="How built each owned character is, best first."
-                delay="0.08s"
+                n={1}
+                id="step-load"
+                title={`Load your ${game.gearNounPlural.toLowerCase()}`}
+                hint="Import a full inventory, fetch from a UID, or add pieces by hand."
+                delay="0.05s"
               >
-                <RosterView />
+                <ImportPanel />
+                <details className="group mt-3">
+                  <summary className="inline-flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-flux-bright transition hover:text-flux">
+                    <span className="text-xs transition group-open:rotate-90">
+                      ▶
+                    </span>
+                    Or add one manually
+                  </summary>
+                  <div className="mt-3">
+                    <ArtifactForm />
+                  </div>
+                </details>
               </Section>
-            )}
 
-            {hasRoster && (
-              <Section
-                n={3}
-                id="step-teams"
-                title="Endgame teams"
-                hint="Two Abyss halves that share no character, matched from your roster."
-                delay="0.09s"
-              >
-                <TeamsView />
-              </Section>
-            )}
+              {hasRoster && (
+                <Section
+                  n={2}
+                  id="step-roster"
+                  title="Your roster"
+                  hint="How built each owned character is, best first."
+                  delay="0.08s"
+                >
+                  <RosterView />
+                </Section>
+              )}
 
-            {hasRoster && (
+              {hasRoster && (
+                <Section
+                  n={3}
+                  id="step-teams"
+                  title="Endgame teams"
+                  hint="Two Abyss halves that share no character, matched from your roster."
+                  delay="0.09s"
+                >
+                  <TeamsView />
+                </Section>
+              )}
+
+              {hasRoster && (
+                <Section
+                  n={4}
+                  id="step-plan"
+                  title="Your plan"
+                  hint="An optimised build for all eight members, plus one farming list."
+                  delay="0.1s"
+                >
+                  <PlanView />
+                </Section>
+              )}
+
               <Section
-                n={4}
-                id="step-plan"
-                title="Your plan"
-                hint="An optimised build for all eight members, plus one farming list."
+                n={optimiseN}
+                id="step-optimise"
+                title="Optimise"
+                hint="Choose a character, weapon, and what to maximise."
                 delay="0.1s"
               >
-                <PlanView />
+                <OptimizePanel onRun={runCurrent} running={running} />
               </Section>
-            )}
 
-            <Section
-              n={optimiseN}
-              id="step-optimise"
-              title="Optimise"
-              hint="Choose a character, weapon, and what to maximise."
-              delay="0.1s"
-            >
-              <OptimizePanel onRun={runCurrent} running={running} />
-            </Section>
-
-            {result && request && (
-              <div id="results-section">
-                <Section n={optimiseN + 1} title="Results" delay="0s">
-                  <GapSection
-                    result={result}
-                    request={request}
-                    artifacts={artifacts}
-                    sharedArtifacts={sharedArtifacts}
-                  />
-                  <Results
-                    result={result}
-                    request={request}
-                    artifactsById={artifactsById}
-                  />
-                </Section>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+              {result && request && (
+                <div id="results-section">
+                  <Section n={optimiseN + 1} title="Results" delay="0s">
+                    <GapSection
+                      result={result}
+                      request={request}
+                      artifacts={artifacts}
+                      sharedArtifacts={sharedArtifacts}
+                    />
+                    <Results
+                      result={result}
+                      request={request}
+                      artifactsById={artifactsById}
+                    />
+                  </Section>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
 
       <footer className="mt-16 border-t border-white/5 pt-6 text-center text-xs text-muted/70">
         Built with branch-and-bound optimization in a Web Worker
