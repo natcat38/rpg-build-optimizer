@@ -52,15 +52,8 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 ## v2 (shipped)
 
 The [v2 Endgame Planner](../docs/superpowers/specs/2026-08-20-endgame-planner-spec.md)
-turned the single-character optimiser into an account-level planner. Its vocabulary is
-defined in the canonical glossary rather than duplicated here — see
-[`CONTEXT.md`](../CONTEXT.md) for:
-
-- **Damage profile** — a character's curated rotation, the input to the `avg_damage` objective.
-- **Comp archetype** — a 4-slot team recipe with ranked substitutes ([ADR-0017](../docs/adr/0017-curated-comp-database.md)).
-- **Team recommendation** — two Abyss halves sharing no character ([ADR-0018](../docs/adr/0018-mode-aware-team-recommendation.md)).
-- **Plan** — optimised builds for all eight members over one shared inventory ([ADR-0019](../docs/adr/0019-plan-output.md)).
-- **Shopping list** — the farming and investment advice derived from the plan's gaps.
-
-Team and meta data are hand-curated per patch; the refresh checklist is
+turned the single-character optimiser into an account-level planner: damage profiles,
+comp archetypes (ADR-0017), team recommendations (ADR-0018) and the Plan (ADR-0019).
+Those terms are defined once in [`CONTEXT.md`](../CONTEXT.md), not duplicated here.
+Team and meta data are hand-curated per patch — the refresh checklist is
 [`docs/runbooks/patch-refresh.md`](../docs/runbooks/patch-refresh.md).
