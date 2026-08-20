@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   statLabel,
   objectiveLabel,
+  objectiveHint,
   formatSetName,
   formatScore,
   SLOT_LABELS,
@@ -33,5 +34,15 @@ describe('labels', () => {
   it('has a label for every slot', () => {
     expect(SLOT_LABELS.flower).toBe('Flower');
     expect(Object.keys(SLOT_LABELS)).toHaveLength(5);
+  });
+});
+
+describe('objectiveHint', () => {
+  it('explains every objective in one sentence', () => {
+    expect(objectiveHint('avg_damage')).toMatch(/estimated damage/i);
+    expect(objectiveHint('crit_value')).toMatch(/crit value/i);
+    expect(objectiveHint('hp_pct')).toMatch(/HP/);
+    expect(objectiveHint('em')).toMatch(/Elemental Mastery/i);
+    expect(objectiveHint('def_pct')).toMatch(/DEF%/);
   });
 });

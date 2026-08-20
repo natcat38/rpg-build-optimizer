@@ -69,7 +69,7 @@ describe('BuildCard grade badge', () => {
   });
 });
 
-describe('avg_damage caveat', () => {
+describe('objective hint', () => {
   const req: OptimizeRequest = {
     characterKey: 'neuvillette',
     weaponKey: 'w',
@@ -80,14 +80,10 @@ describe('avg_damage caveat', () => {
 
   it('labels a damage figure as an estimate', () => {
     render(<BuildCard build={build} request={req} artifacts={artifacts} />);
-    expect(
-      screen.getByText(
-        'estimated — for comparing builds, not matching in-game numbers',
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/estimated damage/i)).toBeInTheDocument();
   });
 
-  it('omits the caveat for stat objectives', () => {
+  it('explains a stat objective instead of the damage caveat', () => {
     render(
       <BuildCard
         build={build}
@@ -95,7 +91,8 @@ describe('avg_damage caveat', () => {
         artifacts={artifacts}
       />,
     );
-    expect(screen.queryByText(/estimated —/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/estimated damage/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Crit Value = 2/)).toBeInTheDocument();
   });
 });
 
