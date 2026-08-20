@@ -71,4 +71,23 @@ describe('RosterView', () => {
     expect(screen.getByText('Talents')).toBeInTheDocument();
     expect(screen.getByText('Artifact quality')).toBeInTheDocument();
   });
+
+  it('shows only the top 12 characters until "Show all" is clicked', async () => {
+    const user = userEvent.setup();
+    useRoster
+      .getState()
+      .setRoster(
+        Object.fromEntries(
+          Array.from({ length: 15 }, (_, i) => [
+            `char_${i}`,
+            { level: 90 - i },
+          ]),
+        ),
+      );
+
+    render(<RosterView />);
+    expect(screen.getAllByRole('listitem')).toHaveLength(12);
+    await user.click(screen.getByRole('button', { name: /show all 15/i }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(15);
+  });
 });
