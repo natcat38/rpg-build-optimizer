@@ -27,6 +27,8 @@ tables underneath it are not.
 3. **Re-verify each curated table** against its `source` URL and the patch notes:
    - `src/meta/metaTargets.ts` — build recipes (set, main stats, ER floor, objective,
      stat targets, signature weapon).
+     Also re-read each guide's weapon ranking: a new banner weapon moves `weapon`, and
+     a new craftable or battle-pass weapon moves `weaponAccessible`.
      Re-check any character whose kit was reworked.
    - `src/teams/comps.ts` — comp archetypes. New Abyss blessings can change which
      archetypes are top-tier, so **re-rank the `tier` values**, not just the rosters.

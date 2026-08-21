@@ -87,10 +87,16 @@ export function isDefaultSelection(s: {
  * rule instead of by an effect in one component.
  *
  * Preference order: the weapon asked for, then the player's own equipped one,
- * then the curated meta pick, then the first legal weapon as a floor. Unlike
- * `canEquip` (deliberately permissive about keys the frozen snapshot doesn't
- * carry), a weapon the adapter can't resolve counts as illegal here — the
- * request is about to be run, and `baseStats` fails loud on an unknown key.
+ * then the curated meta BiS, then the curated accessible pick, then the first
+ * legal weapon as a floor. The accessible pick sits below the BiS because it
+ * answers a narrower question ("what if I don't have the signature?") that
+ * only the reader can ask; it's here so a character whose BiS the snapshot
+ * doesn't carry still lands on a curated weapon rather than an alphabetical
+ * one.
+ *
+ * Unlike `canEquip` (deliberately permissive about keys the frozen snapshot
+ * doesn't carry), a weapon the adapter can't resolve counts as illegal here —
+ * the request is about to be run, and `baseStats` fails loud on an unknown key.
  */
 function legalWeapon(characterKey: string, wanted: string): string {
   const character = genshinAdapter.character(characterKey);
@@ -104,8 +110,11 @@ function legalWeapon(characterKey: string, wanted: string): string {
   if (ok(wanted)) return wanted;
   const equipped = useRoster.getState().entries[characterKey]?.weaponKey;
   if (ok(equipped)) return equipped;
-  const meta = META_TARGETS[characterKey]?.weapon;
-  if (ok(meta)) return meta;
+  const meta = META_TARGETS[characterKey];
+  const bis = meta?.weapon;
+  if (ok(bis)) return bis;
+  const accessible = meta?.weaponAccessible;
+  if (ok(accessible)) return accessible;
   return genshinAdapter.weaponsOfType(character.weaponType)[0]?.key ?? wanted;
 }
 
