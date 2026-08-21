@@ -75,9 +75,11 @@ export function objectiveHint(o: Objective): string {
   }
 }
 
-/** Turn a PascalCase set key (e.g. "EmblemOfSeveredFate") into spaced words. */
+/** Turn a PascalCase set key (e.g. "EmblemOfSeveredFate") into spaced words.
+ *  Coerced first: inventories persisted before the import guards landed can
+ *  still hold a non-string setKey, and this runs during render. */
 export function formatSetName(setKey: string): string {
-  return setKey
+  return String(setKey ?? '')
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
     .trim();

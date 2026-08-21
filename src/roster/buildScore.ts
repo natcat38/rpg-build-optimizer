@@ -14,9 +14,9 @@
  * A missing field scores 0 for that component (an unimported talent triple is
  * indistinguishable from an unlevelled one — both mean "no evidence of work").
  */
-import type { Artifact, StatKey } from '../game/types';
+import type { Artifact } from '../game/types';
 import type { RosterEntry } from '../import/good';
-import { critValue } from '../optimizer/score';
+import { artifactContribution, objectiveValue } from '../optimizer/score';
 
 export interface BuildScoreComponent {
   label: string;
@@ -31,12 +31,10 @@ export interface BuildScore {
 
 export type Band = 'built' | 'partial' | 'unbuilt';
 
-/** Crit value a piece contributes on its own — main stat plus sub-stats. */
+/** Crit value a piece contributes on its own — main stat plus sub-stats. The
+ *  optimiser's own fold, so a roster score and a search score can't diverge. */
 function pieceCritValue(a: Artifact): number {
-  const of = (key: StatKey) =>
-    (a.mainStat === key ? a.mainStatValue : 0) +
-    a.subStats.reduce((sum, s) => sum + (s.key === key ? s.value : 0), 0);
-  return critValue(of('crit_rate'), of('crit_dmg'));
+  return objectiveValue(artifactContribution(a), 'crit_value');
 }
 
 /** 180 CV across five pieces is roughly a finished set — good enough as the

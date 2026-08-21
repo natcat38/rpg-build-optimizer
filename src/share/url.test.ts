@@ -179,6 +179,98 @@ describe('decodeBuild validation', () => {
     expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
   });
 
+  // A shared request is re-runnable, so its constraints reach the optimizer.
+  // meetsSetRequirement and setCeilingVector both read the union's members off
+  // `kind`, so a malformed setRequirement has to die at the trust boundary.
+  it.each([
+    ['an unknown setRequirement kind', { kind: '3pc', setKey: 'A' }],
+    ['a 4pc setRequirement with no setKey', { kind: '4pc' }],
+    [
+      'a 4pc setRequirement with a non-string setKey',
+      { kind: '4pc', setKey: 7 },
+    ],
+    ['a 2+2 setRequirement with one key', { kind: '2+2', setKeys: ['A'] }],
+    [
+      'a 2+2 setRequirement naming the same set twice',
+      {
+        kind: '2+2',
+        setKeys: ['A', 'A'],
+      },
+    ],
+    ['a setRequirement that is not an object', 'EmblemOfSeveredFate'],
+  ])('rejects %s', async (_label, setRequirement) => {
+    const bad = await encodeBuild({
+      request: { ...request, constraints: { setRequirement } as never },
+      build,
+      artifacts,
+    });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('accepts a well-formed 2+2 setRequirement', async () => {
+    const ok = await encodeBuild({
+      request: {
+        ...request,
+        constraints: { setRequirement: { kind: '2+2', setKeys: ['A', 'B'] } },
+      },
+      build,
+      artifacts,
+    });
+    expect(await decodeBuild(ok)).not.toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects an out-of-range critRatioTarget', async () => {
+    const bad = await encodeBuild({
+      request: { ...request, constraints: { critRatioTarget: 42 } },
+      build,
+      artifacts,
+    });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects mainStatLocks with an unknown slot or stat', async () => {
+    for (const locks of [{ helmet: 'crit_rate' }, { sands: 'bogus' }]) {
+      const bad = await encodeBuild({
+        request: { ...request, constraints: { mainStatLocks: locks } as never },
+        build,
+        artifacts,
+      });
+      expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+    }
+  });
+
+  it('rejects an artifact carrying duplicate sub-stat keys', async () => {
+    const bad = await encodeBuild({
+      request,
+      build,
+      artifacts: artifacts.map((a) =>
+        a.id === 'f'
+          ? {
+              ...a,
+              subStats: [
+                { key: 'crit_rate' as const, value: 3 },
+                { key: 'crit_rate' as const, value: 4 },
+              ],
+            }
+          : a,
+      ),
+    });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects an artifact whose sub-stat duplicates its main stat', async () => {
+    const bad = await encodeBuild({
+      request,
+      build,
+      artifacts: artifacts.map((a) =>
+        a.id === 'f'
+          ? { ...a, subStats: [{ key: 'hp' as const, value: 3 }] }
+          : a,
+      ),
+    });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
   it('rejects when artifactIds reference an artifact not carried in the snapshot', async () => {
     const bad = await encodeBuild({
       request,

@@ -81,10 +81,24 @@ function meetsSetRequirement(
   req: NonNullable<OptimizeConstraints['setRequirement']>,
 ): boolean {
   const c = countSets(build);
-  if (req.kind === '4pc') return (c[req.setKey] ?? 0) >= 4;
-  if (req.kind === '2pc') return (c[req.setKey] ?? 0) >= 2;
-  const [a, b] = req.setKeys;
-  return (c[a] ?? 0) >= 2 && (c[b] ?? 0) >= 2;
+  // Exhaustive over SetRequirement: an unknown `kind` (only reachable from a
+  // malformed persisted/shared payload that slipped the guards) must fail the
+  // constraint rather than fall through to the 2+2 destructure.
+  switch (req.kind) {
+    case '4pc':
+      return (c[req.setKey] ?? 0) >= 4;
+    case '2pc':
+      return (c[req.setKey] ?? 0) >= 2;
+    case '2+2': {
+      const [a, b] = req.setKeys;
+      return (c[a] ?? 0) >= 2 && (c[b] ?? 0) >= 2;
+    }
+    default: {
+      const _exhaustive: never = req;
+      void _exhaustive;
+      return false;
+    }
+  }
 }
 
 export function satisfies(
@@ -99,7 +113,11 @@ export function satisfies(
     return false;
   if (constraints.minStats) {
     for (const k of Object.keys(constraints.minStats) as StatKey[]) {
-      if ((t[k] ?? 0) < (constraints.minStats[k] ?? 0)) return false;
+      // A NaN total passes `<`, so a floor would be silently satisfied by a
+      // build whose stats are not even numbers — reject non-finite outright.
+      const have = t[k] ?? 0;
+      if (!Number.isFinite(have) || have < (constraints.minStats[k] ?? 0))
+        return false;
     }
   }
   if (constraints.mainStatLocks) {
@@ -117,9 +135,14 @@ export function satisfies(
  * conventional Genshin 1:2 CR:CD corresponds to target ≈ 0.333. Returns 0 when
  * target is undefined — it's set only via meta-target presets (see
  * metaTargets.ts), not a direct user-facing control.
+ *
+ * A target that is not a finite positive ratio (NaN from a malformed share
+ * link, 0, negative) also scores 0: a NaN penalty would poison every build's
+ * score and make the top-K ordering meaningless.
  */
 export function critRatioPenalty(t: StatVec, target?: number): number {
   if (target === undefined) return 0;
+  if (!Number.isFinite(target) || target <= 0) return 0;
   const cr = t.crit_rate ?? 0;
   const cd = t.crit_dmg ?? 0;
   if (cr + cd === 0) return 0;

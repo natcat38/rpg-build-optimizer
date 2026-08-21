@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { fetchUidArtifacts } from './uid';
+import type { Artifact } from '../game/types';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -58,6 +59,138 @@ describe('fetchUidArtifacts', () => {
     );
     const r = await fetchUidArtifacts('123');
     expect(Array.isArray(r)).toBe(true);
+  });
+
+  /** Stub a successful Enka response carrying `avatarInfoList`. */
+  function stubAvatars(avatarInfoList: unknown) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ avatarInfoList }),
+      }),
+    );
+  }
+
+  /** A well-formed showcase reliquary, with `flat` overridable per test. */
+  const reliquary = (flat: Record<string, unknown> = {}) => ({
+    avatarInfoList: [
+      {
+        equipList: [
+          {
+            reliquary: { level: 21 },
+            flat: {
+              itemType: 'ITEM_RELIQUARY',
+              equipType: 'EQUIP_BRACER',
+              rankLevel: 5,
+              setNameTextMapHash: 'x',
+              reliquaryMainstat: {
+                mainPropId: 'FIGHT_PROP_HP',
+                statValue: 4780,
+              },
+              reliquarySubstats: [
+                { appendPropId: 'FIGHT_PROP_CRITICAL', statValue: 7 },
+              ],
+              ...flat,
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  // Enka's payload is third-party JSON — a null or primitive at any level of
+  // the nesting must be skipped, not thrown on.
+  it.each([
+    ['a null avatar entry', [null]],
+    ['a primitive avatar entry', [5]],
+    ['a non-array equipList', [{ equipList: 'nope' }]],
+    ['a null equip entry', [{ equipList: [null] }]],
+    ['a null flat', [{ equipList: [{ flat: null }] }]],
+    [
+      'a non-array reliquarySubstats',
+      [
+        {
+          equipList: [
+            {
+              flat: {
+                itemType: 'ITEM_RELIQUARY',
+                equipType: 'EQUIP_BRACER',
+                reliquaryMainstat: { mainPropId: 'FIGHT_PROP_HP' },
+                reliquarySubstats: 'nope',
+              },
+            },
+          ],
+        },
+      ],
+    ],
+    [
+      'a null reliquarySubstats element',
+      [
+        {
+          equipList: [
+            {
+              flat: {
+                itemType: 'ITEM_RELIQUARY',
+                equipType: 'EQUIP_BRACER',
+                reliquaryMainstat: { mainPropId: 'FIGHT_PROP_HP' },
+                reliquarySubstats: [null],
+              },
+            },
+          ],
+        },
+      ],
+    ],
+  ])('tolerates %s instead of throwing', async (_label, avatars) => {
+    stubAvatars(avatars);
+    const r = await fetchUidArtifacts('123');
+    expect(Array.isArray(r)).toBe(true);
+  });
+
+  it('drops a sub-stat with a non-finite value, keeping the rest of the piece', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () =>
+          reliquary({
+            reliquarySubstats: [
+              { appendPropId: 'FIGHT_PROP_CRITICAL', statValue: 7 },
+              { appendPropId: 'FIGHT_PROP_CRITICAL_HURT', statValue: NaN },
+            ],
+          }),
+      }),
+    );
+    const r = await fetchUidArtifacts('123');
+    expect(r).toHaveLength(1);
+    expect((r as Artifact[])[0].subStats).toEqual([
+      { key: 'crit_rate', value: 7 },
+    ]);
+  });
+
+  it('drops a sub-stat duplicating the main stat and caps sub-stats at 4', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () =>
+          reliquary({
+            reliquarySubstats: [
+              { appendPropId: 'FIGHT_PROP_HP', statValue: 100 }, // == main stat
+              { appendPropId: 'FIGHT_PROP_CRITICAL', statValue: 7 },
+              { appendPropId: 'FIGHT_PROP_CRITICAL_HURT', statValue: 14 },
+              { appendPropId: 'FIGHT_PROP_ATTACK', statValue: 18 },
+              { appendPropId: 'FIGHT_PROP_DEFENSE', statValue: 21 },
+              { appendPropId: 'FIGHT_PROP_ELEMENT_MASTERY', statValue: 40 },
+            ],
+          }),
+      }),
+    );
+    const r = await fetchUidArtifacts('123');
+    expect(r).toHaveLength(1);
+    const subs = (r as Artifact[])[0].subStats;
+    expect(subs).toHaveLength(4);
+    expect(subs.map((s) => s.key)).not.toContain('hp');
   });
 
   it('returns NETWORK when fetch throws', async () => {

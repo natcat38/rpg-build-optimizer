@@ -9,6 +9,7 @@ import type {
   Artifact,
   BuildResult,
   OptimizeRequest,
+  StatKey,
   StatVec,
   SubStat,
 } from '../game/types';
@@ -19,6 +20,7 @@ import {
   ELEMENTS,
   SLOTS,
 } from '../game/types';
+import { validateArtifactDraft } from '../state/artifactValidation';
 
 export interface BuildSnapshot {
   request: OptimizeRequest;
@@ -158,7 +160,50 @@ function isArtifact(x: unknown): x is Artifact {
     (a.element === undefined ||
       ((ELEMENTS as readonly string[]).includes(a.element as string) &&
         a.slot === 'goblet' &&
-        a.mainStat === 'elemental_dmg'))
+        a.mainStat === 'elemental_dmg')) &&
+    // The same invariants manual entry and GOOD import enforce (level range,
+    // ≤4 sub-stats, none duplicating each other or the main stat) — a crafted
+    // link can carry exactly the corruption a hand-typed draft can.
+    validateArtifactDraft({
+      mainStat: a.mainStat as StatKey,
+      level: a.level as number,
+      subStats: a.subStats as SubStat[],
+    }) === null
+  );
+}
+
+/** The tiebreak is a cr/(cr+cd) ratio, so anything outside [0,1] is malformed
+ *  rather than merely extreme. */
+function isCritRatioTarget(x: unknown): boolean {
+  return (
+    x === undefined ||
+    (typeof x === 'number' && Number.isFinite(x) && x >= 0 && x <= 1)
+  );
+}
+
+function isSetRequirement(x: unknown): boolean {
+  if (typeof x !== 'object' || x === null) return false;
+  const r = x as Record<string, unknown>;
+  if (r.kind === '4pc' || r.kind === '2pc') return isShortString(r.setKey);
+  if (r.kind === '2+2') {
+    const keys = r.setKeys;
+    return (
+      Array.isArray(keys) &&
+      keys.length === 2 &&
+      keys.every(isShortString) &&
+      // Equal halves collapse to a plain 2pc, which the optimiser's ceiling
+      // and satisfies() would each read differently — reject rather than
+      // silently reinterpret.
+      keys[0] !== keys[1]
+    );
+  }
+  return false;
+}
+
+function isMainStatLocks(x: unknown): boolean {
+  if (typeof x !== 'object' || x === null) return false;
+  return Object.entries(x).every(
+    ([slot, stat]) => (SLOTS as string[]).includes(slot) && isStatKey(stat),
   );
 }
 
@@ -171,10 +216,18 @@ function isOptimizeRequest(x: unknown): x is OptimizeRequest {
     return false;
   if (!isObjective(r.objective)) return false;
   if (typeof r.constraints !== 'object' || r.constraints === null) return false;
-  // minStats, if present, reaches the optimizer should a shared request ever be
-  // re-run — validate its keys/values now rather than trust the link.
-  const minStats = (r.constraints as Record<string, unknown>).minStats;
-  if (minStats !== undefined && !isStatVec(minStats)) return false;
+  // The whole constraints object reaches the optimizer should a shared request
+  // ever be re-run — validate every field now rather than trust the link. A
+  // malformed setRequirement in particular would otherwise reach
+  // meetsSetRequirement and setCeilingVector, which each read the union's
+  // members without re-checking `kind`.
+  const c = r.constraints as Record<string, unknown>;
+  if (c.minStats !== undefined && !isStatVec(c.minStats)) return false;
+  if (!isCritRatioTarget(c.critRatioTarget)) return false;
+  if (c.setRequirement !== undefined && !isSetRequirement(c.setRequirement))
+    return false;
+  if (c.mainStatLocks !== undefined && !isMainStatLocks(c.mainStatLocks))
+    return false;
   return true;
 }
 

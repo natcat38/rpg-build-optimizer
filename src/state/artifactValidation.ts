@@ -18,5 +18,10 @@ export function validateArtifactDraft(d: ArtifactDraft): string | null {
   if (d.subStats.length > 4 || d.subStats.some((s) => s.key === d.mainStat)) {
     return 'An artifact can have at most 4 sub-stats, none matching the main stat.';
   }
+  // A stat can roll at most once per artifact. Beyond being wrong, repeats are
+  // rendered keyed by stat (BuildCard), so duplicates collide as React keys.
+  if (new Set(d.subStats.map((s) => s.key)).size !== d.subStats.length) {
+    return 'Each sub-stat can appear only once.';
+  }
   return null;
 }

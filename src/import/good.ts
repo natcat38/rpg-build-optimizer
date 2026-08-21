@@ -101,6 +101,14 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
     // same corruption a hand-typed draft can.
     if (validateArtifactDraft({ mainStat, level: raw.level, subStats }))
       continue;
+    // setKey is carried through unvalidated into set-bonus lookups and the DOM
+    // (formatSetName); bound it like the share path's isShortString does.
+    if (
+      typeof raw.setKey !== 'string' ||
+      raw.setKey.length === 0 ||
+      raw.setKey.length > 128
+    )
+      continue;
     out.push({
       id: crypto.randomUUID(),
       setKey: raw.setKey,

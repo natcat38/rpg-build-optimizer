@@ -46,6 +46,34 @@ describe('parseGOOD', () => {
     expect(arr[0].subStats).toEqual([]);
   });
 
+  it.each([
+    ['a non-string setKey', 42],
+    ['an empty setKey', ''],
+    ['an over-long setKey', 'x'.repeat(129)],
+  ])('skips an artifact with %s', (_label, setKey) => {
+    const out = parseGOOD({
+      format: 'GOOD',
+      artifacts: [{ ...goodFile.artifacts[0], setKey }],
+    });
+    expect(out).toEqual([]);
+  });
+
+  it('skips an artifact carrying duplicate substat keys', () => {
+    const out = parseGOOD({
+      format: 'GOOD',
+      artifacts: [
+        {
+          ...goodFile.artifacts[0],
+          substats: [
+            { key: 'critRate_', value: 3 },
+            { key: 'critRate_', value: 4 },
+          ],
+        },
+      ],
+    });
+    expect(out).toEqual([]);
+  });
+
   it('maps a GOOD artifact to our Artifact shape', () => {
     const out = parseGOOD(goodFile);
     expect(Array.isArray(out)).toBe(true);
