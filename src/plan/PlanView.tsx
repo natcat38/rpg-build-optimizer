@@ -9,11 +9,11 @@ import { useMemo, useState } from 'react';
 import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
 import { genshinAdapter } from '../game/genshin/adapter';
-import { computeBuildScore } from '../roster/buildScore';
+import { rosterBuildScores } from '../roster/buildScore';
 import { recommendAbyss } from '../teams/recommend';
-import { COMP_ARCHETYPES } from '../teams/comps';
+import { archetypeName } from '../teams/comps';
 import { META_TARGETS } from '../meta/metaTargets';
-import { objectiveLabel } from '../ui/labels';
+import { objectiveLabel } from '../labels';
 import { BuildCard } from '../components/BuildCard';
 import { optimize } from '../workers/optimizeClient';
 import { composePlan, type Plan, type RunOptimize } from './composePlan';
@@ -34,7 +34,7 @@ function MemberCard({
   buildLevel: OptimizeRequest['buildLevel'];
   artifactsById: Record<string, Artifact>;
 }) {
-  const name = genshinAdapter.character(characterKey)?.name ?? characterKey;
+  const name = genshinAdapter.characterName(characterKey);
   const request: OptimizeRequest = {
     characterKey,
     weaponKey,
@@ -102,12 +102,7 @@ export function PlanView({
   }, [artifacts]);
 
   const { teams, advice } = useMemo(() => {
-    const byLocation: Record<string, Artifact[]> = {};
-    for (const a of artifacts)
-      if (a.location) (byLocation[a.location] ??= []).push(a);
-    const scores: Record<string, number> = {};
-    for (const [key, entry] of Object.entries(entries))
-      scores[key] = computeBuildScore(entry, byLocation[key] ?? []).total;
+    const scores = rosterBuildScores(entries, artifacts);
     const rec = recommendAbyss(scores);
     return {
       teams: rec.teams,
@@ -187,13 +182,12 @@ export function PlanView({
       {plan && (
         <>
           {plan.teams.map((team, i) => {
-            const arch = COMP_ARCHETYPES.find((a) => a.id === team.archetypeId);
             const members = new Set(team.members.map((m) => m.characterKey));
             return (
               <section key={team.archetypeId} className="space-y-3">
                 <h3 className="font-display text-base font-bold text-paper">
                   {i === 0 ? 'First half' : 'Second half'} —{' '}
-                  {arch?.name ?? team.archetypeId}
+                  {archetypeName(team.archetypeId)}
                 </h3>
                 {plan.builds
                   .filter((b) => members.has(b.characterKey))

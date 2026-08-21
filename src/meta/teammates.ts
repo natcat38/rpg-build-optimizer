@@ -749,12 +749,3 @@ export const TEAMMATES: Record<
     source: 'https://keqingmains.com/q/clorinde-quickguide/',
   },
 };
-
-/** Resolve a teammate's display name, falling back to the raw key rather than
- *  crashing when the dataset doesn't have them (e.g. a very new character). */
-export function resolveTeammateName(
-  characterKey: string,
-  characters: { key: string; name: string }[],
-): string {
-  return characters.find((c) => c.key === characterKey)?.name ?? characterKey;
-}

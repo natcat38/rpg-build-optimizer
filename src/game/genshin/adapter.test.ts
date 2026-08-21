@@ -9,6 +9,25 @@ describe('genshinAdapter', () => {
   it('returns a non-empty character list', () => {
     expect(genshinAdapter.characters().length).toBeGreaterThan(0);
   });
+  it('resolves a key to its display name, falling back to the key itself', () => {
+    const first = genshinAdapter.characters()[0];
+    expect(genshinAdapter.characterName(first.key)).toBe(first.name);
+    // A character newer than the frozen snapshot must degrade, not crash.
+    expect(genshinAdapter.characterName('some_brand_new_character')).toBe(
+      'some_brand_new_character',
+    );
+  });
+  it('looks a weapon up by key, undefined when unknown', () => {
+    const first = genshinAdapter.weapons()[0];
+    expect(genshinAdapter.weapon(first.key)?.name).toBe(first.name);
+    expect(genshinAdapter.weapon('__nope__')).toBeUndefined();
+  });
+  it('hands out the same frozen dataset arrays on every call', () => {
+    expect(genshinAdapter.characters()).toBe(genshinAdapter.characters());
+    expect(genshinAdapter.weapons()).toBe(genshinAdapter.weapons());
+    expect(genshinAdapter.sets()).toBe(genshinAdapter.sets());
+    expect(Object.isFrozen(genshinAdapter.characters())).toBe(true);
+  });
   it('produces base stats with positive base ATK at level 90', () => {
     const chars = genshinAdapter.characters();
     const weapons = genshinAdapter.weapons();

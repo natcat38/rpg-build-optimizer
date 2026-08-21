@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { type ChangeEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { parseGOOD, parseGOODRoster } from '../import/good';
 import { fetchUidArtifacts, type UidError } from '../import/uid';
 import { mergeNew } from '../import/dedupe';
@@ -20,7 +19,8 @@ const UID_ERRORS: Record<UidError['error'], string> = {
 };
 
 export function ImportPanel() {
-  const { artifacts, addMany } = useInventory();
+  const artifacts = useInventory((s) => s.artifacts);
+  const addMany = useInventory((s) => s.addMany);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [uid, setUid] = useState('');

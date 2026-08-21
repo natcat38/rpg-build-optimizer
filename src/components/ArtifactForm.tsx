@@ -4,15 +4,21 @@ import { ELEMENTS, SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { validateArtifactDraft } from '../state/artifactValidation';
 import { useInventory } from '../state/inventory';
-import { formatSetName, SLOT_LABELS, statLabel } from '../ui/labels';
+import { formatSetName, SLOT_LABELS, statLabel } from '../labels';
 import { Combobox } from './ui/Combobox';
 
 const STAT_OPTIONS: StatKey[] = genshinAdapter.statKeys;
 
+// The set list is frozen for the app's lifetime (ADR-0002), so its options are
+// built once rather than on every render.
+const SET_OPTIONS = genshinAdapter
+  .sets()
+  .map((s) => ({ value: s.key, label: formatSetName(s.name) }));
+
 export function ArtifactForm() {
   const add = useInventory((s) => s.add);
   const [slot, setSlot] = useState<Slot>('sands');
-  const [setKey, setSetKey] = useState(genshinAdapter.sets()[0]?.key ?? '');
+  const [setKey, setSetKey] = useState(SET_OPTIONS[0]?.value ?? '');
   const [mainStat, setMainStat] = useState<StatKey>('atk_pct');
   const [element, setElement] = useState<Element | ''>('');
   const [level, setLevel] = useState(20);
@@ -51,9 +57,7 @@ export function ArtifactForm() {
         <div className="block">
           <span className="field-label">Set</span>
           <Combobox
-            options={genshinAdapter
-              .sets()
-              .map((s) => ({ value: s.key, label: formatSetName(s.name) }))}
+            options={SET_OPTIONS}
             value={setKey}
             onChange={setSetKey}
             label="Set"

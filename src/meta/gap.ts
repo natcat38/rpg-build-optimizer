@@ -9,6 +9,7 @@ import type { Artifact, BuildResult, Slot, StatKey } from '../game/types';
 import { SLOTS } from '../game/types';
 import type { MetaTarget } from './metaTargets';
 import {
+  formatCritRatio,
   formatSetName,
   objectiveLabel,
   SLOT_LABELS,
@@ -103,7 +104,7 @@ export function computeGapReport(
           const haveX = cr > 0 ? (cd / cr).toFixed(1) : '∞';
           const targetX =
             meta.critRatioTarget > 0
-              ? ((1 - meta.critRatioTarget) / meta.critRatioTarget).toFixed(1)
+              ? formatCritRatio(meta.critRatioTarget)
               : '∞';
           shortfalls.push(
             `Crit ratio is 1:${haveX} vs meta's ~1:${targetX} — ${ratio > meta.critRatioTarget ? 'favour CRIT DMG' : 'favour CRIT Rate'}.`,

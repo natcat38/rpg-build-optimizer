@@ -13,7 +13,10 @@ const FEATURED_SETS = [
 ];
 
 // Slot-legal main stats we populate so presets + the optimiser have real choices.
-const SLOT_MAINS: Record<Slot, StatKey[]> = {
+// Same name as the table in src/optimizer/benchmark.ts and deliberately not the
+// same contents: that one is the full in-game pool, this one is the curated
+// subset the sample inventory ships.
+const MAIN_BY_SLOT: Record<Slot, StatKey[]> = {
   flower: ['hp'],
   plume: ['atk'],
   sands: ['er_pct', 'em', 'atk_pct', 'hp_pct'],
@@ -54,7 +57,7 @@ function build(): Artifact[] {
   let n = 0;
   for (const setKey of FEATURED_SETS) {
     for (const slot of SLOTS) {
-      for (const mainStat of SLOT_MAINS[slot]) {
+      for (const mainStat of MAIN_BY_SLOT[slot]) {
         inv.push({
           id: `sample-${n++}`,
           setKey,

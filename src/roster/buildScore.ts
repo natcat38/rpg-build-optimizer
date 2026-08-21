@@ -74,9 +74,26 @@ export function band(total: number): Band {
   return 'unbuilt';
 }
 
-/** Band chip colours — one definition, shared by every view that shows a band. */
-export const BAND_STYLE: Record<Band, string> = {
-  built: 'border-jade/40 bg-jade/10 text-jade',
-  partial: 'border-flux/40 bg-flux/10 text-flux-bright',
-  unbuilt: 'border-muted/40 bg-muted/10 text-muted',
-};
+/** An inventory bucketed by the character each piece is equipped on. Loose
+ *  pieces (no `location`) belong to nobody and are dropped. */
+export function groupByLocation(
+  artifacts: Artifact[],
+): Record<string, Artifact[]> {
+  const byLocation: Record<string, Artifact[]> = {};
+  for (const a of artifacts)
+    if (a.location) (byLocation[a.location] ??= []).push(a);
+  return byLocation;
+}
+
+/** Build-score totals for a whole roster — the shape `recommendAbyss` and the
+ *  investment advice both take. */
+export function rosterBuildScores(
+  entries: Record<string, RosterEntry>,
+  artifacts: Artifact[],
+): Record<string, number> {
+  const byLocation = groupByLocation(artifacts);
+  const scores: Record<string, number> = {};
+  for (const [key, entry] of Object.entries(entries))
+    scores[key] = computeBuildScore(entry, byLocation[key] ?? []).total;
+  return scores;
+}

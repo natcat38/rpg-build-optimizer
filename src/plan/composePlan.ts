@@ -27,7 +27,7 @@ import type { RosterEntry } from '../import/good';
 import type { Role } from '../teams/types';
 import type { TeamInstance } from '../teams/recommend';
 import { META_TARGETS, metaToConstraints } from '../meta/metaTargets';
-import { computeGapReport, type GapReport } from '../meta/gap';
+import { computeGapReport } from '../meta/gap';
 import { getDamageProfile } from '../damage/profiles';
 import { genshinAdapter } from '../game/genshin/adapter';
 
@@ -35,7 +35,6 @@ export interface PlanMemberBuild {
   characterKey: string;
   objective: Objective;
   result: OptimizeResult;
-  gap: GapReport | null; // null when the character has no META_TARGETS entry
   /** Human-readable notes: pieces from this member's meta set that a
    *  higher-priority member already claimed. */
   conflicts: string[];
@@ -73,8 +72,6 @@ function orderedMembers(team: TeamInstance): TeamInstance['members'] {
     .map((x) => x.m);
 }
 
-const displayName = (key: string) => genshinAdapter.character(key)?.name ?? key;
-
 /** The set keys a character's meta recipe asks for, for conflict reporting. */
 function metaSetKeys(characterKey: string): string[] {
   const req = META_TARGETS[characterKey]?.setRequirement;
@@ -101,7 +98,7 @@ export async function composePlan(
   const seenFarming = new Set<string>();
 
   const addFarming = (characterKey: string, line: string) => {
-    const prefixed = `${displayName(characterKey)}: ${line}`;
+    const prefixed = `${genshinAdapter.characterName(characterKey)}: ${line}`;
     if (seenFarming.has(prefixed)) return;
     seenFarming.add(prefixed);
     farming.push(prefixed);
@@ -143,7 +140,6 @@ export async function composePlan(
         characterKey: key,
         objective,
         result: { status: 'infeasible', explored: 0, pruned: 0 },
-        gap: null,
         conflicts,
       });
       addFarming(
@@ -177,7 +173,7 @@ export async function composePlan(
       pool = pool.filter((a) => !ids.has(a.id));
     }
 
-    builds.push({ characterKey: key, objective, result, gap, conflicts });
+    builds.push({ characterKey: key, objective, result, conflicts });
     onProgress?.(builds.length, total);
   }
 

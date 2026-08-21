@@ -122,8 +122,8 @@ export async function fetchUidArtifacts(
         // NOTE: setNameTextMapHash is a NAME HASH, not a GOOD-format set key.
         // UID-imported artifacts will NOT match set-requirement constraints or set
         // bonuses reliably (their setKey is a numeric hash string). This is a known
-        // v1.0 limitation — GOOD file import is the reliable path. Do NOT build a
-        // hash→key mapping here; that is deferred to v1.1.
+        // limitation — GOOD file import is the reliable path. Do NOT build a
+        // hash→key mapping here; still deferred as of v2 (2026-08).
         setKey: String(flat.setNameTextMapHash),
         slot,
         rarity,

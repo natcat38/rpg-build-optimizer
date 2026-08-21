@@ -11,9 +11,9 @@
  *
  * Main-stat value tables are hardcoded constants (the artifact scaling tables are
  * fixed game constants; genshin-db does not expose a per-level/rarity main-stat table).
- * Linear fill between the known base (level 0) and max (level 20) values is used,
- * which is a known v1.0 approximation – real scaling is non-linear but endpoints
- * are correct. CONCERN: mid-level values may be slightly off; flagged in report.
+ * Linear fill between the known base (level 0) and max (level 20) values is used:
+ * endpoints are exact, mid-level values may be slightly off. Known approximation
+ * as of 2026-08, re-checked per patch via docs/runbooks/patch-refresh.md.
  */
 
 import * as fs from 'fs';
@@ -197,10 +197,11 @@ function parse2pc(text: string): Record<string, number> | null {
 //   em=28, er_pct=7.8, crit_rate=4.7, crit_dmg=9.3,
 //   elemental_dmg=7.0, physical_dmg=8.7, healing=5.4
 //
-// CONCERN (v1.0): real scaling uses a non-linear lookup table per rarity.
-// Linear fill produces correct values at +0 and +20; mid-level (e.g. +10) may
-// deviate by ~1-3% from in-game values. This is acceptable for v1.0 build
-// optimisation where final-level (+20) artifacts are the primary target.
+// Known approximation as of 2026-08 (re-checked per patch via
+// docs/runbooks/patch-refresh.md): real scaling uses a non-linear lookup table
+// per rarity. Linear fill produces correct values at +0 and +20; mid-level
+// (e.g. +10) may deviate by ~1-3% from in-game values. Acceptable while
+// final-level (+20) artifacts are the primary optimisation target.
 
 /** Build a linear 21-element array from base to max (indices 0..20). */
 function linearFill(base: number, max: number): number[] {

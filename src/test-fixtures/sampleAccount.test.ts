@@ -60,7 +60,6 @@ describe('sample account fixture', () => {
     expect(roster['raiden_shogun'].weaponKey).toBe('the_catch');
     expect(roster['xiangling'].weaponKey).toBe("dragon's_bane");
     expect(roster['xingqiu'].weaponLevel).toBe(90);
-    expect(roster['charlotte'].weaponRefinement).toBe(5);
 
     const arts = parseGOOD(loadSampleGOOD()) as Artifact[];
     // 17 of the 20 pieces are equipped; the other 3 sit loose in the inventory.

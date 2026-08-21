@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { instantiate, recommendAbyss } from './recommend';
+import { instantiate, recommendAbyss, type TeamInstance } from './recommend';
 import { COMP_ARCHETYPES } from './comps';
 import { loadSampleGOOD } from '../test-fixtures/sampleAccount';
 import { parseGOOD, parseGOODRoster } from '../import/good';
@@ -63,7 +63,6 @@ describe('instantiate', () => {
     expect('missing' in out!).toBe(false);
     const team = out as Exclude<typeof out, { missing: unknown } | null>;
     expect(team.members[0].characterKey).toBe('yoimiya');
-    expect(team.members[0].optionWeight).toBe(0.85);
   });
 
   it('never reuses a character across slots', () => {
@@ -110,7 +109,7 @@ describe('recommendAbyss', () => {
   it('returns nothing for an empty roster', () => {
     const out = recommendAbyss({});
     expect(out.teams).toBeNull();
-    expect(out.singles).toEqual([]);
+    expect(out.gaps).toEqual([]);
   });
 
   it('picks two fully disjoint halves', () => {
@@ -145,34 +144,13 @@ describe('recommendAbyss', () => {
     expect(gap?.bestPossibleScore).toBeGreaterThan(0);
   });
 
-  it('sorts singles by score, best first', () => {
-    const scores = {
-      neuvillette: 90,
-      furina: 90,
-      kaedehara_kazuha: 90,
-      charlotte: 90,
-    };
-    const out = recommendAbyss(scores);
-    const sorted = [...out.singles].sort((x, y) => y.score - x.score);
-    expect(out.singles.map((s) => s.archetypeId)).toEqual(
-      sorted.map((s) => s.archetypeId),
-    );
-  });
-
   it('rates the ideal lineup above the same team built on substitutes', () => {
-    const ideal = recommendAbyss({
-      hu_tao: 90,
-      xingqiu: 90,
-      yelan: 90,
-      zhongli: 90,
-    }).singles.find((s) => s.archetypeId === 'hu-tao-vape')!;
-    const subs = recommendAbyss({
-      hu_tao: 90,
-      yelan: 90,
-      xingqiu: 90,
-      layla: 90,
-    }).singles.find((s) => s.archetypeId === 'hu-tao-vape')!;
-    expect(ideal.score).toBeGreaterThan(subs.score);
+    const score = (scores: Record<string, number>) =>
+      (instantiate(arch('hu-tao-vape'), scores, new Set()) as TeamInstance)
+        .score;
+    const ideal = score({ hu_tao: 90, xingqiu: 90, yelan: 90, zhongli: 90 });
+    const subs = score({ hu_tao: 90, yelan: 90, xingqiu: 90, layla: 90 });
+    expect(ideal).toBeGreaterThan(subs);
     expect(arch('hu-tao-vape').tier).toBe(1);
   });
 });

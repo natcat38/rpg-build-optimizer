@@ -8,28 +8,24 @@ import { useMemo, useState, type KeyboardEvent } from 'react';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { computeBuildScore } from './buildScore';
 import { META_TARGETS } from '../meta/metaTargets';
-import { COMP_ARCHETYPES } from '../teams/comps';
-import { ROLE_LABELS } from '../teams/types';
+import { archetypesFor } from '../teams/comps';
 import { getDamageProfile } from '../damage/profiles';
 import {
+  formatScore,
   formatSetName,
   statLabel,
   objectiveHint,
   objectiveLabel,
+  ROLE_LABELS,
+  setRequirementLabel,
   SLOT_LABELS,
-} from '../ui/labels';
+} from '../labels';
 import type { RosterEntry } from '../import/good';
-import type { Artifact, SetRequirement, Slot, StatKey } from '../game/types';
+import type { Artifact, Slot, StatKey } from '../game/types';
 import { SLOTS } from '../game/types';
 
 const TABS = ['Overview', 'Gear', 'Recommended', 'Teams'] as const;
 type Tab = (typeof TABS)[number];
-
-function setReqLabel(r: SetRequirement): string {
-  if (r.kind === '4pc') return `4pc ${formatSetName(r.setKey)}`;
-  if (r.kind === '2pc') return `2pc ${formatSetName(r.setKey)}`;
-  return `2pc ${formatSetName(r.setKeys[0])} + 2pc ${formatSetName(r.setKeys[1])}`;
-}
 
 export function CharacterDetail({
   characterKey,
@@ -43,29 +39,15 @@ export function CharacterDetail({
 }) {
   const [tab, setTab] = useState<Tab>('Overview');
   const char = genshinAdapter.character(characterKey);
-  const names = useMemo(
-    () => new Map(genshinAdapter.characters().map((c) => [c.key, c.name])),
-    [],
-  );
-  const weaponName = useMemo(() => {
-    if (!entry.weaponKey) return undefined;
-    return genshinAdapter.weapons().find((w) => w.key === entry.weaponKey)
-      ?.name;
-  }, [entry.weaponKey]);
+  const weaponName = entry.weaponKey
+    ? genshinAdapter.weapon(entry.weaponKey)?.name
+    : undefined;
   const score = useMemo(
     () => computeBuildScore(entry, artifacts),
     [entry, artifacts],
   );
   const meta = META_TARGETS[characterKey];
-  const comps = useMemo(
-    () =>
-      COMP_ARCHETYPES.filter((a) =>
-        a.slots.some((s) =>
-          s.options.some((o) => o.characterKey === characterKey),
-        ),
-      ),
-    [characterKey],
-  );
+  const comps = archetypesFor(characterKey);
 
   function onKeys(e: KeyboardEvent) {
     const i = TABS.indexOf(tab);
@@ -114,7 +96,7 @@ export function CharacterDetail({
               {entry.constellation != null && ` · C${entry.constellation}`}
             </p>
             <p className="font-mono text-3xl font-bold text-accent-bright">
-              {score.total.toFixed(0)}
+              {formatScore(score.total, 0)}
               <span className="text-base text-muted"> / 100</span>
             </p>
             <dl className="grid gap-1 text-xs">
@@ -122,7 +104,7 @@ export function CharacterDetail({
                 <div key={c.label} className="flex justify-between gap-4">
                   <dt className="text-muted">{c.label}</dt>
                   <dd className="font-mono text-paper">
-                    {c.points.toFixed(1)} / {c.max}
+                    {formatScore(c.points, 1)} / {c.max}
                   </dd>
                 </div>
               ))}
@@ -161,7 +143,7 @@ export function CharacterDetail({
             <>
               <p>
                 <span className="text-muted">Set:</span>{' '}
-                {setReqLabel(meta.setRequirement)}
+                {setRequirementLabel(meta.setRequirement)}
               </p>
               {Object.entries(meta.mains).map(([slot, stat]) => (
                 <p key={slot}>
@@ -218,7 +200,7 @@ export function CharacterDetail({
                     {a.slots
                       .map((s) => {
                         const k = s.options[0]?.characterKey;
-                        return `${ROLE_LABELS[s.role]}: ${k ? (names.get(k) ?? k) : '—'}`;
+                        return `${ROLE_LABELS[s.role]}: ${k ? genshinAdapter.characterName(k) : '—'}`;
                       })
                       .join(' · ')}
                   </p>

@@ -59,7 +59,6 @@ const member = (
 ) => ({
   characterKey,
   role,
-  optionWeight: 1,
   buildScore: 90,
 });
 

@@ -24,7 +24,7 @@ import { optimize } from '../workers/optimizeClient';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
 import { formatReduction } from '../optimizer/benchmark';
 import { scrollToId } from '../ui/scroll';
-import { objectiveHint } from '../ui/labels';
+import { formatScore, objectiveHint } from '../labels';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 
 function Section({
@@ -101,7 +101,7 @@ function SolvedHero({ hero }: { hero: HeroExample }) {
             Crit Value, one real solve
           </p>
           <p className="font-mono text-5xl font-bold leading-none text-accent-bright">
-            {hero.build.objectiveValue.toFixed(1)}
+            {formatScore(hero.build.objectiveValue, 1)}
           </p>
           <p className="mt-1 max-w-xs text-[0.7rem] text-muted">
             {objectiveHint('crit_value')}
@@ -218,6 +218,9 @@ export function App() {
     const token = ++runToken.current;
     setRunning(true);
     setOptimizeError(false);
+    // A fresh run replaces whatever Results was showing, so the banner about
+    // the shared build that couldn't be read no longer describes anything.
+    setSharedError(false);
     try {
       const r = await optimize(req, inv);
       if (runToken.current !== token) return; // superseded by a newer run

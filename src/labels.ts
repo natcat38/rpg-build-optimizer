@@ -1,4 +1,6 @@
-import type { Objective, Slot, StatKey } from './game/types';
+import type { Objective, SetRequirement, Slot, StatKey } from './game/types';
+import type { Band } from './roster/buildScore';
+import type { Role } from './teams/types';
 
 /** Human-friendly display names for stat keys. */
 export const STAT_LABELS: Record<StatKey, string> = {
@@ -30,6 +32,33 @@ export const SLOT_LABELS: Record<Slot, string> = {
   sands: 'Sands',
   goblet: 'Goblet',
   circlet: 'Circlet',
+};
+
+/** A small glyph per slot for compact, scannable build lists. */
+export const SLOT_GLYPH: Record<Slot, string> = {
+  flower: '✿',
+  plume: '⟁',
+  sands: '⧖',
+  goblet: '♟',
+  circlet: '◆',
+};
+
+/** Display names for team roles — user-visible copy lives here, not next to the
+ *  `Role` union it labels. */
+export const ROLE_LABELS: Record<Role, string> = {
+  'on-field-dps': 'On-field DPS',
+  'off-field-dps': 'Off-field DPS',
+  buffer: 'Buffer',
+  sustain: 'Sustain',
+  battery: 'Battery',
+  applicator: 'Applicator',
+};
+
+/** Band chip colours — one definition, shared by every view that shows a band. */
+export const BAND_STYLE: Record<Band, string> = {
+  built: 'border-jade/40 bg-jade/10 text-jade',
+  partial: 'border-flux/40 bg-flux/10 text-flux-bright',
+  unbuilt: 'border-muted/40 bg-muted/10 text-muted',
 };
 
 export function statLabel(key: StatKey): string {
@@ -93,4 +122,17 @@ export function formatSetName(setKey: string): string {
  */
 export function formatScore(n: number, digits = 1): string {
   return Number.isFinite(n) ? n.toFixed(digits) : '—';
+}
+
+/** Crit-ratio targets are stored as CRIT Rate's share of CR+CD; players read
+ *  them as "1:N". Callers must exclude a zero target — 1:∞ is theirs to word. */
+export function formatCritRatio(target: number): string {
+  return ((1 - target) / target).toFixed(1);
+}
+
+/** The one rendering of a meta recipe's set requirement. */
+export function setRequirementLabel(r: SetRequirement): string {
+  if (r.kind === '2+2')
+    return `2pc ${formatSetName(r.setKeys[0])} + 2pc ${formatSetName(r.setKeys[1])}`;
+  return `${r.kind} ${formatSetName(r.setKey)}`;
 }

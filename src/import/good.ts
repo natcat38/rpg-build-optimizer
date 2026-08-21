@@ -138,7 +138,6 @@ export interface RosterEntry {
   talents?: { auto: number; skill: number; burst: number };
   weaponKey?: string;
   weaponLevel?: number;
-  weaponRefinement?: number;
 }
 
 /** Range-guarded integer read: out-of-range or non-integer values are dropped
@@ -212,11 +211,10 @@ export function parseGOODRoster(json: unknown): Record<string, RosterEntry> {
   }
   for (const raw of rawWeapons) {
     if (typeof raw !== 'object' || raw === null) continue;
-    const { key, location, level, refinement } = raw as {
+    const { key, location, level } = raw as {
       key?: unknown;
       location?: unknown;
       level?: unknown;
-      refinement?: unknown;
     };
     if (typeof key !== 'string') continue;
     const ourChar = resolveLocation(location);
@@ -228,8 +226,6 @@ export function parseGOODRoster(json: unknown): Record<string, RosterEntry> {
     entry.weaponKey = ourWeapon;
     const wl = intInRange(level, 1, 90);
     if (wl !== undefined) entry.weaponLevel = wl;
-    const ref = intInRange(refinement, 1, 5);
-    if (ref !== undefined) entry.weaponRefinement = ref;
   }
   return entries;
 }

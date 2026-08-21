@@ -7,11 +7,11 @@ import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest } from '../state/optimizeRequest';
 import { genshinAdapter } from '../game/genshin/adapter';
-import { computeBuildScore, band, BAND_STYLE } from './buildScore';
+import { computeBuildScore, band, groupByLocation } from './buildScore';
 import { AppDrawer } from '../components/ui/Drawer';
 import { CharacterDetail } from './CharacterDetail';
 import { scrollToId } from '../ui/scroll';
-import type { Artifact } from '../game/types';
+import { BAND_STYLE, formatScore } from '../labels';
 
 function Row({
   characterKey,
@@ -46,7 +46,7 @@ function Row({
         </div>
         <div className="flex-none">
           <span className="font-mono text-lg font-bold text-accent-bright">
-            {total.toFixed(0)}
+            {formatScore(total, 0)}
           </span>
           {/* The number is the accessible value; this is the same figure again. */}
           <div
@@ -82,30 +82,23 @@ export function RosterView() {
   const [showAll, setShowAll] = useState(false);
   const [openKey, setOpenKey] = useState<string | null>(null);
 
-  const byLocation = useMemo(() => {
-    const m: Record<string, Artifact[]> = {};
-    for (const a of artifacts) if (a.location) (m[a.location] ??= []).push(a);
-    return m;
-  }, [artifacts]);
+  const byLocation = useMemo(() => groupByLocation(artifacts), [artifacts]);
 
-  const rows = useMemo(() => {
-    const chars = new Map(genshinAdapter.characters().map((c) => [c.key, c]));
-    const weapons = new Map(genshinAdapter.weapons().map((w) => [w.key, w]));
-    return Object.entries(entries)
-      .map(([key, entry]) => {
-        const score = computeBuildScore(entry, byLocation[key] ?? []);
-        return {
+  const rows = useMemo(
+    () =>
+      Object.entries(entries)
+        .map(([key, entry]) => ({
           characterKey: key,
-          name: chars.get(key)?.name ?? key,
-          element: chars.get(key)?.element,
+          name: genshinAdapter.characterName(key),
+          element: genshinAdapter.character(key)?.element,
           weaponName: entry.weaponKey
-            ? weapons.get(entry.weaponKey)?.name
+            ? genshinAdapter.weapon(entry.weaponKey)?.name
             : undefined,
-          total: score.total,
-        };
-      })
-      .sort((a, b) => b.total - a.total);
-  }, [entries, byLocation]);
+          total: computeBuildScore(entry, byLocation[key] ?? []).total,
+        }))
+        .sort((a, b) => b.total - a.total),
+    [entries, byLocation],
+  );
 
   if (rows.length === 0) {
     return (

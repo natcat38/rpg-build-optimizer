@@ -7,15 +7,14 @@ import { useMemo } from 'react';
 import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
 import { genshinAdapter, PATCH } from '../game/genshin/adapter';
-import { computeBuildScore, band, BAND_STYLE } from '../roster/buildScore';
-import { COMP_ARCHETYPES } from './comps';
+import { band, rosterBuildScores } from '../roster/buildScore';
+import { getArchetype, archetypeName } from './comps';
 import {
   recommendAbyss,
   type TeamInstance,
   type ArchetypeGap,
 } from './recommend';
-import type { Artifact } from '../game/types';
-import { ROLE_LABELS } from './types';
+import { BAND_STYLE, formatScore, ROLE_LABELS } from '../labels';
 import type { EndgameMode } from './types';
 
 const MODES: { id: EndgameMode; label: string; live: boolean }[] = [
@@ -24,23 +23,8 @@ const MODES: { id: EndgameMode; label: string; live: boolean }[] = [
   { id: 'stygian', label: 'Stygian Onslaught', live: false },
 ];
 
-function useCharacterNames() {
-  return useMemo(
-    () => new Map(genshinAdapter.characters().map((c) => [c.key, c.name])),
-    [],
-  );
-}
-
-function TeamCard({
-  title,
-  team,
-  names,
-}: {
-  title: string;
-  team: TeamInstance;
-  names: Map<string, string>;
-}) {
-  const arch = COMP_ARCHETYPES.find((a) => a.id === team.archetypeId);
+function TeamCard({ title, team }: { title: string; team: TeamInstance }) {
+  const arch = getArchetype(team.archetypeId);
   return (
     <div
       data-testid="team-card"
@@ -50,7 +34,7 @@ function TeamCard({
         {title}
       </p>
       <h3 className="font-display text-base font-bold text-paper">
-        {arch?.name ?? team.archetypeId}
+        {archetypeName(team.archetypeId)}
       </h3>
       {arch && <p className="mt-1 text-xs text-muted">{arch.notes}</p>}
       <ul className="mt-3 space-y-2">
@@ -63,11 +47,11 @@ function TeamCard({
               className="flex items-center gap-3 text-sm"
             >
               <span className="min-w-0 flex-1 truncate font-semibold text-paper">
-                {names.get(m.characterKey) ?? m.characterKey}
+                {genshinAdapter.characterName(m.characterKey)}
               </span>
               <span className="text-xs text-muted">{ROLE_LABELS[m.role]}</span>
               <span className="font-mono text-xs text-muted">
-                {m.buildScore.toFixed(0)}
+                {formatScore(m.buildScore, 0)}
               </span>
               <span
                 className={`rounded-lg border px-2 py-0.5 text-[0.7rem] font-semibold ${BAND_STYLE[b]}`}
@@ -82,13 +66,7 @@ function TeamCard({
   );
 }
 
-function GapList({
-  gaps,
-  names,
-}: {
-  gaps: ArchetypeGap[];
-  names: Map<string, string>;
-}) {
+function GapList({ gaps }: { gaps: ArchetypeGap[] }) {
   if (gaps.length === 0) return null;
   return (
     <div className="border-t border-white/5 pt-4">
@@ -96,21 +74,18 @@ function GapList({
         One character short
       </p>
       <ul className="mt-2 space-y-1 text-sm">
-        {gaps.slice(0, 5).map((g) => {
-          const arch = COMP_ARCHETYPES.find((a) => a.id === g.archetypeId);
-          return (
-            <li key={g.archetypeId} className="text-muted">
-              <span className="font-semibold text-paper">
-                {arch?.name ?? g.archetypeId}
-              </span>{' '}
-              is missing its {ROLE_LABELS[g.missingRole].toLowerCase()} —{' '}
-              {g.candidates
-                .map((c) => names.get(c) ?? c)
-                .slice(0, 3)
-                .join(', ')}
-            </li>
-          );
-        })}
+        {gaps.slice(0, 5).map((g) => (
+          <li key={g.archetypeId} className="text-muted">
+            <span className="font-semibold text-paper">
+              {archetypeName(g.archetypeId)}
+            </span>{' '}
+            is missing its {ROLE_LABELS[g.missingRole].toLowerCase()} —{' '}
+            {g.candidates
+              .slice(0, 3)
+              .map((c) => genshinAdapter.characterName(c))
+              .join(', ')}
+          </li>
+        ))}
       </ul>
     </div>
   );
@@ -119,17 +94,11 @@ function GapList({
 export function TeamsView() {
   const entries = useRoster((s) => s.entries);
   const artifacts = useInventory((s) => s.artifacts);
-  const names = useCharacterNames();
 
-  const rec = useMemo(() => {
-    const byLocation: Record<string, Artifact[]> = {};
-    for (const a of artifacts)
-      if (a.location) (byLocation[a.location] ??= []).push(a);
-    const scores: Record<string, number> = {};
-    for (const [key, entry] of Object.entries(entries))
-      scores[key] = computeBuildScore(entry, byLocation[key] ?? []).total;
-    return recommendAbyss(scores);
-  }, [entries, artifacts]);
+  const rec = useMemo(
+    () => recommendAbyss(rosterBuildScores(entries, artifacts)),
+    [entries, artifacts],
+  );
 
   return (
     <div className="panel space-y-4">
@@ -167,8 +136,8 @@ export function TeamsView() {
 
       {rec.teams ? (
         <div className="grid gap-3 sm:grid-cols-2">
-          <TeamCard title="First half" team={rec.teams[0]} names={names} />
-          <TeamCard title="Second half" team={rec.teams[1]} names={names} />
+          <TeamCard title="First half" team={rec.teams[0]} />
+          <TeamCard title="Second half" team={rec.teams[1]} />
         </div>
       ) : (
         <p className="text-sm text-muted">
@@ -178,7 +147,7 @@ export function TeamsView() {
         </p>
       )}
 
-      <GapList gaps={rec.gaps} names={names} />
+      <GapList gaps={rec.gaps} />
     </div>
   );
 }

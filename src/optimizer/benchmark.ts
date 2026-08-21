@@ -31,7 +31,9 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-/** Standard Genshin main-stat pools per slot. */
+/** The full in-game main-stat pool per slot. Same name as the table in
+ *  src/sample/sampleInventory.ts and deliberately not the same contents: that
+ *  one is a curated subset, this one is exhaustive. */
 const MAIN_BY_SLOT: Record<Slot, StatKey[]> = {
   flower: ['hp'],
   plume: ['atk'],

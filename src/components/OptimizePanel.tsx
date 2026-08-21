@@ -6,23 +6,20 @@ import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
 import { useOptimizeRequest } from '../state/optimizeRequest';
 import {
-  formatSetName,
+  formatCritRatio,
   isPctStat,
   objectiveLabel,
+  setRequirementLabel,
   SLOT_LABELS,
   statLabel,
-} from '../ui/labels';
+} from '../labels';
 import { Combobox } from './ui/Combobox';
 import {
   META_TARGETS,
   metaToConstraints,
   type MetaTarget,
 } from '../meta/metaTargets';
-import {
-  TEAMMATES,
-  resolveTeammateName,
-  type TeammateRec,
-} from '../meta/teammates';
+import { TEAMMATES, type TeammateRec } from '../meta/teammates';
 import { getDamageProfile } from '../damage/profiles';
 
 const OBJECTIVES: Objective[] = [
@@ -33,13 +30,6 @@ const OBJECTIVES: Objective[] = [
   'er_pct',
   'elemental_dmg',
 ];
-
-function setRequirementLabel(meta: MetaTarget): string {
-  const req = meta.setRequirement;
-  if (req.kind === '2+2')
-    return req.setKeys.map((k) => `2pc ${formatSetName(k)}`).join(' + ');
-  return `${req.kind} ${formatSetName(req.setKey)}`;
-}
 
 /** Shared shell for the two read-only meta-recipe panels below (recipe
  *  summary, teammate recs) — same border/background/text treatment and a
@@ -72,7 +62,7 @@ function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
     <InfoPanel href={meta.source}>
       <p>
         <span className="font-semibold text-paper">
-          {setRequirementLabel(meta)}
+          {setRequirementLabel(meta.setRequirement)}
         </span>
         {mainsEntries.length > 0 && (
           <>
@@ -88,7 +78,7 @@ function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
         {meta.critRatioTarget != null && meta.critRatioTarget > 0 && (
           <span>
             CR:CD ≈ 1:
-            {((1 - meta.critRatioTarget) / meta.critRatioTarget).toFixed(1)}
+            {formatCritRatio(meta.critRatioTarget)}
           </span>
         )}
         {meta.statTargets &&
@@ -105,15 +95,11 @@ function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
   );
 }
 
-/** Curated "works well with" list (ADR-0007-style: static, sourced). Falls
- *  back to the raw character key rather than crashing if a teammate isn't
- *  in the frozen dataset. */
+/** Curated "works well with" list (ADR-0007-style: static, sourced). */
 function TeammatesSummary({
   entry,
-  characters,
 }: {
   entry: { recs: TeammateRec[]; source: string };
-  characters: { key: string; name: string }[];
 }) {
   return (
     <InfoPanel href={entry.source}>
@@ -122,7 +108,7 @@ function TeammatesSummary({
         {entry.recs.map((r) => (
           <li key={r.characterKey}>
             <span className="font-medium text-paper">
-              {resolveTeammateName(r.characterKey, characters)}
+              {genshinAdapter.characterName(r.characterKey)}
             </span>{' '}
             <span className="text-muted">({r.role})</span> — {r.why}
           </li>
@@ -141,8 +127,10 @@ export function OptimizePanel({
 }) {
   const artifacts = useInventory((s) => s.artifacts);
   const rosterEntries = useRoster((s) => s.entries);
-  const chars = useMemo(() => genshinAdapter.characters(), []);
-  const weapons = useMemo(() => genshinAdapter.weapons(), []);
+  // Both are the adapter's memoised module-level arrays, stable for the app's
+  // lifetime — safe as `useMemo` dependencies without wrapping.
+  const chars = genshinAdapter.characters();
+  const weapons = genshinAdapter.weapons();
 
   const characterKey = useOptimizeRequest((s) => s.characterKey);
   const weaponKey = useOptimizeRequest((s) => s.weaponKey);
@@ -294,7 +282,7 @@ export function OptimizePanel({
       </div>
 
       {meta && <MetaTargetSummary meta={meta} />}
-      {teammates && <TeammatesSummary entry={teammates} characters={chars} />}
+      {teammates && <TeammatesSummary entry={teammates} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
         {hint ? (

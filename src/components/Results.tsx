@@ -19,7 +19,21 @@ export function Results({
   artifactsById: Record<string, Artifact>;
 }) {
   const [copied, setCopied] = useState<number | null>(null);
-  const [copyFailed, setCopyFailed] = useState(false);
+  // `url` is null when encoding failed and there is no link to hand over.
+  const [shareFailed, setShareFailed] = useState<{
+    index: number;
+    url: string | null;
+  } | null>(null);
+
+  // A new run replaces every card, so a confirmation pinned to the old card
+  // index would sit under an unrelated build. Reset during render rather than
+  // in an effect — React re-runs this pass before painting the stale cue.
+  const [shownResult, setShownResult] = useState(result);
+  if (result !== shownResult) {
+    setShownResult(result);
+    setCopied(null);
+    setShareFailed(null);
+  }
 
   if (result.status === 'infeasible') {
     return (
@@ -38,9 +52,7 @@ export function Results({
     );
 
   const total = result.explored + result.pruned;
-  const rawPct = total > 0 ? (result.explored / total) * 100 : 100;
-  // A non-finite width is invalid CSS and silently drops the bar.
-  const exploredPct = Number.isFinite(rawPct) ? rawPct : 0;
+  const exploredPct = total > 0 ? (result.explored / total) * 100 : 100;
 
   return (
     <div className="space-y-4">
@@ -83,45 +95,69 @@ export function Results({
               artifacts={arts}
               rank={i + 1}
               onShare={async () => {
+                let url: string;
                 try {
                   const param = await encodeBuild({
                     request,
                     build: b,
                     artifacts: arts,
                   });
-                  const url = `${location.origin}${location.pathname}?b=${param}`;
+                  url = `${location.origin}${location.pathname}?b=${param}`;
+                } catch {
+                  // encodeBuild (CompressionStream) rejected — there is no link
+                  // to offer, so say that rather than showing an empty field.
+                  setCopied(null);
+                  setShareFailed({ index: i, url: null });
+                  return;
+                }
+                try {
                   await navigator.clipboard.writeText(url);
-                  setCopyFailed(false);
+                  setShareFailed(null);
                   setCopied(i);
                 } catch {
-                  // encodeBuild (CompressionStream) or clipboard can reject —
-                  // both now surface as the copy-failed cue instead of an
-                  // unhandled rejection.
+                  // The clipboard can reject (permission, insecure context).
+                  // The link was never in the address bar, so hand it over to
+                  // be copied by hand instead of pointing there.
                   setCopied(null);
-                  setCopyFailed(true);
+                  setShareFailed({ index: i, url });
                 }
               }}
             />
+            {copied === i && (
+              <p
+                role="status"
+                className="mt-2 rounded-lg border border-jade/25 bg-jade/10 px-3 py-2 text-sm text-jade"
+              >
+                Share link copied.
+              </p>
+            )}
+            {shareFailed?.index === i && (
+              <div
+                role="alert"
+                className="mt-2 rounded-lg border border-rose/30 bg-rose/10 px-3 py-2 text-sm text-rose"
+              >
+                {shareFailed.url ? (
+                  <>
+                    <p>Couldn&apos;t copy automatically — copy it from here:</p>
+                    <input
+                      className="field mt-2"
+                      readOnly
+                      value={shareFailed.url}
+                      aria-label="Share link"
+                      onFocus={(e) => e.currentTarget.select()}
+                    />
+                  </>
+                ) : (
+                  <p>
+                    Couldn&apos;t build a share link in this browser — try a
+                    different one.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         );
       })}
-      {copied !== null && (
-        <p
-          role="status"
-          className="rounded-lg border border-jade/25 bg-jade/10 px-3 py-2 text-sm text-jade"
-        >
-          Share link copied.
-        </p>
-      )}
-      {copyFailed && (
-        <p
-          role="alert"
-          className="rounded-lg border border-rose/30 bg-rose/10 px-3 py-2 text-sm text-rose"
-        >
-          Couldn&apos;t copy automatically — copy the link from your
-          browser&apos;s address bar.
-        </p>
-      )}
     </div>
   );
 }

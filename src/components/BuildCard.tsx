@@ -15,7 +15,7 @@ import {
   SLOT_LABELS,
   statLabel,
   objectiveHint,
-} from '../ui/labels';
+} from '../labels';
 import { META_TARGETS } from '../meta/metaTargets';
 import { gradeBuild, type Grade } from '../meta/grade';
 
@@ -143,7 +143,9 @@ export function BuildCard({
           <div key={k} className="flex items-baseline justify-between gap-2">
             <dt className="text-muted">{statLabel(k)}</dt>
             <dd className="font-mono tabular-nums text-paper">
-              {formatScore(build.totals[k] ?? 0)}
+              {/* Flat stats (EM, ATK) are whole numbers in-game — a trailing
+                  ".0" on them reads as false precision. */}
+              {formatScore(build.totals[k] ?? 0, isPctStat(k) ? 1 : 0)}
             </dd>
           </div>
         ))}
