@@ -114,7 +114,7 @@ describe('CharacterDetail', () => {
     );
     await user.click(screen.getByRole('tab', { name: /recommended/i }));
     expect(screen.getByRole('tabpanel')).toHaveTextContent(
-      /BlizzardStrayer 4pc: Assumes the target is Frozen/,
+      /Blizzard Strayer 4pc: Assumes the target is Frozen/,
     );
   });
 

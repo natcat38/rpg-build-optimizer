@@ -270,7 +270,7 @@ describe('BuildCard — what drives the build', () => {
     render(<BuildCard build={explained} request={req} artifacts={four} />);
     await user.click(screen.getByText(/What’s driving this build/i));
     expect(
-      screen.getByText(/BlizzardStrayer 4pc: Assumes the target is Frozen/),
+      screen.getByText(/Blizzard Strayer 4pc: Assumes the target is Frozen/),
     ).toBeVisible();
   });
 
