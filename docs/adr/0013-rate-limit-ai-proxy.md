@@ -56,6 +56,15 @@ one-function-at-a-time proxy model) via `@upstash/ratelimit` +
 - The spend cap in the Anthropic console remains the hard backstop — the
   rate limit bounds request _rate_, not worst-case total spend.
 
+## Amended 2026-08-21
+
+A security pass tightened two points above: the graceful no-op now applies only
+outside production (`VERCEL_ENV === 'production'` with the Upstash env vars
+unset fails **closed**, since a dark limiter there means the paid endpoint has
+no cost ceiling), and a second sliding window keyed on the fixed `'global'`
+bucket (500 requests / 1 h) runs alongside the per-IP one, so worst-case spend
+is bounded independent of how many IPs an attacker controls.
+
 ## Rejected alternatives
 
 - **In-memory counter** — serverless functions are stateless and

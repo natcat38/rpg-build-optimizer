@@ -18,6 +18,25 @@ function clientIp(req: VercelRequest): string {
   return first?.split(',')[0]?.trim() || 'unknown';
 }
 
+function isAllowedOrigin(req: VercelRequest): boolean {
+  // An absent Origin is a non-browser client, which the rate limit and global
+  // budget cap already bound; a present-but-foreign one is a cross-site caller
+  // spending this endpoint's budget, and has no legitimate case.
+  const origin = req.headers.origin;
+  if (typeof origin !== 'string' || !origin) return true;
+  return [
+    process.env.PUBLIC_ORIGIN,
+    'http://localhost:5199',
+    'http://localhost:5173',
+  ].includes(origin);
+}
+
+// Declared body cap, for runtimes that read it. The content-length check below
+// is only a cheap pre-parse exit — it reads as 0 when the header is absent or
+// non-numeric — so parseExplainPayload's field-level caps stay the guard that
+// actually bounds what reaches the paid call.
+export const config = { api: { bodyParser: { sizeLimit: '16kb' } } };
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse,
@@ -35,9 +54,22 @@ export default async function handler(
     return;
   }
 
+  if (!isAllowedOrigin(req)) {
+    res.status(403).json({ error: 'forbidden' });
+    return;
+  }
+
   // Per-IP cost/abuse guard ahead of the parse/key checks (ADR-0013) —
   // cheapest rejection first.
-  const { success } = await checkRateLimit(clientIp(req));
+  let success: boolean;
+  try {
+    ({ success } = await checkRateLimit(clientIp(req)));
+  } catch {
+    // Upstash unreachable. Fail closed rather than crash the invocation: an
+    // unbounded paid endpoint is worse than a temporary outage.
+    res.status(503).json({ error: 'unavailable' });
+    return;
+  }
   if (!success) {
     res.status(429).json({ error: 'rate limited' });
     return;

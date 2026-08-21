@@ -16,7 +16,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
 const { checkRateLimit } = vi.hoisted(() => ({ checkRateLimit: vi.fn() }));
 vi.mock('./_ratelimit', () => ({ checkRateLimit }));
 
-import handler from './explain';
+import handler, { config } from './explain';
 
 function makeRes() {
   return {
@@ -119,6 +119,56 @@ describe('api/explain handler', () => {
       res as unknown as VercelResponse,
     );
     expect(res.statusCode).toBe(400);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  // The header check is only a fast path; this is the cap the platform
+  // actually enforces when content-length is absent or lies.
+  it('declares a platform-enforced body size limit', () => {
+    expect(config.api.bodyParser.sizeLimit).toBe('16kb');
+  });
+
+  it('403s a cross-site Origin before spending the rate limit or the API', async () => {
+    const res = makeRes();
+    await handler(
+      makeReq({ headers: { origin: 'https://evil.example' } }),
+      res as unknown as VercelResponse,
+    );
+    expect(res.statusCode).toBe(403);
+    expect(checkRateLimit).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('allows the configured public origin and localhost dev origins', async () => {
+    process.env.PUBLIC_ORIGIN = 'https://builds.example';
+    create.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] });
+    for (const origin of [
+      'https://builds.example',
+      'http://localhost:5199',
+      'http://localhost:5173',
+    ]) {
+      const res = makeRes();
+      await handler(
+        makeReq({ headers: { origin } }),
+        res as unknown as VercelResponse,
+      );
+      expect(res.statusCode).toBe(200);
+    }
+  });
+
+  it('allows a request with no Origin header (non-browser client)', async () => {
+    create.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] });
+    const res = makeRes();
+    await handler(makeReq({ headers: {} }), res as unknown as VercelResponse);
+    expect(res.statusCode).toBe(200);
+  });
+
+  it('503s (fail closed) when the rate-limit store is unreachable', async () => {
+    checkRateLimit.mockRejectedValue(new Error('ECONNREFUSED'));
+    const res = makeRes();
+    await handler(makeReq(), res as unknown as VercelResponse);
+    expect(res.statusCode).toBe(503);
+    expect(res.payload).toEqual({ error: 'unavailable' });
     expect(create).not.toHaveBeenCalled();
   });
 

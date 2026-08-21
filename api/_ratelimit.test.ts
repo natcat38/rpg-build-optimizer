@@ -28,24 +28,31 @@ const ORIGINAL_ENV = process.env;
 beforeEach(() => {
   limit.mockReset();
   RatelimitCtor.mockReset();
+  slidingWindow.mockReset();
 });
 afterEach(() => {
   process.env = ORIGINAL_ENV;
 });
 
 describe('checkRateLimit', () => {
-  it('allows the request when Upstash env vars are unset (graceful no-op) and warns', async () => {
+  // Runs first: the warn latch is module-level, so this is the only test that
+  // can observe the first (and only) warning.
+  it('allows the request when Upstash env vars are unset (graceful no-op) and warns exactly once', async () => {
     process.env = { ...ORIGINAL_ENV };
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    delete process.env.VERCEL_ENV;
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const result = await checkRateLimit('1.2.3.4');
+    const second = await checkRateLimit('1.2.3.4');
 
     expect(result).toEqual({ success: true });
+    expect(second).toEqual({ success: true });
     expect(RatelimitCtor).not.toHaveBeenCalled();
-    // The fail-open no-op must stay observable — if the env vars are ever
-    // dropped in prod, this warn is the only signal the limiter went dark.
+    // The fail-open no-op must stay observable — outside production this warn
+    // is the only signal the limiter went dark — but it's a startup condition,
+    // not a per-request one, so it must not fire on every call.
     expect(warn).toHaveBeenCalledOnce();
     warn.mockRestore();
   });
@@ -56,10 +63,22 @@ describe('checkRateLimit', () => {
       UPSTASH_REDIS_REST_URL: 'https://example.upstash.io',
     };
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    delete process.env.VERCEL_ENV;
 
     const result = await checkRateLimit('1.2.3.4');
 
     expect(result).toEqual({ success: true });
+    expect(RatelimitCtor).not.toHaveBeenCalled();
+  });
+
+  it('fails closed in production when the limiter is unconfigured', async () => {
+    process.env = { ...ORIGINAL_ENV, VERCEL_ENV: 'production' };
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+
+    const result = await checkRateLimit('1.2.3.4');
+
+    expect(result).toEqual({ success: false });
     expect(RatelimitCtor).not.toHaveBeenCalled();
   });
 
@@ -90,7 +109,23 @@ describe('checkRateLimit', () => {
     expect(result).toEqual({ success: false });
   });
 
-  it('reuses one limiter across calls with the same env (built once, not per request)', async () => {
+  it('blocks the request when the global budget cap is exhausted, even under the per-IP limit', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      UPSTASH_REDIS_REST_URL: 'https://example.upstash.io',
+      UPSTASH_REDIS_REST_TOKEN: 'test-token',
+    };
+    limit.mockImplementation(async (id: string) => ({
+      success: id !== 'global',
+    }));
+
+    const result = await checkRateLimit('1.2.3.4');
+
+    expect(result).toEqual({ success: false });
+    expect(limit).toHaveBeenCalledWith('global');
+  });
+
+  it('reuses the limiters across calls with the same env (built once, not per request)', async () => {
     // Unique creds so this asserts fresh construction regardless of earlier tests.
     process.env = {
       ...ORIGINAL_ENV,
@@ -102,7 +137,10 @@ describe('checkRateLimit', () => {
     await checkRateLimit('1.2.3.4');
     await checkRateLimit('5.6.7.8');
 
-    expect(RatelimitCtor).toHaveBeenCalledTimes(1);
-    expect(limit).toHaveBeenCalledTimes(2);
+    // Two limiters (per-IP + global) built once, then two limit calls each.
+    expect(RatelimitCtor).toHaveBeenCalledTimes(2);
+    expect(limit).toHaveBeenCalledTimes(4);
+    expect(slidingWindow).toHaveBeenCalledWith(10, '60 s');
+    expect(slidingWindow).toHaveBeenCalledWith(500, '1 h');
   });
 });
