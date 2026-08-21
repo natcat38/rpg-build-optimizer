@@ -8,6 +8,8 @@ import type {
 import { SLOTS } from '../game/types';
 import { BuildCard } from './BuildCard';
 import { encodeBuild } from '../share/url';
+import { Callout } from './ui/Callout';
+import { Meter } from './ui/Meter';
 
 export function Results({
   result,
@@ -37,7 +39,7 @@ export function Results({
 
   if (result.status === 'infeasible') {
     return (
-      <div className="panel border-rose/20 text-sm text-rose">
+      <div className="panel panel-md border-rose/20 text-sm text-rose">
         <p className="font-semibold">No build satisfies all constraints.</p>
         <p className="mt-1 text-rose/80">
           Try relaxing the set requirement or the Energy Recharge minimum.
@@ -58,7 +60,7 @@ export function Results({
     <div className="space-y-4">
       <div className="panel space-y-2 px-4 py-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 font-mono text-xs">
-          <span className="uppercase tracking-[0.18em] text-muted">
+          <span className="uppercase tracking-label text-muted">
             Exact search
           </span>
           <span>
@@ -71,15 +73,7 @@ export function Results({
             subtrees before the optimum was proven.
           </span>
         </div>
-        <div
-          aria-hidden="true"
-          className="h-1 w-full overflow-hidden rounded-full bg-white/5"
-        >
-          <div
-            className="h-full bg-accent/70"
-            style={{ width: `${exploredPct}%` }}
-          />
-        </div>
+        <Meter value={exploredPct} size="sm" className="w-full" />
       </div>
       {result.builds.map((b, i) => {
         const arts = artifactsFor(b);
@@ -124,18 +118,12 @@ export function Results({
               }}
             />
             {copied === i && (
-              <p
-                role="status"
-                className="mt-2 rounded-lg border border-jade/25 bg-jade/10 px-3 py-2 text-sm text-jade"
-              >
+              <Callout tone="success" role="status" className="mt-2">
                 Share link copied.
-              </p>
+              </Callout>
             )}
             {shareFailed?.index === i && (
-              <div
-                role="alert"
-                className="mt-2 rounded-lg border border-rose/30 bg-rose/10 px-3 py-2 text-sm text-rose"
-              >
+              <Callout tone="error" role="alert" className="mt-2">
                 {shareFailed.url ? (
                   <>
                     <p>Couldn&apos;t copy automatically — copy it from here:</p>
@@ -153,7 +141,7 @@ export function Results({
                     different one.
                   </p>
                 )}
-              </div>
+              </Callout>
             )}
           </div>
         );

@@ -14,7 +14,9 @@ import {
   type TeamInstance,
   type ArchetypeGap,
 } from './recommend';
-import { BAND_STYLE, formatScore, ROLE_LABELS } from '../labels';
+import { BAND_TONE, formatScore, ROLE_LABELS } from '../labels';
+import { Badge } from '../components/ui/Badge';
+import { cn } from '../components/ui/cn';
 import type { EndgameMode } from './types';
 
 const MODES: { id: EndgameMode; label: string; live: boolean }[] = [
@@ -26,13 +28,8 @@ const MODES: { id: EndgameMode; label: string; live: boolean }[] = [
 function TeamCard({ title, team }: { title: string; team: TeamInstance }) {
   const arch = getArchetype(team.archetypeId);
   return (
-    <div
-      data-testid="team-card"
-      className="rounded-xl border border-white/10 bg-surface-700/40 p-4"
-    >
-      <p className="text-[0.7rem] uppercase tracking-[0.18em] text-muted">
-        {title}
-      </p>
+    <div data-testid="team-card" className="card p-4">
+      <p className="micro-label">{title}</p>
       <h3 className="font-display text-base font-bold text-paper">
         {archetypeName(team.archetypeId)}
       </h3>
@@ -53,11 +50,7 @@ function TeamCard({ title, team }: { title: string; team: TeamInstance }) {
               <span className="font-mono text-xs text-muted">
                 {formatScore(m.buildScore, 0)}
               </span>
-              <span
-                className={`rounded-lg border px-2 py-0.5 text-[0.7rem] font-semibold ${BAND_STYLE[b]}`}
-              >
-                {b}
-              </span>
+              <Badge tone={BAND_TONE[b]}>{b}</Badge>
             </li>
           );
         })}
@@ -70,9 +63,7 @@ function GapList({ gaps }: { gaps: ArchetypeGap[] }) {
   if (gaps.length === 0) return null;
   return (
     <div className="border-t border-white/5 pt-4">
-      <p className="text-[0.7rem] uppercase tracking-[0.18em] text-muted">
-        One character short
-      </p>
+      <p className="micro-label">One character short</p>
       <ul className="mt-2 space-y-1 text-sm">
         {gaps.slice(0, 5).map((g) => (
           <li key={g.archetypeId} className="text-muted">
@@ -101,18 +92,20 @@ export function TeamsView() {
   );
 
   return (
-    <div className="panel space-y-4">
+    <div className="panel panel-md space-y-4">
       <fieldset className="flex flex-wrap gap-4">
         <legend className="field-label">Endgame mode</legend>
         {MODES.map((m) => (
           <label
             key={m.id}
-            className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm transition
-              ${
-                m.live
-                  ? 'border-white/15 text-paper has-[:checked]:border-accent/60 has-[:checked]:bg-accent/10 has-[:checked]:text-accent-bright has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/50'
-                  : 'cursor-not-allowed border-white/5 text-muted has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-white/30'
-              }`}
+            className={cn(
+              // Same ring width/colour/offset as .focus-ring — a label can't
+              // @apply it, because the ring is driven by the nested input.
+              `touch-target inline-flex cursor-pointer items-center gap-2 rounded-full border px-4 text-sm transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/70 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-surface-900`,
+              m.live
+                ? 'border-white/15 text-paper has-[:checked]:border-accent/60 has-[:checked]:bg-accent/10 has-[:checked]:text-accent-bright'
+                : 'cursor-not-allowed border-white/5 text-muted',
+            )}
           >
             <input
               type="radio"

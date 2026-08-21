@@ -29,7 +29,7 @@ export function SampleGear({
   }
 
   return (
-    <div className="panel space-y-3">
+    <div className="panel panel-md space-y-3">
       <div>
         <h2 className="font-display text-lg font-bold tracking-wide text-paper">
           No gear handy? Try a sample build

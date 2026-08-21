@@ -15,6 +15,7 @@ import { archetypeName } from '../teams/comps';
 import { META_TARGETS } from '../meta/metaTargets';
 import { objectiveLabel } from '../labels';
 import { BuildCard } from '../components/BuildCard';
+import { Callout } from '../components/ui/Callout';
 import { optimize } from '../workers/optimizeClient';
 import { composePlan, type Plan, type RunOptimize } from './composePlan';
 import { adviseInvestments, type Advice } from '../invest/advise';
@@ -61,7 +62,7 @@ function MemberCard({
           ).filter((a): a is Artifact => Boolean(a))}
         />
       ) : (
-        <p className="panel text-sm text-muted">
+        <p className="panel panel-md text-sm text-muted">
           Couldn&apos;t gear {name}: teammates earlier in the plan had first
           pick of the shared inventory, and the artifacts left don&apos;t meet{' '}
           {name}&apos;s recommended loadout (required set, main stats and ER).
@@ -135,7 +136,7 @@ export function PlanView({
 
   return (
     <div className="space-y-4">
-      <div className="panel flex flex-wrap items-center justify-between gap-3">
+      <div className="panel panel-md flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
           {teams
             ? 'Optimises all eight members over your inventory, giving the carries first pick.'
@@ -171,12 +172,9 @@ export function PlanView({
       )}
 
       {failed && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
-        >
+        <Callout tone="error" role="alert">
           Building the plan failed — please try again.
-        </div>
+        </Callout>
       )}
 
       {plan && (
@@ -205,7 +203,7 @@ export function PlanView({
           })}
 
           {advice.length > 0 && (
-            <div className="panel space-y-2">
+            <div className="panel panel-md space-y-2">
               <h3 className="font-display text-base font-bold text-paper">
                 Worth investing in
               </h3>
@@ -224,7 +222,7 @@ export function PlanView({
           )}
 
           {plan.farming.length > 0 && (
-            <div className="panel space-y-2">
+            <div className="panel panel-md space-y-2">
               <h3 className="font-display text-base font-bold text-paper">
                 What to farm
               </h3>

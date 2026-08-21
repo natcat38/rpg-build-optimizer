@@ -18,13 +18,16 @@ import {
 } from '../labels';
 import { META_TARGETS } from '../meta/metaTargets';
 import { gradeBuild, type Grade } from '../meta/grade';
+import { Marker } from './ui/Marker';
+import { Meter } from './ui/Meter';
+import type { Tone } from './ui/tone';
 
-const GRADE_STYLE: Record<Grade, string> = {
-  S: 'border-accent-bright/40 bg-accent-bright/10 text-accent-bright',
-  A: 'border-jade/40 bg-jade/10 text-jade',
-  B: 'border-flux/40 bg-flux/10 text-flux-bright',
-  C: 'border-muted/40 bg-muted/10 text-muted',
-  D: 'border-rose/40 bg-rose/10 text-rose',
+const GRADE_TONE: Record<Grade, Tone> = {
+  S: 'accent',
+  A: 'jade',
+  B: 'flux',
+  C: 'muted',
+  D: 'rose',
 };
 
 const SHOW: StatKey[] = [
@@ -59,33 +62,29 @@ export function BuildCard({
   const weakest = grade?.perStat.reduce((a, s) => (s.pct < a.pct ? s : a));
 
   return (
-    <div className="panel space-y-5 p-5">
+    <div className="panel panel-sm space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           {rank != null && (
-            <span className="grid h-8 w-8 flex-none place-items-center rounded-lg border border-accent/30 bg-accent/10 font-mono text-sm font-bold text-accent-bright">
-              {rank}
-            </span>
+            <span className="section-badge section-badge-sm">{rank}</span>
           )}
           <div>
-            <p className="text-[0.7rem] uppercase tracking-[0.18em] text-muted">
-              {objectiveLabel(request.objective)}
-            </p>
+            <p className="micro-label">{objectiveLabel(request.objective)}</p>
             <p className="font-mono text-2xl font-bold leading-tight text-accent-bright">
               {formatScore(build.objectiveValue)}
             </p>
-            <p className="max-w-xs text-[0.7rem] text-muted">
+            <p className="max-w-xs text-2xs text-muted">
               {objectiveHint(request.objective)}
             </p>
           </div>
           {grade && (
-            <span
-              className={`grid h-8 w-8 flex-none place-items-center rounded-lg border font-display text-sm font-bold ${GRADE_STYLE[grade.grade]}`}
+            <Marker
+              tone={GRADE_TONE[grade.grade]}
               aria-label={`Grade ${grade.grade} — how close this build is to endgame stat targets`}
               title={`Grade ${grade.grade} — how close this build is to endgame stat targets`}
             >
               {grade.grade}
-            </span>
+            </Marker>
           )}
         </div>
         {onShare && (
@@ -114,17 +113,11 @@ export function BuildCard({
                       ({formatScore(s.pct * 100, 0)}%)
                     </span>
                   </p>
-                  <div
-                    aria-hidden="true"
-                    className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-white/5"
-                  >
-                    <div
-                      className={`h-full rounded-full ${met ? 'bg-jade/70' : 'bg-accent/60'}`}
-                      style={{
-                        width: `${Math.min(Math.max(s.pct, 0), 1) * 100}%`,
-                      }}
-                    />
-                  </div>
+                  <Meter
+                    value={s.pct * 100}
+                    tone={met ? 'jade' : 'accent'}
+                    className="mt-0.5"
+                  />
                 </div>
               );
             })}
@@ -179,7 +172,7 @@ export function BuildCard({
                 )}
               </div>
               {a && a.subStats.length > 0 && (
-                <p className="mt-1 pl-9 font-mono text-[0.7rem] leading-relaxed text-muted">
+                <p className="mt-1 pl-9 font-mono text-2xs leading-relaxed text-muted">
                   {a.subStats.map((sub, i) => (
                     <span key={sub.key}>
                       {i > 0 && <span className="text-muted/40"> · </span>}

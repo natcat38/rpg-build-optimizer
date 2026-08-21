@@ -25,6 +25,7 @@ import { buildHeroExample, type HeroExample } from '../sample/heroExample';
 import { formatReduction } from '../optimizer/benchmark';
 import { scrollToId } from '../ui/scroll';
 import { formatScore, objectiveHint } from '../labels';
+import { Callout } from './ui/Callout';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 
 function Section({
@@ -45,13 +46,13 @@ function Section({
   return (
     <section
       id={id}
-      className="scroll-mt-20 animate-fade-up"
+      className="animate-fade-up scroll-mt-20"
       style={{ animationDelay: delay }}
     >
       <div className="mb-3 flex items-center gap-3">
         <span className="section-badge">{String(n).padStart(2, '0')}</span>
         <div>
-          <h2 className="font-display text-lg font-bold tracking-wide text-paper">
+          <h2 className="font-display text-2xl font-bold tracking-tight text-paper">
             {title}
           </h2>
           {hint && <p className="text-xs text-muted">{hint}</p>}
@@ -67,7 +68,7 @@ function Section({
 function ThesisHero({ game }: { game: GameDescriptor }) {
   return (
     <>
-      <h1 className="font-display text-4xl font-black leading-tight text-paper sm:text-5xl">
+      <h1 className="font-display text-4xl font-bold leading-tight text-paper sm:text-5xl">
         RPG Build Optimizer
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
@@ -87,7 +88,7 @@ function SolvedHero({ hero }: { hero: HeroExample }) {
   );
   return (
     <>
-      <h1 className="font-display text-4xl font-black leading-tight text-paper sm:text-5xl">
+      <h1 className="font-display text-4xl font-bold leading-tight text-paper sm:text-5xl">
         RPG Build Optimizer
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
@@ -97,13 +98,11 @@ function SolvedHero({ hero }: { hero: HeroExample }) {
       </p>
       <div className="mt-6 flex flex-wrap items-end gap-x-8 gap-y-4">
         <div>
-          <p className="text-[0.7rem] uppercase tracking-[0.18em] text-muted">
-            Crit Value, one real solve
-          </p>
+          <p className="micro-label">Crit Value, one real solve</p>
           <p className="font-mono text-5xl font-bold leading-none text-accent-bright">
             {formatScore(hero.build.objectiveValue, 1)}
           </p>
-          <p className="mt-1 max-w-xs text-[0.7rem] text-muted">
+          <p className="mt-1 max-w-xs text-2xs text-muted">
             {objectiveHint('crit_value')}
           </p>
         </div>
@@ -285,7 +284,7 @@ export function App() {
             <a
               key={id}
               href={`#${id}`}
-              className="chip min-h-11 items-center whitespace-nowrap hover:border-accent/40 hover:text-paper"
+              className="chip touch-target items-center whitespace-nowrap hover:border-accent/40 hover:text-paper"
             >
               <span className="font-mono text-accent-bright">{n}</span> {label}
             </a>
@@ -295,22 +294,16 @@ export function App() {
 
       <div id="content" tabIndex={-1}>
         {sharedError && (
-          <div
-            role="alert"
-            className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
-          >
+          <Callout tone="error" role="alert" className="mb-8 animate-fade-up">
             This shared build couldn&apos;t be read — it may be from a newer
             version.
-          </div>
+          </Callout>
         )}
 
         {optimizeError && (
-          <div
-            role="alert"
-            className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
-          >
+          <Callout tone="error" role="alert" className="mb-8 animate-fade-up">
             Optimisation failed — please try again.
-          </div>
+          </Callout>
         )}
 
         <div className="space-y-10">
@@ -328,7 +321,7 @@ export function App() {
           >
             <ImportPanel />
             <details className="group mt-3">
-              <summary className="inline-flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-flux-bright transition hover:text-flux">
+              <summary className="focus-ring inline-flex cursor-pointer select-none items-center gap-2 rounded-md text-sm font-medium text-flux-bright transition hover:text-flux">
                 <span className="text-xs transition group-open:rotate-90">
                   ▶
                 </span>
@@ -406,7 +399,7 @@ export function App() {
         </div>
       </div>
 
-      <footer className="mt-16 border-t border-white/5 pt-6 text-center text-xs text-muted/70">
+      <footer className="mt-16 border-t border-white/5 pt-6 text-center text-xs text-muted">
         Built with branch-and-bound optimization in a Web Worker · Data from{' '}
         {game.source} (patch {game.patch}) · Not affiliated with the game&apos;s
         publisher.

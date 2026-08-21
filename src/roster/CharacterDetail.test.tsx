@@ -68,7 +68,7 @@ describe('CharacterDetail', () => {
     ).toBeInTheDocument();
   });
 
-  it('moves between tabs with arrow keys', async () => {
+  it('moves between tabs with arrow keys, taking focus along', async () => {
     const user = userEvent.setup();
     render(
       <CharacterDetail
@@ -79,9 +79,22 @@ describe('CharacterDetail', () => {
     );
     screen.getByRole('tab', { name: /overview/i }).focus();
     await user.keyboard('{ArrowRight}');
-    expect(screen.getByRole('tab', { name: /gear/i })).toHaveAttribute(
-      'aria-selected',
-      'true',
+    const gear = screen.getByRole('tab', { name: /gear/i });
+    expect(gear).toHaveAttribute('aria-selected', 'true');
+    expect(gear).toHaveFocus();
+  });
+
+  it('names the panel after the selected tab and points the tabs at it', () => {
+    render(
+      <CharacterDetail
+        characterKey="kamisato_ayaka"
+        entry={entry}
+        artifacts={[]}
+      />,
     );
+    const panel = screen.getByRole('tabpanel');
+    const overview = screen.getByRole('tab', { name: /overview/i });
+    expect(overview).toHaveAttribute('aria-controls', panel.id);
+    expect(panel).toHaveAttribute('aria-labelledby', overview.id);
   });
 });

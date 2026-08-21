@@ -1,7 +1,7 @@
 /**
- * Generic, domain-agnostic UI primitives shared across feature components
- * (currently a filterable/typeable Combobox used for character and weapon
- * pickers).
+ * Generic, domain-agnostic UI primitives shared across feature components: the
+ * shared tone record and class-join helper, plus Badge, Callout, Combobox,
+ * Drawer, Marker, Meter and Segmented (see docs/design-system.md).
  * @packageDocumentation
  */
 
@@ -162,7 +162,7 @@ export function Combobox({
           // Keep focus in the input while an option is clicked; otherwise the
           // blur-close below fires first and the click lands on nothing.
           onMouseDown={(e) => e.preventDefault()}
-          className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-surface-900 shadow-lg"
+          className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-surface-900 shadow-popover"
         >
           {filtered.length === 0 ? (
             // role=presentation: a listbox may only own option/group children.

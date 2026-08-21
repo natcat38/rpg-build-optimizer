@@ -50,7 +50,7 @@ Every architectural decision and its rationale lives in [`docs/adr/`](./docs/adr
 
 ## Tech stack
 
-Vite · React 19 · TypeScript (strict) · Tailwind CSS · Zustand · Web Workers · Vitest + Testing Library · native `CompressionStream`. Deployed static on Vercel; CI via GitHub Actions.
+Vite · React 19 · TypeScript (strict) · Tailwind CSS · Zustand · Web Workers · Vitest + Testing Library · native `CompressionStream`. Deployed static on Vercel; CI via GitHub Actions. Tokens and component classes: [docs/design-system.md](docs/design-system.md).
 
 ## AI: Explain this build
 

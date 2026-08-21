@@ -11,7 +11,9 @@ import { computeBuildScore, band, groupByLocation } from './buildScore';
 import { AppDrawer } from '../components/ui/Drawer';
 import { CharacterDetail } from './CharacterDetail';
 import { scrollToId } from '../ui/scroll';
-import { BAND_STYLE, formatScore } from '../labels';
+import { BAND_TONE, formatScore } from '../labels';
+import { Badge } from '../components/ui/Badge';
+import { Meter } from '../components/ui/Meter';
 
 function Row({
   characterKey,
@@ -30,9 +32,9 @@ function Row({
 }) {
   const b = band(total);
   return (
-    <li className="rounded-xl border border-white/10 bg-surface-700/40">
+    <li className="card">
       <button
-        className="flex w-full items-center gap-3 px-4 py-3 text-left"
+        className="focus-ring flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left"
         onClick={() => onOpen(characterKey)}
       >
         <div className="min-w-0 flex-1">
@@ -49,21 +51,9 @@ function Row({
             {formatScore(total, 0)}
           </span>
           {/* The number is the accessible value; this is the same figure again. */}
-          <div
-            aria-hidden="true"
-            className="mt-0.5 h-0.5 w-12 overflow-hidden rounded-full bg-white/5"
-          >
-            <div
-              className="h-full rounded-full bg-accent/60"
-              style={{ width: `${Math.min(Math.max(total, 0), 100)}%` }}
-            />
-          </div>
+          <Meter value={total} className="mt-0.5 w-12" />
         </div>
-        <span
-          className={`rounded-lg border px-2 py-0.5 text-[0.7rem] font-semibold ${BAND_STYLE[b]}`}
-        >
-          {b}
-        </span>
+        <Badge tone={BAND_TONE[b]}>{b}</Badge>
       </button>
     </li>
   );
@@ -102,7 +92,7 @@ export function RosterView() {
 
   if (rows.length === 0) {
     return (
-      <div className="panel">
+      <div className="panel panel-md">
         <p className="text-sm text-muted">
           Import a GOOD file to see your roster.
         </p>
@@ -114,7 +104,7 @@ export function RosterView() {
   const openEntry = openKey ? entries[openKey] : undefined;
 
   return (
-    <div className="panel space-y-3">
+    <div className="panel panel-md space-y-3">
       <p className="text-sm text-muted">
         <span className="font-semibold text-paper">{rows.length}</span>{' '}
         characters owned. Score weighs level, talents, weapon, and the artifacts
@@ -127,7 +117,7 @@ export function RosterView() {
       </ul>
       {rows.length > COLLAPSED_COUNT && !showAll && (
         <button
-          className="flex min-h-11 w-full items-center justify-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-muted transition hover:text-paper"
+          className="micro-label focus-ring touch-target flex w-full items-center justify-center gap-2 font-mono transition hover:text-paper"
           onClick={() => setShowAll(true)}
         >
           <span aria-hidden="true">▶</span> Show all {rows.length} characters,

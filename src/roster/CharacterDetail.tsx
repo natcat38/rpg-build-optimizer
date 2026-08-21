@@ -1,10 +1,9 @@
 /**
  * Drawer body for one character: what they have, what the meta wants, and
- * which curated teams they slot into. Tabs are hand-rolled ARIA — the app has
- * no primitives library and this doesn't justify one.
+ * which curated teams they slot into.
  * @packageDocumentation
  */
-import { useMemo, useState, type KeyboardEvent } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { computeBuildScore } from './buildScore';
 import { META_TARGETS } from '../meta/metaTargets';
@@ -20,6 +19,7 @@ import {
   setRequirementLabel,
   SLOT_LABELS,
 } from '../labels';
+import { Segmented } from '../components/ui/Segmented';
 import type { RosterEntry } from '../import/good';
 import type { Artifact, Slot, StatKey } from '../game/types';
 import { SLOTS } from '../game/types';
@@ -38,6 +38,9 @@ export function CharacterDetail({
   artifacts: Artifact[];
 }) {
   const [tab, setTab] = useState<Tab>('Overview');
+  const uid = useId();
+  const tabId = (t: Tab) => `${uid}-tab-${t}`;
+  const panelId = `${uid}-panel`;
   const char = genshinAdapter.character(characterKey);
   const weaponName = entry.weaponKey
     ? genshinAdapter.weapon(entry.weaponKey)?.name
@@ -49,43 +52,26 @@ export function CharacterDetail({
   const meta = META_TARGETS[characterKey];
   const comps = archetypesFor(characterKey);
 
-  function onKeys(e: KeyboardEvent) {
-    const i = TABS.indexOf(tab);
-    if (e.key === 'ArrowRight') setTab(TABS[(i + 1) % TABS.length]);
-    if (e.key === 'ArrowLeft')
-      setTab(TABS[(i + TABS.length - 1) % TABS.length]);
-  }
-
   return (
     <div className="space-y-4">
-      {/* Segmented control — the app's one sanctioned "pick one of N views"
-          idiom. Deliberately unnumbered: numbered badges mark real sequences
-          (the page steps), and this is a menu. */}
-      <div
-        role="tablist"
-        aria-label="Character detail"
-        className="flex gap-1 rounded-lg border border-white/10 bg-surface-900/60 p-1"
-        onKeyDown={onKeys}
-      >
-        {TABS.map((t) => (
-          <button
-            key={t}
-            role="tab"
-            aria-selected={tab === t}
-            tabIndex={tab === t ? 0 : -1}
-            onClick={() => setTab(t)}
-            className={`min-h-11 flex-1 rounded-md px-3 text-sm font-semibold transition ${
-              tab === t
-                ? 'bg-accent/15 text-accent-bright'
-                : 'text-muted hover:text-paper'
-            }`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      {/* Deliberately unnumbered: numbered badges mark real sequences (the
+          page steps), and this is a menu. */}
+      <Segmented
+        options={TABS}
+        value={tab}
+        onChange={setTab}
+        label="Character detail"
+        itemId={tabId}
+        controls={panelId}
+      />
 
-      <div role="tabpanel" className="space-y-3 text-sm">
+      <div
+        role="tabpanel"
+        id={panelId}
+        aria-labelledby={tabId(tab)}
+        tabIndex={0}
+        className="focus-ring space-y-3 rounded-lg text-sm"
+      >
         {tab === 'Overview' && (
           <>
             <p className="text-muted">

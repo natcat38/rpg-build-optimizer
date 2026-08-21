@@ -213,7 +213,7 @@ export function OptimizePanel({
   }, [rosterBuildLevel, buildLevel, setBuildLevel]);
 
   return (
-    <div className="panel space-y-5">
+    <div className="panel panel-md space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="block">
           <span className="field-label">Character</span>

@@ -2,19 +2,40 @@
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
+    // Replaces Tailwind's default weight scale rather than extending it: only
+    // these four weights are actually fetched in index.html, so `font-black`
+    // and friends must not compile to a weight the browser would synthesise.
+    fontWeight: {
+      normal: '400',
+      medium: '500',
+      semibold: '600',
+      bold: '700',
+    },
     extend: {
       fontFamily: {
         display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
         sans: ['"Spline Sans"', 'system-ui', 'sans-serif'],
         mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
+      // One step below text-xs, for the uppercase micro-labels; `label` and
+      // `eyebrow` are the only two tracking values the display idiom uses.
+      fontSize: {
+        '2xs': ['0.7rem', { lineHeight: '1rem' }],
+      },
+      letterSpacing: {
+        label: '0.18em',
+        eyebrow: '0.4em',
+      },
       colors: {
         // Instrument chassis — graphite surfaces, constant across games.
+        // Lower number = lighter; 500/400 exist only as scrollbar-thumb greys.
         surface: {
           900: '#0f1116',
           800: '#14161d',
           700: '#1b1e27',
           600: '#242833',
+          500: '#2a2f3d',
+          400: '#3a4152',
         },
         // The reading signal — swapped per game via CSS vars (see index.css).
         accent: {
@@ -37,6 +58,9 @@ export default {
         'glow-accent':
           '0 8px 30px -8px rgb(var(--accent) / 0.45), inset 0 1px 0 rgba(255,255,255,0.2)',
         panel: '0 24px 70px -30px rgba(0,0,0,0.9)',
+        // Shallower than `panel`: a listbox floats a few px above the page,
+        // not the whole instrument chassis.
+        popover: '0 16px 40px -16px rgba(0,0,0,0.85)',
       },
       backgroundImage: {
         'hairline-accent':

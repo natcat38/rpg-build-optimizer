@@ -5,6 +5,7 @@ import { genshinAdapter } from '../game/genshin/adapter';
 import { validateArtifactDraft } from '../state/artifactValidation';
 import { useInventory } from '../state/inventory';
 import { formatSetName, SLOT_LABELS, statLabel } from '../labels';
+import { Callout } from './ui/Callout';
 import { Combobox } from './ui/Combobox';
 
 const STAT_OPTIONS: StatKey[] = genshinAdapter.statKeys;
@@ -52,7 +53,7 @@ export function ArtifactForm() {
   }
 
   return (
-    <div className="panel space-y-4 p-5">
+    <div className="panel panel-sm space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="block">
           <span className="field-label">Set</span>
@@ -139,12 +140,9 @@ export function ArtifactForm() {
       </div>
       {/* The level field states its own error inline; don't say it twice. */}
       {error && error !== levelError && (
-        <p
-          role="alert"
-          className="rounded-lg border border-rose/30 bg-rose/10 px-3 py-2 text-sm text-rose"
-        >
+        <Callout tone="error" role="alert">
           {error}
-        </p>
+        </Callout>
       )}
       <button className="btn-primary" onClick={submit}>
         Add artifact

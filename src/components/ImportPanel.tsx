@@ -5,6 +5,7 @@ import { mergeNew } from '../import/dedupe';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
 import { scrollToId } from '../ui/scroll';
+import { Callout } from './ui/Callout';
 import type { Artifact } from '../game/types';
 
 // WCAG 3.3.1: describe what actually went wrong. fetchUidArtifacts already
@@ -88,11 +89,9 @@ export function ImportPanel() {
   const uidOk = /^\d{9,10}$/.test(uid.trim());
 
   return (
-    <div className="panel space-y-5">
+    <div className="panel panel-md space-y-5">
       <div className="flex items-center justify-between">
-        <span className="text-xs uppercase tracking-[0.18em] text-muted">
-          Inventory
-        </span>
+        <span className="micro-label">Inventory</span>
         <span className="chip">
           <span className="font-bold text-accent">{count}</span>
           {count === 1 ? 'artifact' : 'artifacts'} loaded
@@ -113,10 +112,7 @@ export function ImportPanel() {
             type="file"
             accept="application/json,.json"
             onChange={(e) => void onFile(e)}
-            className="block w-full cursor-pointer text-xs text-muted
-              file:mr-3 file:cursor-pointer file:rounded-md file:border-0
-              file:bg-accent/15 file:px-3 file:py-2 file:font-semibold file:text-accent-bright
-              hover:file:bg-accent/25"
+            className="focus-ring block w-full cursor-pointer rounded-md text-xs text-muted file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-accent/15 file:px-3 file:py-2 file:font-semibold file:text-accent-bright hover:file:bg-accent/25"
           />
         </div>
 
@@ -162,20 +158,18 @@ export function ImportPanel() {
       </div>
 
       {msg && (
-        <p
+        <Callout
+          tone="success"
           role="status"
-          className="flex items-center gap-2 rounded-lg border border-jade/25 bg-jade/10 px-3 py-2 text-sm text-jade"
+          className="flex items-center gap-2"
         >
           {msg}
-        </p>
+        </Callout>
       )}
       {err && (
-        <p
-          role="alert"
-          className="flex items-center gap-2 rounded-lg border border-rose/30 bg-rose/10 px-3 py-2 text-sm text-rose"
-        >
+        <Callout tone="error" role="alert" className="flex items-center gap-2">
           {err}
-        </p>
+        </Callout>
       )}
     </div>
   );

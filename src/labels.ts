@@ -1,3 +1,4 @@
+import type { Tone } from './components/ui/tone';
 import type { Objective, SetRequirement, Slot, StatKey } from './game/types';
 import type { Band } from './roster/buildScore';
 import type { Role } from './teams/types';
@@ -54,11 +55,12 @@ export const ROLE_LABELS: Record<Role, string> = {
   applicator: 'Applicator',
 };
 
-/** Band chip colours — one definition, shared by every view that shows a band. */
-export const BAND_STYLE: Record<Band, string> = {
-  built: 'border-jade/40 bg-jade/10 text-jade',
-  partial: 'border-flux/40 bg-flux/10 text-flux-bright',
-  unbuilt: 'border-muted/40 bg-muted/10 text-muted',
+/** Band → the shared UI tone — one definition, used by every view that shows
+ *  a band. The classes themselves live in `components/ui/tone.ts`. */
+export const BAND_TONE: Record<Band, Tone> = {
+  built: 'jade',
+  partial: 'flux',
+  unbuilt: 'muted',
 };
 
 export function statLabel(key: StatKey): string {

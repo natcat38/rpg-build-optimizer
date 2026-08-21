@@ -46,7 +46,7 @@ export function ExplainBuild({
           the DOM before the text arrives. */}
       <div aria-live="polite">
         {explanation && (
-          <div className="panel space-y-2">
+          <div className="panel panel-md space-y-2">
             <p className="field-label">AI explanation</p>
             <p className="text-sm leading-relaxed text-paper/90">
               {explanation}
