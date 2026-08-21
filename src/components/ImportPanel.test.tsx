@@ -97,7 +97,7 @@ describe('ImportPanel', () => {
     await user.type(screen.getByLabelText('UID'), '700000000');
     await user.click(screen.getByRole('button', { name: /fetch/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      /Couldn't find that UID/i,
+      /Couldn’t find that UID/i,
     );
   });
 
@@ -108,7 +108,7 @@ describe('ImportPanel', () => {
     await user.type(screen.getByLabelText('UID'), '700000000');
     await user.click(screen.getByRole('button', { name: /fetch/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      /couldn't reach enka/i,
+      /couldn’t reach enka/i,
     );
   });
 
@@ -283,8 +283,48 @@ describe('ImportPanel', () => {
     render(<ImportPanel />);
     await user.type(screen.getByLabelText('UID'), '123');
     expect(screen.getByText(/9–10 digits/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /fetch/i })).toBeDisabled();
+    // aria-disabled, not `disabled` — the button must keep focus across the
+    // async fetch. `onUid` carries the matching early return.
+    expect(screen.getByRole('button', { name: /fetch/i })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     await user.type(screen.getByLabelText('UID'), '456789');
-    expect(screen.getByRole('button', { name: /fetch/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /fetch/i })).toHaveAttribute(
+      'aria-disabled',
+      'false',
+    );
+  });
+
+  it('does not fetch a malformed UID even when Enter submits the row', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+    await user.type(screen.getByLabelText('UID'), '123{Enter}');
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('reports a re-import as up to date rather than "imported 0"', async () => {
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+    const file = () => {
+      const f = new File([goodJson], 'good.json', {
+        type: 'application/json',
+      });
+      Object.defineProperty(f, 'text', { value: async () => goodJson });
+      return f;
+    };
+    const input = screen.getByLabelText(/Upload GOOD export/i);
+    await user.upload(input, file());
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /Imported 1 artifacts/i,
+    );
+    await user.upload(input, file());
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /Already up to date — all 1 piece was already in your inventory/i,
+      ),
+    );
   });
 });

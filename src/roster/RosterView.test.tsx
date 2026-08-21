@@ -58,13 +58,21 @@ describe('RosterView', () => {
     render(<RosterView />);
     expect(screen.getByText('Neuvillette')).toBeInTheDocument();
     expect(screen.getByText('Amber')).toBeInTheDocument();
-    expect(screen.getByText('built')).toBeInTheDocument();
-    expect(screen.getByText('unbuilt')).toBeInTheDocument();
+    expect(screen.getByText('Built')).toBeInTheDocument();
+    expect(screen.getByText('Unbuilt')).toBeInTheDocument();
+    // The score states its scale.
+    expect(screen.getAllByText('/ 100').length).toBeGreaterThan(0);
+    // Amber has nothing equipped — say so rather than silently capping.
+    expect(
+      screen.getByText(/No equipped gear found — 40 pts unscored/i),
+    ).toBeInTheDocument();
 
-    // Built characters sort first.
+    // Built characters sort first. Rows carry no heading: an <h3> inside a
+    // <button> loses its heading role anyway.
+    expect(screen.queryByRole('heading', { level: 3 })).toBeNull();
     const names = screen
-      .getAllByRole('heading', { level: 3 })
-      .map((h) => h.textContent);
+      .getAllByRole('listitem')
+      .map((li) => li.querySelector('span')?.textContent);
     expect(names[0]).toBe('Neuvillette');
 
     expect(screen.queryByText('Artifact quality')).not.toBeInTheDocument();

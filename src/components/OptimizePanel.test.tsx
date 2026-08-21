@@ -14,9 +14,15 @@ describe('OptimizePanel', () => {
     useOptimizeRequest.getState().reset();
   });
 
-  it('disables Optimise with a hint when no artifacts exist', () => {
-    render(<OptimizePanel onRun={() => {}} running={false} />);
-    expect(screen.getByRole('button', { name: /Optimise/i })).toBeDisabled();
+  // aria-disabled, not `disabled`: going disabled mid-run drops focus to
+  // <body>. The guard is an early return in the click handler.
+  it('blocks Optimise with a hint when no artifacts exist', async () => {
+    const onRun = vi.fn();
+    render(<OptimizePanel onRun={onRun} running={false} />);
+    const btn = screen.getByRole('button', { name: /Optimise/i });
+    expect(btn).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(btn);
+    expect(onRun).not.toHaveBeenCalled();
     expect(
       screen.getByText(/Add or import artifacts before optimising\./i),
     ).toBeInTheDocument();
@@ -34,7 +40,10 @@ describe('OptimizePanel', () => {
       subStats: [],
     });
     render(<OptimizePanel onRun={() => {}} running={false} />);
-    expect(screen.getByRole('button', { name: /Optimise/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /Optimise/i })).toHaveAttribute(
+      'aria-disabled',
+      'false',
+    );
   });
 });
 

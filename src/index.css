@@ -18,6 +18,21 @@
     scroll-behavior: smooth;
   }
 
+  /* The step nav is sticky at the top, so an element scrolled to by focus
+     (Tab, skip link, in-page anchor) lands underneath it. `scroll-margin-top`
+     on `html` does nothing for that — the margin has to be on the element the
+     browser scrolls *to*. 5rem clears the nav plus a hairline of breathing
+     room. Sections set their own `scroll-mt-20`; this covers the controls. */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex] {
+    scroll-margin-top: 5rem;
+  }
+
   body {
     @apply font-sans text-paper antialiased;
     min-height: 100vh;
@@ -164,9 +179,12 @@
     color: theme('colors.paper');
   }
 
-  /* Primary action — the accent reading, made actionable. */
+  /* Primary action — the accent reading, made actionable.
+     `aria-disabled:` repeats every `disabled:` rule because an async action
+     that goes truly `disabled` mid-click drops focus to <body>. Those buttons
+     set aria-disabled and early-return instead, and still have to look off. */
   .btn-primary {
-    @apply focus-ring touch-target inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-surface-900 shadow-glow-accent transition-[transform,filter] hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:brightness-100;
+    @apply focus-ring touch-target inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-surface-900 shadow-glow-accent transition-[transform,filter] hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:brightness-100 aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:translate-y-0 aria-disabled:hover:brightness-100;
     background: linear-gradient(
       150deg,
       rgb(var(--accent-bright)),
@@ -177,7 +195,7 @@
 
   /* Secondary action — the constraint signal, ghosted. */
   .btn-ghost {
-    @apply focus-ring touch-target inline-flex items-center justify-center gap-2 rounded-lg border border-flux/30 bg-flux/5 px-4 py-2 text-sm font-semibold text-flux-bright transition-colors hover:border-flux/60 hover:bg-flux/10 disabled:cursor-not-allowed disabled:opacity-40;
+    @apply focus-ring touch-target inline-flex items-center justify-center gap-2 rounded-lg border border-flux/30 bg-flux/5 px-4 py-2 text-sm font-semibold text-flux-bright transition-colors hover:border-flux/60 hover:bg-flux/10 disabled:cursor-not-allowed disabled:opacity-40 aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:border-flux/30 aria-disabled:hover:bg-flux/5;
   }
 
   /* Recessed well — the one inset-panel treatment, for nested lists and

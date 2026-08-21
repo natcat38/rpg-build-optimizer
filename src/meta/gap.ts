@@ -107,7 +107,7 @@ export function computeGapReport(
               ? formatCritRatio(meta.critRatioTarget)
               : '∞';
           shortfalls.push(
-            `Crit ratio is 1:${haveX} vs meta's ~1:${targetX} — ${ratio > meta.critRatioTarget ? 'favour CRIT DMG' : 'favour CRIT Rate'}.`,
+            `Crit ratio is 1:${haveX} vs meta’s ~1:${targetX} — ${ratio > meta.critRatioTarget ? 'favour CRIT DMG' : 'favour CRIT Rate'}.`,
           );
         }
       }
@@ -117,7 +117,7 @@ export function computeGapReport(
   // Level 3 — exactly one grounded action (prioritised)
   let action: string | null = null;
   if (sg) {
-    action = `Farm ${formatSetName(sg.setKey)} — you can't form the meta set yet.`;
+    action = `Farm ${formatSetName(sg.setKey)} — you can’t form the meta set yet.`;
   } else if (mg.length > 0) {
     action = `Farm a ${statLabel(mg[0].want)} ${SLOT_LABELS[mg[0].slot]} — the meta wants it and you have none.`;
   } else if (build) {

@@ -10,6 +10,7 @@ import { BuildCard } from './BuildCard';
 import { encodeBuild } from '../share/url';
 import { Callout } from './ui/Callout';
 import { Meter } from './ui/Meter';
+import { objectiveHint } from '../labels';
 
 export function Results({
   result,
@@ -39,12 +40,12 @@ export function Results({
 
   if (result.status === 'infeasible') {
     return (
-      <div className="panel panel-md border-rose/20 text-sm text-rose">
+      <Callout tone="error" role="status">
         <p className="font-semibold">No build satisfies all constraints.</p>
-        <p className="mt-1 text-rose/80">
+        <p className="mt-1 opacity-80">
           Try relaxing the set requirement or the Energy Recharge minimum.
         </p>
-      </div>
+      </Callout>
     );
   }
 
@@ -54,27 +55,50 @@ export function Results({
     );
 
   const total = result.explored + result.pruned;
-  const exploredPct = total > 0 ? (result.explored / total) * 100 : 100;
+  // A shared ?b= build carries the build, not the search that found it, so it
+  // hydrates as 0/0. Reporting "explored 0 · pruned 0" beside a full bar
+  // claimed a proof that never ran here — say nothing instead.
+  const searched = total > 0;
+
+  const shareStatus =
+    copied != null
+      ? 'Share link copied.'
+      : shareFailed
+        ? shareFailed.url
+          ? 'Couldn’t copy automatically — the link is shown below for copying by hand.'
+          : 'Couldn’t build a share link in this browser.'
+        : '';
 
   return (
     <div className="space-y-4">
-      <div className="panel space-y-2 px-4 py-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 font-mono text-xs">
-          <span className="uppercase tracking-label text-muted">
-            Exact search
-          </span>
-          <span>
-            Explored{' '}
-            <span className="text-paper">
-              {result.explored.toLocaleString()}
-            </span>{' '}
-            · pruned{' '}
-            <span className="text-paper">{result.pruned.toLocaleString()}</span>{' '}
-            subtrees before the optimum was proven.
-          </span>
+      {searched && (
+        <div className="panel space-y-2 px-4 py-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs">
+            <span className="micro-label font-mono">Exact search</span>
+            {/* Sentence in the body face, numerals in mono: a full sentence set
+                in mono reads as output, not prose. */}
+            <span className="text-muted">
+              Explored{' '}
+              <span className="font-mono tabular-nums text-paper">
+                {result.explored.toLocaleString()}
+              </span>{' '}
+              · pruned{' '}
+              <span className="font-mono tabular-nums text-paper">
+                {result.pruned.toLocaleString()}
+              </span>{' '}
+              subtrees before the optimum was proven.
+            </span>
+          </div>
+          <Meter
+            value={(result.explored / total) * 100}
+            size="sm"
+            className="w-full"
+          />
         </div>
-        <Meter value={exploredPct} size="sm" className="w-full" />
-      </div>
+      )}
+      {/* Once above the list, not once per card: a 10-result page printed the
+          same sentence 11 times. */}
+      <p className="text-xs text-muted">{objectiveHint(request.objective)}</p>
       {result.builds.map((b, i) => {
         const arts = artifactsFor(b);
         return (
@@ -118,15 +142,15 @@ export function Results({
               }}
             />
             {copied === i && (
-              <Callout tone="success" role="status" className="mt-2">
+              <Callout tone="success" className="mt-2">
                 Share link copied.
               </Callout>
             )}
             {shareFailed?.index === i && (
-              <Callout tone="error" role="alert" className="mt-2">
+              <Callout tone="error" className="mt-2">
                 {shareFailed.url ? (
                   <>
-                    <p>Couldn&apos;t copy automatically — copy it from here:</p>
+                    <p>Couldn’t copy automatically — copy it from here:</p>
                     <input
                       className="field mt-2"
                       readOnly
@@ -137,7 +161,7 @@ export function Results({
                   </>
                 ) : (
                   <p>
-                    Couldn&apos;t build a share link in this browser — try a
+                    Couldn’t build a share link in this browser — try a
                     different one.
                   </p>
                 )}
@@ -146,6 +170,13 @@ export function Results({
           </div>
         );
       })}
+      {/* One persistent live region for the share outcome. The Callouts above
+          are created on demand, and a live region that doesn't exist when its
+          text arrives announces nothing — so the announcement lives here and
+          they stay purely visual. */}
+      <p className="sr-only" role="status">
+        {shareStatus}
+      </p>
     </div>
   );
 }

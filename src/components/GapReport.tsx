@@ -19,7 +19,7 @@ export function GapReport({ report }: { report: GapReportData }) {
         <>
           {report.feasibility.length > 0 && (
             <div>
-              <p className="field-label">What&apos;s missing</p>
+              <p className="field-label">What’s missing</p>
               <ul className="space-y-1 text-sm text-paper/90">
                 {report.feasibility.map((f, i) => (
                   <li key={i}>• {f}</li>

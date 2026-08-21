@@ -13,8 +13,8 @@ import type { Artifact } from '../game/types';
 // user guessing which of three unrelated fixes to try.
 const UID_ERRORS: Record<UidError['error'], string> = {
   NETWORK:
-    "Couldn't reach Enka — check your connection and try again in a moment.",
-  NOT_FOUND: "Couldn't find that UID — check the digits and your server.",
+    'Couldn’t reach Enka — check your connection and try again in a moment.',
+  NOT_FOUND: 'Couldn’t find that UID — check the digits and your server.',
   NO_SHOWCASE:
     'No artifacts on showcase — turn on Character Showcase in-game and add characters to it.',
 };
@@ -22,7 +22,10 @@ const UID_ERRORS: Record<UidError['error'], string> = {
 export function ImportPanel() {
   const artifacts = useInventory((s) => s.artifacts);
   const addMany = useInventory((s) => s.addMany);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{
+    tone: 'success' | 'info';
+    text: string;
+  } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [uid, setUid] = useState('');
   const [busy, setBusy] = useState(false);
@@ -34,7 +37,24 @@ export function ImportPanel() {
     const fresh = mergeNew(useInventory.getState().artifacts, incoming);
     addMany(fresh);
     setErr(null);
-    setMsg(`Imported ${fresh.length} artifacts.${suffix}`);
+    // Re-importing the same file adds nothing, and a green "Imported 0
+    // artifacts." reads as a failure dressed as a success. Three outcomes,
+    // three sentences.
+    const skipped = incoming.length - fresh.length;
+    if (fresh.length === 0) {
+      setMsg({
+        tone: 'info',
+        text: `Already up to date — all ${incoming.length} ${incoming.length === 1 ? 'piece was' : 'pieces were'} already in your inventory.${suffix}`,
+      });
+      return;
+    }
+    setMsg({
+      tone: 'success',
+      text:
+        skipped > 0
+          ? `Imported ${fresh.length} new artifacts — ${skipped} were already in your inventory.${suffix}`
+          : `Imported ${fresh.length} artifacts.${suffix}`,
+    });
   }
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
@@ -71,6 +91,9 @@ export function ImportPanel() {
   }
 
   async function onUid() {
+    // The Fetch button is aria-disabled rather than disabled, and Enter in the
+    // field submits regardless — so the guard has to live here.
+    if (busy || !uidOk) return;
     setBusy(true);
     setMsg(null);
     setErr(null);
@@ -92,9 +115,12 @@ export function ImportPanel() {
     <div className="panel panel-md space-y-5">
       <div className="flex items-center justify-between">
         <span className="micro-label">Inventory</span>
+        {/* Two explicit element children, not an element plus a bare text
+            node: JSX drops the newline between them, so the spacing was left
+            to .chip's flex gap and read as "70artifacts loaded". */}
         <span className="chip">
           <span className="font-bold text-accent">{count}</span>
-          {count === 1 ? 'artifact' : 'artifacts'} loaded
+          <span>{count === 1 ? 'artifact' : 'artifacts'} loaded</span>
         </span>
       </div>
 
@@ -124,26 +150,40 @@ export function ImportPanel() {
           <p className="mb-3 text-xs text-muted">
             Showcased characters only — not your full inventory.
           </p>
-          <div className="flex gap-2">
+          {/* A real <form>, so Enter in the field submits — the row read as a
+              form and behaved like two unrelated controls. */}
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void onUid();
+            }}
+          >
             <input
               id="uid-input"
               className="field"
+              name="uid"
               value={uid}
               onChange={(e) => setUid(e.target.value)}
               placeholder="700000000"
               aria-label="UID"
               aria-describedby={uidOk ? undefined : 'uid-hint'}
               inputMode="numeric"
+              autoComplete="off"
+              spellCheck={false}
             />
+            {/* aria-disabled, not disabled: going disabled mid-click moves
+                focus to <body> and the user loses their place. `onUid` holds
+                the matching early return. */}
             <button
+              type="submit"
               className="btn-primary flex-none"
               aria-busy={busy}
-              disabled={busy || !uidOk}
-              onClick={() => void onUid()}
+              aria-disabled={busy || !uidOk}
             >
               {busy ? 'Fetching…' : 'Fetch'}
             </button>
-          </div>
+          </form>
           {!uid && (
             <p id="uid-hint" className="mt-2 text-xs text-muted">
               Enter your UID to enable Fetch.
@@ -157,17 +197,24 @@ export function ImportPanel() {
         </div>
       </div>
 
+      {/* Persistent live regions. A region created in the same commit as its
+          text isn't being observed yet, so nothing is announced — these two
+          are always mounted and only their text changes. `sr-only` is
+          absolutely positioned, so they cost the panel no vertical rhythm and
+          the Callouts below stay purely visual. */}
+      <p className="sr-only" role="status">
+        {msg?.text ?? ''}
+      </p>
+      <p className="sr-only" role="alert">
+        {err ?? ''}
+      </p>
       {msg && (
-        <Callout
-          tone="success"
-          role="status"
-          className="flex items-center gap-2"
-        >
-          {msg}
+        <Callout tone={msg.tone} className="flex items-center gap-2">
+          {msg.text}
         </Callout>
       )}
       {err && (
-        <Callout tone="error" role="alert" className="flex items-center gap-2">
+        <Callout tone="error" className="flex items-center gap-2">
           {err}
         </Callout>
       )}

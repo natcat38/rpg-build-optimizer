@@ -68,6 +68,10 @@ imports from `game/`, `meta/` or `roster/`.
   `aria-hidden`. A bar that is the _only_ carrier of its value needs real
   `role="progressbar"` semantics and does not belong here (PlanView's live
   progress bar is bespoke for that reason).
+- **`Combobox`** takes an optional `id`, applied to whichever control is
+  showing (button when closed, input when open, at the same position). Both are
+  labelable elements, so a sibling `<label htmlFor>` reaches it either way —
+  that is how a Combobox's visible label matches the `<select>`s beside it.
 - **`Combobox`**, **`AppDrawer`** — the two interactive widgets.
 - **`cn()`** — falsy-filtering class join. Registered in `.prettierrc.json` as
   a `tailwindFunctions` entry so its arguments get class-sorted too.
@@ -82,10 +86,23 @@ instead of a gap. It is `@apply`ed into `.field`, `.btn-primary`, `.btn-ghost`
 and `.chip`; anything hand-rolled adds it explicitly.
 
 Every control is at least **44px tall** (`.touch-target`), the minimum
-comfortable touch target. One case can't `@apply` the recipe: the endgame-mode
-radios in `TeamsView`, where the ring is driven by a nested input via
-`has-[:focus-visible]:` — it repeats the same width, colour and offset by hand,
-with a comment saying why.
+comfortable touch target.
+
+**Async actions use `aria-disabled`, not `disabled`.** A button that goes truly
+`disabled` while it is the active element hands focus to `<body>`, dropping the
+keyboard user at the top of the page mid-run. Every button that kicks off an
+async job (Optimise, Use meta build, the sample presets, Build my Abyss plan,
+Fetch, Explain this build) sets `aria-disabled` and holds a matching early
+return in its handler — the guard has to exist, because the button is still
+clickable and, inside a `<form>`, Enter still submits. `.btn-primary` and
+`.btn-ghost` mirror every `disabled:` rule under `aria-disabled:` so the two
+look identical.
+
+**Live regions are persistent.** A region mounted in the same commit as its
+text is not being observed yet, so nothing is announced. The pattern is an
+always-mounted `sr-only` `role="status"` / `role="alert"` node whose text
+changes, with the visible `Callout` carrying no role of its own (App,
+ImportPanel, Results, ArtifactForm, ExplainBuild).
 
 ## One theme, on purpose
 

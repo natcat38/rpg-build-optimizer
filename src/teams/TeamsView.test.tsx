@@ -50,13 +50,16 @@ describe('TeamsView', () => {
     expect(screen.getAllByText('On-field DPS').length).toBeGreaterThan(0);
   });
 
-  it('offers Abyss only, with the other modes marked coming soon', () => {
+  // The mode picker had two disabled options and one inert enabled one: a
+  // control that changes nothing is worse than a sentence that says so.
+  it('names the unbuilt modes in prose instead of offering a dead control', () => {
     render(<TeamsView />);
-    const abyss = screen.getByRole('radio', { name: /Spiral Abyss/i });
-    expect(abyss).toBeChecked();
-    expect(screen.getByRole('radio', { name: /Theater/i })).toBeDisabled();
-    expect(screen.getByRole('radio', { name: /Stygian/i })).toBeDisabled();
-    expect(screen.getAllByText(/coming soon/i).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('radio')).toBeNull();
+    expect(
+      screen.getByText(
+        /Coming soon: Imaginarium Theater · Stygian Onslaught\./i,
+      ),
+    ).toBeInTheDocument();
   });
 
   it('lists near-miss archetypes as one-character-short gaps', () => {

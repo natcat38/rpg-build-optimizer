@@ -13,9 +13,10 @@ import { rosterBuildScores } from '../roster/buildScore';
 import { recommendAbyss } from '../teams/recommend';
 import { archetypeName } from '../teams/comps';
 import { META_TARGETS } from '../meta/metaTargets';
-import { objectiveLabel } from '../labels';
+import { objectiveHint, objectiveLabel } from '../labels';
 import { BuildCard } from '../components/BuildCard';
 import { Callout } from '../components/ui/Callout';
+import { cn } from '../components/ui/cn';
 import { optimize } from '../workers/optimizeClient';
 import { composePlan, type Plan, type RunOptimize } from './composePlan';
 import { adviseInvestments, type Advice } from '../invest/advise';
@@ -46,6 +47,9 @@ function MemberCard({
   return (
     <div data-testid="plan-member" className="space-y-2">
       <h4 className="font-display text-sm font-bold text-paper">{name}</h4>
+      {/* Per member, not per card: Results hoists this above its list because
+          ten cards share one objective, but eight plan members do not. */}
+      <p className="text-xs text-muted">{objectiveHint(objective)}</p>
       {!META_TARGETS[characterKey] && (
         <p className="text-xs text-muted">
           No curated recipe for {name} yet — this is the highest raw{' '}
@@ -63,10 +67,10 @@ function MemberCard({
         />
       ) : (
         <p className="panel panel-md text-sm text-muted">
-          Couldn&apos;t gear {name}: teammates earlier in the plan had first
-          pick of the shared inventory, and the artifacts left don&apos;t meet{' '}
-          {name}&apos;s recommended loadout (required set, main stats and ER).
-          The notes below show which pieces went where.
+          Couldn’t gear {name}: teammates earlier in the plan had first pick of
+          the shared inventory, and the artifacts left don’t meet {name}’s
+          recommended loadout (required set, main stats and ER). The notes below
+          show which pieces went where.
         </p>
       )}
       {conflicts.length > 0 && (
@@ -111,8 +115,21 @@ export function PlanView({
     };
   }, [entries, artifacts, advise]);
 
+  // A plan is a solve over one specific roster + inventory. Re-importing
+  // replaces both, so the eight cards on screen describe gear the user no
+  // longer has. Reset during render, the way Results.tsx resets its share
+  // cues — React re-runs this pass before painting the stale plan.
+  const [planInputs, setPlanInputs] = useState({ entries, artifacts });
+  if (planInputs.entries !== entries || planInputs.artifacts !== artifacts) {
+    setPlanInputs({ entries, artifacts });
+    setPlan(null);
+    setFailed(false);
+  }
+
   async function build() {
-    if (!teams) return;
+    // The button is aria-disabled rather than disabled so it keeps focus
+    // across the run; the guard has to be here.
+    if (!teams || running) return;
     setFailed(false);
     setProgress([0, 8]);
     try {
@@ -137,15 +154,19 @@ export function PlanView({
   return (
     <div className="space-y-4">
       <div className="panel panel-md flex flex-wrap items-center justify-between gap-3">
+        {/* The Section hint above already says "an optimised build for all
+            eight members, plus one farming list"; this line only adds the
+            part it doesn't — who gets first pick of the shared bag. */}
         <p className="text-sm text-muted">
           {teams
-            ? 'Optimises all eight members over your inventory, giving the carries first pick.'
+            ? 'The carries get first pick of the shared inventory.'
             : 'Import a GOOD file — the plan needs a roster to pick teams from.'}
         </p>
         <button
+          type="button"
           className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
           aria-busy={running}
-          disabled={!teams || running}
+          aria-disabled={!teams || running}
           onClick={() => void build()}
         >
           {running
@@ -178,7 +199,16 @@ export function PlanView({
       )}
 
       {plan && (
-        <>
+        // While the next plan is solving, the eight cards on screen are the
+        // previous one. Dim them and mark the region busy so the old numbers
+        // aren't read as the new ones.
+        <div
+          aria-busy={running}
+          className={cn(
+            'space-y-4 transition-opacity',
+            running && 'opacity-40',
+          )}
+        >
           {plan.teams.map((team, i) => {
             const members = new Set(team.members.map((m) => m.characterKey));
             return (
@@ -233,7 +263,7 @@ export function PlanView({
               </ul>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

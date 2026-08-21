@@ -63,6 +63,24 @@ export const BAND_TONE: Record<Band, Tone> = {
   unbuilt: 'muted',
 };
 
+/** Band → its user-visible label. The union's members are lowercase keys, not
+ *  copy: rendering `b` directly printed "partial" mid-sentence. */
+export const BAND_LABELS: Record<Band, string> = {
+  built: 'Built',
+  partial: 'Partly built',
+  unbuilt: 'Unbuilt',
+};
+
+export function bandLabel(b: Band): string {
+  return BAND_LABELS[b] ?? b;
+}
+
+/** Elements are lowercase dataset keys ("hydro"), never display copy. Colour is
+ *  deliberately not part of this — the app has no element-hue system. */
+export function elementLabel(el: string): string {
+  return el ? el[0].toUpperCase() + el.slice(1) : '';
+}
+
 export function statLabel(key: StatKey): string {
   return STAT_LABELS[key] ?? key;
 }
@@ -124,6 +142,18 @@ export function formatSetName(setKey: string): string {
  */
 export function formatScore(n: number, digits = 1): string {
   return Number.isFinite(n) ? n.toFixed(digits) : '—';
+}
+
+/**
+ * One stat *value* with its unit. Percent stats are stored as plain numbers
+ * (46.6 means 46.6%), so every site that printed a bare `formatScore` dropped
+ * the "%" and made a CRIT DMG roll look like a flat stat. Flat stats (EM, ATK,
+ * HP) are whole numbers in-game, so a trailing ".0" on them reads as false
+ * precision — hence the digit count follows the stat, not the caller.
+ */
+export function formatStat(key: StatKey, value: number): string {
+  const pct = isPctStat(key);
+  return `${formatScore(value, pct ? 1 : 0)}${pct ? '%' : ''}`;
 }
 
 /** Crit-ratio targets are stored as CRIT Rate's share of CR+CD; players read

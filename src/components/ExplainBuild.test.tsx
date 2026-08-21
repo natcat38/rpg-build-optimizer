@@ -67,11 +67,26 @@ describe('ExplainBuild', () => {
         screen.getByRole('button', { name: /Explain this build/i }),
       );
       await waitFor(() =>
-        expect(screen.getByText(/Couldn't generate/i)).toBeInTheDocument(),
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          /generate an explanation/i,
+        ),
       );
       expect(
         screen.getByRole('button', { name: /Explain this build/i }),
-      ).toBeEnabled();
+      ).toHaveAttribute('aria-disabled', 'false');
+    });
+
+    it('keeps a Regenerate action after a successful call', async () => {
+      vi.mocked(explainBuild).mockResolvedValue('This build maximises crit.');
+      renderIt();
+      await userEvent.click(
+        screen.getByRole('button', { name: /Explain this build/i }),
+      );
+      await waitFor(() =>
+        expect(
+          screen.getByRole('button', { name: /Regenerate/i }),
+        ).toBeInTheDocument(),
+      );
     });
   });
 });

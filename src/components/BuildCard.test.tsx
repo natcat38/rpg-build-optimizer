@@ -78,21 +78,47 @@ describe('objective hint', () => {
     objective: 'avg_damage',
   };
 
-  it('labels a damage figure as an estimate', () => {
+  // The hint belongs to the *ranking*, not to each build, so it now renders
+  // once above the results list (Results.test.tsx) instead of on every card.
+  it('does not repeat the ranking explanation on the card', () => {
     render(<BuildCard build={build} request={req} artifacts={artifacts} />);
-    expect(screen.getByText(/estimated damage/i)).toBeInTheDocument();
+    expect(screen.queryByText(/estimated damage/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Crit Value = 2/)).not.toBeInTheDocument();
+  });
+});
+
+describe('BuildCard artifact line', () => {
+  const req: OptimizeRequest = {
+    characterKey: 'zzz_not_meta',
+    weaponKey: 'w',
+    buildLevel: 90,
+    constraints: {},
+    objective: 'crit_value',
+  };
+  const flower: Artifact = {
+    id: 'f',
+    setKey: 'EmblemOfSeveredFate',
+    slot: 'flower',
+    rarity: 5,
+    level: 20,
+    mainStat: 'hp',
+    mainStatValue: 4780,
+    subStats: [{ key: 'crit_dmg', value: 14.8 }],
+  };
+
+  it('prints the main-stat value, not the level, beside the stat name', () => {
+    render(<BuildCard build={build} request={req} artifacts={[flower]} />);
+    expect(screen.getByText('4780')).toBeInTheDocument();
+    // The level is its own chip, so "HP +20" can't be read as a 20-HP piece.
+    expect(screen.getByText('Lv 20')).toBeInTheDocument();
   });
 
-  it('explains a stat objective instead of the damage caveat', () => {
-    render(
-      <BuildCard
-        build={build}
-        request={{ ...req, objective: 'crit_value' }}
-        artifacts={artifacts}
-      />,
-    );
-    expect(screen.queryByText(/estimated damage/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/Crit Value = 2/)).toBeInTheDocument();
+  it('carries the percent unit on percent stats', () => {
+    render(<BuildCard build={build} request={req} artifacts={[flower]} />);
+    // Sub-stat value.
+    expect(screen.getByText('+14.8%')).toBeInTheDocument();
+    // Totals row: crit_rate 70 is a percentage, not a flat 70.
+    expect(screen.getByText('70.0%')).toBeInTheDocument();
   });
 });
 

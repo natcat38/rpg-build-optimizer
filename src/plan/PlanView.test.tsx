@@ -77,11 +77,13 @@ describe('PlanView', () => {
     useInventory.getState().clear();
   });
 
+  // aria-disabled rather than `disabled`, so the button keeps focus across a
+  // run; `build()` holds the matching early return.
   it('asks for an import before it can plan anything', () => {
     render(<PlanView runOptimize={run} />);
     expect(
       screen.getByRole('button', { name: /Build my Abyss plan/i }),
-    ).toBeDisabled();
+    ).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('never runs eight solves without an explicit click', () => {

@@ -10,8 +10,10 @@ import { META_TARGETS } from '../meta/metaTargets';
 import { archetypesFor } from '../teams/comps';
 import { getDamageProfile } from '../damage/profiles';
 import {
+  elementLabel,
   formatScore,
   formatSetName,
+  formatStat,
   statLabel,
   objectiveHint,
   objectiveLabel,
@@ -75,7 +77,10 @@ export function CharacterDetail({
         {tab === 'Overview' && (
           <>
             <p className="text-muted">
-              {[char?.element, weaponName ?? 'No weapon equipped']
+              {[
+                char?.element && elementLabel(char.element),
+                weaponName ?? 'No weapon equipped',
+              ]
                 .filter(Boolean)
                 .join(' · ')}
               {entry.level != null && ` · Lv ${entry.level}`}
@@ -113,7 +118,12 @@ export function CharacterDetail({
                   {a ? (
                     <span>
                       {formatSetName(a.setKey)} · {statLabel(a.mainStat)}{' '}
-                      <span className="font-mono text-xs">+{a.level}</span>
+                      {/* The value, then the level as its own chip — printing
+                          "+20" here read as a 20-point main stat. */}
+                      <span className="font-mono text-xs text-paper/80">
+                        {formatStat(a.mainStat, a.mainStatValue)}
+                      </span>{' '}
+                      <span className="chip px-2 py-0.5">Lv {a.level}</span>
                     </span>
                   ) : (
                     <span className="text-muted">empty</span>
@@ -148,7 +158,10 @@ export function CharacterDetail({
                 <p className="text-xs text-muted">
                   Endgame targets:{' '}
                   {Object.entries(meta.statTargets)
-                    .map(([k, v]) => `${statLabel(k as StatKey)} ${v}`)
+                    .map(
+                      ([k, v]) =>
+                        `${statLabel(k as StatKey)} ${formatStat(k as StatKey, v)}`,
+                    )
                     .join(', ')}
                 </p>
               )}

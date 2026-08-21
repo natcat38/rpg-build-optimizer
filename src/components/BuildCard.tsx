@@ -9,12 +9,12 @@ import { SLOTS } from '../game/types';
 import {
   formatScore,
   formatSetName,
+  formatStat,
   isPctStat,
   objectiveLabel,
   SLOT_GLYPH,
   SLOT_LABELS,
   statLabel,
-  objectiveHint,
 } from '../labels';
 import { META_TARGETS } from '../meta/metaTargets';
 import { gradeBuild, type Grade } from '../meta/grade';
@@ -73,14 +73,13 @@ export function BuildCard({
             <p className="font-mono text-2xl font-bold leading-tight text-accent-bright">
               {formatScore(build.objectiveValue)}
             </p>
-            <p className="max-w-xs text-2xs text-muted">
-              {objectiveHint(request.objective)}
-            </p>
           </div>
           {grade && (
+            // The letter is the accessible name; `title` is the description.
+            // Repeating the sentence in `aria-label` too only made a screen
+            // reader say it twice.
             <Marker
               tone={GRADE_TONE[grade.grade]}
-              aria-label={`Grade ${grade.grade} — how close this build is to endgame stat targets`}
               title={`Grade ${grade.grade} — how close this build is to endgame stat targets`}
             >
               {grade.grade}
@@ -131,14 +130,14 @@ export function BuildCard({
         </div>
       )}
 
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-1.5 border-y border-white/5 py-4 text-sm">
+      {/* One column below sm: two columns of "label … value" overflowed a
+          375px viewport by ~42px. */}
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 border-y border-white/5 py-4 text-sm sm:grid-cols-2">
         {SHOW.map((k) => (
           <div key={k} className="flex items-baseline justify-between gap-2">
             <dt className="text-muted">{statLabel(k)}</dt>
             <dd className="font-mono tabular-nums text-paper">
-              {/* Flat stats (EM, ATK) are whole numbers in-game — a trailing
-                  ".0" on them reads as false precision. */}
-              {formatScore(build.totals[k] ?? 0, isPctStat(k) ? 1 : 0)}
+              {formatStat(k, build.totals[k] ?? 0)}
             </dd>
           </div>
         ))}
@@ -150,23 +149,38 @@ export function BuildCard({
           return (
             <li key={s} className="well px-3 py-2">
               <div className="flex items-center gap-3 text-sm text-paper/90">
-                <span className="grid h-6 w-6 flex-none place-items-center rounded-md bg-white/5 text-xs text-accent">
+                {/* Decorative: the slot name sits right beside it. */}
+                <span
+                  aria-hidden="true"
+                  className="grid h-6 w-6 flex-none place-items-center rounded-md bg-white/5 text-xs text-accent"
+                >
                   {SLOT_GLYPH[s]}
                 </span>
                 <span className="w-16 flex-none text-xs uppercase tracking-wide text-muted">
                   {SLOT_LABELS[s]}
                 </span>
                 {a ? (
-                  <span className="min-w-0 flex-1 truncate">
-                    <span className="font-medium">
-                      {formatSetName(a.setKey)}
+                  <>
+                    {/* Wraps below sm; truncation only once there's room for
+                        a single line to be the honest reading. */}
+                    <span className="min-w-0 flex-1 sm:truncate">
+                      <span className="font-medium">
+                        {formatSetName(a.setKey)}
+                      </span>
+                      <span className="text-muted">
+                        {' '}
+                        · {statLabel(a.mainStat)}{' '}
+                        {/* The main-stat VALUE, not the level — a +20 flower
+                            printing "HP +20" read as a 20-HP piece. */}
+                        <span className="font-mono text-xs text-paper/80">
+                          {formatStat(a.mainStat, a.mainStatValue)}
+                        </span>
+                      </span>
                     </span>
-                    <span className="text-muted">
-                      {' '}
-                      · {statLabel(a.mainStat)}{' '}
-                      <span className="font-mono text-xs">+{a.level}</span>
+                    <span className="chip flex-none px-2 py-0.5">
+                      Lv {a.level}
                     </span>
-                  </span>
+                  </>
                 ) : (
                   <span className="text-muted">—</span>
                 )}
@@ -177,7 +191,9 @@ export function BuildCard({
                     <span key={sub.key}>
                       {i > 0 && <span className="text-muted/40"> · </span>}
                       {statLabel(sub.key)}{' '}
-                      <span className="text-paper/80">+{sub.value}</span>
+                      <span className="text-paper/80">
+                        +{formatStat(sub.key, sub.value)}
+                      </span>
                     </span>
                   ))}
                 </p>

@@ -17,6 +17,9 @@ export function SampleGear({
   const [busy, setBusy] = useState<string | null>(null);
 
   async function load(preset: SamplePreset) {
+    // Matches the buttons' aria-disabled below: they stay focusable so a
+    // keyboard user isn't dropped to <body> mid-run, so the guard lives here.
+    if (busy !== null || running) return;
     setBusy(preset.label);
     clear();
     addMany(SAMPLE_INVENTORY);
@@ -43,8 +46,9 @@ export function SampleGear({
         {SAMPLE_PRESETS.map((p) => (
           <button
             key={p.label}
+            type="button"
             className="btn-ghost"
-            disabled={busy !== null || running}
+            aria-disabled={busy !== null || running}
             aria-busy={busy === p.label}
             onClick={() => void load(p)}
           >

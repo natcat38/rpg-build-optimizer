@@ -3,6 +3,7 @@ import type { Objective, StatVec } from '../game/types';
 import type { GapReport } from '../meta/gap';
 import { explainBuild } from '../ai/explainClient';
 import { toExplainPayload } from '../ai/explainShared';
+import { Callout } from './ui/Callout';
 
 export function ExplainBuild({
   characterKey,
@@ -23,6 +24,9 @@ export function ExplainBuild({
   if (!enabled) return null;
 
   async function run() {
+    // The trigger stays focusable (aria-disabled, not disabled) so a repeat
+    // press doesn't drop focus to <body> mid-request.
+    if (loading) return;
     setLoading(true);
     setError(false);
     try {
@@ -45,35 +49,50 @@ export function ExplainBuild({
       {/* Persistent live region: announcing only works if the container is in
           the DOM before the text arrives. */}
       <div aria-live="polite">
-        {explanation && (
+        {(explanation || loading) && (
           <div className="panel panel-md space-y-2">
             <p className="field-label">AI explanation</p>
-            <p className="text-sm leading-relaxed text-paper/90">
-              {explanation}
-            </p>
+            {loading ? (
+              // Skeleton in the box the text will fill, so the panel doesn't
+              // appear from nowhere once the request lands.
+              <div aria-hidden="true" className="space-y-2">
+                <div className="h-3 w-full animate-pulse rounded bg-white/10" />
+                <div className="h-3 w-11/12 animate-pulse rounded bg-white/10" />
+                <div className="h-3 w-2/3 animate-pulse rounded bg-white/10" />
+              </div>
+            ) : (
+              <p className="text-sm leading-relaxed text-paper/90">
+                {explanation}
+              </p>
+            )}
           </div>
         )}
       </div>
-      {!explanation && (
-        <button
-          className="btn-ghost"
-          onClick={() => void run()}
-          aria-busy={loading}
-          disabled={loading}
-        >
-          {loading ? (
-            'Thinking…'
-          ) : (
-            <>
-              <span aria-hidden="true">✨</span> Explain this build
-            </>
-          )}
-        </button>
-      )}
+      {/* The trigger used to vanish for good on success, so a user who wanted
+          a second take had no way to ask for one. */}
+      <button
+        type="button"
+        className="btn-ghost mt-2"
+        onClick={() => void run()}
+        aria-busy={loading}
+        aria-disabled={loading}
+      >
+        {loading ? (
+          'Thinking…'
+        ) : explanation ? (
+          <>
+            <span aria-hidden="true">✨</span> Regenerate
+          </>
+        ) : (
+          <>
+            <span aria-hidden="true">✨</span> Explain this build
+          </>
+        )}
+      </button>
       {error && (
-        <p className="mt-2 text-sm text-rose">
-          Couldn&apos;t generate an explanation right now. Try again.
-        </p>
+        <Callout tone="error" role="alert" className="mt-2">
+          Couldn’t generate an explanation right now. Try again.
+        </Callout>
       )}
     </div>
   );

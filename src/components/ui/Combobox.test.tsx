@@ -98,9 +98,12 @@ describe('Combobox accessibility', () => {
       document.getElementById(
         search.getAttribute('aria-activedescendant') ?? '',
       );
-    expect(active()).toHaveTextContent('Hu Tao');
-    await userEvent.keyboard('{ArrowDown}{ArrowDown}');
+    // Opens on the current selection, not on option 0.
+    expect(active()).toHaveTextContent('Raiden Shogun');
+    await userEvent.keyboard('{ArrowDown}');
     expect(active()).toHaveTextContent('Xiao');
+    await userEvent.keyboard('{ArrowUp}{ArrowUp}');
+    expect(active()).toHaveTextContent('Hu Tao');
   });
 
   it('does not leave the empty state as a bare listbox child', async () => {
@@ -126,7 +129,7 @@ describe('Combobox accessibility', () => {
     ).not.toHaveAttribute('aria-activedescendant');
   });
 
-  it('does not point the collapsed trigger at a list that is not rendered', () => {
+  it('advertises the popup it owns from the collapsed trigger', () => {
     render(
       <Combobox
         options={OPTIONS}
@@ -135,9 +138,49 @@ describe('Combobox accessibility', () => {
         label="Character"
       />,
     );
-    expect(
-      screen.getByRole('combobox', { name: 'Character' }),
-    ).not.toHaveAttribute('aria-controls');
+    const trigger = screen.getByRole('combobox', { name: 'Character' });
+    expect(trigger).toHaveAttribute('aria-haspopup', 'listbox');
+    expect(trigger).toHaveAttribute('aria-controls');
+  });
+
+  it('opens on ArrowDown and ArrowUp from the collapsed trigger', async () => {
+    render(
+      <Combobox
+        options={OPTIONS}
+        value="raiden"
+        onChange={() => {}}
+        label="Character"
+      />,
+    );
+    screen.getByRole('combobox', { name: 'Character' }).focus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  it('adopts a caller-supplied id so a sibling <label> can target it', async () => {
+    render(
+      <>
+        <label htmlFor="cb-set">Set</label>
+        <Combobox
+          id="cb-set"
+          options={OPTIONS}
+          value="raiden"
+          onChange={() => {}}
+          label="Set"
+        />
+      </>,
+    );
+    expect(screen.getByRole('combobox', { name: 'Set' })).toHaveAttribute(
+      'id',
+      'cb-set',
+    );
+    // The open state swaps button for input at the same position; the id has
+    // to travel with it or the label stops pointing at anything.
+    await userEvent.click(screen.getByRole('combobox', { name: 'Set' }));
+    expect(screen.getByRole('combobox', { name: 'Set' })).toHaveAttribute(
+      'id',
+      'cb-set',
+    );
   });
 
   it('exposes the dropdown as a listbox with a selected option', async () => {

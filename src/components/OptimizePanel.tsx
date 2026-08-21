@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, type ReactNode } from 'react';
 import type { BuildLevel, Objective, Slot, StatKey } from '../game/types';
 import { BUILD_LEVELS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
@@ -125,6 +125,7 @@ export function OptimizePanel({
   onRun: () => void | Promise<void>;
   running: boolean;
 }) {
+  const uid = useId();
   const artifacts = useInventory((s) => s.artifacts);
   const rosterEntries = useRoster((s) => s.entries);
   // Both are the adapter's memoised module-level arrays, stable for the app's
@@ -179,6 +180,7 @@ export function OptimizePanel({
 
   const hasArtifacts = artifacts.length > 0;
   const canRun = hasArtifacts && !!characterKey;
+  const blocked = !canRun || running;
   const hint = !hasArtifacts
     ? 'Add or import artifacts before optimising.'
     : !characterKey
@@ -215,9 +217,15 @@ export function OptimizePanel({
   return (
     <div className="panel panel-md space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
+        {/* Real <label htmlFor>, matching the <select>s below: as a bare
+            <span> the visible label wasn't clickable, so the two halves of
+            the same grid behaved differently. */}
         <div className="block">
-          <span className="field-label">Character</span>
+          <label className="field-label" htmlFor={`${uid}-character`}>
+            Character
+          </label>
           <Combobox
+            id={`${uid}-character`}
             options={charOptions}
             value={characterKey}
             onChange={onCharacterChange}
@@ -225,8 +233,11 @@ export function OptimizePanel({
           />
         </div>
         <div className="block">
-          <span className="field-label">Weapon</span>
+          <label className="field-label" htmlFor={`${uid}-weapon`}>
+            Weapon
+          </label>
           <Combobox
+            id={`${uid}-weapon`}
             options={weapons.map((w) => ({ value: w.key, label: w.name }))}
             value={weaponKey}
             onChange={setWeaponKey}
@@ -294,12 +305,17 @@ export function OptimizePanel({
             artifacts for the exact optimum.
           </p>
         )}
+        {/* aria-disabled + an early return, not `disabled`: a button that goes
+            disabled while it is the active element hands focus to <body>, so
+            the keyboard user is dropped at the top of the page mid-run. */}
         <div className="flex gap-2">
           {meta && (
             <button
+              type="button"
               className="btn-ghost"
-              disabled={!canRun || running}
+              aria-disabled={blocked}
               onClick={() => {
+                if (blocked) return;
                 applyPreset({
                   characterKey,
                   weaponKey,
@@ -313,10 +329,14 @@ export function OptimizePanel({
             </button>
           )}
           <button
+            type="button"
             className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
             aria-busy={running}
-            disabled={!canRun || running}
-            onClick={() => void onRun()}
+            aria-disabled={blocked}
+            onClick={() => {
+              if (blocked) return;
+              void onRun();
+            }}
           >
             {running ? 'Searching…' : 'Optimise'}
           </button>

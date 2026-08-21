@@ -29,8 +29,15 @@ describe('SampleGear', () => {
     expect(onRun).toHaveBeenCalled();
   });
 
-  it('disables preset buttons while a run is already in flight elsewhere', () => {
-    render(<SampleGear onRun={() => {}} running={true} />);
-    expect(screen.getByRole('button', { name: 'Furina' })).toBeDisabled();
+  // aria-disabled, not `disabled`: a button that goes truly disabled while it
+  // holds focus drops focus to <body>. The click guard lives in `load`.
+  it('marks preset buttons disabled while a run is in flight elsewhere', async () => {
+    const onRun = vi.fn();
+    render(<SampleGear onRun={onRun} running={true} />);
+    const furina = screen.getByRole('button', { name: 'Furina' });
+    expect(furina).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(furina);
+    expect(onRun).not.toHaveBeenCalled();
+    expect(useInventory.getState().artifacts).toHaveLength(0);
   });
 });

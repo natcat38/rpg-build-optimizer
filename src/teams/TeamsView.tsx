@@ -1,7 +1,8 @@
 /**
- * Team recommendations for endgame content. Abyss is the only mode wired up;
- * Theater and Stygian are shown as coming soon so the shape of the feature is
- * visible without pretending they work.
+ * Team recommendations for endgame content. Abyss is the only mode wired up.
+ * The other two are named in one muted line rather than offered as a control:
+ * a mode picker whose only enabled option changes nothing is a promise the
+ * page can't keep.
  */
 import { useMemo } from 'react';
 import { useRoster } from '../state/roster';
@@ -14,16 +15,13 @@ import {
   type TeamInstance,
   type ArchetypeGap,
 } from './recommend';
-import { BAND_TONE, formatScore, ROLE_LABELS } from '../labels';
+import { BAND_TONE, bandLabel, formatScore, ROLE_LABELS } from '../labels';
 import { Badge } from '../components/ui/Badge';
-import { cn } from '../components/ui/cn';
-import type { EndgameMode } from './types';
 
-const MODES: { id: EndgameMode; label: string; live: boolean }[] = [
-  { id: 'abyss', label: 'Spiral Abyss', live: true },
-  { id: 'theater', label: 'Imaginarium Theater', live: false },
-  { id: 'stygian', label: 'Stygian Onslaught', live: false },
-];
+/** The endgame modes this view does not recommend for yet. Named, not offered:
+ *  the `EndgameMode` union still carries them, so adding one here is the only
+ *  edit a wired-up mode needs on this side. */
+const COMING_SOON: string[] = ['Imaginarium Theater', 'Stygian Onslaught'];
 
 function TeamCard({ title, team }: { title: string; team: TeamInstance }) {
   const arch = getArchetype(team.archetypeId);
@@ -50,7 +48,7 @@ function TeamCard({ title, team }: { title: string; team: TeamInstance }) {
               <span className="font-mono text-xs text-muted">
                 {formatScore(m.buildScore, 0)}
               </span>
-              <Badge tone={BAND_TONE[b]}>{b}</Badge>
+              <Badge tone={BAND_TONE[b]}>{bandLabel(b)}</Badge>
             </li>
           );
         })}
@@ -93,35 +91,6 @@ export function TeamsView() {
 
   return (
     <div className="panel panel-md space-y-4">
-      <fieldset className="flex flex-wrap gap-4">
-        <legend className="field-label">Endgame mode</legend>
-        {MODES.map((m) => (
-          <label
-            key={m.id}
-            className={cn(
-              // Same ring width/colour/offset as .focus-ring — a label can't
-              // @apply it, because the ring is driven by the nested input.
-              `touch-target inline-flex cursor-pointer items-center gap-2 rounded-full border px-4 text-sm transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/70 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-surface-900`,
-              m.live
-                ? 'border-white/15 text-paper has-[:checked]:border-accent/60 has-[:checked]:bg-accent/10 has-[:checked]:text-accent-bright'
-                : 'cursor-not-allowed border-white/5 text-muted',
-            )}
-          >
-            <input
-              type="radio"
-              name="endgame-mode"
-              value={m.id}
-              defaultChecked={m.live}
-              disabled={!m.live}
-              className="sr-only"
-              aria-label={m.label}
-            />
-            {m.label}
-            {!m.live && ' (coming soon)'}
-          </label>
-        ))}
-      </fieldset>
-
       <p className="text-xs text-muted">
         Curated from KQM guides for patch {PATCH} — Abyss blessings change each
         patch, so treat these as archetypes, not answers.
@@ -136,9 +105,13 @@ export function TeamsView() {
         <p className="text-sm text-muted">
           {Object.keys(entries).length === 0
             ? 'Import a GOOD file to see recommended teams.'
-            : "Your roster can't field two disjoint teams from the curated archetypes yet."}
+            : 'Your roster can’t field two disjoint teams from the curated archetypes yet.'}
         </p>
       )}
+
+      <p className="text-xs text-muted">
+        Coming soon: {COMING_SOON.join(' · ')}.
+      </p>
 
       <GapList gaps={rec.gaps} />
     </div>
