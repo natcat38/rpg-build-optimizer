@@ -13,6 +13,7 @@ import {
   SLOT_LABELS,
   statLabel,
 } from '../labels';
+import { cn } from './ui/cn';
 import { Combobox } from './ui/Combobox';
 import {
   META_TARGETS,
@@ -22,11 +23,18 @@ import {
 import { TEAMMATES, type TeammateRec } from '../meta/teammates';
 import { getDamageProfile } from '../damage/profiles';
 
+// Every objective a curated meta recipe can recommend has to be offerable,
+// or "(Recommended)" points at an option the dropdown doesn't carry — which is
+// how hp_pct and def_pct characters (Hu Tao, Noelle) ended up unable to select
+// the metric their own recipe names. `avg_damage` is the deliberate exception:
+// it is appended per character, only where a damage profile exists.
 const OBJECTIVES: Objective[] = [
   'crit_value',
   'em',
   'atk_pct',
   'atk',
+  'hp_pct',
+  'def_pct',
   'er_pct',
   'elemental_dmg',
 ];
@@ -165,39 +173,17 @@ export function OptimizePanel({
     [legalWeapons],
   );
 
-  const rosterWeapon = rosterEntries[characterKey]?.weaponKey;
-  // Correct an illegal pairing wherever it came from — the character picker
-  // below, a roster drawer, a shared ?b= link, the app's own defaults — rather
-  // than only in `onCharacterChange`. `canEquip` passes unknown keys, so this
-  // never fights a request the snapshot can't judge.
-  // Preference order: the weapon the player actually owns on this character,
-  // then the curated meta pick, then the first legal weapon as a floor.
-  const metaWeapon = META_TARGETS[characterKey]?.weapon;
-  useEffect(() => {
-    if (genshinAdapter.canEquip(characterKey, weaponKey)) return;
-    const preferred =
-      rosterWeapon && genshinAdapter.canEquip(characterKey, rosterWeapon)
-        ? rosterWeapon
-        : metaWeapon && genshinAdapter.canEquip(characterKey, metaWeapon)
-          ? metaWeapon
-          : legalWeapons[0]?.key;
-    if (preferred) setWeaponKey(preferred);
-  }, [
-    characterKey,
-    weaponKey,
-    rosterWeapon,
-    metaWeapon,
-    legalWeapons,
-    setWeaponKey,
-  ]);
-
   function onCharacterChange(key: string) {
+    // `setCharacterKey` already guarantees the weapon stays legal for the new
+    // character (see optimizeRequest's `legalWeapon`), including falling back
+    // to this character's roster-equipped weapon when the current one isn't.
+    // What's left here is the rest of the roster pre-fill: both fields stay
+    // manually overridable afterward (same pre-fill-stay-overridable spirit as
+    // "Use meta build", ADR-0007 / ADR-0015).
     setCharacterKey(key);
-    // Pre-fill from the owned roster; both fields stay manually overridable
-    // afterward (same pre-fill-stay-overridable spirit as "Use meta build",
-    // ADR-0007 / ADR-0015).
     const entry = rosterEntries[key];
-    if (entry?.weaponKey) setWeaponKey(entry.weaponKey);
+    if (entry?.weaponKey && genshinAdapter.canEquip(key, entry.weaponKey))
+      setWeaponKey(entry.weaponKey);
     if (entry?.buildLevel) setBuildLevel(entry.buildLevel);
   }
 
@@ -382,7 +368,7 @@ export function OptimizePanel({
           )}
           <button
             type="button"
-            className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
+            className={cn('btn-primary', running && 'animate-pulse-glow')}
             aria-busy={running}
             aria-disabled={blocked}
             onClick={() => {

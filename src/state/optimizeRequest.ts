@@ -8,6 +8,7 @@ import type {
 import { genshinAdapter } from '../game/genshin/adapter';
 import { META_TARGETS } from '../meta/metaTargets';
 import { getDamageProfile } from '../damage/profiles';
+import { useRoster } from './roster';
 
 export interface PresetInput {
   characterKey: string;
@@ -76,16 +77,56 @@ export function isDefaultSelection(s: {
   );
 }
 
+/**
+ * A weapon this character can actually hold.
+ *
+ * Weapon legality is a property of the request, not of the panel that happens
+ * to edit it: an illegal pair reaching the optimiser produces a "proven
+ * optimal" build around a claymore user's polearm. Correcting it here means
+ * every writer — the picker, a preset, a roster prefill — is covered by one
+ * rule instead of by an effect in one component.
+ *
+ * Preference order: the weapon asked for, then the player's own equipped one,
+ * then the curated meta pick, then the first legal weapon as a floor. Unlike
+ * `canEquip` (deliberately permissive about keys the frozen snapshot doesn't
+ * carry), a weapon the adapter can't resolve counts as illegal here — the
+ * request is about to be run, and `baseStats` fails loud on an unknown key.
+ */
+function legalWeapon(characterKey: string, wanted: string): string {
+  const character = genshinAdapter.character(characterKey);
+  // No evidence of a weapon class is not evidence of a wrong one: leave an
+  // unknown character's selection alone rather than guessing for it.
+  if (!character) return wanted;
+  const ok = (k: string | undefined): k is string =>
+    !!k &&
+    !!genshinAdapter.weapon(k) &&
+    genshinAdapter.canEquip(characterKey, k);
+  if (ok(wanted)) return wanted;
+  const equipped = useRoster.getState().entries[characterKey]?.weaponKey;
+  if (ok(equipped)) return equipped;
+  const meta = META_TARGETS[characterKey]?.weapon;
+  if (ok(meta)) return meta;
+  return genshinAdapter.weaponsOfType(character.weaponType)[0]?.key ?? wanted;
+}
+
 export const useOptimizeRequest = create<OptimizeRequestState>((set, get) => ({
   ...defaults(),
-  setCharacterKey: (characterKey) => set({ characterKey }),
+  setCharacterKey: (characterKey) =>
+    set((s) => ({
+      characterKey,
+      weaponKey: legalWeapon(characterKey, s.weaponKey),
+    })),
   setWeaponKey: (weaponKey) => set({ weaponKey }),
   setBuildLevel: (buildLevel) => set({ buildLevel }),
   setObjective: (objective) => set({ objective }),
   setMinER: (v) => {
     const num = v.trim() === '' ? NaN : Number(v);
     const prev = get().constraints;
-    if (Number.isNaN(num)) {
+    // Anything that isn't a usable floor clears the floor. `Number('1e400')`
+    // is Infinity and `Number('Infinity')` parses — both are numbers, not NaN,
+    // and either would have been stored as a threshold no build can meet,
+    // silently returning zero results. A negative floor is no floor at all.
+    if (!Number.isFinite(num) || num < 0) {
       // Remove er_pct; drop minStats entirely if it becomes empty.
       if (!prev.minStats || !('er_pct' in prev.minStats)) return;
       const rest = { ...prev.minStats };
@@ -104,7 +145,7 @@ export const useOptimizeRequest = create<OptimizeRequestState>((set, get) => ({
   applyPreset: (p) => {
     set({
       characterKey: p.characterKey,
-      weaponKey: p.weaponKey,
+      weaponKey: legalWeapon(p.characterKey, p.weaponKey),
       objective: p.objective,
       constraints: p.constraints,
     });

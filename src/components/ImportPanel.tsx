@@ -19,42 +19,104 @@ const UID_ERRORS: Record<UidError['error'], string> = {
     'No artifacts on showcase — turn on Character Showcase in-game and add characters to it.',
 };
 
+/** Every outcome this panel reports, in one shape: the tone decides both the
+ *  Callout's colour and which of the two live regions announces it. */
+interface Notice {
+  tone: 'success' | 'info' | 'error';
+  text: string;
+}
+
+const BAD_FILE =
+  "That file isn't a recognised inventory export. Expected a GOOD-format .json.";
+
+/** "1 artifact" / "2 artifacts". English's regular plural is all this panel
+ *  needs, and a count of one printed as "1 artifacts" reads as a bug in the
+ *  importer rather than in the copy. */
+function plural(n: number, word: string): string {
+  return n === 1 ? word : `${word}s`;
+}
+
+/** Sample gear carries a `sample-` id prefix (see src/sample/sampleInventory)
+ *  — the one marker distinguishing the demo bag from artifacts the player
+ *  actually owns. */
+function isSampleArtifact(a: Artifact): boolean {
+  return a.id.startsWith('sample-');
+}
+
 export function ImportPanel() {
   const artifacts = useInventory((s) => s.artifacts);
-  const addMany = useInventory((s) => s.addMany);
-  const [msg, setMsg] = useState<{
-    tone: 'success' | 'info';
-    text: string;
-  } | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const replaceAll = useInventory((s) => s.replaceAll);
+  // One notice, not a message and an error that could both be on screen at
+  // once: every path below sets exactly one outcome, and the two live regions
+  // are fed from its tone. Previously each path had to remember to clear the
+  // other piece of state, and one that forgot showed a green "Imported 1" over
+  // a red parse failure.
+  const [notice, setNotice] = useState<Notice | null>(null);
   const [uid, setUid] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   function mergeDedupe(incoming: Artifact[], suffix = '') {
+    // An import replaces the demo bag rather than merging with it. The sample
+    // artifacts are generated, not owned, so leaving them in place meant the
+    // first real import produced results built around gear the player has
+    // never seen — and `mergeNew` can't tell the difference, since a sample
+    // piece is a structurally valid artifact.
+    const existing = useInventory
+      .getState()
+      .artifacts.filter((a) => !isSampleArtifact(a));
     // Read live state rather than the render-time `artifacts` closure: onFile
     // and onUid are both async, so a second import can otherwise dedupe
     // against a snapshot that predates the first import's commit.
-    const fresh = mergeNew(useInventory.getState().artifacts, incoming);
-    addMany(fresh);
-    setErr(null);
+    const fresh = mergeNew(existing, incoming);
+    replaceAll([...existing, ...fresh]);
+    // An empty parse is not "already up to date": the file was readable but
+    // carried nothing this app recognises, and saying "all 0 pieces were
+    // already in your inventory" made a failed import read as a no-op success.
+    if (incoming.length === 0) {
+      setNotice({
+        tone: 'info',
+        text: `No readable artifacts in that file — nothing was imported.${suffix}`,
+      });
+      return;
+    }
     // Re-importing the same file adds nothing, and a green "Imported 0
     // artifacts." reads as a failure dressed as a success. Three outcomes,
     // three sentences.
     const skipped = incoming.length - fresh.length;
     if (fresh.length === 0) {
-      setMsg({
+      setNotice({
         tone: 'info',
         text: `Already up to date — all ${incoming.length} ${incoming.length === 1 ? 'piece was' : 'pieces were'} already in your inventory.${suffix}`,
       });
       return;
     }
-    setMsg({
+    setNotice({
       tone: 'success',
       text:
         skipped > 0
-          ? `Imported ${fresh.length} new artifacts — ${skipped} were already in your inventory.${suffix}`
-          : `Imported ${fresh.length} artifacts.${suffix}`,
+          ? `Imported ${fresh.length} new ${plural(fresh.length, 'artifact')} — ${skipped} ${skipped === 1 ? 'was' : 'were'} already in your inventory.${suffix}`
+          : `Imported ${fresh.length} ${plural(fresh.length, 'artifact')}.${suffix}`,
     });
+  }
+
+  function onClear() {
+    // Two-step, because this is the one control on the panel that destroys
+    // work and there is no undo. `disabled` is not involved: the button stays
+    // fully operable and simply means something different on the second press,
+    // with the label saying so rather than a dialog interrupting.
+    if (!confirmingClear) {
+      setConfirmingClear(true);
+      setNotice({
+        tone: 'info',
+        text: 'Press Confirm clear to remove all artifacts and roster data. This cannot be undone.',
+      });
+      return;
+    }
+    setConfirmingClear(false);
+    useInventory.getState().clear();
+    useRoster.getState().clear();
+    setNotice({ tone: 'info', text: 'Inventory and roster cleared.' });
   }
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
@@ -64,10 +126,7 @@ export function ImportPanel() {
       const json = JSON.parse(await file.text()) as unknown;
       const out = parseGOOD(json);
       if ('error' in out) {
-        setMsg(null);
-        setErr(
-          "That file isn't a recognised inventory export. Expected a GOOD-format .json.",
-        );
+        setNotice({ tone: 'error', text: BAD_FILE });
         return;
       }
       const roster = parseGOODRoster(json);
@@ -83,10 +142,7 @@ export function ImportPanel() {
         rosterCount > 0 ? ` Roster: ${rosterCount} characters.` : '',
       );
     } catch {
-      setMsg(null);
-      setErr(
-        "That file isn't a recognised inventory export. Expected a GOOD-format .json.",
-      );
+      setNotice({ tone: 'error', text: BAD_FILE });
     }
   }
 
@@ -95,12 +151,11 @@ export function ImportPanel() {
     // field submits regardless — so the guard has to live here.
     if (busy || !uidOk) return;
     setBusy(true);
-    setMsg(null);
-    setErr(null);
+    setNotice(null);
     const out = await fetchUidArtifacts(uid.trim());
     setBusy(false);
     if ('error' in out) {
-      setErr(UID_ERRORS[out.error]);
+      setNotice({ tone: 'error', text: UID_ERRORS[out.error] });
       return;
     }
     mergeDedupe(out);
@@ -118,10 +173,20 @@ export function ImportPanel() {
         {/* Two explicit element children, not an element plus a bare text
             node: JSX drops the newline between them, so the spacing was left
             to .chip's flex gap and read as "70artifacts loaded". */}
-        <span className="chip">
-          <span className="font-bold text-accent">{count}</span>
-          <span>{count === 1 ? 'artifact' : 'artifacts'} loaded</span>
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="chip">
+            {/* Tabular digits: the count changes under the reader's eyes on
+                every import, and a proportional font shifted the word beside
+                it sideways each time. */}
+            <span className="font-mono font-bold text-accent">{count}</span>
+            <span>{plural(count, 'artifact')} loaded</span>
+          </span>
+          {count > 0 && (
+            <button type="button" className="btn-ghost" onClick={onClear}>
+              {confirmingClear ? 'Confirm clear' : 'Clear inventory'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
@@ -203,19 +268,14 @@ export function ImportPanel() {
           absolutely positioned, so they cost the panel no vertical rhythm and
           the Callouts below stay purely visual. */}
       <p className="sr-only" role="status">
-        {msg?.text ?? ''}
+        {notice && notice.tone !== 'error' ? notice.text : ''}
       </p>
       <p className="sr-only" role="alert">
-        {err ?? ''}
+        {notice?.tone === 'error' ? notice.text : ''}
       </p>
-      {msg && (
-        <Callout tone={msg.tone} className="flex items-center gap-2">
-          {msg.text}
-        </Callout>
-      )}
-      {err && (
-        <Callout tone="error" className="flex items-center gap-2">
-          {err}
+      {notice && (
+        <Callout tone={notice.tone} className="flex items-center gap-2">
+          {notice.text}
         </Callout>
       )}
     </div>

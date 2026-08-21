@@ -1,6 +1,7 @@
 import type { Objective, StatKey, StatVec } from '../game/types';
 import { isStatKey, isObjective } from '../game/types';
-import { objectiveLabel, statLabel } from '../labels';
+import { objectiveLabel, statLabel } from '../labels-core';
+import { MAX_KEY_LEN } from '../state/artifactValidation';
 import type { GapReport } from '../meta/gap';
 
 // ---------------------------------------------------------------------------
@@ -18,7 +19,6 @@ export interface ExplainPayload {
   };
 }
 
-const MAX_KEY_LEN = 64;
 const MAX_TOTALS = 20;
 const STAT_MIN = -10_000;
 const STAT_MAX = 100_000;

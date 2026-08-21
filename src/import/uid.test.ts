@@ -230,3 +230,55 @@ describe('fetchUidArtifacts', () => {
     expect(r).toEqual([]);
   });
 });
+
+describe('fetchUidArtifacts rarity and set key', () => {
+  const piece = (flat: Record<string, unknown>) => ({
+    avatarInfoList: [
+      {
+        equipList: [
+          {
+            reliquary: { level: 21 },
+            flat: {
+              itemType: 'ITEM_RELIQUARY',
+              equipType: 'EQUIP_BRACER',
+              setNameTextMapHash: '1234567890',
+              reliquaryMainstat: {
+                mainPropId: 'FIGHT_PROP_HP',
+                statValue: 4780,
+              },
+              reliquarySubstats: [],
+              ...flat,
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  const fetchOnce = (body: unknown) =>
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => body }),
+    );
+
+  it('keeps a 4★ piece at its own rarity', async () => {
+    fetchOnce(piece({ rankLevel: 4 }));
+    const out = await fetchUidArtifacts('700000000');
+    expect(Array.isArray(out) && out[0].rarity).toBe(4);
+  });
+
+  // `mainStatValue` indexes the dataset's per-rarity curves, so defaulting a
+  // missing rankLevel to 5 invented a stat value Enka never reported.
+  it.each([[undefined], [3], ['5'], [NaN]])(
+    'skips a piece whose rankLevel is %s rather than assuming 5',
+    async (rankLevel) => {
+      fetchOnce(piece({ rankLevel }));
+      expect(await fetchUidArtifacts('700000000')).toEqual([]);
+    },
+  );
+
+  it('skips a piece whose set-name hash exceeds the shared key bound', async () => {
+    fetchOnce(piece({ rankLevel: 5, setNameTextMapHash: 'x'.repeat(200) }));
+    expect(await fetchUidArtifacts('700000000')).toEqual([]);
+  });
+});

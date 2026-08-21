@@ -7,6 +7,7 @@ import { genshinAdapter } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
 import { useOptimizeRequest } from '../state/optimizeRequest';
+import { META_TARGETS } from '../meta/metaTargets';
 import { currentRequest } from '../state/optimizeRequest';
 
 describe('OptimizePanel', () => {
@@ -388,5 +389,35 @@ describe('OptimizePanel weapon typing', () => {
     expect(within(list).getAllByRole('option').length).toBe(
       genshinAdapter.weapons().length,
     );
+  });
+});
+
+describe('OptimizePanel objective coverage', () => {
+  beforeEach(() => {
+    useInventory.getState().clear();
+    useOptimizeRequest.getState().reset();
+  });
+
+  // "(Recommended)" is drawn on the option whose value matches the recipe's
+  // objective — so a recipe naming an objective the dropdown doesn't offer
+  // (hp_pct for Hu Tao, def_pct for Noelle) recommended nothing at all, and
+  // the user couldn't select the metric the app itself told them to use.
+  it('offers every objective a meta recipe can recommend', () => {
+    render(<OptimizePanel onRun={() => {}} running={false} />);
+    const select = screen.getByRole('combobox', { name: /Maximise/i });
+    const offered = new Set(
+      (within(select).getAllByRole('option') as HTMLOptionElement[]).map(
+        (o) => o.value,
+      ),
+    );
+    for (const meta of Object.values(META_TARGETS)) {
+      // avg_damage is the deliberate exception: it is appended per character,
+      // only where a curated damage profile exists.
+      if (meta.objective === 'avg_damage') continue;
+      expect(
+        offered,
+        `${meta.characterKey} recommends ${meta.objective}`,
+      ).toContain(meta.objective);
+    }
   });
 });

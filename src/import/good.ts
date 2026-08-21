@@ -8,7 +8,10 @@ import type {
 } from '../game/types';
 import { BUILD_LEVELS, ELEMENTS, SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
-import { validateArtifactDraft } from '../state/artifactValidation';
+import {
+  MAX_KEY_LEN,
+  validateArtifactDraft,
+} from '../state/artifactValidation';
 
 // A full-collection GOOD export is large (a maxed account's artifact inventory
 // runs into the low thousands) but not unbounded; cap generously so a
@@ -84,7 +87,6 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
     const mainStat = STAT_MAP[raw.mainStatKey];
     if (!slot || !mainStat) continue; // skip unrecognised entries rather than throwing
     if (raw.rarity !== 4 && raw.rarity !== 5) continue; // reject corrupt rarity
-    if (!Number.isFinite(raw.level)) continue; // validateArtifactDraft's range check misses NaN
     // Guard the array shape too, not just undefined — a non-array `substats`
     // (malformed export) would otherwise throw on `.map`, breaking the
     // "skip malformed rather than throw" contract above.
@@ -102,11 +104,12 @@ export function parseGOOD(json: unknown): Artifact[] | { error: 'BAD_FORMAT' } {
     if (validateArtifactDraft({ mainStat, level: raw.level, subStats }))
       continue;
     // setKey is carried through unvalidated into set-bonus lookups and the DOM
-    // (formatSetName); bound it like the share path's isShortString does.
+    // (formatSetName); bound it by the one shared key cap the share link and
+    // the AI proxy payload guard also apply.
     if (
       typeof raw.setKey !== 'string' ||
       raw.setKey.length === 0 ||
-      raw.setKey.length > 128
+      raw.setKey.length > MAX_KEY_LEN
     )
       continue;
     out.push({

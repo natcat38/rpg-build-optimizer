@@ -22,3 +22,38 @@ describe('inventory store', () => {
     expect(useInventory.getState().artifacts).toHaveLength(1);
   });
 });
+
+describe('inventory rehydration is a trust boundary', () => {
+  beforeEach(() => useInventory.getState().clear());
+
+  it('keeps the valid rows of a legacy blob and drops the corrupt one', async () => {
+    // A blob written by an older build (or hand-edited in devtools) reaches
+    // the optimiser and BuildCard's render unchecked. One bad row must cost
+    // the player that row, not their whole inventory.
+    localStorage.setItem(
+      'rpg-build-optimizer/inventory',
+      JSON.stringify({
+        state: {
+          artifacts: [
+            sample({ id: 'good-1' }),
+            { id: 'corrupt', slot: 'sands' },
+            sample({ id: 'good-2', level: 999 }),
+          ],
+        },
+      }),
+    );
+    await useInventory.persist.rehydrate();
+    expect(useInventory.getState().artifacts.map((a) => a.id)).toEqual([
+      'good-1',
+    ]);
+  });
+
+  it('survives a blob whose artifacts field is not an array', async () => {
+    localStorage.setItem(
+      'rpg-build-optimizer/inventory',
+      JSON.stringify({ state: { artifacts: 'everything' } }),
+    );
+    await useInventory.persist.rehydrate();
+    expect(useInventory.getState().artifacts).toEqual([]);
+  });
+});

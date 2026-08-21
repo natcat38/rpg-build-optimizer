@@ -1,6 +1,9 @@
 import type { Artifact, Element, Slot, StatKey, SubStat } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
-import { validateArtifactDraft } from '../state/artifactValidation';
+import {
+  MAX_KEY_LEN,
+  validateArtifactDraft,
+} from '../state/artifactValidation';
 
 export type UidError = { error: 'NOT_FOUND' | 'NO_SHOWCASE' | 'NETWORK' };
 
@@ -112,11 +115,19 @@ export async function fetchUidArtifacts(
           ? rawLevel
           : 1) - 1, // Enka level is 1-based
       );
+      // Rarity is not a free number: `mainStatValue` indexes the dataset's
+      // 4★/5★ curves by it, so defaulting a missing or corrupt rankLevel to 5
+      // invented a stat value for a piece Enka never described that way. There
+      // is no fifth-star fallback to guess — skip the piece, as parseGOOD does.
       const rank = flat.rankLevel;
-      const rarity =
-        typeof rank === 'number' && Number.isFinite(rank) ? rank : 5;
+      if (rank !== 4 && rank !== 5) continue;
+      const rarity = rank;
       // Same invariant the manual entry and GOOD paths enforce.
       if (validateArtifactDraft({ mainStat, level, subStats })) continue;
+      // The hash reaches set lookups and the DOM (formatSetName) like any
+      // other setKey, so it gets the same bound the other two importers apply.
+      const setKey = String(flat.setNameTextMapHash);
+      if (setKey.length === 0 || setKey.length > MAX_KEY_LEN) continue;
       out.push({
         id: crypto.randomUUID(),
         // NOTE: setNameTextMapHash is a NAME HASH, not a GOOD-format set key.
@@ -124,7 +135,7 @@ export async function fetchUidArtifacts(
         // bonuses reliably (their setKey is a numeric hash string). This is a known
         // limitation — GOOD file import is the reliable path. Do NOT build a
         // hash→key mapping here; still deferred as of v2 (2026-08).
-        setKey: String(flat.setNameTextMapHash),
+        setKey,
         slot,
         rarity,
         level,
