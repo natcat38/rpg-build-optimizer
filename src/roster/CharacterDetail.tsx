@@ -52,6 +52,7 @@ export function CharacterDetail({
     [entry, artifacts],
   );
   const meta = META_TARGETS[characterKey];
+  const profile = getDamageProfile(characterKey);
   const comps = archetypesFor(characterKey);
 
   return (
@@ -174,7 +175,20 @@ export function CharacterDetail({
                 Source guide (KQM)
                 <span className="sr-only"> (opens in new tab)</span>
               </a>
-              {!getDamageProfile(characterKey) && (
+              {profile && (
+                <p>
+                  <a
+                    className="text-xs text-muted underline"
+                    href={profile.source}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Damage profile source
+                    <span className="sr-only"> (opens in new tab)</span>
+                  </a>
+                </p>
+              )}
+              {!profile && (
                 <p className="text-xs text-muted">
                   No curated damage profile yet — builds for this character are
                   ranked by {objectiveLabel(meta.objective)} instead of

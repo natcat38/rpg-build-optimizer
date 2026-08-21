@@ -17,7 +17,7 @@ This is **deliberate and permanent**, not a stopgap for a snapshot gap. The reas
 
 ## Consequences
 
-- ER totals, ER constraints, and ER-as-objective are correct app-wide; this surfaced while building the "Try with example gear" presets (a Furina ER ≥ 200 preset was infeasible until the baseline was applied).
+- ER totals, ER constraints, and ER-as-objective are correct app-wide; this surfaced while building the "Try a sample build" presets (a Furina ER ≥ 200 preset was infeasible until the baseline was applied).
 - The frozen snapshot stays a faithful, un-editorialised mirror of `genshin-db`; re-running the build script never needs to "remember" to inject baselines.
 - A second game's adapter is the correct place for its own universal baselines, keeping the optimiser game-agnostic.
 - Future game-universal constants (should any emerge) have an established home — the adapter — rather than leaking into the snapshot or the optimiser.

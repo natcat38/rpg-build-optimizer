@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CharacterDetail } from './CharacterDetail';
 import type { Artifact } from '../game/types';
 import type { RosterEntry } from '../import/good';
+import { getDamageProfile } from '../damage/profiles';
 
 const entry: RosterEntry = {
   buildLevel: 90,
@@ -66,6 +67,27 @@ describe('CharacterDetail', () => {
     expect(
       screen.getByText(/No curated recipe for this character yet/i),
     ).toBeInTheDocument();
+  });
+
+  it('links the curated damage profile source when there is one', async () => {
+    const user = userEvent.setup();
+    render(
+      <CharacterDetail
+        characterKey="kamisato_ayaka"
+        entry={entry}
+        artifacts={[]}
+      />,
+    );
+    await user.click(screen.getByRole('tab', { name: /recommended/i }));
+    const link = screen.getByRole('link', {
+      name: /damage profile source\s*\(opens in new tab\)/i,
+    });
+    expect(link).toHaveAttribute(
+      'href',
+      getDamageProfile('kamisato_ayaka')?.source,
+    );
+    expect(link).toHaveAttribute('rel', 'noreferrer');
+    expect(link).toHaveAttribute('target', '_blank');
   });
 
   it('moves between tabs with arrow keys, taking focus along', async () => {

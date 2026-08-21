@@ -31,7 +31,9 @@ npm run dev
 
 ### What CI checks
 
-`.github/workflows/ci.yml` runs one job, in order: `typecheck` → `lint` → `docs:check` → `format:check` → `test` → `build` → `build:data`. That last step is a **dataset-drift gate**: it regenerates the snapshot and then runs `git diff --exit-code src/game/genshin/data.generated.json`, so a `genshin-db` bump or a change to `scripts/build-dataset.ts` fails CI unless the regenerated file is committed with it.
+`.github/workflows/ci.yml` runs one job, in order: `typecheck` → `lint` → `docs:check` → `bench:check` → `format:check` → `test` → `build` → `build:data`. That last step is a **dataset-drift gate**: it regenerates the snapshot and then runs `git diff --exit-code src/game/genshin/data.generated.json`, so a `genshin-db` bump or a change to `scripts/build-dataset.ts` fails CI unless the regenerated file is committed with it.
+
+`bench:check` (`scripts/check-bench.ts`) is the matching **speed-report gate**: if `src/optimizer/search.ts`, `src/optimizer/score.ts`, or `src/optimizer/benchmark.ts` changed in the diff against the base commit but `docs/speed-report.md` did not, it fails — run `npm run bench` and commit the regenerated report. It reads the base from `BENCH_BASE_SHA` (the PR base SHA in CI, the previous commit on a push to `main`) and skips silently when that is unset or the git history is unavailable, so it is a no-op locally unless you set the var yourself.
 
 A second workflow, `.github/workflows/okf.yml`, validates the `knowledge/` bundle against the house standard (this is why `knowledge/index.md` uses root-relative links, and why `docs:check` deliberately skips them).
 
@@ -58,7 +60,7 @@ Issues and PRDs are tracked as GitHub issues via the `gh` CLI — conventions in
 The button calls `api/explain.ts`, a Vercel serverless function that proxies Claude (`claude-haiku-4-5`) so the Anthropic key never reaches the browser bundle ([ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md)).
 
 - `ANTHROPIC_API_KEY` — server-side Vercel project env var.
-- `VITE_AI_ENABLED=true` — build-time flag that renders the button. Keep it off until the key is deployed.
+- `VITE_AI_ENABLED=true` — build-time flag that renders the button. Keep it off until the key is deployed. It stays off on the public demo: the deployed proxy runs against a personal Anthropic account, so the feature is a local/self-hosted opt-in.
 - `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — from an [Upstash](https://upstash.com) Redis database, enabling per-IP rate limiting (10 requests/60s) plus a global budget cap (500 requests/1h, [ADR-0013](docs/adr/0013-rate-limit-ai-proxy.md)). **Required in production**: the gate keys on `VERCEL_ENV === 'production'`, and with the vars unset there the endpoint fails closed — every request is rejected with `503 { error: 'unavailable' }`. Outside production they are optional: the limiter is a no-op that logs one warning, so `vercel dev` and CI run unthrottled.
 - `PUBLIC_ORIGIN` — optional. The function already accepts its own deployment origin (from `VERCEL_URL` / the request host), so set this only when the app is served from a custom domain. A present-but-unlisted `Origin` gets a 403; an absent one is allowed through to the rate limiter.
 - Set a spend cap in the Anthropic console — it is the feature's hard cost ceiling.
