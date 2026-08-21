@@ -32,7 +32,7 @@ describe('GapSection', () => {
         sharedArtifacts={null}
       />,
     );
-    expect(screen.getByText('Gap vs meta build')).toBeInTheDocument();
+    expect(screen.getByText('Gap vs Meta Build')).toBeInTheDocument();
   });
 
   it('renders nothing for a non-meta character', () => {

@@ -11,7 +11,8 @@ import { computeBuildScore, band, groupByLocation } from './buildScore';
 import { AppDrawer } from '../components/ui/Drawer';
 import { CharacterDetail } from './CharacterDetail';
 import { scrollToId } from '../ui/scroll';
-import { BAND_TONE, bandLabel, elementLabel, formatScore } from '../labels';
+import { BAND_TONE, bandLabel, formatScore } from '../labels';
+import { ElementName } from '../components/ui/ElementName';
 import { Badge } from '../components/ui/Badge';
 import { Meter } from '../components/ui/Meter';
 
@@ -50,9 +51,10 @@ function Row({
             {name}
           </span>
           <span className="block truncate text-xs text-muted">
-            {[element && elementLabel(element), weaponName]
-              .filter(Boolean)
-              .join(' · ') || 'No weapon equipped'}
+            {element && <ElementName element={element} />}
+            {element && weaponName && ' · '}
+            {weaponName}
+            {!element && !weaponName && 'No weapon equipped'}
           </span>
           {equippedCount === 0 && (
             <span className="block text-xs text-flux-bright">
@@ -154,8 +156,8 @@ export function RosterView() {
       </ul>
       {rows.length > COLLAPSED_COUNT && !showAll && (
         <button className="btn-ghost w-full" onClick={() => setShowAll(true)}>
-          <span aria-hidden="true">▶</span> Show all {rows.length} characters,
-          sorted by score
+          <span aria-hidden="true">▶</span> Show All {rows.length} Characters,
+          Sorted by Score
         </button>
       )}
 
@@ -185,7 +187,7 @@ export function RosterView() {
               setTimeout(() => scrollToId('step-optimise'), DRAWER_EXIT_MS);
             }}
           >
-            Optimise this character
+            Optimise This Character
           </button>
         </AppDrawer>
       )}

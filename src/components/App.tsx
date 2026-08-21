@@ -245,7 +245,7 @@ function SharedBuildBanner({ request }: { request: OptimizeRequest }) {
         className="btn-ghost flex-none"
         onClick={() => scrollToId('step-optimise')}
       >
-        Run it yourself
+        Run It Yourself
       </button>
     </Callout>
   );
@@ -483,7 +483,7 @@ export function App() {
         href="#content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface-700 focus:px-4 focus:py-2 focus:text-paper"
       >
-        Skip to content
+        Skip to Content
       </a>
       <header className="mb-10 animate-fade-up">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -602,7 +602,7 @@ export function App() {
           <Section
             n={1}
             id="step-load"
-            title="Load your artifacts"
+            title="Load Your Artifacts"
             hint="Import a full inventory, fetch from a UID, or add pieces by hand."
             delay="0.05s"
           >
@@ -617,7 +617,7 @@ export function App() {
                 >
                   ▶
                 </span>
-                Or add one manually
+                Or Add One Manually
               </summary>
               <div className="mt-3">
                 <ArtifactForm />
@@ -629,7 +629,7 @@ export function App() {
             <Section
               n={2}
               id="step-roster"
-              title="Your roster"
+              title="Your Roster"
               hint="How built each owned character is, best first."
               delay="0.08s"
             >
@@ -641,7 +641,7 @@ export function App() {
             <Section
               n={3}
               id="step-teams"
-              title="Endgame teams"
+              title="Endgame Teams"
               hint="Two Abyss halves that share no character, matched from your roster."
               delay="0.09s"
             >
@@ -653,7 +653,7 @@ export function App() {
             <Section
               n={4}
               id="step-plan"
-              title="Your plan"
+              title="Your Plan"
               hint="An optimised build for all eight members, plus one farming list."
               delay="0.1s"
             >

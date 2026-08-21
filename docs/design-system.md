@@ -24,6 +24,21 @@ things can't follow the seam and say so in a comment: the `select.field`
 chevron (a `background-image` data-URI can't read a custom property) and the
 scrollbar greys.
 
+**Element hues are a token set, not a seam.** `element.pyro`/`hydro`/`electro`/
+`cryo`/`anemo`/`geo`/`dendro` in [`tailwind.config.js`](../tailwind.config.js)
+are the seven canonical game hues, brightened for this chassis: each is stored
+as an `rgb(r g b / <alpha-value>)` triplet like the accent, so `/alpha`
+modifiers work, and each clears 4.5:1 as **text** on `surface-900` (the darkest
+ground the app paints). Unlike the accent they are constant — an element is a
+fact about the dataset, not a per-game reading. Domain code never writes these
+classes: `ELEMENT_TONE` and the `ElementName` component in
+[`src/components/ui/elementTone.ts`](../src/components/ui/elementTone.ts) own
+the mapping, and `ElementName` always prints the element's name beside its dot,
+so hue is a second channel and never the only one.
+
+**Copy case.** Chrome copy (buttons, headings, chips, labels) is Title Case;
+body, hints and status sentences are sentence case.
+
 ## Component classes
 
 Defined in `@layer components` in [`src/index.css`](../src/index.css).

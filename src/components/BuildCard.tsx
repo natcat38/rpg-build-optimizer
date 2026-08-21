@@ -18,6 +18,8 @@ import {
 } from '../labels';
 import { META_TARGETS } from '../meta/metaTargets';
 import { gradeBuild, type Grade } from '../meta/grade';
+import { countSets } from '../optimizer/score';
+import { fourPieceAssumptions } from '../damage/setBonuses';
 import { SlotGlyph } from './SlotGlyph';
 import { cn } from './ui/cn';
 import { Marker } from './ui/Marker';
@@ -66,12 +68,31 @@ function Fingerprint({ filled }: { filled: (s: Slot) => boolean }) {
  * a second headline. `details`/`summary` is natively accessible; the twisty is
  * decorative and matches App's disclosure.
  */
-function DrivingThis({ build }: { build: BuildResult }) {
+function DrivingThis({
+  build,
+  artifacts,
+}: {
+  build: BuildResult;
+  artifacts: Artifact[];
+}) {
   const { bindingConstraints, marginalBySlot } = build.diagnostics;
+  // What the 4pc's contribution assumes (ADR-0020) — the last line of the
+  // disclosure, not a headline.
+  const assumptions = fourPieceAssumptions(
+    Object.entries(countSets(artifacts))
+      .filter(([, n]) => n >= 4)
+      .map(([key]) => key),
+    formatSetName,
+  );
   const marginals = SLOTS.map((s) => ({ slot: s, value: marginalBySlot[s] }))
     .filter((m): m is { slot: Slot; value: number } => m.value != null)
     .filter((m) => Number.isFinite(m.value));
-  if (bindingConstraints.length === 0 && marginals.length === 0) return null;
+  if (
+    bindingConstraints.length === 0 &&
+    marginals.length === 0 &&
+    assumptions.length === 0
+  )
+    return null;
   // Bars are relative to the biggest contributor, so the row reads as "this
   // slot against the others" — the absolute objective units mean little here.
   const peak = Math.max(...marginals.map((m) => Math.abs(m.value)), 0);
@@ -85,7 +106,7 @@ function DrivingThis({ build }: { build: BuildResult }) {
         >
           ▶
         </span>
-        <span className="micro-label">What’s driving this build</span>
+        <span className="micro-label">What’s Driving This Build</span>
       </summary>
       <div className="mt-2 space-y-2 text-xs text-muted">
         {bindingConstraints.length > 0 && (
@@ -119,6 +140,11 @@ function DrivingThis({ build }: { build: BuildResult }) {
             </ul>
           </div>
         )}
+        {assumptions.map((line) => (
+          <p key={line} className="text-2xs leading-relaxed text-muted">
+            {line}
+          </p>
+        ))}
       </div>
     </details>
   );
@@ -212,7 +238,7 @@ export function BuildCard({
         </div>
         {onShare && (
           <button className="btn-ghost" onClick={() => void onShare()}>
-            Copy share link
+            Copy Share Link
           </button>
         )}
       </div>
@@ -344,7 +370,9 @@ export function BuildCard({
 
       {/* Rank 1 only (and the single shared build, which carries no rank): the
           same notes under every card would be five disclosures of noise. */}
-      {(rank == null || rank === 1) && <DrivingThis build={build} />}
+      {(rank == null || rank === 1) && (
+        <DrivingThis build={build} artifacts={artifacts} />
+      )}
     </div>
   );
 }

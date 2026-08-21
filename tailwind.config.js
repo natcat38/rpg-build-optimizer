@@ -48,6 +48,19 @@ export default {
           DEFAULT: '#6aa6ff',
           bright: '#9dc0ff',
         },
+        // Elemental hues — constant across the app (not game-swapped like
+        // `accent`). rgb triplets so `/alpha` modifiers work; every one clears
+        // 4.5:1 as text on surface-900. Colour is never the only channel: the
+        // element name is always written next to it.
+        element: {
+          pyro: 'rgb(255 155 118 / <alpha-value>)',
+          hydro: 'rgb(95 200 245 / <alpha-value>)',
+          electro: 'rgb(207 155 245 / <alpha-value>)',
+          cryo: 'rgb(143 227 240 / <alpha-value>)',
+          anemo: 'rgb(116 223 192 / <alpha-value>)',
+          geo: 'rgb(255 212 94 / <alpha-value>)',
+          dendro: 'rgb(168 222 84 / <alpha-value>)',
+        },
         paper: '#e9e7e0',
         muted: '#8d93a3',
         rose: '#e88b7d',

@@ -399,7 +399,7 @@ export function Results({
           for, and ten full cards pushed everything below the fold. */}
       {groups.length > COLLAPSED_GROUPS && !showAll && (
         <button className="btn-ghost w-full" onClick={() => setShowAll(true)}>
-          <span aria-hidden="true">▶</span> Show all {groups.length} builds
+          <span aria-hidden="true">▶</span> Show All {groups.length} Builds
         </button>
       )}
       {/* One persistent live region for the share outcome. The Callouts above

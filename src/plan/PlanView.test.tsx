@@ -101,13 +101,13 @@ describe('PlanView', () => {
       screen.getByRole('button', { name: /Build my Abyss plan/i }),
     );
 
-    expect(await screen.findByText('What to farm')).toBeInTheDocument();
+    expect(await screen.findByText('What to Farm')).toBeInTheDocument();
     // The plan leads with a summary: one row per member across two halves,
     // every card collapsed until asked for.
     const rows = screen.getAllByTestId('plan-summary-row');
     expect(rows).toHaveLength(8);
-    expect(screen.getByText(/First half/)).toBeInTheDocument();
-    expect(screen.getByText(/Second half/)).toBeInTheDocument();
+    expect(screen.getByText(/First Half/)).toBeInTheDocument();
+    expect(screen.getByText(/Second Half/)).toBeInTheDocument();
     expect(screen.queryAllByTestId('plan-member')).toHaveLength(0);
   });
 
@@ -118,7 +118,7 @@ describe('PlanView', () => {
     await user.click(
       screen.getByRole('button', { name: /Build my Abyss plan/i }),
     );
-    await screen.findByText('What to farm');
+    await screen.findByText('What to Farm');
 
     const row = within(screen.getAllByTestId('plan-summary-row')[0]).getByRole(
       'button',
@@ -145,13 +145,13 @@ describe('PlanView', () => {
     await user.click(
       screen.getByRole('button', { name: /Build my Abyss plan/i }),
     );
-    await screen.findByText('What to farm');
+    await screen.findByText('What to Farm');
 
     const order = [...container.querySelectorAll('h3')].map(
       (h) => h.textContent ?? '',
     );
-    const farm = order.findIndex((t) => t.includes('What to farm'));
-    const summary = order.findIndex((t) => t.includes('First half'));
+    const farm = order.findIndex((t) => t.includes('What to Farm'));
+    const summary = order.findIndex((t) => t.includes('First Half'));
     expect(summary).toBeGreaterThanOrEqual(0);
     expect(farm).toBeGreaterThan(summary);
     // …and nothing between them but the eight collapsed rows.
@@ -180,7 +180,7 @@ describe('PlanView', () => {
     await user.click(
       screen.getByRole('button', { name: /Build my Abyss plan/i }),
     );
-    await screen.findByText('What to farm');
+    await screen.findByText('What to Farm');
 
     const link = screen.getByRole('link', { name: /source/i });
     expect(link).toHaveAttribute('href', 'https://example.test/The_Catch');
@@ -196,10 +196,10 @@ describe('PlanView', () => {
     await user.click(
       screen.getByRole('button', { name: /Build my Abyss plan/i }),
     );
-    await screen.findByText('What to farm');
+    await screen.findByText('What to Farm');
     // The seeded roster is eight characters, so plenty of archetypes are one
     // character short and yield advice.
-    expect(screen.getByText('Worth investing in')).toBeInTheDocument();
+    expect(screen.getByText('Worth Investing In')).toBeInTheDocument();
     expect(screen.getAllByTestId('advice').length).toBeGreaterThan(0);
   });
 
@@ -239,7 +239,7 @@ describe('PlanView', () => {
       await waitFor(() => expect(solved).toBe(8));
     });
     // The superseded run commits nothing: no plan, no progress, no error.
-    expect(screen.queryByText('What to farm')).toBeNull();
+    expect(screen.queryByText('What to Farm')).toBeNull();
     expect(screen.queryByText(/Optimising member/i)).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
   });
@@ -251,7 +251,7 @@ describe('PlanView', () => {
     await user.click(
       screen.getByRole('button', { name: /Build my Abyss plan/i }),
     );
-    await screen.findByText('What to farm');
-    expect(screen.queryByText('Worth investing in')).not.toBeInTheDocument();
+    await screen.findByText('What to Farm');
+    expect(screen.queryByText('Worth Investing In')).not.toBeInTheDocument();
   });
 });

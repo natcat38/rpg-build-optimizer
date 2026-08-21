@@ -425,7 +425,7 @@ export function OptimizePanel({
                 void onRun();
               }}
             >
-              Use meta build
+              Use Meta Build
             </button>
           )}
           <button

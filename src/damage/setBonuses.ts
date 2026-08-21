@@ -319,11 +319,17 @@ function weightedHitKindShares(
 
 /** The uptime assumptions behind whatever 4pc bonuses a build actually lights
  *  up — one line per set, for the UI to print under the damage figure. */
-export function fourPieceAssumptions(setKeys: Iterable<string>): string[] {
+export function fourPieceAssumptions(
+  setKeys: Iterable<string>,
+  // Display-name resolver injected by the caller: this module must stay free
+  // of the dataset adapter (the API bundle imports it), so it cannot call
+  // formatSetName itself. Defaults to the raw key.
+  setName: (key: string) => string = (key) => key,
+): string[] {
   const out: string[] = [];
   for (const key of setKeys) {
     const e = FOUR_PIECE_BONUSES[key];
-    if (e) out.push(`${key} 4pc: ${e.uptime}`);
+    if (e) out.push(`${setName(key)} 4pc: ${e.uptime}`);
   }
   return out;
 }

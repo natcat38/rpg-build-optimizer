@@ -10,7 +10,10 @@ import { META_TARGETS } from '../meta/metaTargets';
 import { archetypesFor } from '../teams/comps';
 import { getDamageProfile } from '../damage/profiles';
 import {
-  elementLabel,
+  fourPieceAssumptions,
+  UNMODELLED_FOUR_PIECE,
+} from '../damage/setBonuses';
+import {
   formatScore,
   formatSetName,
   formatStat,
@@ -22,6 +25,7 @@ import {
   SLOT_LABELS,
 } from '../labels';
 import { Segmented } from '../components/ui/Segmented';
+import { ElementName } from '../components/ui/ElementName';
 import type { RosterEntry } from '../import/good';
 import type { Artifact, Slot, StatKey } from '../game/types';
 import { SLOTS } from '../game/types';
@@ -54,6 +58,12 @@ export function CharacterDetail({
   const meta = META_TARGETS[characterKey];
   const profile = getDamageProfile(characterKey);
   const comps = archetypesFor(characterKey);
+  // Only a 4pc recipe lights up a 4-piece bonus; a 2+2 or 2pc requirement has
+  // no set effect to state an assumption about.
+  const fourPcKey =
+    meta?.setRequirement.kind === '4pc'
+      ? meta.setRequirement.setKey
+      : undefined;
 
   return (
     <div className="space-y-4">
@@ -78,12 +88,13 @@ export function CharacterDetail({
         {tab === 'Overview' && (
           <>
             <p className="text-muted">
-              {[
-                char?.element && elementLabel(char.element),
-                weaponName ?? 'No weapon equipped',
-              ]
-                .filter(Boolean)
-                .join(' · ')}
+              {char?.element && (
+                <>
+                  <ElementName element={char.element} />
+                  {' · '}
+                </>
+              )}
+              {weaponName ?? 'No weapon equipped'}
               {entry.level != null && ` · Lv ${entry.level}`}
               {entry.constellation != null && ` · C${entry.constellation}`}
             </p>
@@ -175,7 +186,10 @@ export function CharacterDetail({
                 Source guide (KQM)
                 <span className="sr-only"> (opens in new tab)</span>
               </a>
-              {profile && (
+              {/* The damage profile is usually cited from the very same KQM
+                  page as the recipe above, and two links to one page read as
+                  two sources. Only shown when it really is a second one. */}
+              {profile && profile.source !== meta.source && (
                 <p>
                   <a
                     className="text-xs text-muted underline"
@@ -183,11 +197,31 @@ export function CharacterDetail({
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Damage profile source
+                    Damage Profile Source
                     <span className="sr-only"> (opens in new tab)</span>
                   </a>
                 </p>
               )}
+              {/* What the 4pc number assumes (ADR-0020), or why there is no
+                  number. Quiet on purpose: it qualifies the figure above
+                  rather than competing with it. */}
+              {fourPcKey &&
+                (UNMODELLED_FOUR_PIECE[fourPcKey] ? (
+                  <p className="text-2xs leading-relaxed text-muted">
+                    4pc not scored: {UNMODELLED_FOUR_PIECE[fourPcKey]}
+                  </p>
+                ) : (
+                  fourPieceAssumptions([fourPcKey], formatSetName).map(
+                    (line) => (
+                      <p
+                        key={line}
+                        className="text-2xs leading-relaxed text-muted"
+                      >
+                        {line}
+                      </p>
+                    ),
+                  )
+                ))}
               {!profile && (
                 <p className="text-xs text-muted">
                   No curated damage profile yet — builds for this character are

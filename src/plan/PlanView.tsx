@@ -297,7 +297,7 @@ export function PlanView({
         >
           {running
             ? `Optimising ${progress[0]}/${progress[1]}…`
-            : 'Build my Abyss plan'}
+            : 'Build My Abyss Plan'}
         </button>
       </div>
 
@@ -343,7 +343,7 @@ export function PlanView({
                 className="panel panel-sm space-y-2"
               >
                 <h3 className="font-display text-base font-bold text-paper">
-                  {i === 0 ? 'First half' : 'Second half'} —{' '}
+                  {i === 0 ? 'First Half' : 'Second Half'} —{' '}
                   {archetypeName(team.archetypeId)}
                 </h3>
                 <ul className="-mx-1">
@@ -373,7 +373,7 @@ export function PlanView({
           {plan.farming.length > 0 && (
             <div className="panel panel-md space-y-2">
               <h3 className="font-display text-base font-bold text-paper">
-                What to farm
+                What to Farm
               </h3>
               <ul className="space-y-1 text-sm text-paper/90">
                 {plan.farming.map((line, i) => (
@@ -385,7 +385,7 @@ export function PlanView({
           {advice.length > 0 && (
             <div className="panel panel-md space-y-2">
               <h3 className="font-display text-base font-bold text-paper">
-                Worth investing in
+                Worth Investing In
               </h3>
               <ul className="space-y-2 text-sm">
                 {advice.map((a) => (

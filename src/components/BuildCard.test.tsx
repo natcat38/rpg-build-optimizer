@@ -248,4 +248,34 @@ describe('BuildCard — what drives the build', () => {
     render(<BuildCard build={build} request={req} artifacts={[]} />);
     expect(screen.queryByText(/What’s driving this build/i)).toBeNull();
   });
+
+  it('states what an activated 4pc assumes', async () => {
+    const user = userEvent.setup();
+    const piece = (id: string, slot: Artifact['slot']): Artifact => ({
+      id,
+      setKey: 'BlizzardStrayer',
+      slot,
+      rarity: 5,
+      level: 20,
+      mainStat: 'hp',
+      mainStatValue: 4780,
+      subStats: [],
+    });
+    const four: Artifact[] = [
+      piece('a1', 'flower'),
+      piece('a2', 'plume'),
+      piece('a3', 'sands'),
+      piece('a4', 'goblet'),
+    ];
+    render(<BuildCard build={explained} request={req} artifacts={four} />);
+    await user.click(screen.getByText(/What’s driving this build/i));
+    expect(
+      screen.getByText(/BlizzardStrayer 4pc: Assumes the target is Frozen/),
+    ).toBeVisible();
+  });
+
+  it('says nothing about sets when no 4pc is activated', () => {
+    render(<BuildCard build={explained} request={req} artifacts={[]} />);
+    expect(screen.queryByText(/4pc: Assumes/)).toBeNull();
+  });
 });
