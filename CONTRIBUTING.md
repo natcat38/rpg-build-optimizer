@@ -11,21 +11,29 @@ npm run dev
 
 ## Scripts
 
-| Script               | What it does                                             |
-| -------------------- | -------------------------------------------------------- |
-| `npm run dev`        | Vite dev server                                          |
-| `npm test`           | Vitest suite (jsdom)                                     |
-| `npm run test:watch` | Vitest in watch mode                                     |
-| `npm run typecheck`  | `tsc -b` (strict, project references) + the API tsconfig |
-| `npm run lint`       | ESLint                                                   |
-| `npm run format`     | Prettier write                                           |
-| `npm run build`      | Production build → `dist/`                               |
-| `npm run build:data` | Regenerate the frozen `genshin-db` snapshot              |
-| `npm run bench`      | Regenerate `docs/speed-report.md`                        |
-| `npm run docs:check` | ADR numbering, knowledge-bundle freshness, dead links    |
-| `npm run file-map`   | Regenerate `FILE-MAP.md`                                 |
+| Script                  | What it does                                             |
+| ----------------------- | -------------------------------------------------------- |
+| `npm run dev`           | Vite dev server                                          |
+| `npm run preview`       | Serve the built `dist/` locally                          |
+| `npm test`              | Vitest suite (jsdom)                                     |
+| `npm run test:watch`    | Vitest in watch mode                                     |
+| `npm run test:coverage` | Vitest with a coverage report                            |
+| `npm run typecheck`     | `tsc -b` (strict, project references) + the API tsconfig |
+| `npm run lint`          | ESLint                                                   |
+| `npm run format`        | Prettier write                                           |
+| `npm run format:check`  | Prettier check (no writes) — what CI runs                |
+| `npm run build`         | Production build → `dist/`                               |
+| `npm run build:data`    | Regenerate the frozen `genshin-db` snapshot              |
+| `npm run bench`         | Regenerate `docs/speed-report.md`                        |
+| `npm run docs:check`    | ADR numbering, knowledge-bundle freshness, dead links    |
 
-CI runs typecheck + lint + test + build; `docs:check` and `file-map:check` guard documentation drift.
+`FILE-MAP.md` is hand-maintained — update it in the same commit that moves or adds a module.
+
+### What CI checks
+
+`.github/workflows/ci.yml` runs one job, in order: `typecheck` → `lint` → `docs:check` → `format:check` → `test` → `build` → `build:data`. That last step is a **dataset-drift gate**: it regenerates the snapshot and then runs `git diff --exit-code src/game/genshin/data.generated.json`, so a `genshin-db` bump or a change to `scripts/build-dataset.ts` fails CI unless the regenerated file is committed with it.
+
+A second workflow, `.github/workflows/okf.yml`, validates the `knowledge/` bundle against the house standard (this is why `knowledge/index.md` uses root-relative links, and why `docs:check` deliberately skips them).
 
 ## Workflow
 

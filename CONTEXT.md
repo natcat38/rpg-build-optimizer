@@ -59,5 +59,6 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 - **Role** — a slot's function in a **comp archetype**: `on-field-dps | off-field-dps | buffer | sustain | battery | applicator`.
 - **Team recommendation** — a **comp archetype** instantiated from the player's roster (real characters filling its slots).
 - **Endgame mode** — the endgame content a plan targets: `abyss | theater | stygian`. Spiral Abyss first.
-- **Plan** — the composed output: **team recommendations** → per-member optimised builds → **shopping list**.
-- **Shopping list** — the aggregated farming and investment advice derived from the **plan**'s gaps.
+- **Plan** — the composed output: **team recommendations** → per-member optimised builds → **farming list**. See [ADR-0019](docs/adr/0019-plan-output.md).
+- **Farming list** — the deduped, name-prefixed feasibility and shortfall lines a **plan** aggregates from its members' gaps (`Plan.farming`). The UI calls it the "what to farm" list; never "shopping list".
+- **Investment advice** — the ranked pull-and-craft recommendations derived from the near-miss **comp archetypes** the recommender reports (`src/invest/advise.ts`): which characters to pull for and which weapons to craft, ranked by the **team-score** points each would unlock. Acquisition advice, not levelling advice.

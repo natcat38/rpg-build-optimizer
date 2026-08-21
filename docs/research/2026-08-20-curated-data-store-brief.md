@@ -143,8 +143,9 @@ removes the hand-transcription problem rather than instrumenting it.
 
 ## What this connects to
 
-The deferred **D1 damage-engine work** (see
-`docs/superpowers/plans/2026-08-20-ux-overhaul-and-docs-refresh.md`) wants conditional
+The deferred **D1 damage-engine work** (the plan doc that scoped it has been
+removed; the standing decision is
+[ADR-0016](../adr/0016-damage-engine-objective.md)) wants conditional
 4pc set effects modelled as data records, because today only flat 2pc stat bonuses are
 scored — 13 of 57 sets in the snapshot have no scored bonus at all, which is why
 mixed-set "rainbow" builds can beat real sets. **That work needs a data model anyway.**

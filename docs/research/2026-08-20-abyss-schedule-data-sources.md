@@ -1,7 +1,10 @@
 # Research: Spiral Abyss schedule data sources (blessings, disorders, floor 12)
 
-Point-in-time report (2026-08-20). Input for the D2 spec (per-patch endgame
-modes) in `docs/superpowers/plans/2026-08-20-ux-overhaul-and-docs-refresh.md`.
+Point-in-time report (2026-08-20). Input for the deferred per-patch endgame-mode
+work; the plan doc that scoped it has been removed, so the standing decisions are
+[ADR-0018](../adr/0018-mode-aware-team-recommendation.md) (mode-aware team
+recommendation) and the manual refresh in
+[`docs/runbooks/patch-refresh.md`](../runbooks/patch-refresh.md).
 
 ## Key correction to the feature premise
 

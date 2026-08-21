@@ -7,9 +7,7 @@ Find the **best five-piece artifact build** for a Genshin Impact character from 
 
 **▶ Live demo:** https://rpg-build-optimizer.vercel.app
 
-<!-- If your Vercel production domain differs, replace the URL above. -->
-
-![RPG Build Optimizer — import your artifacts, pick a character, and optimise](docs/screenshot.png)
+![RPG Build Optimizer — a solved build above the fold: the five chosen artifacts, the resulting stat sheet, and the share link](docs/screenshot.png)
 
 ---
 
@@ -17,7 +15,7 @@ Find the **best five-piece artifact build** for a Genshin Impact character from 
 
 In gacha RPGs like Genshin Impact, a character's strength comes mostly from five **artifacts**, each with one main stat and up to four random sub-stats drawn from a large pool. A serious player owns **hundreds**. Finding the best five-piece combination — one that satisfies the bonuses you want (a 4-piece set, an Energy Recharge threshold) and then maximises a damage-relevant stat like Crit Value — is a genuine **combinatorial optimisation problem**. By hand it's slow and error-prone, so most players guess.
 
-This tool does one thing well: _given the artifacts you own, what's the best build for this character under these constraints?_ — and lets you share the result with a link.
+It started as one question: _given the artifacts you own, what's the best build for this character under these constraints?_ It has since grown into the account-level version — score your whole roster, field two Abyss halves that share no character, and plan all eight builds over one shared inventory. Any result shares as a single link.
 
 ## Features
 
@@ -26,11 +24,14 @@ This tool does one thing well: _given the artifacts you own, what's the best bui
 - **Provably optimal results** — an exact search returns the genuine top builds, each with its full stat sheet.
 - **Shareable links** — every build encodes into a self-contained URL; no account, nothing stored server-side.
 - **Try with example gear** — one click loads a curated sample inventory and runs the optimiser.
-- **Roster assessment** — a 0–100 build score for every owned character, broken down into level, talents, weapon, and artifact quality.
+
+A GOOD-file upload unlocks the four account-level features — Roster, Teams, Plan, and Investment:
+
+- **Roster assessment** — a 0–100 build score for every owned character, broken down into five components: level, talents, weapon, artifact count, and artifact quality.
 - **Abyss team recommendations** — two halves that share no character, matched from curated comp archetypes.
 - **Damage-ranked builds** — where a curated damage profile exists, the optimiser maximises estimated average damage instead of a proxy stat, and stays exact.
-- **One plan** — optimised builds for all eight members over your shared inventory, plus a "what to farm" list.
-- **Investment advice** — which characters and weapons are worth levelling next, from your roster's gaps.
+- **One plan** — optimised builds for all eight members over your shared inventory, plus one farming list.
+- **Investment advice** — which characters to pull for and which weapons to craft, ranked by the team-score points each would unlock.
 
 ## Quick start
 
@@ -39,7 +40,7 @@ npm install
 npm run dev
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev workflow, and [FILE-MAP.md](FILE-MAP.md) (auto-generated) for the code layout.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev workflow, and [FILE-MAP.md](FILE-MAP.md) for the code layout.
 
 ## How it works
 
@@ -53,10 +54,10 @@ Vite · React 19 · TypeScript (strict) · Tailwind CSS · Zustand · Web Worker
 
 ## AI: Explain this build
 
-An optional Claude-powered plain-English explanation of the optimised build, served through a Vercel serverless function so the API key stays server-side ([ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md)). No personal data is sent; setup is in [CONTRIBUTING.md](CONTRIBUTING.md).
+An optional Claude-powered plain-English explanation of the optimised build, served through a Vercel serverless function so the API key stays server-side ([ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md)). No personal data is sent. It sits behind the `VITE_AI_ENABLED` build flag and is **off on the public demo** to cap API spend — enable it locally per [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Data & license
 
-Game reference data is derived at build time from [genshin-db](https://github.com/theBowja/genshin-db) and bundled as a frozen snapshot — numeric data only, no game assets ([`DATA_LICENSE`](./DATA_LICENSE)).
+Game reference data is derived at build time from [genshin-db](https://github.com/theBowja/genshin-db) and bundled as a frozen snapshot — numeric data only, no game assets ([`DATA_LICENSE`](./DATA_LICENSE)). On top of it sits a hand-curated layer transcribed from KQM sources — 52 meta build recipes, 30 comp archetypes, 18 damage profiles — re-verified each patch ([docs/runbooks/patch-refresh.md](docs/runbooks/patch-refresh.md)).
 
 Code is [MIT](./LICENSE) licensed. Not affiliated with HoYoverse.

@@ -18,9 +18,12 @@ This repo is **single-context**:
 /
 ├── CONTEXT.md
 ├── docs/adr/
-│   ├── 0001-event-sourced-orders.md
-│   └── 0002-postgres-for-write-model.md
+│   ├── 0004-exact-branch-and-bound-optimisation.md
+│   └── 0016-damage-engine-objective.md
 └── src/
+    ├── optimizer/
+    ├── teams/
+    └── plan/
 ```
 
 To switch to multi-context later (e.g. if this grows into a monorepo), add a `CONTEXT-MAP.md` at the root pointing to per-context `CONTEXT.md` files, and update this file:
@@ -30,10 +33,10 @@ To switch to multi-context later (e.g. if this grows into a monorepo), add a `CO
 ├── CONTEXT-MAP.md
 ├── docs/adr/                          ← system-wide decisions
 └── src/
-    ├── ordering/
+    ├── optimizer/
     │   ├── CONTEXT.md
     │   └── docs/adr/                  ← context-specific decisions
-    └── billing/
+    └── teams/
         ├── CONTEXT.md
         └── docs/adr/
 ```
@@ -48,4 +51,4 @@ If the concept you need isn't in the glossary yet, that's a signal — either yo
 
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
 
-> _Contradicts ADR-0007 (event-sourced orders) — but worth reopening because…_
+> _Contradicts ADR-0004 (the optimiser is exact branch-and-bound, never approximate) — but worth reopening because…_
