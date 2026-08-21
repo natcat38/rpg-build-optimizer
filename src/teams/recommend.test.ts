@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { instantiate, recommendAbyss } from './recommend';
 import { COMP_ARCHETYPES } from './comps';
-import { hasOwnerGOOD, loadOwnerGOOD } from '../test-fixtures/ownerAccount';
+import { loadSampleGOOD } from '../test-fixtures/sampleAccount';
 import { parseGOOD, parseGOODRoster } from '../import/good';
 import { computeBuildScore } from '../roster/buildScore';
 import type { Artifact } from '../game/types';
@@ -177,37 +177,49 @@ describe('recommendAbyss', () => {
   });
 });
 
-// Gated like the other fixture tests: the export is the owner's real account
-// and is gitignored, so CI never has it.
-describe.skipIf(!hasOwnerGOOD())(
-  'recommendAbyss on the owner account fixture',
-  () => {
-    it('fields two disjoint teams from a real roster', () => {
-      const roster = parseGOODRoster(loadOwnerGOOD());
-      const artifacts = parseGOOD(loadOwnerGOOD()) as Artifact[];
-      const byLocation: Record<string, Artifact[]> = {};
-      for (const a of artifacts)
-        if (a.location) (byLocation[a.location] ??= []).push(a);
-      const scores: Record<string, number> = {};
-      for (const [key, entry] of Object.entries(roster))
-        scores[key] = computeBuildScore(entry, byLocation[key] ?? []).total;
+// End-to-end over the committed synthetic GOOD export: parse -> build score ->
+// recommendation. Runs everywhere, unlike the local-only fixture it replaced.
+describe('recommendAbyss on the sample account fixture', () => {
+  /** Score every owned character from the fixture, the way the app does. */
+  function scoreSampleRoster(): Record<string, number> {
+    const roster = parseGOODRoster(loadSampleGOOD());
+    const artifacts = parseGOOD(loadSampleGOOD()) as Artifact[];
+    const byLocation: Record<string, Artifact[]> = {};
+    for (const a of artifacts)
+      if (a.location) (byLocation[a.location] ??= []).push(a);
+    const scores: Record<string, number> = {};
+    for (const [key, entry] of Object.entries(roster))
+      scores[key] = computeBuildScore(entry, byLocation[key] ?? []).total;
+    return scores;
+  }
 
-      const out = recommendAbyss(scores);
-      expect(out.teams).not.toBeNull();
-      const [first, second] = out.teams!;
-      expect(first.score).toBeGreaterThan(0);
-      expect(second.score).toBeGreaterThan(0);
-      const keys = [...first.members, ...second.members].map(
-        (m) => m.characterKey,
-      );
-      expect(new Set(keys).size).toBe(8);
-      // Snapshot the chosen archetypes so meta/curation drift shows as a diff.
-      expect([first.archetypeId, second.archetypeId]).toMatchInlineSnapshot(`
+  it('scores the imported roster by how built each character is', () => {
+    const scores = scoreSampleRoster();
+    expect(Object.keys(scores)).toHaveLength(8);
+    expect(Object.values(scores).every((s) => s > 0)).toBe(true);
+    // Neuvillette wears a full five-piece set; Xingqiu wears none, so the
+    // artifact components separate them even though both are level 90.
+    expect(scores['neuvillette']).toBeGreaterThan(scores['xingqiu']);
+    expect(scores['neuvillette']).toBeGreaterThan(70); // "built" band
+    expect(scores['xingqiu']).toBeLessThan(70);
+  });
+
+  it('fields two disjoint teams from the imported roster', () => {
+    const out = recommendAbyss(scoreSampleRoster());
+    expect(out.teams).not.toBeNull();
+    const [first, second] = out.teams!;
+    expect(first.score).toBeGreaterThan(0);
+    expect(second.score).toBeGreaterThan(0);
+    const keys = [...first.members, ...second.members].map(
+      (m) => m.characterKey,
+    );
+    expect(new Set(keys).size).toBe(8);
+    // Snapshot the chosen archetypes so meta/curation drift shows as a diff.
+    expect([first.archetypeId, second.archetypeId]).toMatchInlineSnapshot(`
       [
-        "hu-tao-vape",
-        "ayaka-freeze",
+        "raiden-national",
+        "neuvillette-mono-hydro",
       ]
     `);
-    });
-  },
-);
+  });
+});

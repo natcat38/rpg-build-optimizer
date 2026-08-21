@@ -16,12 +16,10 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc -b && tsc --noEmit -p tsconfig.api.json",
+    "typecheck": "tsc -b && tsc --noEmit -p tsconfig.api.json && tsc --noEmit -p tsconfig.scripts.json",
     "build:data": "tsx scripts/build-dataset.ts",
     "bench": "tsx scripts/benchmark.ts",
-    "docs:check": "tsx scripts/check-docs.ts",
-    "file-map": "tsx scripts/gen-file-map.ts",
-    "file-map:check": "tsx scripts/gen-file-map.ts --check"
+    "docs:check": "tsx scripts/check-docs.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

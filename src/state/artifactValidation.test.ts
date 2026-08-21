@@ -30,6 +30,20 @@ describe('validateArtifactDraft', () => {
     );
   });
 
+  it('rejects a repeated sub-stat key', () => {
+    // Duplicates are rendered keyed by stat (BuildCard), so they collide as
+    // React keys as well as being an impossible roll.
+    const err = validateArtifactDraft({
+      mainStat: 'atk_pct',
+      level: 20,
+      subStats: [
+        { key: 'crit_rate', value: 3 },
+        { key: 'crit_rate', value: 4 },
+      ],
+    });
+    expect(err).toBe('Each sub-stat can appear only once.');
+  });
+
   it('rejects level out of range', () => {
     const err = validateArtifactDraft({
       mainStat: 'atk_pct',

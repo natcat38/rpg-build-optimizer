@@ -5,6 +5,10 @@
  * ADR-0003: stat-only set bonuses; elemental 2pc → elemental_dmg.
  * ADR-0006: character/weapon base stats at ascension breakpoints only (1,20,40,50,60,70,80,90).
  *
+ * One of three `tsx`-run repo tools, none of them shipped in the app bundle:
+ * this one bakes the frozen reference dataset, `check-docs.ts` gates ADR and
+ * knowledge-bundle consistency, and `benchmark.ts` times the optimiser.
+ *
  * Main-stat value tables are hardcoded constants (the artifact scaling tables are
  * fixed game constants; genshin-db does not expose a per-level/rarity main-stat table).
  * Linear fill between the known base (level 0) and max (level 20) values is used,
@@ -16,6 +20,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
+import { BUILD_LEVELS, ELEMENTS } from '../src/game/types';
 
 const require = createRequire(import.meta.url);
 // genshin-db uses CommonJS; we use createRequire to load it in an ESM script.
@@ -54,19 +59,10 @@ const SUBSTAT_TO_KEY: Record<string, string> = {
 };
 
 // Allowlists: lowercase the genshindb value, then skip anything non-standard.
-const ELEMENTS = [
-  'pyro',
-  'hydro',
-  'electro',
-  'cryo',
-  'anemo',
-  'geo',
-  'dendro',
-  'physical',
-];
+// `ELEMENTS` and `BUILD_LEVELS` come from the app's own domain types so the
+// snapshot can never be built against a list the app doesn't recognise.
+const ELEMENT_NAMES: readonly string[] = ELEMENTS;
 const WEAPON_TYPES = ['sword', 'claymore', 'polearm', 'bow', 'catalyst'];
-
-const BUILD_LEVELS = [1, 20, 40, 50, 60, 70, 80, 90] as const;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -183,15 +179,6 @@ function parse2pc(text: string): Record<string, number> | null {
   return null;
 }
 
-/**
- * Parse a 4pc bonus that is a FLAT STAT only.
- * Strict — returns null for anything conditional/reactive.
- * For v1.0, all known Genshin 4pc bonuses are conditional; this always returns null.
- */
-function parse4pcStatOnly(): Record<string, number> | null {
-  return null;
-}
-
 // ---------------------------------------------------------------------------
 // Main-stat value tables (hardcoded game constants, ADR-0002)
 // ---------------------------------------------------------------------------
@@ -281,7 +268,7 @@ function buildCharacters() {
     if (!c) continue;
 
     const element = String(c.elementText).toLowerCase();
-    if (!ELEMENTS.includes(element)) continue; // skip non-standard elements
+    if (!ELEMENT_NAMES.includes(element)) continue; // skip non-standard elements
 
     const substattKey = SUBSTAT_TO_KEY[c.substatText] ?? null;
 
@@ -404,29 +391,16 @@ function buildSets() {
     // bonus so the set is still requirable as a constraint (ADR-0003) — it just
     // contributes 0 to stat scoring.
     const twoPiece = parse2pc(a.effect2Pc) ?? {};
-    const fourPiece = parse4pcStatOnly();
+    // No `fourPiece`: no known Genshin 4pc bonus is a plain flat stat — every
+    // one is conditional or reactive — so the snapshot never emits one. The
+    // app-side model keeps the `four` field as headroom (ADR-0003).
     if (Object.keys(twoPiece).length === 0) {
       console.log(`  · retained set "${name}" with no scored 2pc bonus`);
     }
 
     const key = goodKey(name); // GOOD-standard set key so imported artifacts match
 
-    const entry: {
-      key: string;
-      name: string;
-      twoPiece: Record<string, number>;
-      fourPiece?: Record<string, number>;
-    } = {
-      key,
-      name,
-      twoPiece,
-    };
-
-    if (fourPiece) {
-      entry.fourPiece = fourPiece;
-    }
-
-    result.push(entry);
+    result.push({ key, name, twoPiece });
   }
 
   return result;
