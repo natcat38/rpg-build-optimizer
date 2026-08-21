@@ -16,7 +16,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
 const { checkRateLimit } = vi.hoisted(() => ({ checkRateLimit: vi.fn() }));
 vi.mock('./_ratelimit', () => ({ checkRateLimit }));
 
-import handler, { config } from './explain';
+import handler from './explain';
 
 function makeRes() {
   return {
@@ -94,8 +94,9 @@ describe('api/explain handler', () => {
 
   // The content-length guard is a cheap pre-parse fast path, not the real
   // size backstop — a missing or non-numeric header reads as 0 (Number(x) ??
-  // 0), so parseExplainPayload's own field-level caps (MAX_KEY_LEN etc.) are
-  // what actually bound an oversized/adversarial body in these cases.
+  // 0). The cap is re-checked against the parsed body, and
+  // parseExplainPayload's own field-level caps (MAX_KEY_LEN etc.) bound what
+  // is under it.
   it('rejects an oversized body via parseExplainPayload when content-length is absent', async () => {
     const res = makeRes();
     await handler(
@@ -122,10 +123,17 @@ describe('api/explain handler', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  // The header check is only a fast path; this is the cap the platform
-  // actually enforces when content-length is absent or lies.
-  it('declares a platform-enforced body size limit', () => {
-    expect(config.api.bodyParser.sizeLimit).toBe('16kb');
+  it('413s on a body that is oversized in fact while content-length lies', async () => {
+    const res = makeRes();
+    await handler(
+      makeReq({
+        headers: { 'content-length': '10' },
+        body: { ...validBody(), padding: 'x'.repeat(20_000) },
+      }),
+      res as unknown as VercelResponse,
+    );
+    expect(res.statusCode).toBe(413);
+    expect(create).not.toHaveBeenCalled();
   });
 
   it('403s a cross-site Origin before spending the rate limit or the API', async () => {
@@ -141,6 +149,7 @@ describe('api/explain handler', () => {
 
   it('allows the configured public origin and localhost dev origins', async () => {
     process.env.PUBLIC_ORIGIN = 'https://builds.example';
+    delete process.env.VERCEL_ENV;
     create.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] });
     for (const origin of [
       'https://builds.example',
@@ -154,6 +163,67 @@ describe('api/explain handler', () => {
       );
       expect(res.statusCode).toBe(200);
     }
+  });
+
+  // PUBLIC_ORIGIN is an optional override, not a prerequisite: with it unset,
+  // the deployment's own origin still has to work, or every same-origin POST
+  // from the shipped app (browsers send Origin on those too) would 403.
+  it('allows the deployment self-origin from the host header when PUBLIC_ORIGIN is unset', async () => {
+    delete process.env.PUBLIC_ORIGIN;
+    delete process.env.VERCEL_URL;
+    create.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] });
+    const res = makeRes();
+    await handler(
+      makeReq({
+        headers: {
+          host: 'builds-abc123.vercel.app',
+          origin: 'https://builds-abc123.vercel.app',
+        },
+      }),
+      res as unknown as VercelResponse,
+    );
+    expect(res.statusCode).toBe(200);
+  });
+
+  it('allows the deployment self-origin derived from VERCEL_URL', async () => {
+    delete process.env.PUBLIC_ORIGIN;
+    process.env.VERCEL_URL = 'builds-preview.vercel.app';
+    create.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] });
+    const res = makeRes();
+    await handler(
+      makeReq({ headers: { origin: 'https://builds-preview.vercel.app' } }),
+      res as unknown as VercelResponse,
+    );
+    expect(res.statusCode).toBe(200);
+  });
+
+  it('rejects a localhost Origin in production', async () => {
+    process.env.VERCEL_ENV = 'production';
+    process.env.PUBLIC_ORIGIN = 'https://builds.example';
+    const res = makeRes();
+    await handler(
+      makeReq({ headers: { origin: 'http://localhost:5173' } }),
+      res as unknown as VercelResponse,
+    );
+    expect(res.statusCode).toBe(403);
+    expect(checkRateLimit).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a foreign Origin even when the host header names this deployment', async () => {
+    delete process.env.PUBLIC_ORIGIN;
+    const res = makeRes();
+    await handler(
+      makeReq({
+        headers: {
+          host: 'builds-abc123.vercel.app',
+          origin: 'https://evil.example',
+        },
+      }),
+      res as unknown as VercelResponse,
+    );
+    expect(res.statusCode).toBe(403);
+    expect(create).not.toHaveBeenCalled();
   });
 
   it('allows a request with no Origin header (non-browser client)', async () => {
@@ -177,6 +247,20 @@ describe('api/explain handler', () => {
     const res = makeRes();
     await handler(makeReq(), res as unknown as VercelResponse);
     expect(res.statusCode).toBe(429);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  // A missing limiter in production is our misconfiguration, not the caller's
+  // rate — telling them "slow down" would be a lie they can't act on.
+  it('503s (not 429) when the limiter is unconfigured in production', async () => {
+    checkRateLimit.mockResolvedValue({
+      success: false,
+      reason: 'not-configured',
+    });
+    const res = makeRes();
+    await handler(makeReq(), res as unknown as VercelResponse);
+    expect(res.statusCode).toBe(503);
+    expect(res.payload).toEqual({ error: 'unavailable' });
     expect(create).not.toHaveBeenCalled();
   });
 

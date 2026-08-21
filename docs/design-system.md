@@ -68,11 +68,15 @@ imports from `game/`, `meta/` or `roster/`.
   `aria-hidden`. A bar that is the _only_ carrier of its value needs real
   `role="progressbar"` semantics and does not belong here (PlanView's live
   progress bar is bespoke for that reason).
-- **`Combobox`** takes an optional `id`, applied to whichever control is
-  showing (button when closed, input when open, at the same position). Both are
-  labelable elements, so a sibling `<label htmlFor>` reaches it either way —
-  that is how a Combobox's visible label matches the `<select>`s beside it.
-- **`Combobox`**, **`AppDrawer`** — the two interactive widgets.
+- **`Combobox`** — the searchable single-select. Takes an optional `id`,
+  applied to whichever control is showing (button when closed, input when open,
+  at the same position). Both are labelable elements, so a sibling
+  `<label htmlFor>` reaches it either way — that is how a Combobox's visible
+  label matches the `<select>`s beside it.
+- **`AppDrawer`** — the app-wide detail panel: slides from the left on desktop,
+  from the bottom on mobile. `vaul` supplies the focus trap, scroll lock and
+  esc-close; `aria-modal` is set here because Vaul's content node does not set
+  it.
 - **`cn()`** — falsy-filtering class join. Registered in `.prettierrc.json` as
   a `tailwindFunctions` entry so its arguments get class-sorted too.
 
@@ -101,8 +105,15 @@ look identical.
 **Live regions are persistent.** A region mounted in the same commit as its
 text is not being observed yet, so nothing is announced. The pattern is an
 always-mounted `sr-only` `role="status"` / `role="alert"` node whose text
-changes, with the visible `Callout` carrying no role of its own (App,
-ImportPanel, Results, ArtifactForm, ExplainBuild).
+changes, with the visible `Callout` carrying no role of its own. Every panel
+that announces uses it (App, ImportPanel, Results, ArtifactForm, and
+ExplainBuild, which is being aligned onto the same pattern).
+
+**Re-announce identical text by clearing the region first.** A live region only
+fires on content _change_, so writing the same string twice in a row is
+silently dropped — the second occurrence of an unchanged message (a repeated
+failure, a re-run that lands on the same result) has to blank the node and set
+it again.
 
 ## One theme, on purpose
 

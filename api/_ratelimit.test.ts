@@ -71,15 +71,37 @@ describe('checkRateLimit', () => {
     expect(RatelimitCtor).not.toHaveBeenCalled();
   });
 
-  it('fails closed in production when the limiter is unconfigured', async () => {
+  it('fails closed in production when the limiter is unconfigured, flagging it as a misconfiguration', async () => {
     process.env = { ...ORIGINAL_ENV, VERCEL_ENV: 'production' };
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
 
     const result = await checkRateLimit('1.2.3.4');
 
-    expect(result).toEqual({ success: false });
+    // 'not-configured' is what lets the handler answer 503 (our fault) rather
+    // than 429 (the caller's fault) — the distinction is the whole point.
+    expect(result).toEqual({ success: false, reason: 'not-configured' });
     expect(RatelimitCtor).not.toHaveBeenCalled();
+  });
+
+  it('logs the production misconfiguration before refusing (fresh module, fresh latch)', async () => {
+    // The warn/error latch is module-level and already spent by the tests
+    // above, so reset the module registry to observe the first log again.
+    vi.resetModules();
+    process.env = { ...ORIGINAL_ENV, VERCEL_ENV: 'production' };
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const fresh = await import('./_ratelimit');
+    const result = await fresh.checkRateLimit('1.2.3.4');
+
+    expect(result).toEqual({ success: false, reason: 'not-configured' });
+    // A silent fail-closed is unoperable: the log has to happen even though
+    // the function returns unsuccessfully.
+    expect(error).toHaveBeenCalledOnce();
+    error.mockRestore();
+    vi.resetModules();
   });
 
   it('allows the request through when the configured limiter reports under the limit', async () => {
@@ -96,7 +118,7 @@ describe('checkRateLimit', () => {
     expect(limit).toHaveBeenCalledWith('1.2.3.4');
   });
 
-  it('blocks the request once the configured limiter reports the limit exceeded', async () => {
+  it('blocks the request once the per-IP limiter reports the limit exceeded, without spending global budget', async () => {
     process.env = {
       ...ORIGINAL_ENV,
       UPSTASH_REDIS_REST_URL: 'https://example.upstash.io',
@@ -107,6 +129,12 @@ describe('checkRateLimit', () => {
     const result = await checkRateLimit('1.2.3.4');
 
     expect(result).toEqual({ success: false });
+    // The windows are consumed in sequence, not in parallel: if a rejected
+    // per-IP request still drew from the shared hourly bucket, one hostile IP
+    // could exhaust the whole endpoint's budget for everyone else.
+    expect(limit).toHaveBeenCalledTimes(1);
+    expect(limit).toHaveBeenCalledWith('1.2.3.4');
+    expect(limit).not.toHaveBeenCalledWith('global');
   });
 
   it('blocks the request when the global budget cap is exhausted, even under the per-IP limit', async () => {

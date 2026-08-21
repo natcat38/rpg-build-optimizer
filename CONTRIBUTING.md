@@ -27,7 +27,7 @@ npm run dev
 | `npm run bench`         | Regenerate `docs/speed-report.md`                        |
 | `npm run docs:check`    | ADR numbering, knowledge-bundle freshness, dead links    |
 
-`FILE-MAP.md` is hand-maintained — update it in the same commit that moves or adds a module.
+`FILE-MAP.md` is hand-maintained — update it in the same commit that adds or moves a top-level source directory.
 
 ### What CI checks
 
@@ -59,7 +59,10 @@ The button calls `api/explain.ts`, a Vercel serverless function that proxies Cla
 
 - `ANTHROPIC_API_KEY` — server-side Vercel project env var.
 - `VITE_AI_ENABLED=true` — build-time flag that renders the button. Keep it off until the key is deployed.
-- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — from an [Upstash](https://upstash.com) Redis database, enabling per-IP rate limiting (10 requests/60s, [ADR-0013](docs/adr/0013-rate-limit-ai-proxy.md)). Without them the endpoint still works, just unthrottled.
+- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — from an [Upstash](https://upstash.com) Redis database, enabling per-IP rate limiting (10 requests/60s) plus a global budget cap (500 requests/1h, [ADR-0013](docs/adr/0013-rate-limit-ai-proxy.md)). **Required in production**: the gate keys on `VERCEL_ENV === 'production'`, and with the vars unset there the endpoint fails closed — every request is rejected with `503 { error: 'unavailable' }`. Outside production they are optional: the limiter is a no-op that logs one warning, so `vercel dev` and CI run unthrottled.
+- `PUBLIC_ORIGIN` — optional. The function already accepts its own deployment origin (from `VERCEL_URL` / the request host), so set this only when the app is served from a custom domain. A present-but-unlisted `Origin` gets a 403; an absent one is allowed through to the rate limiter.
 - Set a spend cap in the Anthropic console — it is the feature's hard cost ceiling.
+
+`.env.example` at the repo root lists all five names with no values — copy it to `.env.local` and fill it in.
 
 Run `vercel dev` (not `npm run dev`) locally to serve the `/api` function.

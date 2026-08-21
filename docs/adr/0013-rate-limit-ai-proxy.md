@@ -52,7 +52,10 @@ one-function-at-a-time proxy model) via `@upstash/ratelimit` +
   ADR-0001's client-side architecture is otherwise unchanged.
 - Deploying the rate limit requires provisioning an Upstash Redis database
   and setting its two env vars on Vercel; until then, the endpoint runs
-  exactly as it did under ADR-0010 (spend-cap-only).
+  exactly as it did under ADR-0010 (spend-cap-only). _Superseded by the
+  amendment below: this now holds outside production only. In production the
+  unconfigured endpoint refuses every request rather than running
+  spend-cap-only._
 - The spend cap in the Anthropic console remains the hard backstop — the
   rate limit bounds request _rate_, not worst-case total spend.
 
@@ -65,11 +68,43 @@ no cost ceiling), and a second sliding window keyed on the fixed `'global'`
 bucket (500 requests / 1 h) runs alongside the per-IP one, so worst-case spend
 is bounded independent of how many IPs an attacker controls.
 
+A follow-up pass added three further points:
+
+- **The two windows are consumed in sequence, not in parallel.** The per-IP
+  window is awaited first and short-circuits on failure, so a request already
+  refused never draws from the shared global bucket. Consuming both together
+  (the original `Promise.all`) meant one hostile IP could burn the endpoint's
+  entire hourly allowance for every other caller while being rejected itself —
+  the global cap became a denial-of-service lever instead of a spend ceiling.
+- **Unconfigured-in-production is reported as `reason: 'not-configured'` and
+  answered `503 { error: 'unavailable' }`**, not `429`. The refusal is a
+  server-side misconfiguration, indistinguishable to the caller from the
+  existing Upstash-unreachable branch; answering 429 told them to slow down
+  when no amount of waiting would help. The condition is also logged
+  (`console.error`, once, via the same latch as the non-production warning)
+  _before_ returning, so a fail-closed deployment is diagnosable from the logs
+  rather than presenting as mysterious throttling.
+- **An `Origin` allowlist runs ahead of the limiter** as defence in depth — it
+  is not a replacement for the counter (see the rejected alternative below),
+  just a cheap way to drop cross-site callers before they spend budget. The
+  allowlist is `PUBLIC_ORIGIN` (an optional override, for a custom domain) plus
+  the deployment's _own_ origin, derived from `VERCEL_URL` and from the
+  request's `x-forwarded-host`/`host` header. Trusting self-origin is safe: a
+  cross-site attacker's browser sends the attacker's `Origin`, never ours.
+  Deriving it is also necessary — same-origin POSTs still carry `Origin`, and
+  each preview deployment has its own hostname, so a `PUBLIC_ORIGIN`-only list
+  rejects every real browser request unless that one var is set and current.
+  Localhost dev origins are trusted only when `VERCEL_ENV !== 'production'`. An
+  **absent** `Origin` still passes, deliberately: non-browser clients are what
+  the rate limit and global cap exist to bound, and rejecting them would be
+  security theatre against anything scripted.
+
 ## Rejected alternatives
 
 - **In-memory counter** — serverless functions are stateless and
   multi-instance; a per-instance counter doesn't bound aggregate request
   rate across instances.
-- **Origin/Referer check only** — cheaper (no new dependency) but trivially
-  spoofed by a direct scripted client; doesn't bound cost the way a request
-  counter does.
+- **Origin/Referer check instead of a counter** — cheaper (no new dependency)
+  but trivially spoofed by a direct scripted client; doesn't bound cost the way
+  a request counter does. Rejected as a _substitute_; an `Origin` allowlist was
+  later added _alongside_ the counter (see the amendment above).

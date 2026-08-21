@@ -25,7 +25,8 @@ tables underneath it are not.
    visible to users.
 
 3. **Re-verify each curated table** against its `source` URL and the patch notes:
-   - `src/meta/metaTargets.ts` — build recipes (set, main stats, ER floor, objective).
+   - `src/meta/metaTargets.ts` — build recipes (set, main stats, ER floor, objective,
+     stat targets, signature weapon).
      Re-check any character whose kit was reworked.
    - `src/teams/comps.ts` — comp archetypes. New Abyss blessings can change which
      archetypes are top-tier, so **re-rank the `tier` values**, not just the rosters.
