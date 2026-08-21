@@ -7,6 +7,17 @@
 
 import { useId, useState, useRef, useEffect } from 'react';
 
+/** Hoisted out of the render: 235 <li>s each allocating an identical style
+ *  object is 235 allocations per keystroke, and the object never varies.
+ *  contentVisibility skips layout+paint for the off-screen rows, which is what
+ *  keeps opening the list cheap; containIntrinsicSize supplies the row height
+ *  those skipped rows would have had, so the scrollbar and `scrollIntoView`
+ *  still land in the right place. */
+const OPTION_STYLE: React.CSSProperties = {
+  contentVisibility: 'auto',
+  containIntrinsicSize: 'auto 34px',
+};
+
 interface ComboboxOption {
   value: string;
   label: string;
@@ -52,12 +63,18 @@ export function Combobox({
   // unmounts whichever element had focus and it lands on <body>. Track that
   // the user was in here to hand focus back to the trigger on close.
   const wasOpen = useRef(false);
+  // Scrolling the list is right when the *keyboard* moved the cursor, and
+  // wrong when the pointer did: hovering an option set activeIndex, which
+  // scrolled the row under the cursor and hovered a different one.
+  const keyboardNav = useRef(false);
 
   const selectedLabel =
     options.find((o) => o.value === value)?.label ?? placeholder ?? '';
 
+  // Lowercased once per render, not once per option.
+  const needle = query.toLowerCase();
   const filtered = query
-    ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
+    ? options.filter((o) => o.label.toLowerCase().includes(needle))
     : options;
 
   function changeQuery(next: string) {
@@ -69,6 +86,7 @@ export function Combobox({
    *  235-option list opened at the top every time, so "next character" meant
    *  scrolling back to where you already were. */
   function openList() {
+    keyboardNav.current = true;
     const i = options.findIndex((o) => o.value === value);
     setActiveIndex(i >= 0 ? i : 0);
     setOpen(true);
@@ -84,7 +102,7 @@ export function Combobox({
   // listbox: 15 ArrowDowns left scrollTop at 0 and the highlight off-screen.
   // Runs on `query` too, because filtering renumbers the options.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !keyboardNav.current) return;
     const el = listRef.current?.children[activeIndex];
     if (el instanceof HTMLElement) el.scrollIntoView({ block: 'nearest' });
   }, [open, activeIndex, query]);
@@ -109,20 +127,43 @@ export function Combobox({
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') {
+      // Dismissing the list is the whole of the Escape press: without
+      // stopPropagation an ancestor drawer/dialog closed at the same time,
+      // and without preventDefault the browser could reset the field too.
+      e.preventDefault();
+      e.stopPropagation();
       setOpen(false);
       changeQuery('');
+      return;
+    }
+    if (e.key === 'Home' || e.key === 'End') {
+      if (filtered.length === 0) return;
+      e.preventDefault();
+      keyboardNav.current = true;
+      setActiveIndex(e.key === 'Home' ? 0 : filtered.length - 1);
+      return;
+    }
+    if (e.key === 'Enter') {
+      // Always swallowed while open. This input usually sits inside a <form>,
+      // and an Enter that matched nothing used to fall through as an implicit
+      // submit — the list closing *and* the form submitting on one press.
+      e.preventDefault();
+      if (filtered[activeIndex]) handleSelect(filtered[activeIndex]);
+      else {
+        setOpen(false);
+        changeQuery('');
+      }
       return;
     }
     if (filtered.length === 0) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
+      keyboardNav.current = true;
       setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
+      keyboardNav.current = true;
       setActiveIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (filtered[activeIndex]) handleSelect(filtered[activeIndex]);
     }
   }
 
@@ -165,7 +206,9 @@ export function Combobox({
           role="combobox"
           aria-label={label}
           aria-haspopup="listbox"
-          aria-controls={listId}
+          // No `aria-controls` while closed: the listbox it names does not
+          // exist, and a dangling idref is a broken relationship, not an
+          // empty one.
           aria-expanded="false"
           className="field flex w-full items-center justify-between gap-2 text-left"
           onClick={openList}
@@ -225,16 +268,12 @@ export function Combobox({
                   opt.value === value ? 'text-accent' : 'text-paper',
                   i === activeIndex ? 'bg-white/5' : 'hover:bg-white/5',
                 ].join(' ')}
-                // 235 options render at once; skipping layout+paint for the
-                // off-screen ones is what keeps opening the list cheap. The
-                // intrinsic size is the row height, so the scrollbar and
-                // scrollIntoView still land in the right place.
-                style={{
-                  contentVisibility: 'auto',
-                  containIntrinsicSize: 'auto 34px',
-                }}
+                style={OPTION_STYLE}
                 onClick={() => handleSelect(opt)}
-                onMouseEnter={() => setActiveIndex(i)}
+                onMouseEnter={() => {
+                  keyboardNav.current = false;
+                  setActiveIndex(i);
+                }}
               >
                 {opt.label}
                 {opt.hint && (

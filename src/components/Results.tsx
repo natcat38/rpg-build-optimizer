@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type {
   Artifact,
   BuildResult,
@@ -96,6 +96,32 @@ function describeTies(
  *  browsing, not comparing, and 10 full cards buried everything below them. */
 const COLLAPSED_GROUPS = 3;
 
+/**
+ * The outcome of the last share attempt, pinned to the card that produced it.
+ *
+ * One value rather than a `copied` flag beside a `shareFailed` object: the
+ * three outcomes are mutually exclusive, and two independent pieces of state
+ * meant every call site had to remember to clear the other one.
+ *
+ * `nonce` exists only so the live region below re-announces an identical
+ * repeat — copying the same link twice used to be silent, because a live
+ * region only speaks when its content actually changes.
+ */
+type Share = { nonce: number; index: number } & (
+  | { status: 'copied' }
+  /** The clipboard refused; the link exists and is handed over to copy by hand. */
+  | { status: 'manual'; url: string }
+  /** Encoding failed — there is no link to offer at all. */
+  | { status: 'failed' }
+);
+
+const SHARE_STATUS: Record<Share['status'], string> = {
+  copied: 'Share link copied.',
+  manual:
+    'Couldn’t copy automatically — the link is shown below for copying by hand.',
+  failed: 'Couldn’t build a share link in this browser.',
+};
+
 export function Results({
   result,
   request,
@@ -105,13 +131,8 @@ export function Results({
   request: OptimizeRequest;
   artifactsById: Record<string, Artifact>;
 }) {
-  const [copied, setCopied] = useState<number | null>(null);
-  // `url` is null when encoding failed and there is no link to hand over.
-  const [shareFailed, setShareFailed] = useState<{
-    index: number;
-    url: string | null;
-  } | null>(null);
-
+  const [share, setShare] = useState<Share | null>(null);
+  const shareNonce = useRef(0);
   const [showAll, setShowAll] = useState(false);
 
   // A new run replaces every card, so a confirmation pinned to the old card
@@ -120,8 +141,7 @@ export function Results({
   const [shownResult, setShownResult] = useState(result);
   if (result !== shownResult) {
     setShownResult(result);
-    setCopied(null);
-    setShareFailed(null);
+    setShare(null);
     setShowAll(false);
   }
 
@@ -149,23 +169,20 @@ export function Results({
 
   const groups = groupTies(result.builds);
   const visible = showAll ? groups : groups.slice(0, COLLAPSED_GROUPS);
-  const topScore = result.builds[0]?.objectiveValue;
+  // The gap is measured in `score`, the number the list is ordered by — not in
+  // `objectiveValue`, the number the card prints. With a target-style
+  // objective (a crit-ratio target, say) the printed objective can be higher
+  // at rank 2 than at rank 1, so an objective-based gap put a "−" chip on a
+  // bigger number. Ranked by score, the gap is non-positive by construction.
+  const topScore = result.builds[0]?.score;
   // The search filters near-duplicates (clones sharing a 4-piece core), so a
   // short list is a feature. Unlabelled it reads as a bug — "why only 4?" — so
   // say so, but only where a search actually ran and returned something: a
   // shared ?b= link carries exactly one build and never searched.
+  // Counted in cards, not raw results: exact ties collapse into one card, so
+  // counting results promised more cards than the list can show.
   const requestedK = request.topK ?? 10;
-  const shortList =
-    searched && result.builds.length > 0 && result.builds.length < requestedK;
-
-  const shareStatus =
-    copied != null
-      ? 'Share link copied.'
-      : shareFailed
-        ? shareFailed.url
-          ? 'Couldn’t copy automatically — the link is shown below for copying by hand.'
-          : 'Couldn’t build a share link in this browser.'
-        : '';
+  const shortList = searched && groups.length > 0 && groups.length < requestedK;
 
   return (
     <div className="space-y-4">
@@ -199,8 +216,8 @@ export function Results({
       <p className="text-xs text-muted">{objectiveHint(request.objective)}</p>
       {shortList && (
         <p className="text-xs text-muted">
-          {result.builds.length} builds shown — near-duplicates sharing the same
-          core are filtered.
+          {groups.length} builds shown — near-duplicates sharing the same core
+          are filtered.
         </p>
       )}
       {visible.map((g, i) => {
@@ -218,9 +235,7 @@ export function Results({
               artifacts={arts}
               rank={g.rank}
               delta={
-                g.rank > 1 && topScore != null
-                  ? b.objectiveValue - topScore
-                  : undefined
+                g.rank > 1 && topScore != null ? b.score - topScore : undefined
               }
               variants={
                 g.ties.length > 0
@@ -242,47 +257,56 @@ export function Results({
                 } catch {
                   // encodeBuild (CompressionStream) rejected — there is no link
                   // to offer, so say that rather than showing an empty field.
-                  setCopied(null);
-                  setShareFailed({ index: i, url: null });
+                  setShare({
+                    nonce: ++shareNonce.current,
+                    index: i,
+                    status: 'failed',
+                  });
                   return;
                 }
                 try {
                   await navigator.clipboard.writeText(url);
-                  setShareFailed(null);
-                  setCopied(i);
+                  setShare({
+                    nonce: ++shareNonce.current,
+                    index: i,
+                    status: 'copied',
+                  });
                 } catch {
                   // The clipboard can reject (permission, insecure context).
                   // The link was never in the address bar, so hand it over to
                   // be copied by hand instead of pointing there.
-                  setCopied(null);
-                  setShareFailed({ index: i, url });
+                  setShare({
+                    nonce: ++shareNonce.current,
+                    index: i,
+                    status: 'manual',
+                    url,
+                  });
                 }
               }}
             />
-            {copied === i && (
+            {share?.index === i && share.status === 'copied' && (
               <Callout tone="success" className="mt-2">
                 Share link copied.
               </Callout>
             )}
-            {shareFailed?.index === i && (
+            {share?.index === i && share.status === 'manual' && (
               <Callout tone="error" className="mt-2">
-                {shareFailed.url ? (
-                  <>
-                    <p>Couldn’t copy automatically — copy it from here:</p>
-                    <input
-                      className="field mt-2"
-                      readOnly
-                      value={shareFailed.url}
-                      aria-label="Share link"
-                      onFocus={(e) => e.currentTarget.select()}
-                    />
-                  </>
-                ) : (
-                  <p>
-                    Couldn’t build a share link in this browser — try a
-                    different one.
-                  </p>
-                )}
+                <p>Couldn’t copy automatically — copy it from here:</p>
+                <input
+                  className="field mt-2"
+                  readOnly
+                  value={share.url}
+                  aria-label="Share link"
+                  onFocus={(e) => e.currentTarget.select()}
+                />
+              </Callout>
+            )}
+            {share?.index === i && share.status === 'failed' && (
+              <Callout tone="error" className="mt-2">
+                <p>
+                  Couldn’t build a share link in this browser — try a different
+                  one.
+                </p>
               </Callout>
             )}
           </div>
@@ -292,8 +316,7 @@ export function Results({
           for, and ten full cards pushed everything below the fold. */}
       {groups.length > COLLAPSED_GROUPS && !showAll && (
         <button className="btn-ghost w-full" onClick={() => setShowAll(true)}>
-          <span aria-hidden="true">▶</span> Show all {result.builds.length}{' '}
-          builds
+          <span aria-hidden="true">▶</span> Show all {groups.length} builds
         </button>
       )}
       {/* One persistent live region for the share outcome. The Callouts above
@@ -301,7 +324,9 @@ export function Results({
           text arrives announces nothing — so the announcement lives here and
           they stay purely visual. */}
       <p className="sr-only" role="status">
-        {shareStatus}
+        {/* Keyed on the nonce so an identical repeat — copying the same link
+            twice — still counts as a change and is announced again. */}
+        {share && <span key={share.nonce}>{SHARE_STATUS[share.status]}</span>}
       </p>
     </div>
   );

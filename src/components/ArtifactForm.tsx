@@ -4,7 +4,7 @@ import { ELEMENTS, SLOTS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { validateArtifactDraft } from '../state/artifactValidation';
 import { useInventory } from '../state/inventory';
-import { formatSetName, SLOT_LABELS, statLabel } from '../labels';
+import { elementLabel, formatSetName, SLOT_LABELS, statLabel } from '../labels';
 import { Callout } from './ui/Callout';
 import { Combobox } from './ui/Combobox';
 
@@ -31,7 +31,9 @@ export function ArtifactForm() {
   // Sub-stat editing UI is intentionally minimal in v1.0; reserved for future use.
   const subStats: SubStat[] = [];
   const [error, setError] = useState<string | null>(null);
-  const [added, setAdded] = useState<string | null>(null);
+  const [added, setAdded] = useState<{ nonce: number; text: string } | null>(
+    null,
+  );
   // ponytail: only the level field gets inline validation — it's the one users
   // actually fumble. Everything else keeps the submit-time banner; extend if
   // evidence says otherwise.
@@ -66,9 +68,12 @@ export function ArtifactForm() {
     // Read the count back from the store rather than the render-time closure:
     // `add` has already committed by the time this line runs.
     const total = useInventory.getState().artifacts.length;
-    setAdded(
-      `Added: ${formatSetName(setKey)} ${SLOT_LABELS[slot].toLowerCase()} — inventory now ${total}.`,
-    );
+    // Keyed by a nonce below: adding two identical pieces produces the same
+    // sentence twice, and an unchanged live region announces nothing.
+    setAdded((prev) => ({
+      nonce: (prev?.nonce ?? 0) + 1,
+      text: `Added: ${formatSetName(setKey)} ${SLOT_LABELS[slot].toLowerCase()} — inventory now ${total}.`,
+    }));
     // A form that keeps the last entry invites a duplicate on the next Enter.
     setSlot(DEFAULT_SLOT);
     setMainStat(DEFAULT_MAIN);
@@ -139,7 +144,7 @@ export function ArtifactForm() {
               <option value="">Any (unknown)</option>
               {ELEMENTS.map((el) => (
                 <option key={el} value={el}>
-                  {el[0].toUpperCase() + el.slice(1)}
+                  {elementLabel(el)}
                 </option>
               ))}
             </select>
@@ -194,9 +199,9 @@ export function ArtifactForm() {
           created in the same commit as its text announces nothing — so the
           Callout below is the visual half only. */}
       <p className="sr-only" role="status">
-        {added ?? ''}
+        {added && <span key={added.nonce}>{added.text}</span>}
       </p>
-      {added && <Callout tone="success">{added}</Callout>}
+      {added && <Callout tone="success">{added.text}</Callout>}
       <button type="submit" className="btn-primary">
         Add artifact
       </button>

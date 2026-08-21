@@ -61,18 +61,4 @@ describe('Segmented', () => {
     await user.keyboard('{ArrowDown}');
     expect(onChange).not.toHaveBeenCalled();
   });
-
-  it('renders radios with aria-checked when asked for a radiogroup', () => {
-    render(
-      <Segmented
-        options={OPTIONS}
-        value="One"
-        onChange={() => {}}
-        label="Example"
-        role="radiogroup"
-      />,
-    );
-    expect(screen.getByRole('radio', { name: 'One' })).toBeChecked();
-    expect(screen.getByRole('radio', { name: 'Two' })).not.toBeChecked();
-  });
 });

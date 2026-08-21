@@ -15,11 +15,10 @@ interface SegmentedProps<T extends string> {
   onChange: (value: T) => void;
   /** Accessible name for the group itself. */
   label: string;
-  role?: 'tablist' | 'radiogroup';
-  /** Tablist only: gives each item a stable id so the panel can point back at
-   *  the selected one with `aria-labelledby`. */
+  /** Gives each tab a stable id so the panel can point back at the selected
+   *  one with `aria-labelledby`. */
   itemId?: (value: T) => string;
-  /** Tablist only: the id of the single panel every tab swaps the content of. */
+  /** The id of the single panel every tab swaps the content of. */
   controls?: string;
   className?: string;
 }
@@ -29,16 +28,16 @@ export function Segmented<T extends string>({
   value,
   onChange,
   label,
-  role = 'tablist',
   itemId,
   controls,
   className,
 }: SegmentedProps<T>) {
   const items = useRef<(HTMLButtonElement | null)[]>([]);
-  const tabs = role === 'tablist';
 
   function onKeyDown(e: KeyboardEvent) {
-    const i = options.indexOf(value);
+    // A `value` outside `options` (a stale prop mid-swap) gives -1, which
+    // would make ArrowRight land on 0 by accident and ArrowLeft on -2.
+    const i = Math.max(0, options.indexOf(value));
     const last = options.length - 1;
     let next: number;
     if (e.key === 'ArrowRight') next = i === last ? 0 : i + 1;
@@ -53,7 +52,7 @@ export function Segmented<T extends string>({
 
   return (
     <div
-      role={role}
+      role="tablist"
       aria-label={label}
       onKeyDown={onKeyDown}
       className={cn(
@@ -70,12 +69,10 @@ export function Segmented<T extends string>({
             ref={(el) => {
               items.current[i] = el;
             }}
-            role={tabs ? 'tab' : 'radio'}
-            id={tabs ? itemId?.(opt) : undefined}
-            aria-controls={tabs ? controls : undefined}
-            {...(tabs
-              ? { 'aria-selected': active }
-              : { 'aria-checked': active })}
+            role="tab"
+            id={itemId?.(opt)}
+            aria-controls={controls}
+            aria-selected={active}
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(opt)}
             className={cn(

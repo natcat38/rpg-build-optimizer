@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PlanView } from './PlanView';
 import { useRoster } from '../state/roster';
@@ -120,6 +120,47 @@ describe('PlanView', () => {
     // character short and yield advice.
     expect(screen.getByText('Worth investing in')).toBeInTheDocument();
     expect(screen.getAllByTestId('advice').length).toBeGreaterThan(0);
+  });
+
+  it('discards a plan whose inventory was replaced mid-run', async () => {
+    const user = userEvent.setup();
+    seed();
+    // Park the first of the eight solves so the inventory can be swapped
+    // underneath a run that is genuinely in flight.
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    let solved = 0;
+    let parked = false;
+    const gated: RunOptimize = async (req, inv) => {
+      if (!parked) {
+        parked = true;
+        await gate;
+      }
+      const out = await run(req, inv);
+      solved++;
+      return out;
+    };
+    render(<PlanView runOptimize={gated} />);
+    await user.click(
+      screen.getByRole('button', { name: /Build my Abyss plan/i }),
+    );
+    expect(await screen.findByText(/Optimising member/i)).toBeInTheDocument();
+
+    // Re-importing replaces the inventory: the run still in flight is now
+    // solving over gear the user no longer has.
+    await act(async () => {
+      useInventory.getState().clear();
+    });
+    expect(screen.queryByText(/Optimising member/i)).toBeNull();
+
+    await act(async () => {
+      release();
+      await waitFor(() => expect(solved).toBe(8));
+    });
+    // The superseded run commits nothing: no plan, no progress, no error.
+    expect(screen.queryByText('What to farm')).toBeNull();
+    expect(screen.queryByText(/Optimising member/i)).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('renders no advice heading when there is nothing to advise', async () => {

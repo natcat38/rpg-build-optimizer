@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { FormEvent } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Combobox } from './Combobox';
@@ -129,7 +130,8 @@ describe('Combobox accessibility', () => {
     ).not.toHaveAttribute('aria-activedescendant');
   });
 
-  it('advertises the popup it owns from the collapsed trigger', () => {
+  it('advertises the popup it owns from the collapsed trigger', async () => {
+    const user = userEvent.setup();
     render(
       <Combobox
         options={OPTIONS}
@@ -140,7 +142,35 @@ describe('Combobox accessibility', () => {
     );
     const trigger = screen.getByRole('combobox', { name: 'Character' });
     expect(trigger).toHaveAttribute('aria-haspopup', 'listbox');
-    expect(trigger).toHaveAttribute('aria-controls');
+    // No aria-controls while closed: the listbox it would name does not
+    // exist yet, and a dangling idref is a broken relationship.
+    expect(trigger).not.toHaveAttribute('aria-controls');
+    await user.click(trigger);
+    expect(screen.getByRole('combobox', { name: 'Character' })).toHaveAttribute(
+      'aria-controls',
+      screen.getByRole('listbox').id,
+    );
+  });
+
+  it('does not submit the surrounding form when Enter matches nothing', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn((e: FormEvent) => e.preventDefault());
+    render(
+      <form onSubmit={onSubmit}>
+        <Combobox
+          options={OPTIONS}
+          value="raiden"
+          onChange={() => {}}
+          label="Character"
+        />
+      </form>,
+    );
+    await user.click(screen.getByRole('combobox', { name: 'Character' }));
+    await user.keyboard('zzzz');
+    expect(screen.getByText('No results')).toBeInTheDocument();
+    await user.keyboard('{Enter}');
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.queryByRole('listbox')).toBeNull();
   });
 
   it('opens on ArrowDown and ArrowUp from the collapsed trigger', async () => {

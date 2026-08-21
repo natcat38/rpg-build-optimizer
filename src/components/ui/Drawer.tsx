@@ -51,7 +51,7 @@ export function AppDrawer({
                 // visible. overscroll-contain keeps the wheel out of the page
                 // behind the overlay.
                 'fixed inset-y-0 left-0 z-50 w-full max-w-md overflow-y-auto overscroll-contain border-l border-r-2 border-l-white/10 border-r-accent/50 bg-surface-700/60 p-6 backdrop-blur-md'
-              : // pb has to *include* p-5's 1.25rem: `pb-[env(...)]` overrode
+              : // pb has to *include* p-5's 1.25rem: a bare safe-area-inset padding overrode
                 // it outright, so on a phone without a safe-area inset the
                 // bottom padding collapsed to 0.
                 'fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto overscroll-contain rounded-t-2xl border-t-2 border-t-accent/50 bg-surface-700/60 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] backdrop-blur-md'

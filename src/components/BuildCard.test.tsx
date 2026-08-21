@@ -28,7 +28,13 @@ describe('BuildCard grade badge', () => {
       objective: 'crit_value',
     };
     render(<BuildCard build={build} request={req} artifacts={artifacts} />);
-    expect(screen.getByText('S')).toBeInTheDocument();
+    // The bare letter is a code, so the marker carries the whole sentence as
+    // its accessible name rather than announcing "S".
+    expect(
+      screen.getByRole('img', {
+        name: /Grade S — how close this build is to endgame stat targets/i,
+      }),
+    ).toHaveTextContent('S');
     expect(screen.getByText(/CRIT Rate 70%\/70%/)).toBeInTheDocument();
   });
 

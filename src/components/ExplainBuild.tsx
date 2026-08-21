@@ -20,6 +20,9 @@ export function ExplainBuild({
   const [loading, setLoading] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [error, setError] = useState(false);
+  // Announcements are keyed by this so a second attempt that produces the same
+  // sentence still counts as a change to the live region.
+  const [statusNonce, setStatusNonce] = useState(0);
 
   if (!enabled) return null;
 
@@ -27,6 +30,7 @@ export function ExplainBuild({
     // The trigger stays focusable (aria-disabled, not disabled) so a repeat
     // press doesn't drop focus to <body> mid-request.
     if (loading) return;
+    setStatusNonce((n) => n + 1);
     setLoading(true);
     setError(false);
     try {
@@ -40,15 +44,31 @@ export function ExplainBuild({
       console.error('Explain build failed', err);
       setError(true);
     } finally {
+      setStatusNonce((n) => n + 1);
       setLoading(false);
     }
   }
 
   return (
     <div className="mt-3">
-      {/* Persistent live region: announcing only works if the container is in
-          the DOM before the text arrives. */}
-      <div aria-live="polite">
+      {/* Persistent live regions: announcing only works if the container is
+          already in the DOM when its text arrives. The panel below is purely
+          visual — its own mount is too late to be observed. */}
+      <p className="sr-only" role="status">
+        <span key={statusNonce}>
+          {loading
+            ? 'Generating explanation…'
+            : explanation
+              ? 'Explanation ready.'
+              : ''}
+        </span>
+      </p>
+      {/* The visible Callout is created on demand, so it cannot carry the
+          alert role itself; this one is always mounted. */}
+      <p className="sr-only" role="alert">
+        {error ? 'Couldn’t generate an explanation right now.' : ''}
+      </p>
+      <div>
         {(explanation || loading) && (
           <div className="panel panel-md space-y-2">
             <p className="field-label">AI explanation</p>
@@ -90,7 +110,7 @@ export function ExplainBuild({
         )}
       </button>
       {error && (
-        <Callout tone="error" role="alert" className="mt-2">
+        <Callout tone="error" className="mt-2">
           Couldn’t generate an explanation right now. Try again.
         </Callout>
       )}

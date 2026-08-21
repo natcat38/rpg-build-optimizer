@@ -71,8 +71,12 @@ export function BuildCard({
   request: OptimizeRequest;
   artifacts: Artifact[];
   rank?: number;
-  /** Objective difference from rank 1, already signed (negative below it).
-   *  Omitted on rank 1, where "0" would be noise. */
+  /** Gap to rank 1 in the *ranking score* — the number the list is actually
+   *  ordered by — already signed, and therefore never positive. Omitted on
+   *  rank 1, where "0" would be noise. Deliberately not the objective
+   *  difference: with a target-style objective (a crit ratio, say) the
+   *  displayed objective can be *higher* at rank 2, and a "−" chip on a
+   *  bigger number reads as a rendering bug. */
   delta?: number;
   /** How many further builds scored exactly this, and what separates them.
    *  Collapsed into this card rather than repeated as identical siblings. */
@@ -101,22 +105,33 @@ export function BuildCard({
                 {formatScore(build.objectiveValue)}
               </p>
               {delta != null && (
-                // The gap to rank 1, which is the only reason to read a
-                // runner-up's number at all. U+2212, not a hyphen: at mono
-                // weights a hyphen next to digits reads as a separator.
-                <span className="chip flex-none px-1.5 py-0 font-mono text-2xs tabular-nums text-muted">
-                  −{formatScore(Math.abs(delta))}
+                // The gap to rank 1 in the ranking score, which is the only
+                // reason to read a runner-up's number at all. U+2212, not a
+                // hyphen: at mono weights a hyphen next to digits reads as a
+                // separator. The sign comes from the value rather than being
+                // written in, so a zero gap can't print as "−0.0".
+                <span
+                  className="chip flex-none px-1.5 py-0 font-mono text-2xs tabular-nums text-muted"
+                  aria-label={`Rank gap: ${formatScore(delta)} against rank 1`}
+                  title="Gap to rank 1 in the ranking score"
+                >
+                  {delta < 0 && '−'}
+                  {formatScore(Math.abs(delta))}
                 </span>
               )}
             </div>
             <Fingerprint filled={(s) => bySlot.has(s)} />
           </div>
           {grade && (
-            // The letter is the accessible name; `title` is the description.
-            // Repeating the sentence in `aria-label` too only made a screen
-            // reader say it twice.
+            // A bare letter in a role-less span is not a name a screen reader
+            // can make anything of, and `title` alone is neither the name nor
+            // reachable without a mouse. role="img" + aria-label makes the
+            // whole sentence the accessible name; `title` stays as the
+            // sighted reader's tooltip.
             <Marker
               tone={GRADE_TONE[grade.grade]}
+              role="img"
+              aria-label={`Grade ${grade.grade} — how close this build is to endgame stat targets`}
               title={`Grade ${grade.grade} — how close this build is to endgame stat targets`}
             >
               {grade.grade}

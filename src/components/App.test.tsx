@@ -118,7 +118,12 @@ describe('App — step nav', () => {
     useInventory.getState().clear();
     useRoster.getState().clear();
   });
-  afterEach(() => useRoster.getState().clear());
+  afterEach(() => {
+    useRoster.getState().clear();
+    // One test stubs IntersectionObserver; restore it here so a failure
+    // inside that test can't leak the stub into the rest of the file.
+    vi.unstubAllGlobals();
+  });
 
   it('renders a sticky step nav with anchors when a roster exists', () => {
     useRoster.getState().setRoster({ amber: { level: 90 } });
@@ -141,11 +146,16 @@ describe('App — step nav', () => {
     expect(
       within(nav).getByRole('link', { name: /optimise/i }),
     ).toBeInTheDocument();
-    // Roster/Teams/Plan are ghosted, not links: there is nothing to scroll to.
-    const locked = within(nav).getAllByTitle(/unlock this step/i);
+    // Roster/Teams/Plan are real disabled buttons, not links: there is
+    // nothing to scroll to. The step name has to survive into the accessible
+    // name, and the "why" has to be exposed as a description rather than a
+    // mouse-only `title`.
+    const locked = within(nav).getAllByRole('button');
     expect(locked).toHaveLength(3);
-    for (const chip of locked)
-      expect(chip).toHaveAttribute('aria-disabled', 'true');
+    for (const chip of locked) expect(chip).toBeDisabled();
+    expect(
+      within(nav).getByRole('button', { name: /roster/i }),
+    ).toHaveAccessibleDescription(/unlock this step/i);
     expect(within(nav).queryByRole('link', { name: /roster/i })).toBeNull();
   });
 
@@ -176,6 +186,9 @@ describe('App — step nav', () => {
         disconnect() {}
       },
     );
+    // Restored in afterEach below rather than at the end of the test body: an
+    // assertion failure above would otherwise leave the stub installed for
+    // every later test in the file.
     useRoster.getState().setRoster({ amber: { level: 90 } });
     render(<App />);
     const nav = screen.getByRole('navigation', { name: /steps/i });
@@ -204,8 +217,6 @@ describe('App — step nav', () => {
     expect(
       within(nav).getByRole('link', { name: /teams/i }),
     ).not.toHaveAttribute('aria-current');
-
-    vi.unstubAllGlobals();
   });
 });
 

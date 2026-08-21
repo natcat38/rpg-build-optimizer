@@ -2,8 +2,14 @@ import type { HTMLAttributes } from 'react';
 import { cn } from './cn';
 import { TONE, type Tone } from './tone';
 
-/** Square single-glyph tick — a grade letter, a rank. Sized to match
- *  `.section-badge-sm` so the two read as one family down a card. */
+/** Square single-glyph tick — a grade letter, a rank. Shares the `.tick`
+ *  recipe with `.section-badge`, so the two are the same shape by
+ *  construction rather than by hand-matched numbers.
+ *
+ *  A bare `<span>` has no role, so a single glyph carries no accessible name
+ *  of its own beyond its text. Callers whose glyph is a code the reader has
+ *  to decode (a grade letter) should pass `role="img"` + `aria-label`; both
+ *  travel through `...rest`. */
 export function Marker({
   tone,
   className,
@@ -12,11 +18,7 @@ export function Marker({
 }: HTMLAttributes<HTMLSpanElement> & { tone: Tone }) {
   return (
     <span
-      className={cn(
-        'grid h-8 w-8 flex-none place-items-center rounded-lg border font-display text-sm font-bold',
-        TONE[tone],
-        className,
-      )}
+      className={cn('tick tick-sm font-display', TONE[tone], className)}
       {...rest}
     >
       {children}

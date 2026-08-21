@@ -5,7 +5,7 @@
  * Eight exact solves are not free, so the plan only runs on an explicit click —
  * never on mount.
  */
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
 import { genshinAdapter } from '../game/genshin/adapter';
@@ -97,6 +97,10 @@ export function PlanView({
   const [plan, setPlan] = useState<Plan | null>(null);
   const [progress, setProgress] = useState<[number, number] | null>(null);
   const [failed, setFailed] = useState(false);
+  // A plan is eight awaited solves. If its inputs are replaced mid-flight the
+  // run in progress describes gear the user no longer has, so only the most
+  // recently started run may commit progress, a plan, or a failure.
+  const planToken = useRef(0);
 
   // Resolves each member's chosen artifact ids back to Artifact objects for
   // BuildCard — mirrors Results.tsx's artifactsFor.
@@ -124,12 +128,20 @@ export function PlanView({
     setPlanInputs({ entries, artifacts });
     setPlan(null);
     setFailed(false);
+    setProgress(null);
   }
+  // Layout, not passive: layout effects run inside the commit, so the token
+  // is already bumped by the time an awaited solve's continuation — a
+  // microtask, which cannot run until the stack empties — gets to check it.
+  useLayoutEffect(() => {
+    planToken.current++;
+  }, [planInputs]);
 
   async function build() {
     // The button is aria-disabled rather than disabled so it keeps focus
     // across the run; the guard has to be here.
     if (!teams || running) return;
+    const token = ++planToken.current;
     setFailed(false);
     setProgress([0, 8]);
     try {
@@ -138,14 +150,18 @@ export function PlanView({
         entries,
         artifacts,
         runOptimize,
-        (d, t) => setProgress([d, t]),
+        (d, t) => {
+          if (planToken.current === token) setProgress([d, t]);
+        },
       );
+      if (planToken.current !== token) return; // superseded
       setPlan(p);
     } catch (err) {
+      if (planToken.current !== token) return;
       console.error('Plan failed', err);
       setFailed(true);
     } finally {
-      setProgress(null);
+      if (planToken.current === token) setProgress(null);
     }
   }
 
@@ -164,7 +180,7 @@ export function PlanView({
         </p>
         <button
           type="button"
-          className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
+          className={cn('btn-primary', running && 'animate-pulse-glow')}
           aria-busy={running}
           aria-disabled={!teams || running}
           onClick={() => void build()}

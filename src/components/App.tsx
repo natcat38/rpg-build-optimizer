@@ -146,8 +146,8 @@ function SolvedHero({ hero }: { hero: HeroExample }) {
         </p>
       </div>
       <p className="mt-3 text-2xs text-muted">
-        Solved on load from a fixed 50-piece demo bag — not your gear, and not a
-        result you asked for.
+        Solved on load from a fixed 50-piece demo inventory — not your gear, and
+        not a result you asked for.
       </p>
     </>
   );
@@ -174,10 +174,18 @@ const LOCKED_HINT = 'Import a roster to unlock this step';
  */
 function useScrollSpy(ids: string[]): string | null {
   const [active, setActive] = useState<string | null>(null);
-  const key = ids.join('|');
+  // The id set changed, so the previous answer describes a nav that no longer
+  // exists: clear it and let the observer's first callback decide. Done in the
+  // render pass, not an effect — React re-runs this pass before painting, so
+  // `aria-current` never lands on a chip that is gone.
+  const [spiedIds, setSpiedIds] = useState(ids);
+  if (spiedIds !== ids) {
+    setSpiedIds(ids);
+    setActive(null);
+  }
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return;
-    const order = key.split('|');
+    const order = ids;
     const els = order
       .map((id) => document.getElementById(id))
       .filter((e): e is HTMLElement => e !== null);
@@ -190,6 +198,11 @@ function useScrollSpy(ids: string[]): string | null {
           else seen.delete(e.target.id);
         }
         const first = order.find((id) => seen.has(id));
+        // Deliberately keep the last answer when nothing is intersecting:
+        // between two sections (or scrolled past the last one) `first` is
+        // undefined, and blanking `aria-current` there makes the highlight
+        // flicker off mid-scroll. The reader is still "at" the section they
+        // last passed, so it stays lit until another one wins.
         if (first) setActive(first);
       },
       // Top band only: a section counts as "current" once its heading has
@@ -198,7 +211,9 @@ function useScrollSpy(ids: string[]): string | null {
     );
     for (const el of els) io.observe(el);
     return () => io.disconnect();
-  }, [key]);
+    // `ids` is a memoised array from the caller: a fresh array every render
+    // would tear down and rebuild the observer on every render.
+  }, [ids]);
   return active;
 }
 
@@ -322,7 +337,17 @@ export function App() {
   // One persistent announcement for the whole page. Written by the run itself
   // rather than by an effect on `result`, so a shared ?b= hydration (which is
   // not an optimisation) never claims one finished.
-  const [announcement, setAnnouncement] = useState('');
+  const [announcement, setAnnouncement] = useState<{
+    nonce: number;
+    text: string;
+  } | null>(null);
+  // A live region only speaks when its content *changes*, so two runs that
+  // finish with the same sentence used to announce once. The nonce keys the
+  // text below, making every announcement a distinct node.
+  const announceNonce = useRef(0);
+  function announce(text: string) {
+    setAnnouncement(text ? { nonce: ++announceNonce.current, text } : null);
+  }
 
   // Guards against a stale run's result clobbering a newer one: OptimizePanel
   // and SampleGear share `running` (below) so their controls disable
@@ -347,7 +372,7 @@ export function App() {
       setSharedArtifacts(null);
       setResult(r);
       setRequest(req);
-      setAnnouncement(
+      announce(
         r.status === 'ok'
           ? `Optimisation complete — ${r.builds.length} ${r.builds.length === 1 ? 'build' : 'builds'}.`
           : 'Optimisation complete — no build satisfies all constraints.',
@@ -359,7 +384,7 @@ export function App() {
       console.error('Optimize failed', err);
       // The failure is announced by the assertive region below, not here.
       setOptimizeError(true);
-      setAnnouncement('');
+      announce('');
     } finally {
       if (runToken.current === token) setRunning(false);
     }
@@ -389,8 +414,21 @@ export function App() {
     'step-optimise': true,
     'results-section': hasResults,
   };
-  const liveIds = STEPS.filter((s) => unlocked[s.id]).map((s) => s.id);
+  // Memoised because it is a scroll-spy effect dependency: only these two
+  // booleans can change which steps exist, so a new array identity on every
+  // unrelated render would rebuild the IntersectionObserver each time.
+  const liveIds = useMemo(
+    () =>
+      STEPS.filter(
+        (s) =>
+          s.id === 'step-load' ||
+          s.id === 'step-optimise' ||
+          (s.id === 'results-section' ? hasResults : hasRoster),
+      ).map((s) => s.id),
+    [hasRoster, hasResults],
+  );
   const activeId = useScrollSpy(liveIds);
+  const lockedHintId = useId();
 
   return (
     <main className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
@@ -431,16 +469,23 @@ export function App() {
               // unlocks. Results isn't a step you can reach, so it simply
               // isn't there until a run produces one.
               if (!s.n) return null;
+              // A real disabled control, not a styled span: `aria-disabled` on
+              // a <span> announces nothing useful, and the hint lived in
+              // `title` — unreachable by keyboard and invisible to a screen
+              // reader. Solid muted text rather than opacity-40, which took
+              // the label below 4.5:1 against the nav.
               return (
-                <span
+                <button
                   key={s.id}
-                  aria-disabled="true"
-                  title={LOCKED_HINT}
-                  className="chip touch-target flex-none snap-start items-center whitespace-nowrap opacity-40"
+                  type="button"
+                  disabled
+                  aria-describedby={lockedHintId}
+                  className="chip touch-target flex-none cursor-not-allowed snap-start items-center whitespace-nowrap border-white/5 text-muted"
                 >
-                  {s.n && <span className="font-mono">{s.n}</span>}
+                  <span aria-hidden="true">🔒</span>
+                  <span className="font-mono">{s.n}</span>
                   {s.label}
-                </span>
+                </button>
               );
             }
             const current = activeId === s.id;
@@ -464,6 +509,10 @@ export function App() {
           {/* The right-edge mask fades the last chip; this spacer is what it
               fades, so chip 6 doesn't look cut off at the scroll end. */}
           <span aria-hidden="true" className="w-3 flex-none snap-end" />
+          {/* One hint, referenced by every locked chip. */}
+          <span id={lockedHintId} className="sr-only">
+            {LOCKED_HINT}
+          </span>
         </nav>
       )}
 
@@ -473,7 +522,9 @@ export function App() {
             announced — hence this, and hence the Callouts below carry no
             role of their own. */}
         <p className="sr-only" role="status">
-          {announcement}
+          {announcement && (
+            <span key={announcement.nonce}>{announcement.text}</span>
+          )}
         </p>
         <p className="sr-only" role="alert">
           {sharedError

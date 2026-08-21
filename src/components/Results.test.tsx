@@ -182,8 +182,11 @@ describe('Results', () => {
   });
 });
 
-/** A build whose only interesting property is its score and its circlet. */
-function scored(objectiveValue: number, circlet: string) {
+/** A build whose only interesting property is its score and its circlet.
+ *  `score` defaults to the objective; pass it separately to model a
+ *  `critRatioTarget` run, where the ranking score carries a penalty the
+ *  printed objective does not. */
+function scored(objectiveValue: number, circlet: string, score?: number) {
   return {
     artifactIds: {
       flower: 'f',
@@ -194,7 +197,7 @@ function scored(objectiveValue: number, circlet: string) {
     },
     totals: { crit_rate: 60 },
     objectiveValue,
-    score: objectiveValue,
+    score: score ?? objectiveValue,
     diagnostics: {
       bindingConstraints: [],
       marginalBySlot: {},
@@ -253,6 +256,54 @@ describe('Results ties and deltas', () => {
     render(<Results result={r} request={req} artifactsById={circletsById} />);
     expect(screen.getByText('−3.4')).toBeInTheDocument();
     expect(screen.queryByText('−0.0')).toBeNull();
+  });
+
+  it('measures the delta in the ranking score, not the printed objective', () => {
+    // A crit-ratio target penalises an over-crit build: rank 2 prints a
+    // *higher* Crit Value than rank 1 and is still second. The chip has to
+    // report the gap the ranking actually used, so it stays non-positive.
+    const r: OptimizeResult = {
+      status: 'ok',
+      explored: 100,
+      pruned: 50,
+      builds: [scored(240, 'c1', 240), scored(244, 'c2', 238)],
+    };
+    render(
+      <Results
+        result={r}
+        request={{ ...req, constraints: { critRatioTarget: 2 } }}
+        artifactsById={circletsById}
+      />,
+    );
+    expect(screen.getByText(/244\.0/)).toBeInTheDocument();
+    expect(screen.getByText('−2.0')).toBeInTheDocument();
+    // Never the objective difference, which would have been a positive 4.
+    expect(screen.queryByText('4.0')).toBeNull();
+  });
+
+  it('counts cards, not raw results, in both list counters', async () => {
+    const user = userEvent.setup();
+    // Five results, but two are an exact tie: four cards.
+    const r: OptimizeResult = {
+      status: 'ok',
+      explored: 100,
+      pruned: 50,
+      builds: [
+        scored(250, 'c1'),
+        scored(240, 'c1'),
+        scored(240, 'c2'),
+        scored(230, 'c1'),
+        scored(220, 'c2'),
+      ],
+    };
+    render(<Results result={r} request={req} artifactsById={circletsById} />);
+    expect(
+      screen.getByText(/4 builds shown — near-duplicates/i),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: /Show all 4 builds/i }),
+    );
+    expect(screen.getByText(/220\.0/)).toBeInTheDocument();
   });
 
   it('holds ranks 4+ behind a reveal', async () => {
