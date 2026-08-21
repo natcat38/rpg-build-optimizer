@@ -15,6 +15,8 @@ import {
 } from '../labels';
 import { cn } from './ui/cn';
 import { Combobox } from './ui/Combobox';
+import { Meter } from './ui/Meter';
+import type { OptimizeProgress } from '../workers/optimizeClient';
 import {
   META_TARGETS,
   metaToConstraints,
@@ -126,12 +128,72 @@ function TeammatesSummary({
   );
 }
 
+/**
+ * What the search has done so far, while it is still doing it. The total is
+ * unknowable up front — branch-and-bound's whole point is that it never visits
+ * the full space — so the bar is deliberately indeterminate and the honest
+ * numbers (leaves evaluated, subtrees pruned, elapsed) carry the real signal.
+ */
+function SearchProgressLine({
+  progress,
+  elapsedMs,
+  onCancel,
+}: {
+  progress: OptimizeProgress | null;
+  elapsedMs: number;
+  onCancel?: () => void;
+}) {
+  return (
+    <div className="space-y-1.5 border-t border-white/5 pt-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <p className="text-xs text-muted">
+          Searching —{' '}
+          <span className="font-mono tabular-nums text-paper">
+            {(progress?.explored ?? 0).toLocaleString()}
+          </span>{' '}
+          leaves evaluated ·{' '}
+          <span className="font-mono tabular-nums text-paper">
+            {(progress?.pruned ?? 0).toLocaleString()}
+          </span>{' '}
+          pruned ·{' '}
+          <span className="font-mono tabular-nums text-paper">
+            {(elapsedMs / 1000).toFixed(1)}s
+          </span>
+        </p>
+        {/* Same aria-disabled + early-return pattern as the run buttons: this
+            button is the active element the moment it is used, and flipping
+            `disabled` under a keyboard user drops focus to <body>. */}
+        <button
+          type="button"
+          className="btn-ghost"
+          aria-disabled={!onCancel}
+          onClick={() => {
+            if (!onCancel) return;
+            onCancel();
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+      {/* No total to divide by, so the bar pulses rather than filling — it
+          says "still working", which is all anyone can honestly claim. */}
+      <Meter value={100} size="sm" className="animate-pulse" />
+    </div>
+  );
+}
+
 export function OptimizePanel({
   onRun,
   running,
+  progress = null,
+  elapsedMs = 0,
+  onCancel,
 }: {
   onRun: () => void | Promise<void>;
   running: boolean;
+  progress?: OptimizeProgress | null;
+  elapsedMs?: number;
+  onCancel?: () => void;
 }) {
   const uid = useId();
   const artifacts = useInventory((s) => s.artifacts);
@@ -380,6 +442,14 @@ export function OptimizePanel({
           </button>
         </div>
       </div>
+
+      {running && (
+        <SearchProgressLine
+          progress={progress}
+          elapsedMs={elapsedMs}
+          onCancel={onCancel}
+        />
+      )}
     </div>
   );
 }

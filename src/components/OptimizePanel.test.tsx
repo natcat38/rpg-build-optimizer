@@ -16,6 +16,52 @@ describe('OptimizePanel', () => {
     useOptimizeRequest.getState().reset();
   });
 
+  it('renders no progress line while idle', () => {
+    render(<OptimizePanel onRun={vi.fn()} running={false} />);
+    expect(screen.queryByRole('button', { name: /^cancel$/i })).toBeNull();
+    expect(screen.queryByText(/leaves evaluated/i)).toBeNull();
+  });
+
+  it('renders the progress line with counters, elapsed time and Cancel while running', () => {
+    render(
+      <OptimizePanel
+        onRun={vi.fn()}
+        running
+        progress={{ explored: 12345, pruned: 678, elapsedMs: 2500 }}
+        elapsedMs={2500}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('12,345')).toBeInTheDocument();
+    expect(screen.getByText('678')).toBeInTheDocument();
+    expect(screen.getByText('2.5s')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /^cancel$/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows zeroes before the first progress tick rather than nothing', () => {
+    render(<OptimizePanel onRun={vi.fn()} running onCancel={vi.fn()} />);
+    expect(screen.getAllByText('0').length).toBeGreaterThan(0);
+    expect(screen.getByText('0.0s')).toBeInTheDocument();
+  });
+
+  it('calls onCancel from the Cancel button', async () => {
+    const onCancel = vi.fn();
+    render(<OptimizePanel onRun={vi.fn()} running onCancel={onCancel} />);
+    await userEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  // Same reason the run buttons use it: `disabled` on the active element
+  // hands focus to <body> mid-run.
+  it('marks Cancel aria-disabled (not disabled) when there is nothing to cancel', () => {
+    render(<OptimizePanel onRun={vi.fn()} running />);
+    const cancel = screen.getByRole('button', { name: /^cancel$/i });
+    expect(cancel).toHaveAttribute('aria-disabled', 'true');
+    expect(cancel).not.toBeDisabled();
+  });
+
   // aria-disabled, not `disabled`: going disabled mid-run drops focus to
   // <body>. The guard is an early return in the click handler.
   it('blocks Optimise with a hint when no artifacts exist', async () => {

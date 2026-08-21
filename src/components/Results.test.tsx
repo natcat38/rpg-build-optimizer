@@ -1,8 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Results } from './Results';
-import type { Artifact, OptimizeResult, OptimizeRequest } from '../game/types';
+import type {
+  Artifact,
+  OptimizeResult,
+  OptimizeRequest,
+  Slot,
+} from '../game/types';
+import { SLOTS } from '../game/types';
+import { useInventory } from '../state/inventory';
+import { useOptimizeRequest } from '../state/optimizeRequest';
 
 const req: OptimizeRequest = {
   characterKey: 'c',
@@ -349,5 +357,111 @@ describe('Results ties and deltas', () => {
     };
     render(<Results result={r} request={req} artifactsById={circletsById} />);
     expect(screen.queryByText(/builds shown/i)).toBeNull();
+  });
+});
+
+describe('Results — infeasible cause', () => {
+  const realReq: OptimizeRequest = {
+    characterKey: 'raiden_shogun',
+    weaponKey: 'engulfing_lightning',
+    buildLevel: 90,
+    constraints: {},
+    objective: 'crit_value',
+  };
+  const infeasible: OptimizeResult = {
+    status: 'infeasible',
+    explored: 10,
+    pruned: 2,
+  };
+  const erPiece = (slot: Slot, setKey: string): Artifact => ({
+    id: `${setKey}-${slot}`,
+    setKey,
+    slot,
+    rarity: 5,
+    level: 20,
+    mainStat: 'er_pct',
+    mainStatValue: 10,
+    subStats: [],
+  });
+
+  beforeEach(() => {
+    useInventory.setState({ artifacts: [] });
+    useOptimizeRequest.getState().setMinER('');
+  });
+
+  it('names an ER floor no build can reach, and relaxes it on request', async () => {
+    const user = userEvent.setup();
+    useInventory.setState({
+      artifacts: SLOTS.map((s) => erPiece(s, 'EmblemOfSeveredFate')),
+    });
+    render(
+      <Results
+        result={infeasible}
+        request={{ ...realReq, constraints: { minStats: { er_pct: 500 } } }}
+        artifactsById={{}}
+      />,
+    );
+    expect(
+      screen.getByText(
+        /Best reachable Energy Recharge is .* your floor is 500/i,
+      ),
+    ).toBeInTheDocument();
+
+    const relax = screen.getByRole('button', { name: /Relax to \d+%/ });
+    await user.click(relax);
+    expect(
+      useOptimizeRequest.getState().constraints.minStats?.er_pct,
+    ).toBeLessThan(500);
+  });
+
+  it('names a set requirement the inventory cannot form', () => {
+    useInventory.setState({
+      artifacts: [erPiece('flower', 'EmblemOfSeveredFate')],
+    });
+    render(
+      <Results
+        result={infeasible}
+        request={{
+          ...realReq,
+          constraints: {
+            setRequirement: { kind: '4pc', setKey: 'EmblemOfSeveredFate' },
+          },
+        }}
+        artifactsById={{}}
+      />,
+    );
+    expect(
+      screen.getByText(
+        /You own 1 Emblem of Severed Fate piece across slots — need 4/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('falls back to the generic advice when no single constraint is to blame', () => {
+    render(
+      <Results result={infeasible} request={realReq} artifactsById={{}} />,
+    );
+    expect(
+      screen.getByText(/Try relaxing the set requirement/i),
+    ).toBeInTheDocument();
+  });
+});
+
+describe('Results — desktop comparison grid', () => {
+  it('lays the cards out two-up from lg with rank 1 spanning both columns', () => {
+    const r: OptimizeResult = {
+      status: 'ok',
+      explored: 100,
+      pruned: 50,
+      builds: [scored(240, 'c1'), scored(230, 'c2')],
+    };
+    const { container } = render(
+      <Results result={r} request={req} artifactsById={circletsById} />,
+    );
+    const grid = container.querySelector('[class~="lg:grid-cols-2"]');
+    expect(grid).not.toBeNull();
+    expect(grid).toHaveClass('grid');
+    expect(grid!.firstElementChild).toHaveClass('lg:col-span-2');
+    expect(grid!.children).toHaveLength(2);
   });
 });

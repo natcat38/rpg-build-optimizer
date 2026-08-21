@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { optimize } from './optimizeClient';
+import { optimize, optimizeRun, isOptimizeCancelled } from './optimizeClient';
 import { genshinAdapter } from '../game/genshin/adapter';
 import type { Artifact, OptimizeRequest } from '../game/types';
 import { SLOTS } from '../game/types';
@@ -71,6 +71,22 @@ describe('optimize (deep entry, sync fallback)', () => {
     if (r.status !== 'ok') throw new Error('expected a feasible result');
     // The off-element goblet's 1000 main-stat value must not appear in totals.
     expect(r.builds[0].totals.elemental_dmg ?? 0).toBe(0);
+  });
+
+  it('cancelling before the fallback runs rejects with a cancellation', async () => {
+    const req: OptimizeRequest = {
+      characterKey: genshinAdapter.characters()[0].key,
+      weaponKey: genshinAdapter.weapons()[0].key,
+      buildLevel: 90,
+      constraints: {},
+      objective: 'crit_value',
+      topK: 3,
+    };
+    // The fallback blocks the thread, so the only honourable window is before
+    // it starts — which is exactly when a superseding run cancels.
+    const run = optimizeRun(req, inv);
+    run.cancel();
+    await expect(run.result).rejects.toSatisfy(isOptimizeCancelled);
   });
 
   it('leaves an on-element goblet main stat untouched', async () => {
@@ -168,6 +184,55 @@ describe('optimize (real Worker path)', () => {
   it('rejects on a worker onerror event', async () => {
     stubWorker((w) => w.onerror?.({ message: 'crash' }));
     await expect(optimize(req, inv)).rejects.toThrow('crash');
+  });
+
+  it('forwards progress messages to the callback without settling the run', async () => {
+    const result = {
+      status: 'ok' as const,
+      builds: [],
+      explored: 7,
+      pruned: 3,
+    };
+    stubWorker((w) => {
+      w.onmessage?.({
+        data: { type: 'progress', explored: 5, pruned: 2, elapsedMs: 120 },
+      } as MessageEvent);
+      w.onmessage?.({ data: { type: 'done', result } } as MessageEvent);
+    });
+    const seen: unknown[] = [];
+    const run = optimizeRun(req, inv, (p) => seen.push(p));
+    await expect(run.result).resolves.toEqual(result);
+    expect(seen).toEqual([
+      { type: 'progress', explored: 5, pruned: 2, elapsedMs: 120 },
+    ]);
+  });
+
+  it('cancel terminates the worker and rejects with a cancellation', async () => {
+    let worker!: FakeWorker;
+    stubWorker((w) => {
+      worker = w; // never responds: only cancel can end this run
+    });
+    const run = optimizeRun(req, inv);
+    await Promise.resolve(); // let postMessage's microtask run
+    run.cancel();
+    await expect(run.result).rejects.toSatisfy(isOptimizeCancelled);
+    expect(worker.terminated).toBe(true);
+  });
+
+  it('cancel after the run has settled is a harmless no-op', async () => {
+    const result = {
+      status: 'ok' as const,
+      builds: [],
+      explored: 1,
+      pruned: 0,
+    };
+    stubWorker((w) =>
+      w.onmessage?.({ data: { type: 'done', result } } as MessageEvent),
+    );
+    const run = optimizeRun(req, inv);
+    await expect(run.result).resolves.toEqual(result);
+    run.cancel();
+    await expect(run.result).resolves.toEqual(result);
   });
 
   it('rejects and terminates on a worker onmessageerror event (structured-clone failure)', async () => {

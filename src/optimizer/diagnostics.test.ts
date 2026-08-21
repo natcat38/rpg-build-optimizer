@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { buildDiagnostics } from './diagnostics';
+import {
+  buildDiagnostics,
+  maxReachable,
+  unreachableMinStats,
+} from './diagnostics';
 import type {
   Artifact,
   OptimizeContext,
@@ -137,5 +141,69 @@ describe('buildDiagnostics', () => {
     };
     const diag = buildDiagnostics(ctx, req, b, chosen, 0, 0);
     expect(diag.bindingConstraints).toHaveLength(0);
+  });
+});
+
+describe('binding set requirement formatting', () => {
+  it('names the set in words rather than dumping its JSON', () => {
+    const { chosen, b } = makeChosenAndBuild(1, 1);
+    const req: OptimizeRequest = {
+      characterKey: 'c',
+      weaponKey: 'w',
+      buildLevel: 90,
+      constraints: {
+        setRequirement: { kind: '4pc', setKey: 'EmblemOfSeveredFate' },
+      },
+      objective: 'crit_value',
+    };
+    const msg = buildDiagnostics(ctx, req, b, chosen, 1, 0)
+      .bindingConstraints[0];
+    expect(msg).toBe('Set requirement: 4pc Emblem of Severed Fate');
+    expect(msg).not.toContain('{');
+    expect(msg).not.toContain('"');
+  });
+});
+
+describe('maxReachable / unreachableMinStats', () => {
+  const inv = (): Artifact[] =>
+    SLOTS.map((s, i) => ({
+      id: `reach-${s}`,
+      setKey: i < 2 ? 'A' : 'B',
+      slot: s,
+      rarity: 5,
+      level: 20,
+      mainStat: 'er_pct' as const,
+      mainStatValue: 10,
+      subStats: [],
+    }));
+  const req = (
+    constraints: OptimizeRequest['constraints'],
+  ): OptimizeRequest => ({
+    characterKey: 'c',
+    weaponKey: 'w',
+    buildLevel: 90,
+    constraints,
+    objective: 'crit_value',
+  });
+
+  it('sums the best piece per slot on top of the base', () => {
+    const c: OptimizeContext = { base: { er_pct: 100 }, setBonuses: {} };
+    expect(maxReachable(c, req({}), inv(), 'er_pct')).toBe(150);
+  });
+
+  it('returns null when the set requirement cannot be formed at all', () => {
+    const c: OptimizeContext = { base: { er_pct: 100 }, setBonuses: {} };
+    const r = req({ setRequirement: { kind: '4pc', setKey: 'A' } });
+    expect(maxReachable(c, r, inv(), 'er_pct')).toBeNull();
+  });
+
+  it('reports only the floors that are out of reach', () => {
+    const c: OptimizeContext = { base: { er_pct: 100 }, setBonuses: {} };
+    const out = unreachableMinStats(
+      c,
+      req({ minStats: { er_pct: 200, crit_rate: 0 } }),
+      inv(),
+    );
+    expect(out).toEqual([{ key: 'er_pct', need: 200, best: 150 }]);
   });
 });

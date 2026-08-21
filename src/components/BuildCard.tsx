@@ -19,6 +19,7 @@ import {
 import { META_TARGETS } from '../meta/metaTargets';
 import { gradeBuild, type Grade } from '../meta/grade';
 import { SlotGlyph } from './SlotGlyph';
+import { cn } from './ui/cn';
 import { Marker } from './ui/Marker';
 import { Meter } from './ui/Meter';
 import type { Tone } from './ui/tone';
@@ -58,6 +59,71 @@ function Fingerprint({ filled }: { filled: (s: Slot) => boolean }) {
   );
 }
 
+/**
+ * The optimiser's own notes on a build: which constraints it was pressed
+ * against, and how much of the score each slot is carrying. Collapsed, muted
+ * and rank-1-only by the caller — a curiosity for the reader who wants it, not
+ * a second headline. `details`/`summary` is natively accessible; the twisty is
+ * decorative and matches App's disclosure.
+ */
+function DrivingThis({ build }: { build: BuildResult }) {
+  const { bindingConstraints, marginalBySlot } = build.diagnostics;
+  const marginals = SLOTS.map((s) => ({ slot: s, value: marginalBySlot[s] }))
+    .filter((m): m is { slot: Slot; value: number } => m.value != null)
+    .filter((m) => Number.isFinite(m.value));
+  if (bindingConstraints.length === 0 && marginals.length === 0) return null;
+  // Bars are relative to the biggest contributor, so the row reads as "this
+  // slot against the others" — the absolute objective units mean little here.
+  const peak = Math.max(...marginals.map((m) => Math.abs(m.value)), 0);
+
+  return (
+    <details className="group">
+      <summary className="focus-ring inline-flex cursor-pointer select-none items-center gap-2 rounded-md py-1 text-muted transition hover:text-paper/80">
+        <span
+          aria-hidden="true"
+          className="text-2xs transition group-open:rotate-90"
+        >
+          ▶
+        </span>
+        <span className="micro-label">What’s driving this build</span>
+      </summary>
+      <div className="mt-2 space-y-2 text-xs text-muted">
+        {bindingConstraints.length > 0 && (
+          <ul className="space-y-0.5">
+            {bindingConstraints.map((c) => (
+              <li key={c}>· {c}</li>
+            ))}
+          </ul>
+        )}
+        {marginals.length > 0 && (
+          <div>
+            <p className="micro-label">Where the score comes from</p>
+            <ul className="mt-1 space-y-1">
+              {marginals.map((m) => (
+                <li key={m.slot} className="flex items-center gap-2">
+                  {/* Decorative: the slot name is right beside it. */}
+                  <SlotGlyph
+                    slot={m.slot}
+                    className="h-3.5 w-3.5 flex-none text-accent/70"
+                  />
+                  <span className="w-16 flex-none">{SLOT_LABELS[m.slot]}</span>
+                  <Meter
+                    value={peak > 0 ? (Math.abs(m.value) / peak) * 100 : 0}
+                    className="min-w-0 flex-1"
+                  />
+                  <span className="flex-none font-mono tabular-nums text-paper/80">
+                    {formatScore(m.value)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </details>
+  );
+}
+
 export function BuildCard({
   build,
   request,
@@ -65,6 +131,7 @@ export function BuildCard({
   rank,
   delta,
   variants,
+  compact,
   onShare,
 }: {
   build: BuildResult;
@@ -81,6 +148,11 @@ export function BuildCard({
   /** How many further builds scored exactly this, and what separates them.
    *  Collapsed into this card rather than repeated as identical siblings. */
   variants?: { count: number; differs: string };
+  /** This card is sharing the row with another one. The two-column internals
+   *  are sized for the full 768px shell — in half of it they'd wrap mid-value,
+   *  so from `lg` (where the caller's two-up grid starts) they stay single
+   *  column. */
+  compact?: boolean;
   onShare?: () => void | Promise<void>;
 }) {
   const bySlot = new Map(artifacts.map((a) => [a.slot, a]));
@@ -155,7 +227,12 @@ export function BuildCard({
 
       {grade && (
         <div className="well px-3 py-2 text-xs text-muted">
-          <div className="grid gap-x-4 gap-y-1.5 sm:grid-cols-2">
+          <div
+            className={cn(
+              'grid gap-x-4 gap-y-1.5 sm:grid-cols-2',
+              compact && 'lg:grid-cols-1',
+            )}
+          >
             {grade.perStat.map((s) => {
               const unit = isPctStat(s.key) ? '%' : '';
               const met = s.pct >= 1;
@@ -192,7 +269,12 @@ export function BuildCard({
 
       {/* One column below sm: two columns of "label … value" overflowed a
           375px viewport by ~42px. */}
-      <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 border-y border-white/5 py-4 text-sm sm:grid-cols-2">
+      <dl
+        className={cn(
+          'grid grid-cols-1 gap-x-6 gap-y-1.5 border-y border-white/5 py-4 text-sm sm:grid-cols-2',
+          compact && 'lg:grid-cols-1',
+        )}
+      >
         {SHOW.map((k) => (
           <div key={k} className="flex items-baseline justify-between gap-2">
             <dt className="text-muted">{statLabel(k)}</dt>
@@ -259,6 +341,10 @@ export function BuildCard({
           );
         })}
       </ul>
+
+      {/* Rank 1 only (and the single shared build, which carries no rank): the
+          same notes under every card would be five disclosures of noise. */}
+      {(rank == null || rank === 1) && <DrivingThis build={build} />}
     </div>
   );
 }

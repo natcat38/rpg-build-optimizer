@@ -7,8 +7,12 @@
  */
 
 import { runSearchRequest } from './protocol';
-import type { WorkerRequest } from './protocol';
+import type { WorkerRequest, WorkerResponse } from './protocol';
 
 (self as unknown as Worker).onmessage = (e: MessageEvent<WorkerRequest>) => {
-  (self as unknown as Worker).postMessage(runSearchRequest(e.data));
+  const post = (m: WorkerResponse) =>
+    (self as unknown as Worker).postMessage(m);
+  // Progress ticks stream out during the call; the returned envelope is the
+  // one and only terminal message.
+  post(runSearchRequest(e.data, post));
 };

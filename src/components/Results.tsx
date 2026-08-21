@@ -11,7 +11,21 @@ import { BuildCard } from './BuildCard';
 import { encodeBuild } from '../share/url';
 import { Callout } from './ui/Callout';
 import { Meter } from './ui/Meter';
-import { objectiveHint, SLOT_LABELS } from '../labels';
+import {
+  formatSetName,
+  formatStat,
+  objectiveHint,
+  statLabel,
+  SLOT_LABELS,
+} from '../labels';
+import { buildContext } from '../optimizer/context';
+import {
+  unreachableMinStats,
+  type StatCeiling,
+} from '../optimizer/diagnostics';
+import { setRequirementGap } from '../meta/gap';
+import { useInventory } from '../state/inventory';
+import { useOptimizeRequest } from '../state/optimizeRequest';
 
 /** One card's worth of result: the build shown, plus any further builds that
  *  scored exactly the same. */
@@ -122,6 +136,47 @@ const SHARE_STATUS: Record<Share['status'], string> = {
   failed: 'Couldn’t build a share link in this browser.',
 };
 
+/**
+ * Why the search came back empty, in the reader's terms — when it can be
+ * pinned on one constraint. Two causes are cheap to name and cover almost
+ * every real case: a set requirement the inventory can't form at all, and a
+ * minStat floor no reachable build clears.
+ *
+ * Returns null when neither is individually to blame (two floors that clash
+ * only together, say) — the generic advice is the honest answer there.
+ */
+function infeasibleCause(
+  request: OptimizeRequest,
+  inventory: Artifact[],
+): { text: string; relax?: StatCeiling } | null {
+  const req = request.constraints.setRequirement;
+  const gap = req ? setRequirementGap(req, inventory) : null;
+  if (gap)
+    return {
+      text: `You own ${gap.have} ${formatSetName(gap.setKey)} piece${
+        gap.have === 1 ? '' : 's'
+      } across slots — need ${gap.need}.`,
+    };
+  let ceilings: StatCeiling[];
+  try {
+    ceilings = unreachableMinStats(buildContext(request), request, inventory);
+  } catch {
+    // buildContext throws on a character the dataset doesn't know (a shared
+    // link from a newer build, a test fixture). No cause is better than a
+    // wrong one.
+    return null;
+  }
+  const worst = ceilings[0];
+  if (!worst) return null;
+  return {
+    text: `Best reachable ${statLabel(worst.key)} is ${formatStat(
+      worst.key,
+      worst.best,
+    )} — your floor is ${formatStat(worst.key, worst.need)}.`,
+    relax: worst,
+  };
+}
+
 export function Results({
   result,
   request,
@@ -131,6 +186,8 @@ export function Results({
   request: OptimizeRequest;
   artifactsById: Record<string, Artifact>;
 }) {
+  const inventory = useInventory((s) => s.artifacts);
+  const setMinER = useOptimizeRequest((s) => s.setMinER);
   const [share, setShare] = useState<Share | null>(null);
   const shareNonce = useRef(0);
   const [showAll, setShowAll] = useState(false);
@@ -146,12 +203,25 @@ export function Results({
   }
 
   if (result.status === 'infeasible') {
+    const cause = infeasibleCause(request, inventory);
+    // Only ER has a setter to offer: it's the one floor the panel exposes.
+    const relaxTo =
+      cause?.relax?.key === 'er_pct' ? Math.floor(cause.relax.best) : null;
     return (
       <Callout tone="error" role="status">
         <p className="font-semibold">No build satisfies all constraints.</p>
         <p className="mt-1 opacity-80">
-          Try relaxing the set requirement or the Energy Recharge minimum.
+          {cause?.text ??
+            'Try relaxing the set requirement or the Energy Recharge minimum.'}
         </p>
+        {relaxTo != null && (
+          <button
+            className="btn-ghost mt-2"
+            onClick={() => setMinER(String(relaxTo))}
+          >
+            Relax to {relaxTo}%
+          </button>
+        )}
       </Callout>
     );
   }
@@ -220,98 +290,111 @@ export function Results({
           are filtered.
         </p>
       )}
-      {visible.map((g, i) => {
-        const b = g.build;
-        const arts = artifactsFor(b);
-        return (
-          <div
-            key={i}
-            className="animate-fade-up"
-            style={{ animationDelay: `${i * 0.04}s` }}
-          >
-            <BuildCard
-              build={b}
-              request={request}
-              artifacts={arts}
-              rank={g.rank}
-              delta={
-                g.rank > 1 && topScore != null ? b.score - topScore : undefined
+      {/* Two-up from lg so the podium can be compared side by side; rank 1
+          keeps the full width, since it's the answer and the runners-up are
+          the alternatives to it. One column below lg — the card's own
+          sm:grid-cols-2 internals need the room. */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {visible.map((g, i) => {
+          const b = g.build;
+          const arts = artifactsFor(b);
+          return (
+            <div
+              key={i}
+              className={
+                g.rank === 1
+                  ? 'animate-fade-up lg:col-span-2'
+                  : 'animate-fade-up'
               }
-              variants={
-                g.ties.length > 0
-                  ? {
-                      count: g.ties.length,
-                      differs: describeTies(g, artifactsById),
-                    }
-                  : undefined
-              }
-              onShare={async () => {
-                let url: string;
-                try {
-                  const param = await encodeBuild({
-                    request,
-                    build: b,
-                    artifacts: arts,
-                  });
-                  url = `${location.origin}${location.pathname}?b=${param}`;
-                } catch {
-                  // encodeBuild (CompressionStream) rejected — there is no link
-                  // to offer, so say that rather than showing an empty field.
-                  setShare({
-                    nonce: ++shareNonce.current,
-                    index: i,
-                    status: 'failed',
-                  });
-                  return;
+              style={{ animationDelay: `${i * 0.04}s` }}
+            >
+              <BuildCard
+                build={b}
+                request={request}
+                artifacts={arts}
+                rank={g.rank}
+                compact={g.rank > 1}
+                delta={
+                  g.rank > 1 && topScore != null
+                    ? b.score - topScore
+                    : undefined
                 }
-                try {
-                  await navigator.clipboard.writeText(url);
-                  setShare({
-                    nonce: ++shareNonce.current,
-                    index: i,
-                    status: 'copied',
-                  });
-                } catch {
-                  // The clipboard can reject (permission, insecure context).
-                  // The link was never in the address bar, so hand it over to
-                  // be copied by hand instead of pointing there.
-                  setShare({
-                    nonce: ++shareNonce.current,
-                    index: i,
-                    status: 'manual',
-                    url,
-                  });
+                variants={
+                  g.ties.length > 0
+                    ? {
+                        count: g.ties.length,
+                        differs: describeTies(g, artifactsById),
+                      }
+                    : undefined
                 }
-              }}
-            />
-            {share?.index === i && share.status === 'copied' && (
-              <Callout tone="success" className="mt-2">
-                Share link copied.
-              </Callout>
-            )}
-            {share?.index === i && share.status === 'manual' && (
-              <Callout tone="error" className="mt-2">
-                <p>Couldn’t copy automatically — copy it from here:</p>
-                <input
-                  className="field mt-2"
-                  readOnly
-                  value={share.url}
-                  aria-label="Share link"
-                  onFocus={(e) => e.currentTarget.select()}
-                />
-              </Callout>
-            )}
-            {share?.index === i && share.status === 'failed' && (
-              <Callout tone="error" className="mt-2">
-                <p>
-                  Couldn’t build a share link in this browser — try a different
-                  one.
-                </p>
-              </Callout>
-            )}
-          </div>
-        );
-      })}
+                onShare={async () => {
+                  let url: string;
+                  try {
+                    const param = await encodeBuild({
+                      request,
+                      build: b,
+                      artifacts: arts,
+                    });
+                    url = `${location.origin}${location.pathname}?b=${param}`;
+                  } catch {
+                    // encodeBuild (CompressionStream) rejected — there is no link
+                    // to offer, so say that rather than showing an empty field.
+                    setShare({
+                      nonce: ++shareNonce.current,
+                      index: i,
+                      status: 'failed',
+                    });
+                    return;
+                  }
+                  try {
+                    await navigator.clipboard.writeText(url);
+                    setShare({
+                      nonce: ++shareNonce.current,
+                      index: i,
+                      status: 'copied',
+                    });
+                  } catch {
+                    // The clipboard can reject (permission, insecure context).
+                    // The link was never in the address bar, so hand it over to
+                    // be copied by hand instead of pointing there.
+                    setShare({
+                      nonce: ++shareNonce.current,
+                      index: i,
+                      status: 'manual',
+                      url,
+                    });
+                  }
+                }}
+              />
+              {share?.index === i && share.status === 'copied' && (
+                <Callout tone="success" className="mt-2">
+                  Share link copied.
+                </Callout>
+              )}
+              {share?.index === i && share.status === 'manual' && (
+                <Callout tone="error" className="mt-2">
+                  <p>Couldn’t copy automatically — copy it from here:</p>
+                  <input
+                    className="field mt-2"
+                    readOnly
+                    value={share.url}
+                    aria-label="Share link"
+                    onFocus={(e) => e.currentTarget.select()}
+                  />
+                </Callout>
+              )}
+              {share?.index === i && share.status === 'failed' && (
+                <Callout tone="error" className="mt-2">
+                  <p>
+                    Couldn’t build a share link in this browser — try a
+                    different one.
+                  </p>
+                </Callout>
+              )}
+            </div>
+          );
+        })}
+      </div>
       {/* Same reveal as the roster list: the podium is what the reader came
           for, and ten full cards pushed everything below the fold. */}
       {groups.length > COLLAPSED_GROUPS && !showAll && (

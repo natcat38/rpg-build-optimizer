@@ -5,10 +5,21 @@ import { useInventory } from '../state/inventory';
 import { useOptimizeRequest } from '../state/optimizeRequest';
 import { useRoster } from '../state/roster';
 import type { Artifact, BuildResult, OptimizeResult } from '../game/types';
+import { OptimizeCancelledError } from '../workers/optimizeClient';
 import { SLOTS } from '../game/types';
 
-const { optimize } = vi.hoisted(() => ({ optimize: vi.fn() }));
-vi.mock('../workers/optimizeClient', () => ({ optimize }));
+const { optimizeRun } = vi.hoisted(() => ({ optimizeRun: vi.fn() }));
+// Only the dispatch is faked: OptimizeCancelledError / isOptimizeCancelled stay
+// real, so the cancel path is exercised through the same predicate App uses.
+vi.mock('../workers/optimizeClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../workers/optimizeClient')>()),
+  optimizeRun,
+}));
+
+/** The shape `optimizeRun` returns: a promise plus the abort handle. */
+function handleFor(result: Promise<OptimizeResult>) {
+  return { result, cancel: vi.fn() };
+}
 
 describe('App shell', () => {
   beforeEach(() => {
@@ -66,7 +77,7 @@ describe('App — overlapping optimise runs', () => {
   }
 
   beforeEach(() => {
-    optimize.mockReset();
+    optimizeRun.mockReset();
     useInventory.getState().clear();
     useInventory.getState().addMany(SAMPLE_ARTIFACTS);
     useOptimizeRequest.getState().reset();
@@ -74,12 +85,14 @@ describe('App — overlapping optimise runs', () => {
   });
 
   it('does not let a stale run overwrite a newer one, even when both fire before either commits', async () => {
-    // Two deferred, independently-resolvable optimize() calls.
+    // Two deferred, independently-resolvable optimizeRun() calls.
     let resolveA!: (r: OptimizeResult) => void;
     let resolveB!: (r: OptimizeResult) => void;
     const pendingA = new Promise<OptimizeResult>((r) => (resolveA = r));
     const pendingB = new Promise<OptimizeResult>((r) => (resolveB = r));
-    optimize.mockReturnValueOnce(pendingA).mockReturnValueOnce(pendingB);
+    optimizeRun
+      .mockReturnValueOnce(handleFor(pendingA))
+      .mockReturnValueOnce(handleFor(pendingB));
 
     render(<App />);
     const optimiseBtn = screen.getByRole('button', { name: /^optimise$/i });
@@ -94,7 +107,7 @@ describe('App — overlapping optimise runs', () => {
       optimiseBtn.click();
       sampleBtn.click();
     });
-    expect(optimize).toHaveBeenCalledTimes(2);
+    expect(optimizeRun).toHaveBeenCalledTimes(2);
 
     // Run B (started second) resolves first...
     await act(async () => {
@@ -110,6 +123,112 @@ describe('App — overlapping optimise runs', () => {
       await pendingA;
     });
     expect(screen.getByText(/explored/i)).toHaveTextContent('222');
+  });
+});
+
+describe('App — optimise progress and cancel', () => {
+  const SAMPLE_ARTIFACTS: Artifact[] = SLOTS.map((slot) => ({
+    id: `cancel-${slot}`,
+    setKey: 'EmblemOfSeveredFate',
+    slot,
+    rarity: 5,
+    level: 20,
+    mainStat: 'hp',
+    mainStatValue: 4780,
+    subStats: [],
+  }));
+
+  beforeEach(() => {
+    optimizeRun.mockReset();
+    useInventory.getState().clear();
+    useInventory.getState().addMany(SAMPLE_ARTIFACTS);
+    useOptimizeRequest.getState().reset();
+    window.history.pushState({}, '', '/');
+  });
+
+  /** A run that never settles on its own — cancel is the only way out. */
+  function pendingRun() {
+    let reject!: (e: unknown) => void;
+    const result = new Promise<OptimizeResult>((_, rej) => (reject = rej));
+    const cancel = vi.fn(() => reject(new OptimizeCancelledError()));
+    optimizeRun.mockReturnValue({ result, cancel });
+    // Callers that need two distinct runs re-point the mock themselves.
+    // Nothing awaits `result` but App; keep Node quiet if the test ends first.
+    result.catch(() => {});
+    return { result, cancel };
+  }
+
+  it('shows live progress counters and a Cancel button while a run is in flight', () => {
+    pendingRun();
+    render(<App />);
+    act(() => {
+      screen.getByRole('button', { name: /^optimise$/i }).click();
+    });
+
+    expect(
+      screen.getByRole('button', { name: /^cancel$/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/leaves evaluated/i)).toBeInTheDocument();
+
+    // The progress callback App handed to optimizeRun drives the counters.
+    const onProgress = optimizeRun.mock.calls[0][2] as (p: {
+      explored: number;
+      pruned: number;
+      elapsedMs: number;
+    }) => void;
+    act(() => onProgress({ explored: 1234, pruned: 99, elapsedMs: 400 }));
+    expect(screen.getByText('1,234')).toBeInTheDocument();
+    expect(screen.getByText('99')).toBeInTheDocument();
+  });
+
+  it('cancelling clears the busy state, shows no error, and announces it', async () => {
+    const { cancel, result } = pendingRun();
+    render(<App />);
+    act(() => {
+      screen.getByRole('button', { name: /^optimise$/i }).click();
+    });
+    const optimiseBtn = screen.getByRole('button', { name: /searching/i });
+    expect(optimiseBtn).toHaveAttribute('aria-busy', 'true');
+
+    await act(async () => {
+      screen.getByRole('button', { name: /^cancel$/i }).click();
+      await result.catch(() => {});
+    });
+
+    expect(cancel).toHaveBeenCalled();
+    // Back to idle: the run button reads "Optimise" and the progress line is gone.
+    expect(screen.getByRole('button', { name: /^optimise$/i })).toHaveAttribute(
+      'aria-busy',
+      'false',
+    );
+    expect(screen.queryByRole('button', { name: /^cancel$/i })).toBeNull();
+    // A deliberate stop is not a failure: the error Callout never appears.
+    expect(screen.queryByText(/Optimisation failed/i)).toBeNull();
+    expect(screen.getByText('Optimisation cancelled.')).toBeInTheDocument();
+  });
+
+  it('starting a new run cancels the one it supersedes', () => {
+    const first = pendingRun();
+    const second = pendingRun();
+    optimizeRun
+      .mockReset()
+      .mockReturnValueOnce(first)
+      .mockReturnValueOnce(second);
+
+    render(<App />);
+    const optimiseBtn = screen.getByRole('button', { name: /^optimise$/i });
+    // Same-tick double trigger, as in the stale-result test above: the second
+    // click runs against the same render closure, before `running` has
+    // reached the DOM to block it.
+    act(() => {
+      optimiseBtn.click();
+      optimiseBtn.click();
+    });
+
+    expect(optimizeRun).toHaveBeenCalledTimes(2);
+    // The superseded run's worker is stopped rather than left burning a core.
+    expect(first.cancel).toHaveBeenCalled();
+    expect(second.cancel).not.toHaveBeenCalled();
   });
 });
 

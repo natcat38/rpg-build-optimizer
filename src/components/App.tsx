@@ -32,7 +32,12 @@ import {
 } from '../state/optimizeRequest';
 import { bestBuiltCharacter } from '../roster/buildScore';
 import { getGame, type GameDescriptor } from '../game/registry';
-import { optimize } from '../workers/optimizeClient';
+import {
+  optimizeRun,
+  isOptimizeCancelled,
+  type OptimizeHandle,
+  type OptimizeProgress,
+} from '../workers/optimizeClient';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { scrollToId } from '../ui/scroll';
@@ -333,6 +338,17 @@ export function App() {
   }, [sharedArtifacts, artifacts]);
 
   const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState<OptimizeProgress | null>(null);
+  // Elapsed is ticked here rather than read off the progress messages: the
+  // synchronous fallback (and the gap before the first tick) produces none,
+  // and a clock that stops moving reads as a hang.
+  const [elapsedMs, setElapsedMs] = useState(0);
+  useEffect(() => {
+    if (!running) return;
+    const startedAt = Date.now();
+    const id = setInterval(() => setElapsedMs(Date.now() - startedAt), 200);
+    return () => clearInterval(id);
+  }, [running]);
 
   // One persistent announcement for the whole page. Written by the run itself
   // rather than by an effect on `result`, so a shared ?b= hydration (which is
@@ -355,19 +371,40 @@ export function App() {
   // either's disable reaches the DOM — this token makes only the most
   // recently started run allowed to commit its outcome or clear `running`.
   const runToken = useRef(0);
+  // The run in flight, so it can be stopped — by Cancel, or by the next run
+  // superseding it. Without this a superseded search kept burning a core to
+  // produce an answer nobody was allowed to commit.
+  const currentRun = useRef<OptimizeHandle | null>(null);
+
+  function cancelCurrent() {
+    // Deliberately does *not* advance runToken: the in-flight run's own
+    // rejection handler is what clears `running` and announces, and it only
+    // does that while its token is still current.
+    currentRun.current?.cancel();
+  }
 
   async function runCurrent() {
     const req = currentRequest(useOptimizeRequest.getState());
     const inv = useInventory.getState().artifacts;
     if (inv.length === 0 || !req.characterKey) return;
     const token = ++runToken.current;
+    // Token first, then stop the old worker: the superseded run's rejection
+    // now sees a stale token and bows out silently.
+    const superseded = currentRun.current;
+    superseded?.cancel();
     setRunning(true);
+    setProgress(null);
+    setElapsedMs(0);
     setOptimizeError(false);
     // A fresh run replaces whatever Results was showing, so the banner about
     // the shared build that couldn't be read no longer describes anything.
     setSharedError(false);
     try {
-      const r = await optimize(req, inv);
+      const run = optimizeRun(req, inv, (p) => {
+        if (runToken.current === token) setProgress(p);
+      });
+      currentRun.current = run;
+      const r = await run.result;
       if (runToken.current !== token) return; // superseded by a newer run
       setSharedArtifacts(null);
       setResult(r);
@@ -379,6 +416,12 @@ export function App() {
       );
     } catch (err) {
       if (runToken.current !== token) return;
+      // The user stopped it on purpose: no error banner, and the results
+      // region simply un-dims with whatever it was already showing.
+      if (isOptimizeCancelled(err)) {
+        announce('Optimisation cancelled.');
+        return;
+      }
       // A worker/protocol rejection (or bad game data) must not vanish
       // silently — surface it instead of dropping back to idle with no cue.
       console.error('Optimize failed', err);
@@ -386,7 +429,11 @@ export function App() {
       setOptimizeError(true);
       announce('');
     } finally {
-      if (runToken.current === token) setRunning(false);
+      if (runToken.current === token) {
+        currentRun.current = null;
+        setRunning(false);
+        setProgress(null);
+      }
     }
   }
 
@@ -621,7 +668,13 @@ export function App() {
             hint="Choose a character, weapon, and what to maximise."
             delay="0.1s"
           >
-            <OptimizePanel onRun={runCurrent} running={running} />
+            <OptimizePanel
+              onRun={runCurrent}
+              running={running}
+              progress={progress}
+              elapsedMs={elapsedMs}
+              onCancel={cancelCurrent}
+            />
           </Section>
 
           {result && request && (

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { BuildCard } from './BuildCard';
 import type { Artifact, BuildResult, OptimizeRequest } from '../game/types';
 
@@ -197,5 +198,54 @@ describe('BuildCard slot marks', () => {
       />,
     );
     expect(screen.getByText('−12.5')).toBeInTheDocument();
+  });
+});
+
+describe('BuildCard — what drives the build', () => {
+  const req: OptimizeRequest = {
+    characterKey: 'furina', // no statTargets, so nothing else competes for the eye
+    weaponKey: 'w',
+    buildLevel: 90,
+    constraints: {},
+    objective: 'crit_value',
+  };
+  const explained: BuildResult = {
+    ...build,
+    diagnostics: {
+      bindingConstraints: ['Set requirement: 4pc Emblem of Severed Fate'],
+      marginalBySlot: { flower: 12.5, circlet: 40 },
+      explored: 1,
+      pruned: 0,
+    },
+  };
+
+  it('keeps the notes collapsed until the reader opens them', async () => {
+    const user = userEvent.setup();
+    render(<BuildCard build={explained} request={req} artifacts={[]} />);
+    const summary = screen.getByText(/What’s driving this build/i);
+    expect(screen.getByText(/4pc Emblem of Severed Fate/)).not.toBeVisible();
+
+    await user.click(summary);
+    expect(screen.getByText(/4pc Emblem of Severed Fate/)).toBeVisible();
+    expect(screen.getByText(/Where the score comes from/i)).toBeVisible();
+    // One line per slot the diagnostics actually measured — not all five.
+    expect(screen.getByText('40.0')).toBeInTheDocument();
+    expect(screen.getByText('12.5')).toBeInTheDocument();
+  });
+
+  it('shows the notes on rank 1 only', () => {
+    const { rerender } = render(
+      <BuildCard build={explained} request={req} artifacts={[]} rank={1} />,
+    );
+    expect(screen.getByText(/What’s driving this build/i)).toBeInTheDocument();
+    rerender(
+      <BuildCard build={explained} request={req} artifacts={[]} rank={2} />,
+    );
+    expect(screen.queryByText(/What’s driving this build/i)).toBeNull();
+  });
+
+  it('renders nothing when there are no diagnostics to show', () => {
+    render(<BuildCard build={build} request={req} artifacts={[]} />);
+    expect(screen.queryByText(/What’s driving this build/i)).toBeNull();
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, act, waitFor } from '@testing-library/react';
+import { render, screen, act, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PlanView } from './PlanView';
 import { useRoster } from '../state/roster';
@@ -102,10 +102,91 @@ describe('PlanView', () => {
     );
 
     expect(await screen.findByText('What to farm')).toBeInTheDocument();
-    const cards = screen.getAllByTestId('plan-member');
-    expect(cards).toHaveLength(8);
+    // The plan leads with a summary: one row per member across two halves,
+    // every card collapsed until asked for.
+    const rows = screen.getAllByTestId('plan-summary-row');
+    expect(rows).toHaveLength(8);
+    expect(screen.getByText(/First half/)).toBeInTheDocument();
+    expect(screen.getByText(/Second half/)).toBeInTheDocument();
+    expect(screen.queryAllByTestId('plan-member')).toHaveLength(0);
+  });
+
+  it('expands one member’s full card from its summary row', async () => {
+    const user = userEvent.setup();
+    seed();
+    render(<PlanView runOptimize={run} />);
+    await user.click(
+      screen.getByRole('button', { name: /Build my Abyss plan/i }),
+    );
+    await screen.findByText('What to farm');
+
+    const row = within(screen.getAllByTestId('plan-summary-row')[0]).getByRole(
+      'button',
+    );
+    expect(row).toHaveAttribute('aria-expanded', 'false');
+    await user.click(row);
+    expect(row).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getAllByTestId('plan-member')).toHaveLength(1);
+    // The disclosure names the region it controls.
+    expect(
+      document.getElementById(row.getAttribute('aria-controls')!),
+    ).toContainElement(screen.getByTestId('plan-member'));
     // Damage-objective members carry the estimate caveat.
     expect(screen.getAllByText(/estimated damage/i).length).toBeGreaterThan(0);
+
+    await user.click(row);
+    expect(screen.queryAllByTestId('plan-member')).toHaveLength(0);
+  });
+
+  it('puts the farming and investment lists above the per-member detail', async () => {
+    const user = userEvent.setup();
+    seed();
+    const { container } = render(<PlanView runOptimize={run} />);
+    await user.click(
+      screen.getByRole('button', { name: /Build my Abyss plan/i }),
+    );
+    await screen.findByText('What to farm');
+
+    const order = [...container.querySelectorAll('h3')].map(
+      (h) => h.textContent ?? '',
+    );
+    const farm = order.findIndex((t) => t.includes('What to farm'));
+    const summary = order.findIndex((t) => t.includes('First half'));
+    expect(summary).toBeGreaterThanOrEqual(0);
+    expect(farm).toBeGreaterThan(summary);
+    // …and nothing between them but the eight collapsed rows.
+    expect(screen.queryAllByTestId('plan-member')).toHaveLength(0);
+  });
+
+  it('links the curated source for weapon advice', async () => {
+    const user = userEvent.setup();
+    seed();
+    render(
+      <PlanView
+        runOptimize={run}
+        advise={() => [
+          {
+            kind: 'weapon',
+            subjectKey: 'the_catch',
+            headline: 'Holding a stat stick',
+            detail: 'The Catch is craftable.',
+            provenance: 'xiangling',
+            upside: 1,
+            source: 'https://example.test/The_Catch',
+          },
+        ]}
+      />,
+    );
+    await user.click(
+      screen.getByRole('button', { name: /Build my Abyss plan/i }),
+    );
+    await screen.findByText('What to farm');
+
+    const link = screen.getByRole('link', { name: /source/i });
+    expect(link).toHaveAttribute('href', 'https://example.test/The_Catch');
+    expect(link).toHaveAttribute('rel', 'noreferrer');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveTextContent(/opens in new tab/i);
   });
 
   it('renders investment advice with provenance when there is any', async () => {

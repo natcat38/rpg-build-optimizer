@@ -5,7 +5,13 @@
  * @packageDocumentation
  */
 
-import type { Artifact, BuildResult, Slot, StatKey } from '../game/types';
+import type {
+  Artifact,
+  BuildResult,
+  SetRequirement,
+  Slot,
+  StatKey,
+} from '../game/types';
 import { SLOTS } from '../game/types';
 import type { MetaTarget } from './metaTargets';
 import {
@@ -29,12 +35,13 @@ function distinctSlots(inventory: Artifact[], setKey: string): number {
   return s.size;
 }
 
-/** The required set the inventory can't form, if any. */
-function setGap(
-  meta: MetaTarget,
+/** The required set the inventory can't form, if any. Exported because the
+ *  infeasible-search message needs the same answer for a *request's* set
+ *  requirement, not just a meta target's. */
+export function setRequirementGap(
+  req: SetRequirement,
   inventory: Artifact[],
 ): { setKey: string; have: number; need: number } | null {
-  const req = meta.setRequirement;
   if (req.kind === '4pc') {
     const have = distinctSlots(inventory, req.setKey);
     return have < 4 ? { setKey: req.setKey, have, need: 4 } : null;
@@ -71,7 +78,7 @@ export function computeGapReport(
 ): GapReport {
   // Level 1 — feasibility (inventory vs recipe)
   const feasibility: string[] = [];
-  const sg = setGap(meta, inventory);
+  const sg = setRequirementGap(meta.setRequirement, inventory);
   if (sg)
     feasibility.push(
       `You own ${sg.have} ${formatSetName(sg.setKey)} piece${sg.have === 1 ? '' : 's'} across slots — need ${sg.need} for the meta set.`,

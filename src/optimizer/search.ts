@@ -262,10 +262,33 @@ function makeBuildResult(
   };
 }
 
+/** A snapshot of the search's own counters, mid-flight. */
+export interface SearchProgress {
+  /** Leaves (complete five-piece builds) evaluated so far. */
+  explored: number;
+  /** Subtrees rejected by a bound so far. */
+  pruned: number;
+  /** Wall-clock time since the search started. */
+  elapsedMs: number;
+}
+
+export interface SearchOptions {
+  /**
+   * Called periodically while the search runs, so a long solve can report
+   * progress instead of looking frozen. Purely observational: it sees the
+   * counters, it cannot steer the search, and nothing about pruning or
+   * iteration order depends on whether it is supplied.
+   */
+  onProgress?: (progress: SearchProgress) => void;
+  /** Minimum wall-clock gap between `onProgress` calls. */
+  progressIntervalMs?: number;
+}
+
 export function searchBuilds(
   req: OptimizeRequest,
   inventory: Artifact[],
   ctx: OptimizeContext,
+  options?: SearchOptions,
 ): OptimizeResult {
   // Precondition: artifact ids are unique across `inventory`. The per-artifact
   // caches below (contributions, scalar values, minContrib) and the result's
@@ -426,6 +449,26 @@ export function searchBuilds(
   let pruned = 0;
   const chosen: Artifact[] = [];
 
+  // Progress reporting. Two guards keep it off the hot path when nobody is
+  // listening: `onProgress` is captured as a local (so the common case is one
+  // truthiness test per node) and the clock is only read once every 256
+  // nodes. Node count, not leaf count: a heavily-pruned search can spend
+  // seconds without reaching a single leaf.
+  const onProgress = options?.onProgress;
+  const progressIntervalMs = options?.progressIntervalMs ?? 80;
+  const startedAt = Date.now();
+  let visited = 0;
+  // -Infinity, not `startedAt`: the first tick should land as soon as there is
+  // anything to say, rather than making the reader wait out a full interval
+  // staring at zeroes.
+  let lastReportAt = -Infinity;
+  function reportProgress() {
+    const now = Date.now();
+    if (now - lastReportAt < progressIntervalMs) return;
+    lastReportAt = now;
+    onProgress!({ explored, pruned, elapsedMs: now - startedAt });
+  }
+
   /**
    * The score a branch must beat to be worth exploring.
    *
@@ -494,6 +537,7 @@ export function searchBuilds(
     matchedA: number,
     matchedB: number,
   ) {
+    if (onProgress && (++visited & 0xff) === 0) reportProgress();
     if (slotIndex === order.length) {
       explored++;
       const t = totals(ctx, chosen);
