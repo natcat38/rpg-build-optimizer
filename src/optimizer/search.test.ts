@@ -26,10 +26,11 @@ function expectOk(
 }
 
 /** Every returned build's score, in rank order. The oracle comparisons assert
- *  this whole list, not just the winner: `minKeptScore` prunes at the same k*6
- *  retention buffer `offer` truncates to, and ranks 2..K are exact only while
- *  those two stay equal. Comparing builds[0] alone cannot see that pairing
- *  break. `bruteForce` applies the same retention buffer and anti-clone cap, so
+ *  this whole list, not just the winner: `minKeptScore` prunes at the k-th
+ *  anti-clone survivor, and ranks 2..K are exact only while the incremental
+ *  greedy inside `offer` agrees with a from-scratch run over everything
+ *  feasible. Comparing builds[0] alone cannot see that divergence.
+ *  `bruteForce` applies the same anti-clone cap over all feasible leaves, so
  *  the two lists are directly comparable. */
 function scoresOf(r: Extract<OptimizeResult, { status: 'ok' }>): number[] {
   return r.builds.map((b) => b.score);
@@ -444,12 +445,23 @@ describe('searchBuilds', () => {
     expect(r.builds.length).toBeLessThanOrEqual(10);
   });
 
-  it('stays exact when the kept list overflows the k*6 truncation cap (topK=1)', () => {
+  it('stays exact when the kept list is truncated hard (topK=1)', () => {
     counter = 0;
-    const inv = inventory(3); // 3^5 = 243 feasible leaves >> k*6 = 6, forcing truncation
+    const inv = inventory(3); // 3^5 = 243 feasible leaves, all but 1 discarded
     const bnb = expectOk(searchBuilds({ ...req, topK: 1 }, inv, ctx));
     const bf = expectOk(bruteForce({ ...req, topK: 1 }, inv, ctx));
     expect(scoresOf(bnb)).toEqual(scoresOf(bf));
+  });
+
+  it('throws on a non-finite scalar contribution instead of pruning silently', () => {
+    // A NaN contribution makes every `upper <= threshold` comparison false, so
+    // the bound stops pruning and stops being meaningful; Infinity prunes
+    // everything. A corrupt inventory must fail loudly, not return a
+    // confident-looking wrong answer.
+    counter = 0;
+    const inv = inventory(3);
+    inv[0] = { ...inv[0], mainStatValue: Number.NaN };
+    expect(() => searchBuilds(req, inv, ctx)).toThrow(/non-finite/);
   });
 
   it('drops exact-duplicate builds via the seenExact guard', () => {

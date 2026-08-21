@@ -301,8 +301,22 @@ export function searchBuilds(
   // so the pruning bound and the score can never drift apart.
   const scalarValues = new Map<string, number>();
   if (scalarObjective)
-    for (const [id, c] of contributions)
-      scalarValues.set(id, objectiveValue(c, scalarObjective));
+    for (const [id, c] of contributions) {
+      const v = objectiveValue(c, scalarObjective);
+      // A NaN/Infinity here (corrupt import, a substat parsed as text) would
+      // poison every comparison in the bound — `NaN <= x` is false, so the
+      // branch never prunes, while `Infinity` prunes everything. Either way the
+      // search silently stops being exact. Fail loudly instead: one isFinite
+      // per artifact, paid once, outside the recursion.
+      if (!Number.isFinite(v)) {
+        throw new Error(
+          `optimizer: artifact ${id} has a non-finite ${scalarObjective} contribution (${v}). ` +
+            'The inventory is corrupt — refusing to search, because a non-finite value ' +
+            'makes the branch-and-bound bound inadmissible.',
+        );
+      }
+      scalarValues.set(id, v);
+    }
   const scalarOf = (a: Artifact) => scalarValues.get(a.id) ?? 0;
 
   // Surface high-contribution pieces first so the kept list fills with strong
@@ -412,26 +426,66 @@ export function searchBuilds(
   let pruned = 0;
   const chosen: Artifact[] = [];
 
-  // Retention margin: the anti-clone filter downstream may drop candidates
-  // (exact duplicates, or a third build sharing a 4-piece core), so keeping
-  // exactly k would leave fewer than k results. A larger/exact margin would
-  // need full core tracking during the search.
-  const RETAIN = k * 6;
-
-  /** The score a branch must beat to be worth exploring. It must be the
-   *  RETAIN-th kept score, not the k-th: pruning at the k-th while retaining
-   *  RETAIN discards branches that could still supply ranks 2..K after the
-   *  anti-clone filter thins the list, so ranks below the first came back
-   *  wrong. The prune threshold and the retention size must stay equal. */
+  /**
+   * The score a branch must beat to be worth exploring.
+   *
+   * Invariant: `kept` is exactly the anti-clone greedy (drop exact duplicates,
+   * at most 2 per shared 4-piece core, stop at k) applied to every feasible
+   * build found so far — re-run over the whole score-sorted list on every
+   * insertion, so it never drifts from what a from-scratch run would produce.
+   * The threshold is therefore the k-th *survivor*, not the k-th raw build.
+   *
+   * Why that is admissible — the search may only ever return anti-clone
+   * survivors, so a branch whose ceiling cannot beat the current k-th survivor
+   * cannot change the output:
+   *
+   * 1. *Suppression is monotone.* A build is dropped only when ≥2 strictly
+   *    better builds share its 4-piece core. Those two displacers can never
+   *    themselves vanish in a way that revives it: anything that displaces a
+   *    displacer shares the same core, so the core's "2 taken" state only ever
+   *    persists. Later discoveries can push a survivor down the list, never
+   *    resurrect a suppressed build above them.
+   * 2. *Truncating at k is safe.* To evict a survivor currently ranked above
+   *    score `s`, later builds must outrank it — and any newcomer that
+   *    suppresses (rather than outranks) it needs 2 higher same-core builds,
+   *    which themselves occupy at least as many output slots as they displace.
+   *    So the count of survivors at or above `s` never decreases.
+   *
+   * Together: the k-th survivor score is monotonically non-decreasing and is a
+   * lower bound on the final k-th score, so pruning at it is exact.
+   *
+   * WARNING: this proof depends on the anti-clone rule being a **per-core cap**
+   * — a partition matroid, where each build belongs to exactly one core class
+   * with a fixed quota. It is **void** if the rule ever becomes general
+   * diversity clustering (a candidate could then be suppressed by a cluster
+   * that later dissolves), which is precisely the v1.1 idea ADR-0004 defers.
+   * Changing the rule means re-deriving this bound or reverting to a raw
+   * top-`k * 6` retention buffer.
+   */
   function minKeptScore(): number {
-    return kept.length >= RETAIN ? kept[RETAIN - 1].score : -Infinity;
+    return kept.length >= k ? kept[k - 1].score : -Infinity;
   }
   function offer(b: BuildResult) {
-    // v1.0: a full sort of up to RETAIN entries on every feasible leaf. Negligible for
-    // small inventories with heavy pruning; swap for a min-heap in the v1.1 speed report.
-    kept.push(b);
-    kept.sort((x, y) => y.score - x.score);
-    if (kept.length > RETAIN) kept.length = RETAIN;
+    // Cheap reject: `kept` already holds k survivors at least this good, and a
+    // build that ties the k-th cannot displace it (stable order keeps the
+    // earlier find). Mirrors the `<=` in the prune test above.
+    if (kept.length >= k && b.score <= kept[k - 1].score) return;
+    // Binary-insert by descending score, after any equal scores — the same
+    // order Array#sort (stable) gives `bruteForce`, so the two rank ties alike.
+    let lo = 0;
+    let hi = kept.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (kept[mid].score >= b.score) lo = mid + 1;
+      else hi = mid;
+    }
+    kept.splice(lo, 0, b);
+    // Re-run the greedy over the whole sorted list (not just the tail): a
+    // newcomer can un-suppress nothing, but it can itself be suppressed, and it
+    // shifts everything below it by one.
+    const survivors = antiClone(kept, k);
+    kept.length = 0;
+    for (const s of survivors) kept.push(s);
   }
 
   function recurse(
@@ -516,6 +570,9 @@ export function searchBuilds(
   const byId = new Map(inventory.map((a) => [a.id, a]));
   return {
     status: 'ok',
+    // `kept` is already the anti-clone survivor list (see minKeptScore), so
+    // this call is idempotent — kept as a cheap assertion that the incremental
+    // invariant and the batch rule agree.
     builds: antiClone(kept, k).map((b) => ({
       ...b,
       // Every id came from an inventory artifact (via the pools), so byId always
@@ -558,11 +615,11 @@ function antiClone(ranked: BuildResult[], k: number): BuildResult[] {
 
 /**
  * Exhaustive reference search — used only by the correctness test. Returns the
- * full top-K, filtered exactly as `searchBuilds` filters it: rank every
- * feasible leaf, cut to the same k*6 retention buffer, then apply the anti-clone
- * cap. Mirroring the buffer is what makes the two comparable — the search can
- * only ever rank what it retained, so an oracle that ranked more would report a
- * difference the search is not claiming to close.
+ * full top-K, filtered exactly as `searchBuilds` filters it: rank every feasible
+ * leaf, then apply the anti-clone cap over *all* of them. No retention buffer:
+ * `searchBuilds` maintains the same greedy incrementally and prunes at the k-th
+ * survivor, so "anti-clone over everything feasible" is the exact spec it
+ * implements, and the oracle must not truncate before applying it.
  */
 export function bruteForce(
   req: OptimizeRequest,
@@ -592,7 +649,6 @@ export function bruteForce(
   if (feasible.length === 0)
     return { status: 'infeasible', explored: 0, pruned: 0 };
   feasible.sort((x, y) => y.score - x.score);
-  feasible.length = Math.min(feasible.length, k * 6);
   return {
     status: 'ok',
     builds: antiClone(feasible, k),
