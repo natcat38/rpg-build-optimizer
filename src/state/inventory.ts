@@ -38,6 +38,11 @@ export const useInventory = create<InventoryState>()(
       // differs, so a blob already stamped v1 would skip the filter forever.
       // Corrupt rows are dropped individually — a single bad piece must never
       // cost the player the rest of their inventory.
+      // Identity `migrate`: the per-row filtering lives in `merge` (above),
+      // but zustand logs an error on every load of a pre-v1 blob when no
+      // migrate function exists at all. Legacy blobs pass through unchanged
+      // and are then filtered by `merge` like everything else.
+      migrate: (persisted) => persisted,
       merge: (persisted, current) => {
         const rows = (persisted as { artifacts?: unknown })?.artifacts;
         return {

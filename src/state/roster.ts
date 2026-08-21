@@ -50,6 +50,11 @@ export const useRoster = create<RosterState>()(
       // Same trust-boundary reasoning as the inventory store, and the same
       // per-row (not whole-blob) drop: one unresolvable character must not
       // erase the rest of the account snapshot.
+      // Identity `migrate`: the per-row filtering lives in `merge` (above),
+      // but zustand logs an error on every load of a pre-v1 blob when no
+      // migrate function exists at all. Legacy blobs pass through unchanged
+      // and are then filtered by `merge` like everything else.
+      migrate: (persisted) => persisted,
       merge: (persisted, current) => {
         const rows = (persisted as { entries?: unknown })?.entries;
         if (typeof rows !== 'object' || rows === null) return { ...current };
