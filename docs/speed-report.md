@@ -19,17 +19,17 @@ what that saves: how many full builds exist versus how many we actually evaluate
 - **Reduction** — Naive ÷ Explored ("explores 1 in N").
 - **Time** — median of 3 runs of `optimize()`; varies by machine, unlike the other columns.
 
-| Inventory | Scenario   |    Naive builds | Explored |    Pruned |  Reduction | Time (ms) |
-| --------- | ---------- | --------------: | -------: | --------: | ---------: | --------: |
-| 50        | crit_value |         100,000 |      270 |       118 |       370× |      10.9 |
-| 100       | crit_value |       3,200,000 |      580 |       599 |     5,517× |      14.1 |
-| 200       | crit_value |     102,400,000 |      680 |    75,449 |   150,588× |      47.5 |
-| 400       | crit_value |   3,276,800,000 |    1,680 |    62,390 | 1,950,476× |      72.4 |
-| 800       | crit_value | 104,857,600,000 |  153,760 | 1,714,014 |   681,956× |    4306.2 |
-| 50        | er_pct     |         100,000 |      210 |       232 |       476× |       8.1 |
-| 100       | er_pct     |       3,200,000 |   14,420 |    28,635 |       222× |     352.1 |
-| 200       | er_pct     |     102,400,000 |    4,800 |    13,297 |    21,333× |     139.8 |
-| 400       | er_pct     |   3,276,800,000 |  484,400 |   869,740 |     6,765× |   11643.1 |
+| Inventory | Scenario   |    Naive builds | Explored |    Pruned | Reduction | Time (ms) |
+| --------- | ---------- | --------------: | -------: | --------: | --------: | --------: |
+| 50        | crit_value |         100,000 |      270 |       118 |      370× |      12.6 |
+| 100       | crit_value |       3,200,000 |      580 |       599 |    5,517× |      20.4 |
+| 200       | crit_value |     102,400,000 |      680 |    75,449 |  150,588× |      35.9 |
+| 400       | crit_value |   3,276,800,000 |   24,480 |   139,446 |  133,856× |     569.3 |
+| 800       | crit_value | 104,857,600,000 |  190,240 | 1,660,839 |  551,186× |    4047.1 |
+| 50        | er_pct     |         100,000 |      210 |       232 |      476× |       7.6 |
+| 100       | er_pct     |       3,200,000 |   14,420 |    28,635 |      222× |     258.0 |
+| 200       | er_pct     |     102,400,000 |    4,800 |    13,297 |   21,333× |      87.5 |
+| 400       | er_pct     |   3,276,800,000 |  484,400 |   869,740 |    6,765× |    7768.1 |
 
 **A note on the two objectives.** `crit_value` is concentrated on a minority of
 artifacts, so ordering surfaces the winners immediately and the bound tightens hard —
