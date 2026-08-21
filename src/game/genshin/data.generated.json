@@ -5,6 +5,7 @@
       "key": "aino",
       "name": "Aino",
       "element": "hydro",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 939.14,
@@ -60,6 +61,7 @@
       "key": "albedo",
       "name": "Albedo",
       "element": "geo",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1029.59,
@@ -115,6 +117,7 @@
       "key": "alhaitham",
       "name": "Alhaitham",
       "element": "dendro",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1039.12,
@@ -170,6 +173,7 @@
       "key": "aloy",
       "name": "Aloy",
       "element": "cryo",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 848.45,
@@ -225,6 +229,7 @@
       "key": "amber",
       "name": "Amber",
       "element": "pyro",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 793.26,
@@ -280,6 +285,7 @@
       "key": "arataki_itto",
       "name": "Arataki Itto",
       "element": "geo",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 1000.99,
@@ -335,6 +341,7 @@
       "key": "arlecchino",
       "name": "Arlecchino",
       "element": "pyro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1020.05,
@@ -390,6 +397,7 @@
       "key": "baizhu",
       "name": "Baizhu",
       "element": "dendro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 1039.12,
@@ -445,6 +453,7 @@
       "key": "barbara",
       "name": "Barbara",
       "element": "hydro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 820.61,
@@ -500,6 +509,7 @@
       "key": "beidou",
       "name": "Beidou",
       "element": "electro",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 1094.15,
@@ -555,6 +565,7 @@
       "key": "bennett",
       "name": "Bennett",
       "element": "pyro",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1039.44,
@@ -610,6 +621,7 @@
       "key": "candace",
       "name": "Candace",
       "element": "hydro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 911.79,
@@ -665,6 +677,7 @@
       "key": "charlotte",
       "name": "Charlotte",
       "element": "cryo",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 902.67,
@@ -720,6 +733,7 @@
       "key": "chasca",
       "name": "Chasca",
       "element": "anemo",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 762.66,
@@ -775,6 +789,7 @@
       "key": "chevreuse",
       "name": "Chevreuse",
       "element": "pyro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1002.97,
@@ -830,6 +845,7 @@
       "key": "chiori",
       "name": "Chiori",
       "element": "geo",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 890.4,
@@ -885,6 +901,7 @@
       "key": "chongyun",
       "name": "Chongyun",
       "element": "cryo",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 920.91,
@@ -940,6 +957,7 @@
       "key": "citlali",
       "name": "Citlali",
       "element": "cryo",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 905.65,
@@ -995,6 +1013,7 @@
       "key": "clorinde",
       "name": "Clorinde",
       "element": "electro",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1008.61,
@@ -1050,6 +1069,7 @@
       "key": "collei",
       "name": "Collei",
       "element": "dendro",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 820.61,
@@ -1105,6 +1125,7 @@
       "key": "columbina",
       "name": "Columbina",
       "element": "hydro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 1143.98,
@@ -1160,6 +1181,7 @@
       "key": "cyno",
       "name": "Cyno",
       "element": "electro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 972.39,
@@ -1215,6 +1237,7 @@
       "key": "dahlia",
       "name": "Dahlia",
       "element": "hydro",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1048.56,
@@ -1270,6 +1293,7 @@
       "key": "dehya",
       "name": "Dehya",
       "element": "pyro",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 1220.25,
@@ -1325,6 +1349,7 @@
       "key": "diluc",
       "name": "Diluc",
       "element": "pyro",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 1010.52,
@@ -1380,6 +1405,7 @@
       "key": "diona",
       "name": "Diona",
       "element": "cryo",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 802.38,
@@ -1435,6 +1461,7 @@
       "key": "dori",
       "name": "Dori",
       "element": "electro",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 1039.44,
@@ -1490,6 +1517,7 @@
       "key": "durin",
       "name": "Durin",
       "element": "pyro",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 967.62,
@@ -1545,6 +1573,7 @@
       "key": "emilie",
       "name": "Emilie",
       "element": "dendro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1056.28,
@@ -1600,6 +1629,7 @@
       "key": "escoffier",
       "name": "Escoffier",
       "element": "cryo",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1039.12,
@@ -1655,6 +1685,7 @@
       "key": "eula",
       "name": "Eula",
       "element": "cryo",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 1029.59,
@@ -1710,6 +1741,7 @@
       "key": "faruzan",
       "name": "Faruzan",
       "element": "anemo",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 802.38,
@@ -1765,6 +1797,7 @@
       "key": "fischl",
       "name": "Fischl",
       "element": "electro",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 770.46,
@@ -1820,6 +1853,7 @@
       "key": "flins",
       "name": "Flins",
       "element": "electro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 972.39,
@@ -1875,6 +1909,7 @@
       "key": "freminet",
       "name": "Freminet",
       "element": "cryo",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 1012.09,
@@ -1930,6 +1965,7 @@
       "key": "furina",
       "name": "Furina",
       "element": "hydro",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1191.65,
@@ -1985,6 +2021,7 @@
       "key": "gaming",
       "name": "Gaming",
       "element": "pyro",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 957.38,
@@ -2040,6 +2077,7 @@
       "key": "ganyu",
       "name": "Ganyu",
       "element": "cryo",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 762.66,
@@ -2095,6 +2133,7 @@
       "key": "gorou",
       "name": "Gorou",
       "element": "geo",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 802.38,
@@ -2150,6 +2189,7 @@
       "key": "hu_tao",
       "name": "Hu Tao",
       "element": "pyro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1210.72,
@@ -2205,6 +2245,7 @@
       "key": "iansan",
       "name": "Iansan",
       "element": "electro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 893.56,
@@ -2260,6 +2301,7 @@
       "key": "ifa",
       "name": "Ifa",
       "element": "anemo",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 845.23,
@@ -2315,6 +2357,7 @@
       "key": "illuga",
       "name": "Illuga",
       "element": "geo",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1002.97,
@@ -2370,6 +2413,7 @@
       "key": "ineffa",
       "name": "Ineffa",
       "element": "electro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 981.92,
@@ -2425,6 +2469,7 @@
       "key": "jahoda",
       "name": "Jahoda",
       "element": "anemo",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 808.76,
@@ -2480,6 +2525,7 @@
       "key": "jean",
       "name": "Jean",
       "element": "anemo",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1143.98,
@@ -2535,6 +2581,7 @@
       "key": "kachina",
       "name": "Kachina",
       "element": "geo",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 989.29,
@@ -2590,6 +2637,7 @@
       "key": "kaedehara_kazuha",
       "name": "Kaedehara Kazuha",
       "element": "anemo",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1039.12,
@@ -2645,6 +2693,7 @@
       "key": "kaeya",
       "name": "Kaeya",
       "element": "cryo",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 975.62,
@@ -2700,6 +2749,7 @@
       "key": "kamisato_ayaka",
       "name": "Kamisato Ayaka",
       "element": "cryo",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1000.99,
@@ -2755,6 +2805,7 @@
       "key": "kamisato_ayato",
       "name": "Kamisato Ayato",
       "element": "hydro",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1067.72,
@@ -2810,6 +2861,7 @@
       "key": "kaveh",
       "name": "Kaveh",
       "element": "dendro",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 1002.97,
@@ -2865,6 +2917,7 @@
       "key": "keqing",
       "name": "Keqing",
       "element": "electro",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1020.05,
@@ -2920,6 +2973,7 @@
       "key": "kinich",
       "name": "Kinich",
       "element": "dendro",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 1000.99,
@@ -2975,6 +3029,7 @@
       "key": "kirara",
       "name": "Kirara",
       "element": "dendro",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1021.21,
@@ -3030,6 +3085,7 @@
       "key": "klee",
       "name": "Klee",
       "element": "pyro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 800.79,
@@ -3085,6 +3141,7 @@
       "key": "kujou_sara",
       "name": "Kujou Sara",
       "element": "electro",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 802.38,
@@ -3140,6 +3197,7 @@
       "key": "kuki_shinobu",
       "name": "Kuki Shinobu",
       "element": "electro",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1030.32,
@@ -3195,6 +3253,7 @@
       "key": "lan_yan",
       "name": "Lan Yan",
       "element": "anemo",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 775.02,
@@ -3250,6 +3309,7 @@
       "key": "lauma",
       "name": "Lauma",
       "element": "dendro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 829.39,
@@ -3305,6 +3365,7 @@
       "key": "layla",
       "name": "Layla",
       "element": "cryo",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 930.03,
@@ -3360,6 +3421,7 @@
       "key": "linnea",
       "name": "Linnea",
       "element": "geo",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 770.28,
@@ -3415,6 +3477,7 @@
       "key": "lisa",
       "name": "Lisa",
       "element": "electro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 802.38,
@@ -3470,6 +3533,7 @@
       "key": "lohen",
       "name": "Lohen",
       "element": "cryo",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1000.99,
@@ -3525,6 +3589,7 @@
       "key": "lynette",
       "name": "Lynette",
       "element": "anemo",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1039.44,
@@ -3580,6 +3645,7 @@
       "key": "lyney",
       "name": "Lyney",
       "element": "pyro",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 857.99,
@@ -3635,6 +3701,7 @@
       "key": "mavuika",
       "name": "Mavuika",
       "element": "pyro",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 977.15,
@@ -3690,6 +3757,7 @@
       "key": "mika",
       "name": "Mika",
       "element": "cryo",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1048.56,
@@ -3745,6 +3813,7 @@
       "key": "mona",
       "name": "Mona",
       "element": "hydro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 810.32,
@@ -3800,6 +3869,7 @@
       "key": "mualani",
       "name": "Mualani",
       "element": "hydro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 1182.12,
@@ -3855,6 +3925,7 @@
       "key": "nahida",
       "name": "Nahida",
       "element": "dendro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 806.51,
@@ -3910,6 +3981,7 @@
       "key": "navia",
       "name": "Navia",
       "element": "geo",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 984.78,
@@ -3965,6 +4037,7 @@
       "key": "nefer",
       "name": "Nefer",
       "element": "dendro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 988.97,
@@ -4020,6 +4093,7 @@
       "key": "neuvillette",
       "name": "Neuvillette",
       "element": "hydro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 1143.98,
@@ -4075,6 +4149,7 @@
       "key": "nicole",
       "name": "Nicole",
       "element": "pyro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 810.32,
@@ -4130,6 +4205,7 @@
       "key": "nilou",
       "name": "Nilou",
       "element": "hydro",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1182.12,
@@ -4185,6 +4261,7 @@
       "key": "ningguang",
       "name": "Ningguang",
       "element": "geo",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 820.61,
@@ -4240,6 +4317,7 @@
       "key": "noelle",
       "name": "Noelle",
       "element": "geo",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 1012.09,
@@ -4295,6 +4373,7 @@
       "key": "ororon",
       "name": "Ororon",
       "element": "electro",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 775.02,
@@ -4350,6 +4429,7 @@
       "key": "prune",
       "name": "Prune",
       "element": "anemo",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 811.49,
@@ -4405,6 +4485,7 @@
       "key": "qiqi",
       "name": "Qiqi",
       "element": "cryo",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 962.85,
@@ -4460,6 +4541,7 @@
       "key": "raiden_shogun",
       "name": "Raiden Shogun",
       "element": "electro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1004.8,
@@ -4515,6 +4597,7 @@
       "key": "razor",
       "name": "Razor",
       "element": "electro",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 1002.97,
@@ -4570,6 +4653,7 @@
       "key": "rosaria",
       "name": "Rosaria",
       "element": "cryo",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1030.32,
@@ -4625,6 +4709,7 @@
       "key": "sandrone",
       "name": "Sandrone",
       "element": "cryo",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 1029.59,
@@ -4680,6 +4765,7 @@
       "key": "sangonomiya_kokomi",
       "name": "Sangonomiya Kokomi",
       "element": "hydro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 1048.65,
@@ -4735,6 +4821,7 @@
       "key": "sayu",
       "name": "Sayu",
       "element": "anemo",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 993.85,
@@ -4790,6 +4877,7 @@
       "key": "sethos",
       "name": "Sethos",
       "element": "electro",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 820.61,
@@ -4845,6 +4933,7 @@
       "key": "shenhe",
       "name": "Shenhe",
       "element": "cryo",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1011.47,
@@ -4900,6 +4989,7 @@
       "key": "shikanoin_heizou",
       "name": "Shikanoin Heizou",
       "element": "anemo",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 893.56,
@@ -4955,6 +5045,7 @@
       "key": "sigewinne",
       "name": "Sigewinne",
       "element": "hydro",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 1039.12,
@@ -5010,6 +5101,7 @@
       "key": "skirk",
       "name": "Skirk",
       "element": "cryo",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 966.67,
@@ -5065,6 +5157,7 @@
       "key": "sucrose",
       "name": "Sucrose",
       "element": "anemo",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 775.02,
@@ -5120,6 +5213,7 @@
       "key": "tartaglia",
       "name": "Tartaglia",
       "element": "hydro",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 1020.05,
@@ -5175,6 +5269,7 @@
       "key": "thoma",
       "name": "Thoma",
       "element": "pyro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 866.2,
@@ -5230,6 +5325,7 @@
       "key": "tighnari",
       "name": "Tighnari",
       "element": "dendro",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 844.64,
@@ -5285,6 +5381,7 @@
       "key": "varesa",
       "name": "Varesa",
       "element": "electro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 988.59,
@@ -5340,6 +5437,7 @@
       "key": "varka",
       "name": "Varka",
       "element": "anemo",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 981.92,
@@ -5395,6 +5493,7 @@
       "key": "venti",
       "name": "Venti",
       "element": "anemo",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 819.86,
@@ -5450,6 +5549,7 @@
       "key": "wanderer",
       "name": "Wanderer",
       "element": "anemo",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 791.26,
@@ -5505,6 +5605,7 @@
       "key": "wriothesley",
       "name": "Wriothesley",
       "element": "cryo",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 1058.19,
@@ -5560,6 +5661,7 @@
       "key": "xiangling",
       "name": "Xiangling",
       "element": "pyro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 911.79,
@@ -5615,6 +5717,7 @@
       "key": "xianyun",
       "name": "Xianyun",
       "element": "anemo",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 810.32,
@@ -5670,6 +5773,7 @@
       "key": "xiao",
       "name": "Xiao",
       "element": "anemo",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 991.45,
@@ -5725,6 +5829,7 @@
       "key": "xilonen",
       "name": "Xilonen",
       "element": "geo",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 965.71,
@@ -5780,6 +5885,7 @@
       "key": "xingqiu",
       "name": "Xingqiu",
       "element": "hydro",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 857.08,
@@ -5835,6 +5941,7 @@
       "key": "xinyan",
       "name": "Xinyan",
       "element": "pyro",
+      "weaponType": "claymore",
       "baseByLevel": {
         "1": {
           "hp": 939.14,
@@ -5890,6 +5997,7 @@
       "key": "yae_miko",
       "name": "Yae Miko",
       "element": "electro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 807.46,
@@ -5945,6 +6053,7 @@
       "key": "yanfei",
       "name": "Yanfei",
       "element": "pyro",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 784.14,
@@ -6000,6 +6109,7 @@
       "key": "yaoyao",
       "name": "Yaoyao",
       "element": "dendro",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1030.32,
@@ -6055,6 +6165,7 @@
       "key": "yelan",
       "name": "Yelan",
       "element": "hydro",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 1124.92,
@@ -6110,6 +6221,7 @@
       "key": "yoimiya",
       "name": "Yoimiya",
       "element": "pyro",
+      "weaponType": "bow",
       "baseByLevel": {
         "1": {
           "hp": 791.26,
@@ -6165,6 +6277,7 @@
       "key": "yumemizuki_mizuki",
       "name": "Yumemizuki Mizuki",
       "element": "anemo",
+      "weaponType": "catalyst",
       "baseByLevel": {
         "1": {
           "hp": 991.45,
@@ -6220,6 +6333,7 @@
       "key": "yun_jin",
       "name": "Yun Jin",
       "element": "geo",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 893.56,
@@ -6275,6 +6389,7 @@
       "key": "zhongli",
       "name": "Zhongli",
       "element": "geo",
+      "weaponType": "polearm",
       "baseByLevel": {
         "1": {
           "hp": 1143.98,
@@ -6330,6 +6445,7 @@
       "key": "zibai",
       "name": "Zibai",
       "element": "geo",
+      "weaponType": "sword",
       "baseByLevel": {
         "1": {
           "hp": 1005.75,
@@ -6387,6 +6503,7 @@
       "key": "absolution",
       "name": "Absolution",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -6426,6 +6543,7 @@
       "key": "akuoumaru",
       "name": "Akuoumaru",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -6465,6 +6583,7 @@
       "key": "alley_hunter",
       "name": "Alley Hunter",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -6504,6 +6623,7 @@
       "key": "amenoma_kageuchi",
       "name": "Amenoma Kageuchi",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -6543,6 +6663,7 @@
       "key": "amos'_bow",
       "name": "Amos' Bow",
       "type": "bow",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -6582,6 +6703,7 @@
       "key": "angelos'_heptades",
       "name": "Angelos' Heptades",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 49.14,
@@ -6621,6 +6743,7 @@
       "key": "apprentice's_notes",
       "name": "Apprentice's Notes",
       "type": "catalyst",
+      "rarity": 1,
       "byLevel": {
         "1": {
           "atk": 23.25
@@ -6646,6 +6769,7 @@
       "key": "aqua_simulacra",
       "name": "Aqua Simulacra",
       "type": "bow",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -6685,6 +6809,7 @@
       "key": "aquila_favonia",
       "name": "Aquila Favonia",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -6724,6 +6849,7 @@
       "key": "ashgraven_drinking_horn",
       "name": "Ash-Graven Drinking Horn",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -6763,6 +6889,7 @@
       "key": "astral_vulture's_crimson_plumage",
       "name": "Astral Vulture's Crimson Plumage",
       "type": "bow",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -6802,6 +6929,7 @@
       "key": "a_teaspoon_of_transcendence",
       "name": "A Teaspoon of Transcendence",
       "type": "claymore",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -6841,6 +6969,7 @@
       "key": "athame_artis",
       "name": "Athame Artis",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -6880,6 +7009,7 @@
       "key": "a_thousand_blazing_suns",
       "name": "A Thousand Blazing Suns",
       "type": "claymore",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 49.14,
@@ -6919,6 +7049,7 @@
       "key": "a_thousand_floating_dreams",
       "name": "A Thousand Floating Dreams",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -6958,6 +7089,7 @@
       "key": "azurelight",
       "name": "Azurelight",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -6997,6 +7129,7 @@
       "key": "ballad_of_the_boundless_blue",
       "name": "Ballad of the Boundless Blue",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -7036,6 +7169,7 @@
       "key": "ballad_of_the_fjords",
       "name": "Ballad of the Fjords",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -7075,6 +7209,7 @@
       "key": "beacon_of_the_reed_sea",
       "name": "Beacon of the Reed Sea",
       "type": "claymore",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -7114,6 +7249,7 @@
       "key": "beginner's_protector",
       "name": "Beginner's Protector",
       "type": "polearm",
+      "rarity": 1,
       "byLevel": {
         "1": {
           "atk": 23.25
@@ -7139,6 +7275,7 @@
       "key": "blackcliff_agate",
       "name": "Blackcliff Agate",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -7178,6 +7315,7 @@
       "key": "blackcliff_longsword",
       "name": "Blackcliff Longsword",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -7217,6 +7355,7 @@
       "key": "blackcliff_pole",
       "name": "Blackcliff Pole",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -7256,6 +7395,7 @@
       "key": "blackcliff_slasher",
       "name": "Blackcliff Slasher",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -7295,6 +7435,7 @@
       "key": "blackcliff_warbow",
       "name": "Blackcliff Warbow",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -7334,6 +7475,7 @@
       "key": "blackmarrow_lantern",
       "name": "Blackmarrow Lantern",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -7373,6 +7515,7 @@
       "key": "black_tassel",
       "name": "Black Tassel",
       "type": "polearm",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 37.61,
@@ -7412,6 +7555,7 @@
       "key": "bloodsoaked_ruins",
       "name": "Bloodsoaked Ruins",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -7451,6 +7595,7 @@
       "key": "bloodtainted_greatsword",
       "name": "Bloodtainted Greatsword",
       "type": "claymore",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 37.61,
@@ -7490,6 +7635,7 @@
       "key": "calamity_of_eshu",
       "name": "Calamity of Eshu",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -7529,6 +7675,7 @@
       "key": "calamity_queller",
       "name": "Calamity Queller",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 49.14,
@@ -7568,6 +7715,7 @@
       "key": "cashflow_supervision",
       "name": "Cashflow Supervision",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -7607,6 +7755,7 @@
       "key": "chain_breaker",
       "name": "Chain Breaker",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -7646,6 +7795,7 @@
       "key": "cinnabar_spindle",
       "name": "Cinnabar Spindle",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -7685,6 +7835,7 @@
       "key": "cloudforged",
       "name": "Cloudforged",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -7724,6 +7875,7 @@
       "key": "compound_bow",
       "name": "Compound Bow",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -7763,6 +7915,7 @@
       "key": "cool_steel",
       "name": "Cool Steel",
       "type": "sword",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -7802,6 +7955,7 @@
       "key": "crane's_echoing_call",
       "name": "Crane's Echoing Call",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 49.14,
@@ -7841,6 +7995,7 @@
       "key": "crescent_pike",
       "name": "Crescent Pike",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -7880,6 +8035,7 @@
       "key": "crimson_moon's_semblance",
       "name": "Crimson Moon's Semblance",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -7919,6 +8075,7 @@
       "key": "dark_iron_sword",
       "name": "Dark Iron Sword",
       "type": "sword",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -7958,6 +8115,7 @@
       "key": "dawning_frost",
       "name": "Dawning Frost",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -7997,6 +8155,7 @@
       "key": "deathmatch",
       "name": "Deathmatch",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -8036,6 +8195,7 @@
       "key": "debate_club",
       "name": "Debate Club",
       "type": "claymore",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -8075,6 +8235,7 @@
       "key": "dialogues_of_the_desert_sages",
       "name": "Dialogues of the Desert Sages",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -8114,6 +8275,7 @@
       "key": "disaster_and_remorse",
       "name": "Disaster and Remorse",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -8153,6 +8315,7 @@
       "key": "dodoco_tales",
       "name": "Dodoco Tales",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -8192,6 +8355,7 @@
       "key": "dragon's_bane",
       "name": "Dragon's Bane",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -8231,6 +8395,7 @@
       "key": "dragonspine_spear",
       "name": "Dragonspine Spear",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -8270,6 +8435,7 @@
       "key": "dull_blade",
       "name": "Dull Blade",
       "type": "sword",
+      "rarity": 1,
       "byLevel": {
         "1": {
           "atk": 23.25
@@ -8295,6 +8461,7 @@
       "key": "earth_shaker",
       "name": "Earth Shaker",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -8334,6 +8501,7 @@
       "key": "elegy_for_the_end",
       "name": "Elegy for the End",
       "type": "bow",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -8373,6 +8541,7 @@
       "key": "emerald_orb",
       "name": "Emerald Orb",
       "type": "catalyst",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 39.88,
@@ -8412,6 +8581,7 @@
       "key": "end_of_the_line",
       "name": "End of the Line",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -8451,6 +8621,7 @@
       "key": "engulfing_lightning",
       "name": "Engulfing Lightning",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -8490,6 +8661,7 @@
       "key": "etherlight_spindlelute",
       "name": "Etherlight Spindlelute",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -8529,6 +8701,7 @@
       "key": "everlasting_moonglow",
       "name": "Everlasting Moonglow",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -8568,6 +8741,7 @@
       "key": "eye_of_perception",
       "name": "Eye of Perception",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -8607,6 +8781,7 @@
       "key": "fading_twilight",
       "name": "Fading Twilight",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -8646,6 +8821,7 @@
       "key": "fang_of_the_mountain_king",
       "name": "Fang of the Mountain King",
       "type": "claymore",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 49.14,
@@ -8685,6 +8861,7 @@
       "key": "favonius_codex",
       "name": "Favonius Codex",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -8724,6 +8901,7 @@
       "key": "favonius_greatsword",
       "name": "Favonius Greatsword",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -8763,6 +8941,7 @@
       "key": "favonius_lance",
       "name": "Favonius Lance",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -8802,6 +8981,7 @@
       "key": "favonius_sword",
       "name": "Favonius Sword",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -8841,6 +9021,7 @@
       "key": "favonius_warbow",
       "name": "Favonius Warbow",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -8880,6 +9061,7 @@
       "key": "ferrous_shadow",
       "name": "Ferrous Shadow",
       "type": "claymore",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -8919,6 +9101,7 @@
       "key": "festering_desire",
       "name": "Festering Desire",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -8958,6 +9141,7 @@
       "key": "fillet_blade",
       "name": "Fillet Blade",
       "type": "sword",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -8997,6 +9181,7 @@
       "key": "finale_of_the_deep",
       "name": "Finale of the Deep",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -9036,6 +9221,7 @@
       "key": "flameforged_insight",
       "name": "Flame-Forged Insight",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -9075,6 +9261,7 @@
       "key": "fleuve_cendre_ferryman",
       "name": "Fleuve Cendre Ferryman",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -9114,6 +9301,7 @@
       "key": "flowerwreathed_feathers",
       "name": "Flower-Wreathed Feathers",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -9153,6 +9341,7 @@
       "key": "flowing_purity",
       "name": "Flowing Purity",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -9192,6 +9381,7 @@
       "key": "flute_of_ezpitzal",
       "name": "Flute of Ezpitzal",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -9231,6 +9421,7 @@
       "key": "footprint_of_the_rainbow",
       "name": "Footprint of the Rainbow",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -9270,6 +9461,7 @@
       "key": "forest_regalia",
       "name": "Forest Regalia",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -9309,6 +9501,7 @@
       "key": "fractured_halo",
       "name": "Fractured Halo",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -9348,6 +9541,7 @@
       "key": "freedomsworn",
       "name": "Freedom-Sworn",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -9387,6 +9581,7 @@
       "key": "frostbearer",
       "name": "Frostbearer",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -9426,6 +9621,7 @@
       "key": "fruitful_hook",
       "name": "Fruitful Hook",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -9465,6 +9661,7 @@
       "key": "fruit_of_fulfillment",
       "name": "Fruit of Fulfillment",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -9504,6 +9701,7 @@
       "key": "gest_of_the_mighty_wolf",
       "name": "Gest of the Mighty Wolf",
       "type": "claymore",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -9543,6 +9741,7 @@
       "key": "golden_frostbound_oath",
       "name": "Golden Frostbound Oath",
       "type": "bow",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -9582,6 +9781,7 @@
       "key": "hakushin_ring",
       "name": "Hakushin Ring",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -9621,6 +9821,7 @@
       "key": "halberd",
       "name": "Halberd",
       "type": "polearm",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 39.88,
@@ -9660,6 +9861,7 @@
       "key": "hamayumi",
       "name": "Hamayumi",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -9699,6 +9901,7 @@
       "key": "haran_geppaku_futsu",
       "name": "Haran Geppaku Futsu",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -9738,6 +9941,7 @@
       "key": "harbinger_of_dawn",
       "name": "Harbinger of Dawn",
       "type": "sword",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -9777,6 +9981,7 @@
       "key": "hunter's_bow",
       "name": "Hunter's Bow",
       "type": "bow",
+      "rarity": 1,
       "byLevel": {
         "1": {
           "atk": 23.25
@@ -9802,6 +10007,7 @@
       "key": "hunter's_path",
       "name": "Hunter's Path",
       "type": "bow",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -9841,6 +10047,7 @@
       "key": "ibis_piercer",
       "name": "Ibis Piercer",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -9880,6 +10087,7 @@
       "key": "iron_point",
       "name": "Iron Point",
       "type": "polearm",
+      "rarity": 2,
       "byLevel": {
         "1": {
           "atk": 32.93
@@ -9905,6 +10113,7 @@
       "key": "iron_sting",
       "name": "Iron Sting",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -9944,6 +10153,7 @@
       "key": "jadefall's_splendor",
       "name": "Jadefall's Splendor",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -9983,6 +10193,7 @@
       "key": "kagotsurube_isshin",
       "name": "Kagotsurube Isshin",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -10022,6 +10233,7 @@
       "key": "kagura's_verity",
       "name": "Kagura's Verity",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -10061,6 +10273,7 @@
       "key": "katsuragikiri_nagamasa",
       "name": "Katsuragikiri Nagamasa",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -10100,6 +10313,7 @@
       "key": "key_of_khajnisut",
       "name": "Key of Khaj-Nisut",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -10139,6 +10353,7 @@
       "key": "king's_squire",
       "name": "King's Squire",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -10178,6 +10393,7 @@
       "key": "kitain_cross_spear",
       "name": "Kitain Cross Spear",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -10217,6 +10433,7 @@
       "key": "lightbearing_moonshard",
       "name": "Lightbearing Moonshard",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -10256,6 +10473,7 @@
       "key": "light_of_foliar_incision",
       "name": "Light of Foliar Incision",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -10295,6 +10513,7 @@
       "key": "lion's_roar",
       "name": "Lion's Roar",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -10334,6 +10553,7 @@
       "key": "lithic_blade",
       "name": "Lithic Blade",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -10373,6 +10593,7 @@
       "key": "lithic_spear",
       "name": "Lithic Spear",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -10412,6 +10633,7 @@
       "key": "lost_prayer_to_the_sacred_winds",
       "name": "Lost Prayer to the Sacred Winds",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -10451,6 +10673,7 @@
       "key": "lumidouce_elegy",
       "name": "Lumidouce Elegy",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -10490,6 +10713,7 @@
       "key": "luxurious_sealord",
       "name": "Luxurious Sea-Lord",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -10529,6 +10753,7 @@
       "key": "magic_guide",
       "name": "Magic Guide",
       "type": "catalyst",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 37.61,
@@ -10568,6 +10793,7 @@
       "key": "mailed_flower",
       "name": "Mailed Flower",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -10607,6 +10833,7 @@
       "key": "makhaira_aquamarine",
       "name": "Makhaira Aquamarine",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -10646,6 +10873,7 @@
       "key": "mappa_mare",
       "name": "Mappa Mare",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -10685,6 +10913,7 @@
       "key": "master_key",
       "name": "Master Key",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -10724,6 +10953,7 @@
       "key": "memory_of_dust",
       "name": "Memory of Dust",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -10763,6 +10993,7 @@
       "key": "messenger",
       "name": "Messenger",
       "type": "bow",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 39.88,
@@ -10802,6 +11033,7 @@
       "key": "missive_windspear",
       "name": "Missive Windspear",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -10841,6 +11073,7 @@
       "key": "mistsplitter_reforged",
       "name": "Mistsplitter Reforged",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -10880,6 +11113,7 @@
       "key": "mitternachts_waltz",
       "name": "Mitternachts Waltz",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -10919,6 +11153,7 @@
       "key": "moonpiercer",
       "name": "Moonpiercer",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -10958,6 +11193,7 @@
       "key": "moonweaver's_dawn",
       "name": "Moonweaver's Dawn",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -10997,6 +11233,7 @@
       "key": "mountainbracing_bolt",
       "name": "Mountain-Bracing Bolt",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -11036,6 +11273,7 @@
       "key": "mouun's_moon",
       "name": "Mouun's Moon",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -11075,6 +11313,7 @@
       "key": "nightweaver's_looking_glass",
       "name": "Nightweaver's Looking Glass",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -11114,6 +11353,7 @@
       "key": "nocturne's_curtain_call",
       "name": "Nocturne's Curtain Call",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -11153,6 +11393,7 @@
       "key": "oathsworn_eye",
       "name": "Oathsworn Eye",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -11192,6 +11433,7 @@
       "key": "old_merc's_pal",
       "name": "Old Merc's Pal",
       "type": "claymore",
+      "rarity": 2,
       "byLevel": {
         "1": {
           "atk": 32.93
@@ -11217,6 +11459,7 @@
       "key": "otherworldly_story",
       "name": "Otherworldly Story",
       "type": "catalyst",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -11256,6 +11499,7 @@
       "key": "peak_patrol_song",
       "name": "Peak Patrol Song",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -11295,6 +11539,7 @@
       "key": "pocket_grimoire",
       "name": "Pocket Grimoire",
       "type": "catalyst",
+      "rarity": 2,
       "byLevel": {
         "1": {
           "atk": 32.93
@@ -11320,6 +11565,7 @@
       "key": "polar_star",
       "name": "Polar Star",
       "type": "bow",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -11359,6 +11605,7 @@
       "key": "portable_power_saw",
       "name": "Portable Power Saw",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -11398,6 +11645,7 @@
       "key": "predator",
       "name": "Predator",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -11437,6 +11685,7 @@
       "key": "primordial_jade_cutter",
       "name": "Primordial Jade Cutter",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -11476,6 +11725,7 @@
       "key": "primordial_jade_wingedspear",
       "name": "Primordial Jade Winged-Spear",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -11515,6 +11765,7 @@
       "key": "prized_isshin_blade",
       "name": "Prized Isshin Blade",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -11554,6 +11805,7 @@
       "key": "prospector's_drill",
       "name": "Prospector's Drill",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -11593,6 +11845,7 @@
       "key": "prospector's_shovel",
       "name": "Prospector's Shovel",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -11632,6 +11885,7 @@
       "key": "prototype_amber",
       "name": "Prototype Amber",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -11671,6 +11925,7 @@
       "key": "prototype_archaic",
       "name": "Prototype Archaic",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -11710,6 +11965,7 @@
       "key": "prototype_crescent",
       "name": "Prototype Crescent",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -11749,6 +12005,7 @@
       "key": "prototype_rancour",
       "name": "Prototype Rancour",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -11788,6 +12045,7 @@
       "key": "prototype_starglitter",
       "name": "Prototype Starglitter",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -11827,6 +12085,7 @@
       "key": "rainbow_serpent's_rain_bow",
       "name": "Rainbow Serpent's Rain Bow",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -11866,6 +12125,7 @@
       "key": "rainslasher",
       "name": "Rainslasher",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -11905,6 +12165,7 @@
       "key": "range_gauge",
       "name": "Range Gauge",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -11944,6 +12205,7 @@
       "key": "raven_bow",
       "name": "Raven Bow",
       "type": "bow",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 39.88,
@@ -11983,6 +12245,7 @@
       "key": "recurve_bow",
       "name": "Recurve Bow",
       "type": "bow",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 37.61,
@@ -12022,6 +12285,7 @@
       "key": "redhorn_stonethresher",
       "name": "Redhorn Stonethresher",
       "type": "claymore",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -12061,6 +12325,7 @@
       "key": "reliquary_of_truth",
       "name": "Reliquary of Truth",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -12100,6 +12365,7 @@
       "key": "rightful_reward",
       "name": "Rightful Reward",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -12139,6 +12405,7 @@
       "key": "ring_of_yaxche",
       "name": "Ring of Yaxche",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -12178,6 +12445,7 @@
       "key": "royal_bow",
       "name": "Royal Bow",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -12217,6 +12485,7 @@
       "key": "royal_greatsword",
       "name": "Royal Greatsword",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -12256,6 +12525,7 @@
       "key": "royal_grimoire",
       "name": "Royal Grimoire",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -12295,6 +12565,7 @@
       "key": "royal_longsword",
       "name": "Royal Longsword",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -12334,6 +12605,7 @@
       "key": "royal_spear",
       "name": "Royal Spear",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -12373,6 +12645,7 @@
       "key": "rust",
       "name": "Rust",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -12412,6 +12685,7 @@
       "key": "sacrificer's_staff",
       "name": "Sacrificer's Staff",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 45.07,
@@ -12451,6 +12725,7 @@
       "key": "sacrificial_bow",
       "name": "Sacrificial Bow",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -12490,6 +12765,7 @@
       "key": "sacrificial_fragments",
       "name": "Sacrificial Fragments",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -12529,6 +12805,7 @@
       "key": "sacrificial_greatsword",
       "name": "Sacrificial Greatsword",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -12568,6 +12845,7 @@
       "key": "sacrificial_jade",
       "name": "Sacrificial Jade",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -12607,6 +12885,7 @@
       "key": "sacrificial_sword",
       "name": "Sacrificial Sword",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -12646,6 +12925,7 @@
       "key": "sapwood_blade",
       "name": "Sapwood Blade",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -12685,6 +12965,7 @@
       "key": "scion_of_the_blazing_sun",
       "name": "Scion of the Blazing Sun",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -12724,6 +13005,7 @@
       "key": "seasoned_hunter's_bow",
       "name": "Seasoned Hunter's Bow",
       "type": "bow",
+      "rarity": 2,
       "byLevel": {
         "1": {
           "atk": 32.93
@@ -12749,6 +13031,7 @@
       "key": "sequence_of_solitude",
       "name": "Sequence of Solitude",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -12788,6 +13071,7 @@
       "key": "serenity's_call",
       "name": "Serenity's Call",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -12827,6 +13111,7 @@
       "key": "serpent_spine",
       "name": "Serpent Spine",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -12866,6 +13151,7 @@
       "key": "sharpshooter's_oath",
       "name": "Sharpshooter's Oath",
       "type": "bow",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -12905,6 +13191,7 @@
       "key": "silvershower_heartstrings",
       "name": "Silvershower Heartstrings",
       "type": "bow",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -12944,6 +13231,7 @@
       "key": "silver_sword",
       "name": "Silver Sword",
       "type": "sword",
+      "rarity": 2,
       "byLevel": {
         "1": {
           "atk": 32.93
@@ -12969,6 +13257,7 @@
       "key": "skyrider_greatsword",
       "name": "Skyrider Greatsword",
       "type": "claymore",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -13008,6 +13297,7 @@
       "key": "skyrider_sword",
       "name": "Skyrider Sword",
       "type": "sword",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 37.61,
@@ -13047,6 +13337,7 @@
       "key": "skyward_atlas",
       "name": "Skyward Atlas",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -13086,6 +13377,7 @@
       "key": "skyward_blade",
       "name": "Skyward Blade",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -13125,6 +13417,7 @@
       "key": "skyward_harp",
       "name": "Skyward Harp",
       "type": "bow",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -13164,6 +13457,7 @@
       "key": "skyward_pride",
       "name": "Skyward Pride",
       "type": "claymore",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -13203,6 +13497,7 @@
       "key": "skyward_spine",
       "name": "Skyward Spine",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -13242,6 +13537,7 @@
       "key": "slingshot",
       "name": "Slingshot",
       "type": "bow",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 37.61,
@@ -13281,6 +13577,7 @@
       "key": "snare_hook",
       "name": "Snare Hook",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -13320,6 +13617,7 @@
       "key": "snowtombed_starsilver",
       "name": "Snow-Tombed Starsilver",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -13359,6 +13657,7 @@
       "key": "solar_pearl",
       "name": "Solar Pearl",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -13398,6 +13697,7 @@
       "key": "song_of_broken_pines",
       "name": "Song of Broken Pines",
       "type": "claymore",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 49.14,
@@ -13437,6 +13737,7 @@
       "key": "song_of_stillness",
       "name": "Song of Stillness",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -13476,6 +13777,7 @@
       "key": "splendor_of_tranquil_waters",
       "name": "Splendor of Tranquil Waters",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -13515,6 +13817,7 @@
       "key": "staff_of_homa",
       "name": "Staff of Homa",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -13554,6 +13857,7 @@
       "key": "staff_of_the_scarlet_sands",
       "name": "Staff of the Scarlet Sands",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -13593,6 +13897,7 @@
       "key": "starcaller's_watch",
       "name": "Starcaller's Watch",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -13632,6 +13937,7 @@
       "key": "sturdy_bone",
       "name": "Sturdy Bone",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -13671,6 +13977,7 @@
       "key": "summit_shaper",
       "name": "Summit Shaper",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -13710,6 +14017,7 @@
       "key": "sunny_morning_sleepin",
       "name": "Sunny Morning Sleep-In",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -13749,6 +14057,7 @@
       "key": "surf's_up",
       "name": "Surf's Up",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -13788,6 +14097,7 @@
       "key": "sword_of_descension",
       "name": "Sword of Descension",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -13827,6 +14137,7 @@
       "key": "sword_of_narzissenkreuz",
       "name": "Sword of Narzissenkreuz",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -13866,6 +14177,7 @@
       "key": "symphonist_of_scents",
       "name": "Symphonist of Scents",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -13905,6 +14217,7 @@
       "key": "talking_stick",
       "name": "Talking Stick",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -13944,6 +14257,7 @@
       "key": "tamayuratei_no_ohanashi",
       "name": "Tamayuratei no Ohanashi",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -13983,6 +14297,7 @@
       "key": "the_alley_flash",
       "name": "The Alley Flash",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 45.07,
@@ -14022,6 +14337,7 @@
       "key": "the_bell",
       "name": "The Bell",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -14061,6 +14377,7 @@
       "key": "the_black_sword",
       "name": "The Black Sword",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -14100,6 +14417,7 @@
       "key": "the_catch",
       "name": "\"The Catch\"",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -14139,6 +14457,7 @@
       "key": "the_daybreak_chronicles",
       "name": "The Daybreak Chronicles",
       "type": "bow",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -14178,6 +14497,7 @@
       "key": "the_dockhand's_assistant",
       "name": "The Dockhand's Assistant",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -14217,6 +14537,7 @@
       "key": "the_first_great_magic",
       "name": "The First Great Magic",
       "type": "bow",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -14256,6 +14577,7 @@
       "key": "the_flute",
       "name": "The Flute",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -14295,6 +14617,7 @@
       "key": "the_stringless",
       "name": "The Stringless",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -14334,6 +14657,7 @@
       "key": "the_unforged",
       "name": "The Unforged",
       "type": "claymore",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -14373,6 +14697,7 @@
       "key": "the_viridescent_hunt",
       "name": "The Viridescent Hunt",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -14412,6 +14737,7 @@
       "key": "the_widsith",
       "name": "The Widsith",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -14451,6 +14777,7 @@
       "key": "thrilling_tales_of_dragon_slayers",
       "name": "Thrilling Tales of Dragon Slayers",
       "type": "catalyst",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -14490,6 +14817,7 @@
       "key": "thundering_pulse",
       "name": "Thundering Pulse",
       "type": "bow",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -14529,6 +14857,7 @@
       "key": "tidal_shadow",
       "name": "Tidal Shadow",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -14568,6 +14897,7 @@
       "key": "tome_of_the_eternal_flow",
       "name": "Tome of the Eternal Flow",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -14607,6 +14937,7 @@
       "key": "toukabou_shigure",
       "name": "Toukabou Shigure",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -14646,6 +14977,7 @@
       "key": "traveler's_handy_sword",
       "name": "Traveler's Handy Sword",
       "type": "sword",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 39.88,
@@ -14685,6 +15017,7 @@
       "key": "tulaytullah's_remembrance",
       "name": "Tulaytullah's Remembrance",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -14724,6 +15057,7 @@
       "key": "twin_nephrite",
       "name": "Twin Nephrite",
       "type": "catalyst",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 39.88,
@@ -14763,6 +15097,7 @@
       "key": "ultimate_overlord's_mega_magic_sword",
       "name": "\"Ultimate Overlord's Mega Magic Sword\"",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -14802,6 +15137,7 @@
       "key": "uraku_misugiri",
       "name": "Uraku Misugiri",
       "type": "sword",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 44.34,
@@ -14841,6 +15177,7 @@
       "key": "verdict",
       "name": "Verdict",
       "type": "claymore",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -14880,6 +15217,7 @@
       "key": "vivid_notions",
       "name": "Vivid Notions",
       "type": "catalyst",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 47.54,
@@ -14919,6 +15257,7 @@
       "key": "vortex_vanquisher",
       "name": "Vortex Vanquisher",
       "type": "polearm",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -14958,6 +15297,7 @@
       "key": "wandering_evenstar",
       "name": "Wandering Evenstar",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -14997,6 +15337,7 @@
       "key": "waster_greatsword",
       "name": "Waster Greatsword",
       "type": "claymore",
+      "rarity": 1,
       "byLevel": {
         "1": {
           "atk": 23.25
@@ -15022,6 +15363,7 @@
       "key": "wavebreaker's_fin",
       "name": "Wavebreaker's Fin",
       "type": "polearm",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 45.07,
@@ -15061,6 +15403,7 @@
       "key": "waveriding_whirl",
       "name": "Waveriding Whirl",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 41.07,
@@ -15100,6 +15443,7 @@
       "key": "whiteblind",
       "name": "Whiteblind",
       "type": "claymore",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -15139,6 +15483,7 @@
       "key": "white_iron_greatsword",
       "name": "White Iron Greatsword",
       "type": "claymore",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -15178,6 +15523,7 @@
       "key": "white_tassel",
       "name": "White Tassel",
       "type": "polearm",
+      "rarity": 3,
       "byLevel": {
         "1": {
           "atk": 38.74,
@@ -15217,6 +15563,7 @@
       "key": "windblume_ode",
       "name": "Windblume Ode",
       "type": "bow",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -15256,6 +15603,7 @@
       "key": "wine_and_song",
       "name": "Wine and Song",
       "type": "catalyst",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 43.73,
@@ -15295,6 +15643,7 @@
       "key": "wolffang",
       "name": "Wolf-Fang",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,
@@ -15334,6 +15683,7 @@
       "key": "wolf's_gravestone",
       "name": "Wolf's Gravestone",
       "type": "claymore",
+      "rarity": 5,
       "byLevel": {
         "1": {
           "atk": 45.94,
@@ -15373,6 +15723,7 @@
       "key": "xiphos'_moonlight",
       "name": "Xiphos' Moonlight",
       "type": "sword",
+      "rarity": 4,
       "byLevel": {
         "1": {
           "atk": 42.4,

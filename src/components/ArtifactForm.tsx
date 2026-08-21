@@ -14,7 +14,7 @@ const STAT_OPTIONS: StatKey[] = genshinAdapter.statKeys;
 // built once rather than on every render.
 const SET_OPTIONS = genshinAdapter
   .sets()
-  .map((s) => ({ value: s.key, label: formatSetName(s.name) }));
+  .map((s) => ({ value: s.key, label: s.name }));
 
 const DEFAULT_SLOT: Slot = 'sands';
 const DEFAULT_MAIN: StatKey = 'atk_pct';

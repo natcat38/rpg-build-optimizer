@@ -25,7 +25,12 @@ import { PlanView } from '../plan/PlanView';
 import { decodeBuild } from '../share/url';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
-import { useOptimizeRequest, currentRequest } from '../state/optimizeRequest';
+import {
+  useOptimizeRequest,
+  currentRequest,
+  isDefaultSelection,
+} from '../state/optimizeRequest';
+import { bestBuiltCharacter } from '../roster/buildScore';
 import { getGame, type GameDescriptor } from '../game/registry';
 import { optimize } from '../workers/optimizeClient';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
@@ -255,6 +260,20 @@ export function App() {
     const id = setTimeout(() => setHero(buildHeroExample()), 0);
     return () => clearTimeout(id);
   }, [sampleMode, hero]);
+
+  // Once a roster exists the app's curated opening pair is no longer the most
+  // useful one — the reader's own best-built character is. Only while the
+  // selection is untouched: a pick the reader (or a shared ?b= link) made must
+  // never be overwritten, which is what `isDefaultSelection` guards. Weapon
+  // legality is left to OptimizePanel, the one place that owns that rule.
+  useEffect(() => {
+    const s = useOptimizeRequest.getState();
+    if (!isDefaultSelection(s)) return;
+    const best = bestBuiltCharacter(rosterEntries, artifacts);
+    if (!best) return;
+    s.setCharacterKey(best.characterKey);
+    if (best.weaponKey) s.setWeaponKey(best.weaponKey);
+  }, [rosterEntries, artifacts]);
 
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get('b');

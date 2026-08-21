@@ -10,6 +10,10 @@ import { useId, useState, useRef, useEffect } from 'react';
 interface ComboboxOption {
   value: string;
   label: string;
+  /** Secondary text shown muted after the label in the list only — never in
+   *  the closed trigger, which has room for one line. Not searched: the query
+   *  matches what the reader typed the name of. */
+  hint?: string;
 }
 
 interface ComboboxProps {
@@ -233,6 +237,9 @@ export function Combobox({
                 onMouseEnter={() => setActiveIndex(i)}
               >
                 {opt.label}
+                {opt.hint && (
+                  <span className="ml-2 text-2xs text-muted">{opt.hint}</span>
+                )}
               </li>
             ))
           )}

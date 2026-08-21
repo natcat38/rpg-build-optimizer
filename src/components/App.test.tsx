@@ -208,3 +208,38 @@ describe('App — step nav', () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe('App — roster-aware default selection', () => {
+  beforeEach(() => {
+    useInventory.getState().clear();
+    useOptimizeRequest.getState().reset();
+    useRoster.getState().clear();
+    window.history.pushState({}, '', '/');
+  });
+  afterEach(() => useRoster.getState().clear());
+
+  it('opens on the curated marquee pair with no roster', () => {
+    render(<App />);
+    expect(useOptimizeRequest.getState().characterKey).toBe('furina');
+  });
+
+  it('switches to the best-built rostered character once a roster loads', () => {
+    useRoster.getState().setRoster({
+      amber: { buildLevel: 20 },
+      raiden_shogun: { weaponKey: 'engulfing_lightning', buildLevel: 90 },
+    });
+    render(<App />);
+    const s = useOptimizeRequest.getState();
+    expect(s.characterKey).toBe('raiden_shogun');
+    expect(s.weaponKey).toBe('engulfing_lightning');
+  });
+
+  it('never overwrites a selection the reader already made', () => {
+    useOptimizeRequest.getState().setCharacterKey('navia');
+    useRoster.getState().setRoster({
+      raiden_shogun: { weaponKey: 'engulfing_lightning', buildLevel: 90 },
+    });
+    render(<App />);
+    expect(useOptimizeRequest.getState().characterKey).toBe('navia');
+  });
+});

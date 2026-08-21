@@ -1,5 +1,38 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useOptimizeRequest, currentRequest } from './optimizeRequest';
+import {
+  useOptimizeRequest,
+  currentRequest,
+  isDefaultSelection,
+  DEFAULT_SELECTION,
+} from './optimizeRequest';
+import { genshinAdapter } from '../game/genshin/adapter';
+import { META_TARGETS } from '../meta/metaTargets';
+
+describe('optimizeRequest defaults', () => {
+  beforeEach(() => useOptimizeRequest.getState().reset());
+
+  // Sort order used to choose these, which opened the app on "Aino +
+  // Absolution" — a claymore user holding a sword.
+  it('opens on a curated marquee pair, not the first entry by sort order', () => {
+    const s = useOptimizeRequest.getState();
+    expect(s.characterKey).toBe('furina');
+    expect(s.weaponKey).toBe(META_TARGETS.furina.weapon);
+    expect(s.characterKey).not.toBe(genshinAdapter.characters()[0].key);
+    expect(s.weaponKey).not.toBe(genshinAdapter.weapons()[0].key);
+  });
+
+  it('opens on a pair the character can actually equip', () => {
+    const s = useOptimizeRequest.getState();
+    expect(genshinAdapter.canEquip(s.characterKey, s.weaponKey)).toBe(true);
+  });
+
+  it('isDefaultSelection tells an untouched selection from a chosen one', () => {
+    expect(isDefaultSelection(useOptimizeRequest.getState())).toBe(true);
+    useOptimizeRequest.getState().setCharacterKey('navia');
+    expect(isDefaultSelection(useOptimizeRequest.getState())).toBe(false);
+    expect(DEFAULT_SELECTION.characterKey).toBe('furina');
+  });
+});
 
 describe('optimizeRequest store', () => {
   beforeEach(() => useOptimizeRequest.getState().reset());

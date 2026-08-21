@@ -4,13 +4,97 @@ import type {
   BuildResult,
   OptimizeResult,
   OptimizeRequest,
+  Slot,
 } from '../game/types';
 import { SLOTS } from '../game/types';
 import { BuildCard } from './BuildCard';
 import { encodeBuild } from '../share/url';
 import { Callout } from './ui/Callout';
 import { Meter } from './ui/Meter';
-import { objectiveHint } from '../labels';
+import { objectiveHint, SLOT_LABELS } from '../labels';
+
+/** One card's worth of result: the build shown, plus any further builds that
+ *  scored exactly the same. */
+interface BuildGroup {
+  build: BuildResult;
+  /** 1-based position of `build` in the unfiltered result list. */
+  rank: number;
+  ties: BuildResult[];
+}
+
+/**
+ * Collapse runs of exactly-equal results into one entry each.
+ *
+ * Equal on both the ranking score and the displayed objective: a tie the reader
+ * can't see in either number is a tie, and printing it as N more cards made a
+ * correct search look like a rendering bug. The list arrives score-descending,
+ * so equal runs are always adjacent.
+ */
+function groupTies(builds: BuildResult[]): BuildGroup[] {
+  const groups: BuildGroup[] = [];
+  const same = (a: BuildResult, b: BuildResult) =>
+    a.score === b.score && a.objectiveValue === b.objectiveValue;
+  for (let i = 0; i < builds.length; i++) {
+    const head = groups[groups.length - 1];
+    if (head && same(head.build, builds[i])) head.ties.push(builds[i]);
+    else groups.push({ build: builds[i], rank: i + 1, ties: [] });
+  }
+  return groups;
+}
+
+/**
+ * What separates the tied builds in a group, in the reader's terms: which slots
+ * hold a different piece, and whether that piece is from a different set (the
+ * only difference visible on the card) or merely a different copy of the same
+ * one.
+ */
+/** "a", "a and b", "a, b and c". Hand-rolled rather than `Intl.ListFormat`,
+ *  which the project's TS lib target predates; there are at most five items and
+ *  the copy around it is English-only anyway. */
+function andList(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? '';
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+/** "goblet and circlet sets differ" — one verb for the whole list, rather than
+ *  repeating "… differs" per slot. */
+function clause(slots: Slot[], noun: 'set' | 'piece'): string | null {
+  if (slots.length === 0) return null;
+  const names = andList(slots.map((s) => SLOT_LABELS[s].toLowerCase()));
+  return slots.length > 1
+    ? `${names} ${noun}s differ`
+    : `${names} ${noun} differs`;
+}
+
+function describeTies(
+  group: BuildGroup,
+  artifactsById: Record<string, Artifact>,
+): string {
+  const all = [group.build, ...group.ties];
+  const setSlots: Slot[] = [];
+  const pieceSlots: Slot[] = [];
+  for (const slot of SLOTS) {
+    const ids = new Set(all.map((b) => b.artifactIds[slot]));
+    if (ids.size <= 1) continue;
+    const sets = new Set(
+      [...ids].map((id) => artifactsById[id]?.setKey).filter(Boolean),
+    );
+    // A different set is visible on the card; a different copy of the same set
+    // is not, and saying "set differs" there would send the reader hunting for
+    // a difference that isn't printed.
+    (sets.size > 1 ? setSlots : pieceSlots).push(slot);
+  }
+  const parts = [clause(setSlots, 'set'), clause(pieceSlots, 'piece')].filter(
+    (p): p is string => p !== null,
+  );
+  // Falls back rather than returning '': a group only exists because the builds
+  // are distinct, so "nothing differs" would mean the ids didn't resolve.
+  return parts.length > 0 ? parts.join(', ') : 'different pieces';
+}
+
+/** Cards shown before the reveal. Three is the podium — past it a reader is
+ *  browsing, not comparing, and 10 full cards buried everything below them. */
+const COLLAPSED_GROUPS = 3;
 
 export function Results({
   result,
@@ -28,6 +112,8 @@ export function Results({
     url: string | null;
   } | null>(null);
 
+  const [showAll, setShowAll] = useState(false);
+
   // A new run replaces every card, so a confirmation pinned to the old card
   // index would sit under an unrelated build. Reset during render rather than
   // in an effect — React re-runs this pass before painting the stale cue.
@@ -36,6 +122,7 @@ export function Results({
     setShownResult(result);
     setCopied(null);
     setShareFailed(null);
+    setShowAll(false);
   }
 
   if (result.status === 'infeasible') {
@@ -59,6 +146,17 @@ export function Results({
   // hydrates as 0/0. Reporting "explored 0 · pruned 0" beside a full bar
   // claimed a proof that never ran here — say nothing instead.
   const searched = total > 0;
+
+  const groups = groupTies(result.builds);
+  const visible = showAll ? groups : groups.slice(0, COLLAPSED_GROUPS);
+  const topScore = result.builds[0]?.objectiveValue;
+  // The search filters near-duplicates (clones sharing a 4-piece core), so a
+  // short list is a feature. Unlabelled it reads as a bug — "why only 4?" — so
+  // say so, but only where a search actually ran and returned something: a
+  // shared ?b= link carries exactly one build and never searched.
+  const requestedK = request.topK ?? 10;
+  const shortList =
+    searched && result.builds.length > 0 && result.builds.length < requestedK;
 
   const shareStatus =
     copied != null
@@ -99,7 +197,14 @@ export function Results({
       {/* Once above the list, not once per card: a 10-result page printed the
           same sentence 11 times. */}
       <p className="text-xs text-muted">{objectiveHint(request.objective)}</p>
-      {result.builds.map((b, i) => {
+      {shortList && (
+        <p className="text-xs text-muted">
+          {result.builds.length} builds shown — near-duplicates sharing the same
+          core are filtered.
+        </p>
+      )}
+      {visible.map((g, i) => {
+        const b = g.build;
         const arts = artifactsFor(b);
         return (
           <div
@@ -111,7 +216,20 @@ export function Results({
               build={b}
               request={request}
               artifacts={arts}
-              rank={i + 1}
+              rank={g.rank}
+              delta={
+                g.rank > 1 && topScore != null
+                  ? b.objectiveValue - topScore
+                  : undefined
+              }
+              variants={
+                g.ties.length > 0
+                  ? {
+                      count: g.ties.length,
+                      differs: describeTies(g, artifactsById),
+                    }
+                  : undefined
+              }
               onShare={async () => {
                 let url: string;
                 try {
@@ -170,6 +288,14 @@ export function Results({
           </div>
         );
       })}
+      {/* Same reveal as the roster list: the podium is what the reader came
+          for, and ten full cards pushed everything below the fold. */}
+      {groups.length > COLLAPSED_GROUPS && !showAll && (
+        <button className="btn-ghost w-full" onClick={() => setShowAll(true)}>
+          <span aria-hidden="true">▶</span> Show all {result.builds.length}{' '}
+          builds
+        </button>
+      )}
       {/* One persistent live region for the share outcome. The Callouts above
           are created on demand, and a live region that doesn't exist when its
           text arrives announces nothing — so the announcement lives here and

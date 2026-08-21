@@ -25,6 +25,18 @@ export interface MetaTarget {
    *  grading a build against (Item 4) — not a hard optimiser constraint. See
    *  metaToConstraints for why these never become minStats. */
   statTargets?: StatVec;
+  /**
+   * The guide's signature weapon, where naming one is uncontroversial. Present
+   * on a handful of entries only: for most characters the pick is team- and
+   * constellation-dependent, and a curated table has no business guessing.
+   *
+   * Deliberately NOT fed into `metaToConstraints` — the optimiser searches
+   * artifacts, not weapons, and "Use meta build" must not silently reassign a
+   * weapon the reader chose. It exists so the app can open on a real pair
+   * instead of whatever sorts first (see state/optimizeRequest.ts), and must
+   * always be one the character can actually equip (guarded in the test).
+   */
+  weapon?: string;
 }
 
 export const META_TARGETS: Record<string, MetaTarget> = {
@@ -34,6 +46,7 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'hp_pct', goblet: 'elemental_dmg' },
     erTarget: 130,
     objective: 'crit_value',
+    weapon: 'splendor_of_tranquil_waters',
     source: 'https://keqingmains.com/furina/',
   },
   nahida: {
@@ -41,6 +54,7 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     setRequirement: { kind: '4pc', setKey: 'GildedDreams' },
     mains: { sands: 'em', goblet: 'em' },
     objective: 'crit_value',
+    weapon: 'a_thousand_floating_dreams',
     source: 'https://keqingmains.com/nahida/',
     statTargets: { em: 900 },
   },
@@ -54,6 +68,7 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 140,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'verdict',
     source: 'https://keqingmains.com/navia/',
   },
   neuvillette: {
@@ -62,6 +77,7 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'hp_pct', goblet: 'elemental_dmg' },
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'tome_of_the_eternal_flow',
     source: 'https://keqingmains.com/neuvillette/',
   },
   hu_tao: {

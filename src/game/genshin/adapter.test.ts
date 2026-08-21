@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { genshinAdapter } from './adapter';
+import { WEAPON_TYPES } from '../types';
 import type { Snapshot } from './snapshot';
 import rawData from './data.generated.json';
 
@@ -139,5 +140,40 @@ describe('artifact set snapshot', () => {
       .sets()
       .find((s) => s.key === 'EmblemOfSeveredFate');
     expect(emblem?.twoPiece?.er_pct).toBeGreaterThan(0);
+  });
+});
+
+describe('weapon typing', () => {
+  it('gives every character one of the five weapon classes', () => {
+    const types = new Set(WEAPON_TYPES as readonly string[]);
+    for (const c of genshinAdapter.characters())
+      expect(types.has(c.weaponType), `${c.key} → ${c.weaponType}`).toBe(true);
+  });
+
+  it('weaponsOfType returns only that class, and every weapon exactly once', () => {
+    let seen = 0;
+    for (const t of WEAPON_TYPES) {
+      const list = genshinAdapter.weaponsOfType(t);
+      expect(list.length, `no ${t}s in the snapshot`).toBeGreaterThan(0);
+      for (const w of list) expect(w.type).toBe(t);
+      seen += list.length;
+    }
+    expect(seen).toBe(genshinAdapter.weapons().length);
+  });
+
+  it('canEquip matches the class, and passes keys the snapshot does not carry', () => {
+    // Furina is a sword user; Aquila Favonia is a sword, The Catch a polearm.
+    expect(genshinAdapter.canEquip('furina', 'aquila_favonia')).toBe(true);
+    expect(genshinAdapter.canEquip('furina', 'the_catch')).toBe(false);
+    // The exact hole this closes: a catalyst user holding a polearm.
+    expect(genshinAdapter.canEquip('nahida', 'the_catch')).toBe(false);
+    // Unknown either side: no evidence of an illegal pairing, so don't claim one.
+    expect(genshinAdapter.canEquip('zzz_unknown', 'the_catch')).toBe(true);
+    expect(genshinAdapter.canEquip('furina', 'zzz_unknown')).toBe(true);
+  });
+
+  it('carries a weapon rarity, so a picker can annotate without a second source', () => {
+    expect(genshinAdapter.weapon('aquila_favonia')?.rarity).toBe(5);
+    expect(genshinAdapter.weapon('the_catch')?.rarity).toBe(4);
   });
 });

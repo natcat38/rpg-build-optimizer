@@ -3,6 +3,7 @@ import type {
   Artifact,
   BuildResult,
   OptimizeRequest,
+  Slot,
   StatKey,
 } from '../game/types';
 import { SLOTS } from '../game/types';
@@ -12,12 +13,12 @@ import {
   formatStat,
   isPctStat,
   objectiveLabel,
-  SLOT_GLYPH,
   SLOT_LABELS,
   statLabel,
 } from '../labels';
 import { META_TARGETS } from '../meta/metaTargets';
 import { gradeBuild, type Grade } from '../meta/grade';
+import { SlotGlyph } from './SlotGlyph';
 import { Marker } from './ui/Marker';
 import { Meter } from './ui/Meter';
 import type { Tone } from './ui/tone';
@@ -40,17 +41,42 @@ const SHOW: StatKey[] = [
   'elemental_dmg',
 ];
 
+/** The five slot marks on one line, filled where this build actually has a
+ *  piece. A build's shape at a glance, next to its score — decorative, because
+ *  the piece list below states every one of these slots in words. */
+function Fingerprint({ filled }: { filled: (s: Slot) => boolean }) {
+  return (
+    <span aria-hidden="true" className="flex items-center gap-1 text-[13px]">
+      {SLOTS.map((s) => (
+        <SlotGlyph
+          key={s}
+          slot={s}
+          className={filled(s) ? 'text-accent' : 'text-paper/15'}
+        />
+      ))}
+    </span>
+  );
+}
+
 export function BuildCard({
   build,
   request,
   artifacts,
   rank,
+  delta,
+  variants,
   onShare,
 }: {
   build: BuildResult;
   request: OptimizeRequest;
   artifacts: Artifact[];
   rank?: number;
+  /** Objective difference from rank 1, already signed (negative below it).
+   *  Omitted on rank 1, where "0" would be noise. */
+  delta?: number;
+  /** How many further builds scored exactly this, and what separates them.
+   *  Collapsed into this card rather than repeated as identical siblings. */
+  variants?: { count: number; differs: string };
   onShare?: () => void | Promise<void>;
 }) {
   const bySlot = new Map(artifacts.map((a) => [a.slot, a]));
@@ -70,9 +96,20 @@ export function BuildCard({
           )}
           <div>
             <p className="micro-label">{objectiveLabel(request.objective)}</p>
-            <p className="font-mono text-2xl font-bold leading-tight text-accent-bright">
-              {formatScore(build.objectiveValue)}
-            </p>
+            <div className="flex items-baseline gap-2">
+              <p className="font-mono text-2xl font-bold leading-tight text-accent-bright">
+                {formatScore(build.objectiveValue)}
+              </p>
+              {delta != null && (
+                // The gap to rank 1, which is the only reason to read a
+                // runner-up's number at all. U+2212, not a hyphen: at mono
+                // weights a hyphen next to digits reads as a separator.
+                <span className="chip flex-none px-1.5 py-0 font-mono text-2xs tabular-nums text-muted">
+                  −{formatScore(Math.abs(delta))}
+                </span>
+              )}
+            </div>
+            <Fingerprint filled={(s) => bySlot.has(s)} />
           </div>
           {grade && (
             // The letter is the accessible name; `title` is the description.
@@ -92,6 +129,14 @@ export function BuildCard({
           </button>
         )}
       </div>
+
+      {variants && variants.count > 0 && (
+        // Equal score means equal answer, so the alternatives are one line here
+        // rather than N more cards printing the same number.
+        <p className="text-xs text-muted">
+          {`×${variants.count + 1} equivalent variants — same score, ${variants.differs}.`}
+        </p>
+      )}
 
       {grade && (
         <div className="well px-3 py-2 text-xs text-muted">
@@ -149,13 +194,10 @@ export function BuildCard({
           return (
             <li key={s} className="well px-3 py-2">
               <div className="flex items-center gap-3 text-sm text-paper/90">
-                {/* Decorative: the slot name sits right beside it. */}
-                <span
-                  aria-hidden="true"
-                  className="grid h-6 w-6 flex-none place-items-center rounded-md bg-white/5 text-xs text-accent"
-                >
-                  {SLOT_GLYPH[s]}
-                </span>
+                {/* Decorative: the slot name sits right beside it. The grey
+                    box this used to sit in was scaffolding for an unreliable
+                    text glyph — the mark carries itself now. */}
+                <SlotGlyph slot={s} className="h-[17px] w-[17px] text-accent" />
                 <span className="w-16 flex-none text-xs uppercase tracking-wide text-muted">
                   {SLOT_LABELS[s]}
                 </span>
@@ -186,7 +228,7 @@ export function BuildCard({
                 )}
               </div>
               {a && a.subStats.length > 0 && (
-                <p className="mt-1 pl-9 font-mono text-2xs leading-relaxed text-muted">
+                <p className="mt-1 pl-[29px] font-mono text-2xs leading-relaxed text-muted">
                   {a.subStats.map((sub, i) => (
                     <span key={sub.key}>
                       {i > 0 && <span className="text-muted/40"> · </span>}

@@ -146,6 +146,51 @@ export function OptimizePanel({
   const setMinER = useOptimizeRequest((s) => s.setMinER);
   const applyPreset = useOptimizeRequest((s) => s.applyPreset);
 
+  // Weapon legality (ADR-0002 data): a character can only equip their own
+  // weapon class, so offering all 235 let the panel hand a catalyst user a
+  // polearm and then call the result "proven optimal". An unknown character key
+  // (a snapshot older than the request) falls back to the full list rather than
+  // an empty picker — no evidence of a class is not evidence of no class.
+  const character = genshinAdapter.character(characterKey);
+  const legalWeapons = character
+    ? genshinAdapter.weaponsOfType(character.weaponType)
+    : weapons;
+  const weaponOptions = useMemo(
+    () =>
+      legalWeapons.map((w) => ({
+        value: w.key,
+        label: w.name,
+        hint: `${w.rarity}★`,
+      })),
+    [legalWeapons],
+  );
+
+  const rosterWeapon = rosterEntries[characterKey]?.weaponKey;
+  // Correct an illegal pairing wherever it came from — the character picker
+  // below, a roster drawer, a shared ?b= link, the app's own defaults — rather
+  // than only in `onCharacterChange`. `canEquip` passes unknown keys, so this
+  // never fights a request the snapshot can't judge.
+  // Preference order: the weapon the player actually owns on this character,
+  // then the curated meta pick, then the first legal weapon as a floor.
+  const metaWeapon = META_TARGETS[characterKey]?.weapon;
+  useEffect(() => {
+    if (genshinAdapter.canEquip(characterKey, weaponKey)) return;
+    const preferred =
+      rosterWeapon && genshinAdapter.canEquip(characterKey, rosterWeapon)
+        ? rosterWeapon
+        : metaWeapon && genshinAdapter.canEquip(characterKey, metaWeapon)
+          ? metaWeapon
+          : legalWeapons[0]?.key;
+    if (preferred) setWeaponKey(preferred);
+  }, [
+    characterKey,
+    weaponKey,
+    rosterWeapon,
+    metaWeapon,
+    legalWeapons,
+    setWeaponKey,
+  ]);
+
   function onCharacterChange(key: string) {
     setCharacterKey(key);
     // Pre-fill from the owned roster; both fields stay manually overridable
@@ -235,10 +280,17 @@ export function OptimizePanel({
         <div className="block">
           <label className="field-label" htmlFor={`${uid}-weapon`}>
             Weapon
+            {/* Naming the class is what makes the short list read as a filter
+                rather than a missing-data bug. `.field-label` uppercases it. */}
+            {character && (
+              <span className="ml-1.5 font-normal text-muted">
+                {character.weaponType}
+              </span>
+            )}
           </label>
           <Combobox
             id={`${uid}-weapon`}
-            options={weapons.map((w) => ({ value: w.key, label: w.name }))}
+            options={weaponOptions}
             value={weaponKey}
             onChange={setWeaponKey}
             label="Weapon"

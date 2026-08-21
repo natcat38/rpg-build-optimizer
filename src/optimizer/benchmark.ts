@@ -20,8 +20,11 @@ export function formatReduction(r: number): string {
   return `${Math.round(r).toLocaleString('en-US')}×`;
 }
 
-/** Deterministic PRNG so committed benchmark numbers reproduce anywhere. */
-function mulberry32(seed: number): () => number {
+/** Deterministic PRNG so committed benchmark numbers reproduce anywhere.
+ *  Exported because the curated sample bag (src/sample/sampleInventory.ts)
+ *  needs the same reproducibility guarantee — one generator, so "deterministic"
+ *  means the same thing in both places. */
+export function mulberry32(seed: number): () => number {
   let s = seed >>> 0;
   return function () {
     s = (s + 0x6d2b79f5) >>> 0;

@@ -1,4 +1,5 @@
 import type { Tone } from './components/ui/tone';
+import { genshinAdapter } from './game/genshin/adapter';
 import type { Objective, SetRequirement, Slot, StatKey } from './game/types';
 import type { Band } from './roster/buildScore';
 import type { Role } from './teams/types';
@@ -35,14 +36,9 @@ export const SLOT_LABELS: Record<Slot, string> = {
   circlet: 'Circlet',
 };
 
-/** A small glyph per slot for compact, scannable build lists. */
-export const SLOT_GLYPH: Record<Slot, string> = {
-  flower: '✿',
-  plume: '⟁',
-  sands: '⧖',
-  goblet: '♟',
-  circlet: '◆',
-};
+// The per-slot mark used by compact build lists is not here: it is drawn, not
+// written. See src/components/SlotGlyph.tsx for why five Unicode characters
+// could not carry it.
 
 /** Display names for team roles — user-visible copy lives here, not next to the
  *  `Role` union it labels. */
@@ -124,14 +120,21 @@ export function objectiveHint(o: Objective): string {
   }
 }
 
-/** Turn a PascalCase set key (e.g. "EmblemOfSeveredFate") into spaced words.
- *  Coerced first: inventories persisted before the import guards landed can
- *  still hold a non-string setKey, and this runs during render. */
+/** The display name for a set key. Prefers the dataset's real name (which
+ *  carries apostrophes and lowercase articles the PascalCase key can't), and
+ *  falls back to splitting the key into spaced words for keys the frozen
+ *  snapshot doesn't know (a GOOD export newer than the snapshot). Coerced
+ *  first: inventories persisted before the import guards landed can still
+ *  hold a non-string setKey, and this runs during render. */
 export function formatSetName(setKey: string): string {
-  return String(setKey ?? '')
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-    .trim();
+  const key = String(setKey ?? '');
+  return (
+    genshinAdapter.setName(key) ??
+    key
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+      .trim()
+  );
 }
 
 /**

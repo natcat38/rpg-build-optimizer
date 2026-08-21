@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { WEAPON_OBTAINABILITY } from './obtainability';
 import { adviseInvestments } from './advise';
 import { genshinAdapter } from '../game/genshin/adapter';
+import { WEAPON_TYPES } from '../game/types';
 import type { ArchetypeGap } from '../teams/recommend';
 import type { RosterEntry } from '../import/good';
 
@@ -22,7 +23,7 @@ describe('WEAPON_OBTAINABILITY', () => {
         .filter(([, e]) => e.tier === 'craftable')
         .map(([k]) => byKey.get(k)?.type),
     );
-    for (const t of ['sword', 'claymore', 'bow', 'catalyst', 'polearm'])
+    for (const t of WEAPON_TYPES)
       expect(craftableTypes.has(t), `no craftable ${t}`).toBe(true);
   });
 });

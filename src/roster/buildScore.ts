@@ -85,6 +85,35 @@ export function groupByLocation(
   return byLocation;
 }
 
+/**
+ * The best-built character on a roster, with whatever they have equipped.
+ *
+ * The one pick an imported account justifies making on the reader's behalf: it
+ * is the character the rest of the page already ranks first, so opening the
+ * optimiser on anyone else means the reader's first action is to correct us.
+ * `undefined` for an empty roster — there is nothing to prefer over the app's
+ * own default.
+ *
+ * Ties resolve by roster insertion order (i.e. GOOD file order). Two characters
+ * scoring identically to the last decimal is not a distinction worth a rule.
+ */
+export function bestBuiltCharacter(
+  entries: Record<string, RosterEntry>,
+  artifacts: Artifact[],
+): { characterKey: string; weaponKey?: string } | undefined {
+  const scores = rosterBuildScores(entries, artifacts);
+  let bestKey: string | undefined;
+  let bestScore = -Infinity;
+  for (const [key, score] of Object.entries(scores)) {
+    if (score > bestScore) {
+      bestScore = score;
+      bestKey = key;
+    }
+  }
+  if (bestKey === undefined) return undefined;
+  return { characterKey: bestKey, weaponKey: entries[bestKey]?.weaponKey };
+}
+
 /** Build-score totals for a whole roster — the shape `recommendAbyss` and the
  *  investment advice both take. */
 export function rosterBuildScores(

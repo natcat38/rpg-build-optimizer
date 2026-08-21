@@ -20,7 +20,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
-import { BUILD_LEVELS, ELEMENTS } from '../src/game/types';
+import { BUILD_LEVELS, ELEMENTS, WEAPON_TYPES } from '../src/game/types';
 
 const require = createRequire(import.meta.url);
 // genshin-db uses CommonJS; we use createRequire to load it in an ESM script.
@@ -59,10 +59,11 @@ const SUBSTAT_TO_KEY: Record<string, string> = {
 };
 
 // Allowlists: lowercase the genshindb value, then skip anything non-standard.
-// `ELEMENTS` and `BUILD_LEVELS` come from the app's own domain types so the
-// snapshot can never be built against a list the app doesn't recognise.
+// `ELEMENTS`, `WEAPON_TYPES` and `BUILD_LEVELS` come from the app's own domain
+// types so the snapshot can never be built against a list the app doesn't
+// recognise.
 const ELEMENT_NAMES: readonly string[] = ELEMENTS;
-const WEAPON_TYPES = ['sword', 'claymore', 'polearm', 'bow', 'catalyst'];
+const WEAPON_TYPE_NAMES: readonly string[] = WEAPON_TYPES;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -271,6 +272,13 @@ function buildCharacters() {
     const element = String(c.elementText).toLowerCase();
     if (!ELEMENT_NAMES.includes(element)) continue; // skip non-standard elements
 
+    // Same `weaponText` field the weapon builder below reads, so the two sides
+    // of the "can this character hold this weapon?" comparison are normalised
+    // identically. A character whose weapon class isn't one of the five is not
+    // a playable build target, so drop them rather than emit an unmatchable type.
+    const weaponType = String(c.weaponText).toLowerCase();
+    if (!WEAPON_TYPE_NAMES.includes(weaponType)) continue;
+
     const substattKey = SUBSTAT_TO_KEY[c.substatText] ?? null;
 
     const baseByLevel: Record<string, Record<string, number>> = {};
@@ -308,6 +316,7 @@ function buildCharacters() {
       key,
       name,
       element,
+      weaponType,
       baseByLevel,
     });
   }
@@ -328,7 +337,7 @@ function buildWeapons() {
     if (!w) continue;
 
     const type = String(w.weaponText).toLowerCase();
-    if (!WEAPON_TYPES.includes(type)) continue;
+    if (!WEAPON_TYPE_NAMES.includes(type)) continue;
 
     const substatKey = SUBSTAT_TO_KEY[w.mainStatText] ?? null;
 
@@ -363,6 +372,10 @@ function buildWeapons() {
       key,
       name,
       type,
+      // Star rating, carried so a weapon picker can rank/annotate options
+      // without a second data source. Non-numeric ratings never occur in the
+      // five weapon classes above, but coerce anyway rather than emit a string.
+      rarity: Number(w.rarity) || 0,
       byLevel,
     });
   }

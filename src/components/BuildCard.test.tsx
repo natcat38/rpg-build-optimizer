@@ -146,3 +146,50 @@ describe('BuildCard non-finite scores', () => {
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
   });
 });
+
+const markReq: OptimizeRequest = {
+  characterKey: 'c',
+  weaponKey: 'w',
+  buildLevel: 90,
+  constraints: {},
+  objective: 'crit_value',
+};
+
+describe('BuildCard slot marks', () => {
+  it('draws every mark, all decorative, with no stray accessible name', () => {
+    const { container } = render(
+      <BuildCard build={build} request={markReq} artifacts={artifacts} />,
+    );
+    const svgs = container.querySelectorAll('svg');
+    // Five in the piece list plus five in the fingerprint row beside the score.
+    expect(svgs.length).toBeGreaterThanOrEqual(10);
+    for (const svg of svgs)
+      expect(svg.getAttribute('aria-hidden')).toBe('true');
+    // The slot names are still spelled out — the marks add to the text, never
+    // replace it.
+    expect(screen.getByText('Flower')).toBeInTheDocument();
+    expect(screen.getByText('Goblet')).toBeInTheDocument();
+  });
+
+  it('renders a delta chip only when given one', () => {
+    const { rerender } = render(
+      <BuildCard
+        build={build}
+        request={markReq}
+        artifacts={artifacts}
+        rank={1}
+      />,
+    );
+    expect(screen.queryByText(/^−/)).toBeNull();
+    rerender(
+      <BuildCard
+        build={build}
+        request={markReq}
+        artifacts={artifacts}
+        rank={2}
+        delta={-12.5}
+      />,
+    );
+    expect(screen.getByText('−12.5')).toBeInTheDocument();
+  });
+});
