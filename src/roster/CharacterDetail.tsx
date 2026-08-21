@@ -76,9 +76,9 @@ export function CharacterDetail({
 
   return (
     <div className="space-y-4">
-      {/* Segmented control, mirroring GameSwitcher — the app's one sanctioned
-          "pick one of N views" idiom. Deliberately unnumbered: numbered badges
-          mark real sequences (the page steps), and this is a menu. */}
+      {/* Segmented control — the app's one sanctioned "pick one of N views"
+          idiom. Deliberately unnumbered: numbered badges mark real sequences
+          (the page steps), and this is a menu. */}
       <div
         role="tablist"
         aria-label="Character detail"

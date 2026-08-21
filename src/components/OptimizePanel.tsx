@@ -5,8 +5,6 @@ import { genshinAdapter } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
 import { useOptimizeRequest } from '../state/optimizeRequest';
-import { useGame } from '../state/game';
-import { getGame } from '../game/registry';
 import {
   formatSetName,
   isPctStat,
@@ -143,7 +141,6 @@ export function OptimizePanel({
 }) {
   const artifacts = useInventory((s) => s.artifacts);
   const rosterEntries = useRoster((s) => s.entries);
-  const game = getGame(useGame((s) => s.gameId));
   const chars = useMemo(() => genshinAdapter.characters(), []);
   const weapons = useMemo(() => genshinAdapter.weapons(), []);
 
@@ -195,7 +192,7 @@ export function OptimizePanel({
   const hasArtifacts = artifacts.length > 0;
   const canRun = hasArtifacts && !!characterKey;
   const hint = !hasArtifacts
-    ? `Add or import ${game.gearNounPlural.toLowerCase()} before optimising.`
+    ? 'Add or import artifacts before optimising.'
     : !characterKey
       ? 'Pick a character to start.'
       : null;
@@ -306,7 +303,7 @@ export function OptimizePanel({
           <p className="text-sm text-muted">
             Searching{' '}
             <span className="font-semibold text-paper">{artifacts.length}</span>{' '}
-            {game.gearNounPlural.toLowerCase()} for the exact optimum.
+            artifacts for the exact optimum.
           </p>
         )}
         <div className="flex gap-2">

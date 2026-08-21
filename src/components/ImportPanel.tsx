@@ -5,8 +5,6 @@ import { fetchUidArtifacts, type UidError } from '../import/uid';
 import { mergeNew } from '../import/dedupe';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
-import { useGame } from '../state/game';
-import { getGame } from '../game/registry';
 import { scrollToId } from '../ui/scroll';
 import type { Artifact } from '../game/types';
 
@@ -23,7 +21,6 @@ const UID_ERRORS: Record<UidError['error'], string> = {
 
 export function ImportPanel() {
   const { artifacts, addMany } = useInventory();
-  const game = getGame(useGame((s) => s.gameId));
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [uid, setUid] = useState('');
@@ -36,9 +33,7 @@ export function ImportPanel() {
     const fresh = mergeNew(useInventory.getState().artifacts, incoming);
     addMany(fresh);
     setErr(null);
-    setMsg(
-      `Imported ${fresh.length} ${game.gearNounPlural.toLowerCase()}.${suffix}`,
-    );
+    setMsg(`Imported ${fresh.length} artifacts.${suffix}`);
   }
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
@@ -100,10 +95,7 @@ export function ImportPanel() {
         </span>
         <span className="chip">
           <span className="font-bold text-accent">{count}</span>
-          {count === 1
-            ? game.gearNoun.toLowerCase()
-            : game.gearNounPlural.toLowerCase()}{' '}
-          loaded
+          {count === 1 ? 'artifact' : 'artifacts'} loaded
         </span>
       </div>
 

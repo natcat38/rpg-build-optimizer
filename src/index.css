@@ -3,21 +3,15 @@
 @tailwind utilities;
 
 @layer base {
+  /* Reading signal for the one live game. Values are "r g b" triplets so
+     Tailwind's rgb(var(--x) / <alpha-value>) color functions can apply opacity.
+     A second game would layer a [data-game] override over these defaults —
+     src/game/registry.ts documents that seam. */
   :root {
     color-scheme: dark;
-  }
-
-  /* Per-game reading signal. Values are "r g b" triplets so Tailwind's
-     rgb(var(--x) / <alpha-value>) color functions can apply opacity. */
-  [data-game='genshin'] {
     --accent: 242 182 76;
     --accent-bright: 255 207 118;
     --accent-deep: 185 133 38;
-  }
-  [data-game='wuwa'] {
-    --accent: 76 214 192;
-    --accent-bright: 126 228 212;
-    --accent-deep: 47 156 138;
   }
 
   html {
@@ -120,17 +114,14 @@
     min-height: 2.75rem; /* 44px: the minimum comfortable touch target */
     touch-action: manipulation; /* no double-tap-zoom delay on mobile */
   }
-  /* A CSS background-image can't read a custom property, so the chevron is
-     duplicated per game rather than themed by --accent like everything else. */
+  /* A CSS background-image can't read a custom property, so the chevron's
+     stroke is the accent hex written out rather than themed by --accent like
+     everything else. A second game would override this rule alongside the
+     accent triplet above. */
   select.field {
     @apply cursor-pointer appearance-none bg-no-repeat pr-9;
     background-position: right 0.75rem center;
-  }
-  [data-game='genshin'] select.field {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f2b64c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  }
-  [data-game='wuwa'] select.field {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234cd6c0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   }
   select.field option {
     background-color: #1b1e27;
