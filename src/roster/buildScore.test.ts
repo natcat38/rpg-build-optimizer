@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeBuildScore, band } from './buildScore';
+import { computeBuildScore, band, bestBuiltCharacter } from './buildScore';
 import type { RosterEntry } from '../import/good';
 import type { Artifact, StatKey } from '../game/types';
 
@@ -109,5 +109,28 @@ describe('band', () => {
     expect(band(69.9)).toBe('partial');
     expect(band(40)).toBe('partial');
     expect(band(39.9)).toBe('unbuilt');
+  });
+});
+
+describe('bestBuiltCharacter', () => {
+  const roster: Record<string, RosterEntry> = {
+    amber: { buildLevel: 20 },
+    furina: { buildLevel: 90, weaponKey: 'aquila_favonia' },
+  };
+
+  it('picks the highest-scoring character and hands back their weapon', () => {
+    const best = bestBuiltCharacter(roster, []);
+    expect(best?.characterKey).toBe('furina');
+    expect(best?.weaponKey).toBe('aquila_favonia');
+  });
+
+  it('is undefined for an empty roster — nothing to prefer over the default', () => {
+    expect(bestBuiltCharacter({}, [])).toBeUndefined();
+  });
+
+  it('omits the weapon when the entry has none equipped', () => {
+    const best = bestBuiltCharacter({ amber: { buildLevel: 90 } }, []);
+    expect(best?.characterKey).toBe('amber');
+    expect(best?.weaponKey).toBeUndefined();
   });
 });

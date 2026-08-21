@@ -7,6 +7,9 @@ export interface SnapshotCharacter {
   key: string;
   name: string;
   element: string;
+  /** Weapon class this character can equip — same vocabulary as
+   *  `SnapshotWeapon.type`, so the two compare directly. */
+  weaponType: string;
   baseByLevel: Record<string, Record<string, number>>;
 }
 
@@ -14,6 +17,7 @@ export interface SnapshotWeapon {
   key: string;
   name: string;
   type: string;
+  rarity: number;
   byLevel: Record<string, Record<string, number>>;
 }
 

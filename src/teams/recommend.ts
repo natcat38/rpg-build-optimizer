@@ -7,12 +7,7 @@ import type { CompArchetype, Role } from './types';
 
 export interface TeamInstance {
   archetypeId: string;
-  members: {
-    characterKey: string;
-    role: Role;
-    optionWeight: number;
-    buildScore: number;
-  }[]; // length 4, distinct
+  members: { characterKey: string; role: Role; buildScore: number }[]; // length 4, distinct
   score: number;
 }
 
@@ -33,7 +28,7 @@ const TIER_WEIGHT: Record<CompArchetype['tier'], number> = {
 
 function teamScore(
   arch: CompArchetype,
-  contributions: number[], // optionWeight × buildScore per slot
+  contributions: number[], // option weight × buildScore per slot
 ): number {
   const mean = contributions.reduce((a, b) => a + b, 0) / contributions.length;
   return TIER_WEIGHT[arch.tier] * mean;
@@ -41,7 +36,7 @@ function teamScore(
 
 /**
  * Fill each slot with the owned, non-excluded option maximizing
- * `optionWeight × buildScore`, never reusing a character.
+ * `option weight × buildScore`, never reusing a character.
  *
  * // ponytail: greedy slot fill in listed order — swap for an exact 4-slot
  * // assignment if curation ever makes greedy visibly wrong.
@@ -83,7 +78,6 @@ export function instantiate(
     members.push({
       characterKey: best.characterKey,
       role: slot.role,
-      optionWeight: best.weight,
       buildScore: best.score,
     });
     contributions.push(best.weight * best.score);
@@ -115,7 +109,6 @@ export function instantiate(
 
 export interface AbyssRecommendation {
   teams: [TeamInstance, TeamInstance] | null;
-  singles: TeamInstance[];
   gaps: ArchetypeGap[];
 }
 
@@ -138,6 +131,9 @@ export function recommendAbyss(
     if ('missing' in out) gaps.push(out.missing);
     else singles.push(out);
   }
+  // The pair search below keeps the first pair to reach a given weaker score,
+  // so ordering the halves best-first is what breaks ties toward the stronger
+  // first half.
   singles.sort((a, b) => b.score - a.score);
   gaps.sort((a, b) => b.bestPossibleScore - a.bestPossibleScore);
 
@@ -156,5 +152,5 @@ export function recommendAbyss(
       }
     }
   }
-  return { teams: best, singles, gaps };
+  return { teams: best, gaps };
 }

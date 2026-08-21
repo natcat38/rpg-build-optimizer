@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { OptimizePanel } from './OptimizePanel';
+import { genshinAdapter } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
 import { useOptimizeRequest } from '../state/optimizeRequest';
+import { META_TARGETS } from '../meta/metaTargets';
 import { currentRequest } from '../state/optimizeRequest';
 
 describe('OptimizePanel', () => {
@@ -14,9 +16,15 @@ describe('OptimizePanel', () => {
     useOptimizeRequest.getState().reset();
   });
 
-  it('disables Optimise with a hint when no artifacts exist', () => {
-    render(<OptimizePanel onRun={() => {}} running={false} />);
-    expect(screen.getByRole('button', { name: /Optimise/i })).toBeDisabled();
+  // aria-disabled, not `disabled`: going disabled mid-run drops focus to
+  // <body>. The guard is an early return in the click handler.
+  it('blocks Optimise with a hint when no artifacts exist', async () => {
+    const onRun = vi.fn();
+    render(<OptimizePanel onRun={onRun} running={false} />);
+    const btn = screen.getByRole('button', { name: /Optimise/i });
+    expect(btn).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(btn);
+    expect(onRun).not.toHaveBeenCalled();
     expect(
       screen.getByText(/Add or import artifacts before optimising\./i),
     ).toBeInTheDocument();
@@ -34,7 +42,10 @@ describe('OptimizePanel', () => {
       subStats: [],
     });
     render(<OptimizePanel onRun={() => {}} running={false} />);
-    expect(screen.getByRole('button', { name: /Optimise/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /Optimise/i })).toHaveAttribute(
+      'aria-disabled',
+      'false',
+    );
   });
 });
 
@@ -172,7 +183,8 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
     const user = userEvent.setup();
     render(<OptimizePanel onRun={() => {}} running={false} />);
 
-    // Default character trigger shows the first adapter entry ("Aino").
+    // The trigger opens on the curated marquee default (Furina), not on
+    // whatever the dataset happens to sort first.
     await user.click(screen.getByRole('combobox', { name: 'Character' }));
     await user.type(
       screen.getByRole('combobox', { name: 'Character' }),
@@ -300,5 +312,112 @@ describe('avg_damage objective', () => {
       within(maximise).queryByRole('option', { name: /Average damage/i }),
     ).not.toBeInTheDocument();
     expect(useOptimizeRequest.getState().objective).not.toBe('avg_damage');
+  });
+});
+
+describe('OptimizePanel weapon typing', () => {
+  beforeEach(() => {
+    useInventory.getState().clear();
+    useOptimizeRequest.getState().reset();
+    useRoster.getState().clear();
+  });
+
+  it('offers only weapons the selected character can equip', async () => {
+    const user = userEvent.setup();
+    // Nahida is a catalyst user; The Catch is a polearm.
+    act(() => useOptimizeRequest.getState().setCharacterKey('nahida'));
+    render(<OptimizePanel onRun={() => {}} running={false} />);
+
+    await user.click(screen.getByRole('combobox', { name: 'Weapon' }));
+    const values = within(screen.getByRole('listbox', { name: 'Weapon' }))
+      .getAllByRole('option')
+      .map((o) => o.textContent ?? '');
+    expect(values.length).toBeGreaterThan(0);
+    expect(values.some((v) => /A Thousand Floating Dreams/.test(v))).toBe(true);
+    expect(values.some((v) => /The Catch/.test(v))).toBe(false);
+    expect(values.some((v) => /Aquila Favonia/.test(v))).toBe(false);
+    // Every listed weapon really is a catalyst.
+    for (const w of genshinAdapter.weapons()) {
+      if (!values.some((v) => v.startsWith(w.name))) continue;
+      expect(w.type, `${w.name} listed for a catalyst user`).toBe('catalyst');
+    }
+  });
+
+  it('re-picks a legal weapon when the character changes to another class', async () => {
+    const user = userEvent.setup();
+    render(<OptimizePanel onRun={() => {}} running={false} />);
+    // The default pair is a sword user with a sword.
+    expect(
+      genshinAdapter.weapon(useOptimizeRequest.getState().weaponKey)?.type,
+    ).toBe('sword');
+
+    await user.click(screen.getByRole('combobox', { name: 'Character' }));
+    await user.type(
+      screen.getByRole('combobox', { name: 'Character' }),
+      'Nahida',
+    );
+    await user.click(screen.getByText(/^Nahida$/));
+
+    const after = useOptimizeRequest.getState();
+    expect(after.characterKey).toBe('nahida');
+    expect(genshinAdapter.canEquip('nahida', after.weaponKey)).toBe(true);
+  });
+
+  it("prefers the roster's equipped weapon over the first legal one", async () => {
+    useRoster.getState().setRoster({
+      raiden_shogun: { weaponKey: 'engulfing_lightning', buildLevel: 90 },
+    });
+    render(<OptimizePanel onRun={() => {}} running={false} />);
+    act(() => useOptimizeRequest.getState().setCharacterKey('raiden_shogun'));
+
+    await waitFor(() =>
+      expect(useOptimizeRequest.getState().weaponKey).toBe(
+        'engulfing_lightning',
+      ),
+    );
+  });
+
+  it('falls back to the full list for a character the snapshot does not carry', async () => {
+    const user = userEvent.setup();
+    act(() => useOptimizeRequest.getState().setCharacterKey('zzz_not_meta'));
+    render(<OptimizePanel onRun={() => {}} running={false} />);
+
+    await user.click(screen.getByRole('combobox', { name: 'Weapon' }));
+    // Scoped to the weapon listbox — the two native <select>s on this panel
+    // contribute options of their own.
+    const list = screen.getByRole('listbox', { name: 'Weapon' });
+    expect(within(list).getAllByRole('option').length).toBe(
+      genshinAdapter.weapons().length,
+    );
+  });
+});
+
+describe('OptimizePanel objective coverage', () => {
+  beforeEach(() => {
+    useInventory.getState().clear();
+    useOptimizeRequest.getState().reset();
+  });
+
+  // "(Recommended)" is drawn on the option whose value matches the recipe's
+  // objective — so a recipe naming an objective the dropdown doesn't offer
+  // (hp_pct for Hu Tao, def_pct for Noelle) recommended nothing at all, and
+  // the user couldn't select the metric the app itself told them to use.
+  it('offers every objective a meta recipe can recommend', () => {
+    render(<OptimizePanel onRun={() => {}} running={false} />);
+    const select = screen.getByRole('combobox', { name: /Maximise/i });
+    const offered = new Set(
+      (within(select).getAllByRole('option') as HTMLOptionElement[]).map(
+        (o) => o.value,
+      ),
+    );
+    for (const meta of Object.values(META_TARGETS)) {
+      // avg_damage is the deliberate exception: it is appended per character,
+      // only where a curated damage profile exists.
+      if (meta.objective === 'avg_damage') continue;
+      expect(
+        offered,
+        `${meta.characterKey} recommends ${meta.objective}`,
+      ).toContain(meta.objective);
+    }
   });
 });

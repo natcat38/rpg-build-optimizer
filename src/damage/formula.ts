@@ -41,6 +41,10 @@ function levelMult(charLevel: number): number {
   return LEVEL_MULT[nearest];
 }
 
+// The six helpers below are used internally by `hitFactor`/`sharedFactor`;
+// their *exports* exist only so the unit tests can pin each factor of the KQM
+// formula against the published one, term by term.
+
 /** Total ATK/HP/DEF: the percentage bonus scales the character+weapon base
  *  only; everything the artifacts add beyond that base is flat. */
 export function effectiveStat(
@@ -131,6 +135,8 @@ function hitFactor(
   return baseDmg * (1 + bonus) * ampMult(hit.reaction, em);
 }
 
+/** One hit's damage in isolation — used only by the formula tests; the search
+ *  path goes through `targetFunctionScore`, which hoists the shared factor. */
 export function computeHitDamage(
   base: StatVec,
   t: StatVec,

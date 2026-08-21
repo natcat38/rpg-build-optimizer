@@ -26,8 +26,10 @@ describe('App shell', () => {
   it('shows a friendly fallback for an unreadable shared link', async () => {
     window.history.pushState({}, '', '/?b=garbage!!');
     render(<App />);
+    // The persistent role="alert" region announces the short form; this is
+    // the visible Callout's longer one.
     expect(
-      await screen.findByText(/This shared build couldn't be read/i),
+      await screen.findByText(/it may be from a newer version/i),
     ).toBeInTheDocument();
     window.history.pushState({}, '', '/');
   });
@@ -116,7 +118,12 @@ describe('App — step nav', () => {
     useInventory.getState().clear();
     useRoster.getState().clear();
   });
-  afterEach(() => useRoster.getState().clear());
+  afterEach(() => {
+    useRoster.getState().clear();
+    // One test stubs IntersectionObserver; restore it here so a failure
+    // inside that test can't leak the stub into the rest of the file.
+    vi.unstubAllGlobals();
+  });
 
   it('renders a sticky step nav with anchors when a roster exists', () => {
     useRoster.getState().setRoster({ amber: { level: 90 } });
@@ -129,8 +136,121 @@ describe('App — step nav', () => {
     );
   });
 
-  it('has no step nav before an import', () => {
+  it('shows the step nav before an import, with the roster steps locked', () => {
     render(<App />);
-    expect(screen.queryByRole('navigation', { name: /steps/i })).toBeNull();
+    const nav = screen.getByRole('navigation', { name: /steps/i });
+    // Load and Optimise exist without a roster, so the nav has somewhere to go.
+    expect(
+      within(nav).getByRole('link', { name: /load/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(nav).getByRole('link', { name: /optimise/i }),
+    ).toBeInTheDocument();
+    // Roster/Teams/Plan are real disabled buttons, not links: there is
+    // nothing to scroll to. The step name has to survive into the accessible
+    // name, and the "why" has to be exposed as a description rather than a
+    // mouse-only `title`.
+    const locked = within(nav).getAllByRole('button');
+    expect(locked).toHaveLength(3);
+    for (const chip of locked) expect(chip).toBeDisabled();
+    expect(
+      within(nav).getByRole('button', { name: /roster/i }),
+    ).toHaveAccessibleDescription(/unlock this step/i);
+    expect(within(nav).queryByRole('link', { name: /roster/i })).toBeNull();
+  });
+
+  it('leaves Results out of the numbered steps', () => {
+    useRoster.getState().setRoster({ amber: { level: 90 } });
+    render(<App />);
+    const nav = screen.getByRole('navigation', { name: /steps/i });
+    expect(
+      within(nav).getByRole('link', { name: /optimise/i }),
+    ).toHaveTextContent('05');
+    // No results yet, so no Results chip at all — and when there is one it
+    // carries no number.
+    expect(within(nav).queryByText('06')).toBeNull();
+  });
+
+  it('marks the section in view with aria-current, topmost first', () => {
+    // jsdom has no IntersectionObserver, and a real browser only runs one on
+    // a visible page — so drive the callback directly.
+    type Cb = (entries: Partial<IntersectionObserverEntry>[]) => void;
+    const callbacks: Cb[] = [];
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(cb: Cb) {
+          callbacks.push(cb);
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    // Restored in afterEach below rather than at the end of the test body: an
+    // assertion failure above would otherwise leave the stub installed for
+    // every later test in the file.
+    useRoster.getState().setRoster({ amber: { level: 90 } });
+    render(<App />);
+    const nav = screen.getByRole('navigation', { name: /steps/i });
+    const fire = (...entries: Partial<IntersectionObserverEntry>[]) =>
+      act(() => callbacks[callbacks.length - 1](entries));
+
+    fire({
+      isIntersecting: true,
+      target: document.getElementById('step-teams')!,
+    });
+    expect(within(nav).getByRole('link', { name: /teams/i })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
+
+    // Two sections straddling the band: the earlier one in page order wins,
+    // because aria-current needs exactly one answer.
+    fire({
+      isIntersecting: true,
+      target: document.getElementById('step-roster')!,
+    });
+    expect(within(nav).getByRole('link', { name: /roster/i })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
+    expect(
+      within(nav).getByRole('link', { name: /teams/i }),
+    ).not.toHaveAttribute('aria-current');
+  });
+});
+
+describe('App — roster-aware default selection', () => {
+  beforeEach(() => {
+    useInventory.getState().clear();
+    useOptimizeRequest.getState().reset();
+    useRoster.getState().clear();
+    window.history.pushState({}, '', '/');
+  });
+  afterEach(() => useRoster.getState().clear());
+
+  it('opens on the curated marquee pair with no roster', () => {
+    render(<App />);
+    expect(useOptimizeRequest.getState().characterKey).toBe('furina');
+  });
+
+  it('switches to the best-built rostered character once a roster loads', () => {
+    useRoster.getState().setRoster({
+      amber: { buildLevel: 20 },
+      raiden_shogun: { weaponKey: 'engulfing_lightning', buildLevel: 90 },
+    });
+    render(<App />);
+    const s = useOptimizeRequest.getState();
+    expect(s.characterKey).toBe('raiden_shogun');
+    expect(s.weaponKey).toBe('engulfing_lightning');
+  });
+
+  it('never overwrites a selection the reader already made', () => {
+    useOptimizeRequest.getState().setCharacterKey('navia');
+    useRoster.getState().setRoster({
+      raiden_shogun: { weaponKey: 'engulfing_lightning', buildLevel: 90 },
+    });
+    render(<App />);
+    expect(useOptimizeRequest.getState().characterKey).toBe('navia');
   });
 });

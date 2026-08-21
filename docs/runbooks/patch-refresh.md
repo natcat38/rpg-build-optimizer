@@ -6,8 +6,8 @@ tables underneath it are not.
 > **Team recommendations are per-patch by design.** Abyss blessings, Imaginarium
 > Theater element restrictions and Stygian Onslaught bosses change every patch, so
 > _this runbook — not code — is what keeps them honest_, until per-mode modifiers are
-> modelled as data (see the deferred D2 work in
-> `docs/superpowers/plans/2026-08-20-ux-overhaul-and-docs-refresh.md`).
+> modelled as data (deferred; the shipped decision is
+> [ADR-0018](../adr/0018-mode-aware-team-recommendation.md)).
 
 ## Checklist
 
@@ -25,7 +25,8 @@ tables underneath it are not.
    visible to users.
 
 3. **Re-verify each curated table** against its `source` URL and the patch notes:
-   - `src/meta/metaTargets.ts` — build recipes (set, main stats, ER floor, objective).
+   - `src/meta/metaTargets.ts` — build recipes (set, main stats, ER floor, objective,
+     stat targets, signature weapon).
      Re-check any character whose kit was reworked.
    - `src/teams/comps.ts` — comp archetypes. New Abyss blessings can change which
      archetypes are top-tier, so **re-rank the `tier` values**, not just the rosters.

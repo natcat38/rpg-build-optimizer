@@ -7,11 +7,17 @@ import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest } from '../state/optimizeRequest';
 import { genshinAdapter } from '../game/genshin/adapter';
-import { computeBuildScore, band, BAND_STYLE } from './buildScore';
+import { computeBuildScore, band, groupByLocation } from './buildScore';
 import { AppDrawer } from '../components/ui/Drawer';
 import { CharacterDetail } from './CharacterDetail';
 import { scrollToId } from '../ui/scroll';
-import type { Artifact } from '../game/types';
+import { BAND_TONE, bandLabel, elementLabel, formatScore } from '../labels';
+import { Badge } from '../components/ui/Badge';
+import { Meter } from '../components/ui/Meter';
+
+/** Artifact count (10) + artifact quality (30) in `computeBuildScore` — the two
+ *  components a character with nothing equipped can never earn. */
+const UNSCORED_WITHOUT_GEAR = 40;
 
 function Row({
   characterKey,
@@ -19,6 +25,7 @@ function Row({
   element,
   weaponName,
   total,
+  equippedCount,
   onOpen,
 }: {
   characterKey: string;
@@ -26,44 +33,61 @@ function Row({
   element?: string;
   weaponName?: string;
   total: number;
+  equippedCount: number;
   onOpen: (characterKey: string) => void;
 }) {
   const b = band(total);
   return (
-    <li className="rounded-xl border border-white/10 bg-surface-700/40">
+    <li className="card transition-colors hover:border-accent/30 hover:bg-surface-700/70">
       <button
-        className="flex w-full items-center gap-3 px-4 py-3 text-left"
+        className="focus-ring flex w-full flex-col items-stretch gap-2 rounded-xl px-4 py-3 text-left transition-transform active:scale-[0.995] sm:flex-row sm:items-center sm:gap-3"
         onClick={() => onOpen(characterKey)}
       >
+        {/* No <h3>: a heading inside a button is stripped of its heading role
+            anyway, and 16 identical rows are not a useful heading outline. */}
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-display text-sm font-bold text-paper">
+          <span className="block truncate font-display text-sm font-bold text-paper">
             {name}
-          </h3>
-          <p className="truncate text-xs text-muted">
-            {[element, weaponName].filter(Boolean).join(' · ') ||
-              'No weapon equipped'}
-          </p>
-        </div>
-        <div className="flex-none">
-          <span className="font-mono text-lg font-bold text-accent-bright">
-            {total.toFixed(0)}
           </span>
-          {/* The number is the accessible value; this is the same figure again. */}
-          <div
-            aria-hidden="true"
-            className="mt-0.5 h-0.5 w-12 overflow-hidden rounded-full bg-white/5"
-          >
-            <div
-              className="h-full rounded-full bg-accent/60"
-              style={{ width: `${Math.min(Math.max(total, 0), 100)}%` }}
-            />
-          </div>
+          <span className="block truncate text-xs text-muted">
+            {[element && elementLabel(element), weaponName]
+              .filter(Boolean)
+              .join(' · ') || 'No weapon equipped'}
+          </span>
+          {equippedCount === 0 && (
+            <span className="block text-xs text-flux-bright">
+              No equipped gear found — {UNSCORED_WITHOUT_GEAR} pts unscored
+            </span>
+          )}
         </div>
-        <span
-          className={`rounded-lg border px-2 py-0.5 text-[0.7rem] font-semibold ${BAND_STYLE[b]}`}
-        >
-          {b}
-        </span>
+        <div className="flex flex-none items-center gap-3">
+          <div className="flex-none">
+            {/* "/ 100" is visible text, so it lands in the row's accessible
+                name too — a bare "60" said nothing about the scale. */}
+            <span className="font-mono text-lg font-bold text-accent-bright">
+              {formatScore(total, 0)}
+              <span className="text-xs text-muted"> / 100</span>
+            </span>
+            {/* Decorative restatement of the number above. Hidden below sm:
+                it is what squeezed the row's content at 375px. */}
+            <Meter value={total} className="mt-0.5 hidden w-12 sm:block" />
+          </div>
+          <Badge tone={BAND_TONE[b]}>{bandLabel(b)}</Badge>
+          <svg
+            className="ml-auto flex-none text-muted sm:ml-0"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </div>
       </button>
     </li>
   );
@@ -82,34 +106,28 @@ export function RosterView() {
   const [showAll, setShowAll] = useState(false);
   const [openKey, setOpenKey] = useState<string | null>(null);
 
-  const byLocation = useMemo(() => {
-    const m: Record<string, Artifact[]> = {};
-    for (const a of artifacts) if (a.location) (m[a.location] ??= []).push(a);
-    return m;
-  }, [artifacts]);
+  const byLocation = useMemo(() => groupByLocation(artifacts), [artifacts]);
 
-  const rows = useMemo(() => {
-    const chars = new Map(genshinAdapter.characters().map((c) => [c.key, c]));
-    const weapons = new Map(genshinAdapter.weapons().map((w) => [w.key, w]));
-    return Object.entries(entries)
-      .map(([key, entry]) => {
-        const score = computeBuildScore(entry, byLocation[key] ?? []);
-        return {
+  const rows = useMemo(
+    () =>
+      Object.entries(entries)
+        .map(([key, entry]) => ({
           characterKey: key,
-          name: chars.get(key)?.name ?? key,
-          element: chars.get(key)?.element,
+          name: genshinAdapter.characterName(key),
+          element: genshinAdapter.character(key)?.element,
           weaponName: entry.weaponKey
-            ? weapons.get(entry.weaponKey)?.name
+            ? genshinAdapter.weapon(entry.weaponKey)?.name
             : undefined,
-          total: score.total,
-        };
-      })
-      .sort((a, b) => b.total - a.total);
-  }, [entries, byLocation]);
+          equippedCount: (byLocation[key] ?? []).length,
+          total: computeBuildScore(entry, byLocation[key] ?? []).total,
+        }))
+        .sort((a, b) => b.total - a.total),
+    [entries, byLocation],
+  );
 
   if (rows.length === 0) {
     return (
-      <div className="panel">
+      <div className="panel panel-md">
         <p className="text-sm text-muted">
           Import a GOOD file to see your roster.
         </p>
@@ -121,11 +139,13 @@ export function RosterView() {
   const openEntry = openKey ? entries[openKey] : undefined;
 
   return (
-    <div className="panel space-y-3">
+    <div className="panel panel-md space-y-3">
+      {/* The Section hint above already says what this list is and how it is
+          ordered; this line only adds what the hint can't — the formula. */}
       <p className="text-sm text-muted">
+        Score weighs level, talents, weapon, and the artifacts each of your{' '}
         <span className="font-semibold text-paper">{rows.length}</span>{' '}
-        characters owned. Score weighs level, talents, weapon, and the artifacts
-        each has equipped.
+        characters has equipped.
       </p>
       <ul className="space-y-2">
         {visible.map((r) => (
@@ -133,10 +153,7 @@ export function RosterView() {
         ))}
       </ul>
       {rows.length > COLLAPSED_COUNT && !showAll && (
-        <button
-          className="flex min-h-11 w-full items-center justify-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-muted transition hover:text-paper"
-          onClick={() => setShowAll(true)}
-        >
+        <button className="btn-ghost w-full" onClick={() => setShowAll(true)}>
           <span aria-hidden="true">▶</span> Show all {rows.length} characters,
           sorted by score
         </button>

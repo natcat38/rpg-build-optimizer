@@ -1,5 +1,39 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useOptimizeRequest, currentRequest } from './optimizeRequest';
+import {
+  useOptimizeRequest,
+  currentRequest,
+  isDefaultSelection,
+  DEFAULT_SELECTION,
+} from './optimizeRequest';
+import { genshinAdapter } from '../game/genshin/adapter';
+import { useRoster } from './roster';
+import { META_TARGETS } from '../meta/metaTargets';
+
+describe('optimizeRequest defaults', () => {
+  beforeEach(() => useOptimizeRequest.getState().reset());
+
+  // Sort order used to choose these, which opened the app on "Aino +
+  // Absolution" — a claymore user holding a sword.
+  it('opens on a curated marquee pair, not the first entry by sort order', () => {
+    const s = useOptimizeRequest.getState();
+    expect(s.characterKey).toBe('furina');
+    expect(s.weaponKey).toBe(META_TARGETS.furina.weapon);
+    expect(s.characterKey).not.toBe(genshinAdapter.characters()[0].key);
+    expect(s.weaponKey).not.toBe(genshinAdapter.weapons()[0].key);
+  });
+
+  it('opens on a pair the character can actually equip', () => {
+    const s = useOptimizeRequest.getState();
+    expect(genshinAdapter.canEquip(s.characterKey, s.weaponKey)).toBe(true);
+  });
+
+  it('isDefaultSelection tells an untouched selection from a chosen one', () => {
+    expect(isDefaultSelection(useOptimizeRequest.getState())).toBe(true);
+    useOptimizeRequest.getState().setCharacterKey('navia');
+    expect(isDefaultSelection(useOptimizeRequest.getState())).toBe(false);
+    expect(DEFAULT_SELECTION.characterKey).toBe('furina');
+  });
+});
 
 describe('optimizeRequest store', () => {
   beforeEach(() => useOptimizeRequest.getState().reset());
@@ -73,5 +107,107 @@ describe('optimizeRequest store', () => {
     });
     // No ER floor in constraints.
     expect(currentRequest(s).constraints.minStats?.er_pct).toBeUndefined();
+  });
+});
+
+describe('setMinER rejects a floor no build can meet', () => {
+  beforeEach(() => useOptimizeRequest.getState().reset());
+
+  // `Number('1e400')` is Infinity and `Number('Infinity')` parses: both are
+  // numbers, not NaN, so the old `Number.isNaN` guard stored them as a
+  // threshold every build fails — the optimiser then returned nothing, with
+  // the field still showing what the user typed.
+  it.each(['1e400', 'Infinity', '-5'])('clears the floor for %s', (input) => {
+    useOptimizeRequest.getState().setMinER('200');
+    expect(useOptimizeRequest.getState().constraints.minStats?.er_pct).toBe(
+      200,
+    );
+    useOptimizeRequest.getState().setMinER(input);
+    expect(useOptimizeRequest.getState().constraints.minStats).toBeUndefined();
+  });
+
+  it('still stores an ordinary floor', () => {
+    useOptimizeRequest.getState().setMinER('0');
+    expect(useOptimizeRequest.getState().constraints.minStats?.er_pct).toBe(0);
+  });
+});
+
+describe('weapon legality lives in the request, not the panel', () => {
+  beforeEach(() => {
+    useOptimizeRequest.getState().reset();
+    useRoster.getState().clear();
+  });
+
+  it('setCharacterKey re-picks a weapon the new character can equip', () => {
+    // Nahida is a catalyst user; the default pair is a sword.
+    useOptimizeRequest.getState().setCharacterKey('nahida');
+    const s = useOptimizeRequest.getState();
+    expect(genshinAdapter.canEquip('nahida', s.weaponKey)).toBe(true);
+  });
+
+  it('keeps a still-legal weapon rather than resetting it', () => {
+    useOptimizeRequest.getState().setCharacterKey('nahida');
+    useOptimizeRequest.getState().setWeaponKey('sacrificial_fragments');
+    useOptimizeRequest.getState().setCharacterKey('klee');
+    expect(useOptimizeRequest.getState().weaponKey).toBe(
+      'sacrificial_fragments',
+    );
+  });
+
+  it("prefers the player's own equipped weapon over the curated pick", () => {
+    useRoster
+      .getState()
+      .setRoster({ raiden_shogun: { weaponKey: 'the_catch' } });
+    useOptimizeRequest.getState().setCharacterKey('raiden_shogun');
+    expect(useOptimizeRequest.getState().weaponKey).toBe('the_catch');
+  });
+
+  it('falls back to the curated meta weapon when the roster has none', () => {
+    useOptimizeRequest.getState().setCharacterKey('navia');
+    expect(useOptimizeRequest.getState().weaponKey).toBe(
+      META_TARGETS.navia.weapon,
+    );
+  });
+
+  it('falls back to the first legal weapon when neither roster nor meta names one', () => {
+    // raiden_shogun's recipe names no signature weapon.
+    expect(META_TARGETS.raiden_shogun.weapon).toBeUndefined();
+    useOptimizeRequest.getState().setCharacterKey('raiden_shogun');
+    expect(
+      genshinAdapter.canEquip(
+        'raiden_shogun',
+        useOptimizeRequest.getState().weaponKey,
+      ),
+    ).toBe(true);
+  });
+
+  it('corrects an illegal pairing a preset asks for', () => {
+    useOptimizeRequest.getState().applyPreset({
+      characterKey: 'nahida',
+      weaponKey: 'the_catch', // a polearm
+      objective: 'crit_value',
+      constraints: {},
+    });
+    const s = useOptimizeRequest.getState();
+    expect(s.characterKey).toBe('nahida');
+    expect(genshinAdapter.canEquip('nahida', s.weaponKey)).toBe(true);
+  });
+
+  it('treats a weapon the snapshot does not carry as illegal', () => {
+    useOptimizeRequest.getState().applyPreset({
+      characterKey: 'nahida',
+      weaponKey: 'not_a_real_weapon',
+      objective: 'crit_value',
+      constraints: {},
+    });
+    expect(
+      genshinAdapter.weapon(useOptimizeRequest.getState().weaponKey),
+    ).toBeTruthy();
+  });
+
+  it('leaves the selection alone for a character the snapshot does not carry', () => {
+    const before = useOptimizeRequest.getState().weaponKey;
+    useOptimizeRequest.getState().setCharacterKey('zzz_not_a_character');
+    expect(useOptimizeRequest.getState().weaponKey).toBe(before);
   });
 });

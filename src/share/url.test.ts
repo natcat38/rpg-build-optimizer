@@ -16,8 +16,11 @@ function toBase64UrlParam(json: string): string {
 }
 
 const request: OptimizeRequest = {
-  characterKey: 'Raiden',
-  weaponKey: 'EngulfingLightning',
+  // Real dataset keys, and a legal pairing: `isOptimizeRequest` now requires
+  // both to resolve and `canEquip` to accept them, because a link the app
+  // can't re-run is not a link (see the guard's own note).
+  characterKey: 'raiden_shogun',
+  weaponKey: 'engulfing_lightning',
   buildLevel: 90,
   constraints: { minStats: { er_pct: 200 } },
   objective: 'crit_value',
@@ -179,6 +182,98 @@ describe('decodeBuild validation', () => {
     expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
   });
 
+  // A shared request is re-runnable, so its constraints reach the optimizer.
+  // meetsSetRequirement and setCeilingVector both read the union's members off
+  // `kind`, so a malformed setRequirement has to die at the trust boundary.
+  it.each([
+    ['an unknown setRequirement kind', { kind: '3pc', setKey: 'A' }],
+    ['a 4pc setRequirement with no setKey', { kind: '4pc' }],
+    [
+      'a 4pc setRequirement with a non-string setKey',
+      { kind: '4pc', setKey: 7 },
+    ],
+    ['a 2+2 setRequirement with one key', { kind: '2+2', setKeys: ['A'] }],
+    [
+      'a 2+2 setRequirement naming the same set twice',
+      {
+        kind: '2+2',
+        setKeys: ['A', 'A'],
+      },
+    ],
+    ['a setRequirement that is not an object', 'EmblemOfSeveredFate'],
+  ])('rejects %s', async (_label, setRequirement) => {
+    const bad = await encodeBuild({
+      request: { ...request, constraints: { setRequirement } as never },
+      build,
+      artifacts,
+    });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('accepts a well-formed 2+2 setRequirement', async () => {
+    const ok = await encodeBuild({
+      request: {
+        ...request,
+        constraints: { setRequirement: { kind: '2+2', setKeys: ['A', 'B'] } },
+      },
+      build,
+      artifacts,
+    });
+    expect(await decodeBuild(ok)).not.toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects an out-of-range critRatioTarget', async () => {
+    const bad = await encodeBuild({
+      request: { ...request, constraints: { critRatioTarget: 42 } },
+      build,
+      artifacts,
+    });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects mainStatLocks with an unknown slot or stat', async () => {
+    for (const locks of [{ helmet: 'crit_rate' }, { sands: 'bogus' }]) {
+      const bad = await encodeBuild({
+        request: { ...request, constraints: { mainStatLocks: locks } as never },
+        build,
+        artifacts,
+      });
+      expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+    }
+  });
+
+  it('rejects an artifact carrying duplicate sub-stat keys', async () => {
+    const bad = await encodeBuild({
+      request,
+      build,
+      artifacts: artifacts.map((a) =>
+        a.id === 'f'
+          ? {
+              ...a,
+              subStats: [
+                { key: 'crit_rate' as const, value: 3 },
+                { key: 'crit_rate' as const, value: 4 },
+              ],
+            }
+          : a,
+      ),
+    });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects an artifact whose sub-stat duplicates its main stat', async () => {
+    const bad = await encodeBuild({
+      request,
+      build,
+      artifacts: artifacts.map((a) =>
+        a.id === 'f'
+          ? { ...a, subStats: [{ key: 'hp' as const, value: 3 }] }
+          : a,
+      ),
+    });
+    expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+
   it('rejects when artifactIds reference an artifact not carried in the snapshot', async () => {
     const bad = await encodeBuild({
       request,
@@ -231,7 +326,7 @@ describe('share url', () => {
     const out = await decodeBuild(param);
     expect(out).not.toHaveProperty('error');
     if (!('error' in out)) {
-      expect(out.request.characterKey).toBe('Raiden');
+      expect(out.request.characterKey).toBe('raiden_shogun');
       expect(out.request.buildLevel).toBe(90);
       expect(out.build.objectiveValue).toBe(240);
       // the five full artifacts survive the round-trip (ADR-0005 self-contained)
@@ -301,5 +396,63 @@ describe('element field (ADR-0014)', () => {
       ],
     });
     expect(await decodeBuild(bad)).toEqual({ error: 'UNREADABLE' });
+  });
+});
+
+describe('a shared link must describe a build the app can re-run', () => {
+  it('rejects a character/weapon pair the character cannot equip', async () => {
+    // Nahida is a catalyst user; The Catch is a polearm. `baseStats` would
+    // happily build the pair and the recipient would be shown a "proven
+    // optimal" result around a weapon that character can never hold.
+    const param = await encodeBuild({
+      request: { ...request, characterKey: 'nahida', weaponKey: 'the_catch' },
+      build,
+      artifacts,
+    });
+    expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it.each(['characterKey', 'weaponKey'])(
+    'rejects a %s the frozen dataset does not carry',
+    async (field) => {
+      const param = await encodeBuild({
+        request: { ...request, [field]: 'not_in_the_snapshot' },
+        build,
+        artifacts,
+      });
+      expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
+    },
+  );
+
+  it('rejects a payload whose five ids all resolve to one circlet', async () => {
+    // The old check asked only whether each id existed *somewhere* in the
+    // array, so five references to one circlet passed and the recipient was
+    // shown that circlet under all five slot headings.
+    const circlet = artifacts.find((a) => a.slot === 'circlet')!;
+    const param = await encodeBuild({
+      request,
+      build: {
+        ...build,
+        artifactIds: {
+          flower: circlet.id,
+          plume: circlet.id,
+          sands: circlet.id,
+          goblet: circlet.id,
+          circlet: circlet.id,
+        },
+      },
+      artifacts: [circlet],
+    });
+    expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects a payload carrying two pieces for the same slot', async () => {
+    const circlet = artifacts.find((a) => a.slot === 'circlet')!;
+    const param = await encodeBuild({
+      request,
+      build,
+      artifacts: [...artifacts, { ...circlet, id: 'circlet-2' }],
+    });
+    expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
   });
 });

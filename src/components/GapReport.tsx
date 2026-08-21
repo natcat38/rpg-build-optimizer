@@ -1,10 +1,11 @@
+import { Callout } from './ui/Callout';
 import type { GapReport as GapReportData } from '../meta/gap';
 
 export function GapReport({ report }: { report: GapReportData }) {
   const allMet =
     report.feasibility.length === 0 && report.shortfalls.length === 0;
   return (
-    <div className="panel space-y-3">
+    <div className="panel panel-md space-y-3">
       <h3 className="font-display text-lg font-bold tracking-wide text-paper">
         Gap vs meta build
       </h3>
@@ -18,7 +19,7 @@ export function GapReport({ report }: { report: GapReportData }) {
         <>
           {report.feasibility.length > 0 && (
             <div>
-              <p className="field-label">What&apos;s missing</p>
+              <p className="field-label">What’s missing</p>
               <ul className="space-y-1 text-sm text-paper/90">
                 {report.feasibility.map((f, i) => (
                   <li key={i}>• {f}</li>
@@ -39,9 +40,9 @@ export function GapReport({ report }: { report: GapReportData }) {
           )}
 
           {report.action && (
-            <div className="rounded-lg border border-accent/25 bg-accent/10 px-3 py-2 text-sm text-accent-bright">
+            <Callout tone="info">
               <span className="font-semibold">Next:</span> {report.action}
-            </div>
+            </Callout>
           )}
         </>
       )}

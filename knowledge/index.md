@@ -51,9 +51,9 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 
 ## v2 (shipped)
 
-The [v2 Endgame Planner](../docs/superpowers/specs/2026-08-20-endgame-planner-spec.md)
-turned the single-character optimiser into an account-level planner: damage profiles,
-comp archetypes (ADR-0017), team recommendations (ADR-0018) and the Plan (ADR-0019).
-Those terms are defined once in [`CONTEXT.md`](../CONTEXT.md), not duplicated here.
+The v2 Endgame Planner turned the single-character optimiser into an account-level
+planner; its decisions are ADR-0016 (damage objective) through ADR-0019 (the Plan),
+linked above. Those terms are defined once in [`CONTEXT.md`](../CONTEXT.md), not
+duplicated here.
 Team and meta data are hand-curated per patch — the refresh checklist is
 [`docs/runbooks/patch-refresh.md`](../docs/runbooks/patch-refresh.md).

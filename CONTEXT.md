@@ -16,7 +16,7 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 - **Sub-stat** — a secondary stat on an artifact (≤4, none equal to the main stat).
 - **Artifact set** — a family of artifacts granting **set bonuses** at 2 and 4 pieces.
 - **Set bonus** — the effect from wearing 2 (**2pc**) or 4 (**4pc**) of a set. Only the **flat-stat** portion of 2pc (and rare flat-stat 4pc) is **scored**; conditional/non-stat 4pc effects are honoured as a **constraint** but not scored. See [ADR-0003](docs/adr/0003-stat-only-model-no-damage-engine.md).
-- **2+2** — a build satisfying two different 2-piece set bonuses simultaneously.
+- **2+2** — a build satisfying two different 2-piece set bonuses simultaneously. A 2+2 naming the same set twice is rejected at the share boundary as malformed; the optimiser defensively reads it as "≥2 of that set" so its bound stays admissible.
 - **Stat keys** — `hp, hp_pct, atk, atk_pct, def, def_pct, em, er_pct, crit_rate, crit_dmg, elemental_dmg, physical_dmg, healing`.
 - **Elemental DMG** — `elemental_dmg`; a **single fungible stat** combining all element-specific DMG% bonuses (Pyro/Hydro/…/Dendro). A goblet's element is tracked (`Artifact.element`) and an off-element goblet's main stat is zeroed before scoring. Physical DMG (`physical_dmg`) is separate. See [ADR-0011](docs/adr/0011-elemental-dmg-as-single-fungible-stat.md) and [ADR-0014](docs/adr/0014-element-aware-goblet-scoring.md).
 - **Energy Recharge (ER)** — `er_pct`; commonly a minimum constraint (e.g. ≥160%). Every character starts from a **universal 100% base ER**; this game-wide baseline is supplied by the `genshinAdapter`, not the reference snapshot. See [ADR-0009](docs/adr/0009-adapter-owns-universal-game-baselines.md).
@@ -43,10 +43,10 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 ### v1.1 domain
 
 - **Gap analysis** — the v1.1 centerpiece: compares the best **owned** build against a **meta target** and reports feasibility gaps, numeric shortfalls, and one grounded action. No random-roll simulation. See [ADR-0007](docs/adr/0007-gap-analysis-with-frozen-meta-snapshot.md).
-- **Meta target / meta recipe** — recommended set(s), main stats per slot, ER target, crit-ratio target, from a frozen KQM-sourced snapshot. Pre-fills the constraint builder; fully **overridable**. It is a build _recipe_, not a tier ranking.
-- **Sample inventory** — the bundled, deterministic "Try with example gear" dataset (artifacts keyed `sample-…`) for instant, import-free demo (v1.1).
-- **Sample preset** (a.k.a. **Sample build**) — one curated "Try with example gear" entry: a character plus a representative **constraint**, that loads the **sample inventory** and auto-runs the **optimiser**. Each preset demonstrates a different constraint mechanism (min stats, set requirement, main-stat lock).
-- **Sample mode** — the app state where "Try with example gear" presets are offered: an empty inventory, or one containing only `sample-` artifacts. Importing real gear leaves sample mode, so a preset click can never overwrite owned artifacts.
+- **Meta target / meta recipe** — recommended set(s), main stats per slot, ER target, crit-ratio target, endgame stat floors (`statTargets`), and where uncontroversial a signature weapon (`weapon`), from a frozen KQM-sourced snapshot. Pre-fills the constraint builder; fully **overridable**. It is a build _recipe_, not a tier ranking.
+- **Sample inventory** — the bundled, deterministic "Try a sample build" dataset (artifacts keyed `sample-…`) for instant, import-free demo (v1.1).
+- **Sample preset** (a.k.a. **Sample build**) — one curated "Try a sample build" entry: a character plus a representative **constraint**, that loads the **sample inventory** and auto-runs the **optimiser**. Each preset demonstrates a different constraint mechanism (min stats, set requirement, main-stat lock).
+- **Sample mode** — the app state where "Try a sample build" presets are offered: an empty inventory, or one containing only `sample-` artifacts. Importing real gear leaves sample mode, so a preset click can never overwrite owned artifacts.
 - **Speed report** — the committed, reproducible benchmark (`docs/speed-report.md`, regenerated via `npm run bench`) showing how small a fraction of the brute-force build space the **optimiser** explores while still returning the exact optimum. See [ADR-0004](docs/adr/0004-exact-branch-and-bound-optimisation.md).
 
 ### v2 domain (endgame planner)
@@ -59,5 +59,6 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 - **Role** — a slot's function in a **comp archetype**: `on-field-dps | off-field-dps | buffer | sustain | battery | applicator`.
 - **Team recommendation** — a **comp archetype** instantiated from the player's roster (real characters filling its slots).
 - **Endgame mode** — the endgame content a plan targets: `abyss | theater | stygian`. Spiral Abyss first.
-- **Plan** — the composed output: **team recommendations** → per-member optimised builds → **shopping list**.
-- **Shopping list** — the aggregated farming and investment advice derived from the **plan**'s gaps.
+- **Plan** — the composed output: **team recommendations** → per-member optimised builds → **farming list**. See [ADR-0019](docs/adr/0019-plan-output.md).
+- **Farming list** — the deduped, name-prefixed feasibility and shortfall lines a **plan** aggregates from its members' gaps (`Plan.farming`). The UI calls it the "what to farm" list; never "shopping list".
+- **Investment advice** — the ranked pull-and-craft recommendations derived from the near-miss **comp archetypes** the recommender reports (`src/invest/advise.ts`): which characters to pull for and which weapons to craft, ranked by the **team-score** points each would unlock. Acquisition advice, not levelling advice.

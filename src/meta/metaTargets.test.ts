@@ -16,6 +16,17 @@ describe('META_TARGETS', () => {
     }
   });
 
+  it('every named signature weapon is one the character can equip', () => {
+    for (const [key, m] of Object.entries(META_TARGETS)) {
+      if (m.weapon == null) continue;
+      expect(genshinAdapter.weapon(m.weapon), `${key} weapon`).toBeDefined();
+      expect(
+        genshinAdapter.canEquip(m.characterKey, m.weapon),
+        `${key}: ${m.weapon} is the wrong weapon class`,
+      ).toBe(true);
+    }
+  });
+
   it('covers at least the four original showcase characters', () => {
     for (const key of ['furina', 'nahida', 'navia', 'neuvillette']) {
       expect(META_TARGETS[key], key).toBeTruthy();

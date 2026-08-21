@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ImportPanel } from './ImportPanel';
 import { useInventory } from '../state/inventory';
+import { SAMPLE_INVENTORY } from '../sample/sampleInventory';
 import { useRoster } from '../state/roster';
 
 const goodJson = JSON.stringify({
@@ -70,7 +71,7 @@ describe('ImportPanel', () => {
     Object.defineProperty(file, 'text', { value: async () => goodJson });
     await user.upload(screen.getByLabelText(/Upload GOOD export/i), file);
     expect(await screen.findByRole('status')).toHaveTextContent(
-      /Imported 1 artifacts/i,
+      /Imported 1 artifact\b/i,
     );
   });
 
@@ -97,7 +98,7 @@ describe('ImportPanel', () => {
     await user.type(screen.getByLabelText('UID'), '700000000');
     await user.click(screen.getByRole('button', { name: /fetch/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      /Couldn't find that UID/i,
+      /Couldn’t find that UID/i,
     );
   });
 
@@ -108,7 +109,7 @@ describe('ImportPanel', () => {
     await user.type(screen.getByLabelText('UID'), '700000000');
     await user.click(screen.getByRole('button', { name: /fetch/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      /couldn't reach enka/i,
+      /couldn’t reach enka/i,
     );
   });
 
@@ -136,7 +137,7 @@ describe('ImportPanel', () => {
     await user.type(screen.getByLabelText('UID'), '700000000');
     await user.click(screen.getByRole('button', { name: /fetch/i }));
     expect(await screen.findByRole('status')).toHaveTextContent(
-      /Imported 1 artifacts/i,
+      /Imported 1 artifact\b/i,
     );
   });
 
@@ -177,7 +178,7 @@ describe('ImportPanel', () => {
     Object.defineProperty(file, 'text', { value: async () => goodJson });
     await user.upload(screen.getByLabelText(/Upload GOOD export/i), file);
     expect(await screen.findByRole('status')).toHaveTextContent(
-      /Imported 1 artifacts/i,
+      /Imported 1 artifact\b/i,
     );
 
     // Now let the UID fetch resolve with the same content, mapped through
@@ -263,7 +264,7 @@ describe('ImportPanel', () => {
     Object.defineProperty(file, 'text', { value: async () => goodJson });
     await user.upload(screen.getByLabelText(/Upload GOOD export/i), file);
     expect(await screen.findByRole('status')).toHaveTextContent(
-      /Imported 1 artifacts/i,
+      /Imported 1 artifact\b/i,
     );
     expect(useRoster.getState().entries).toEqual({});
   });
@@ -283,8 +284,112 @@ describe('ImportPanel', () => {
     render(<ImportPanel />);
     await user.type(screen.getByLabelText('UID'), '123');
     expect(screen.getByText(/9–10 digits/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /fetch/i })).toBeDisabled();
+    // aria-disabled, not `disabled` — the button must keep focus across the
+    // async fetch. `onUid` carries the matching early return.
+    expect(screen.getByRole('button', { name: /fetch/i })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     await user.type(screen.getByLabelText('UID'), '456789');
-    expect(screen.getByRole('button', { name: /fetch/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /fetch/i })).toHaveAttribute(
+      'aria-disabled',
+      'false',
+    );
+  });
+
+  it('does not fetch a malformed UID even when Enter submits the row', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+    await user.type(screen.getByLabelText('UID'), '123{Enter}');
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('reports a re-import as up to date rather than "imported 0"', async () => {
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+    const file = () => {
+      const f = new File([goodJson], 'good.json', {
+        type: 'application/json',
+      });
+      Object.defineProperty(f, 'text', { value: async () => goodJson });
+      return f;
+    };
+    const input = screen.getByLabelText(/Upload GOOD export/i);
+    await user.upload(input, file());
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /Imported 1 artifact\b/i,
+    );
+    await user.upload(input, file());
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /Already up to date — all 1 piece was already in your inventory/i,
+      ),
+    );
+  });
+  it('drops the sample gear when a real import lands', async () => {
+    // The demo bag is generated, not owned: merging a real import into it
+    // would rank builds around gear the player has never seen.
+    useInventory.getState().replaceAll(SAMPLE_INVENTORY);
+    expect(useInventory.getState().artifacts.length).toBeGreaterThan(0);
+
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+    const file = new File([goodJson], 'good.json', {
+      type: 'application/json',
+    });
+    Object.defineProperty(file, 'text', { value: async () => goodJson });
+    await user.upload(screen.getByLabelText(/Upload GOOD export/i), file);
+    await waitFor(() =>
+      expect(useInventory.getState().artifacts).toHaveLength(1),
+    );
+    expect(
+      useInventory.getState().artifacts.some((a) => a.id.startsWith('sample-')),
+    ).toBe(false);
+  });
+
+  it('says nothing was imported when the file parses but carries no artifacts', async () => {
+    const emptyJson = JSON.stringify({
+      format: 'GOOD',
+      version: 2,
+      artifacts: [],
+    });
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+    const file = new File([emptyJson], 'good.json', {
+      type: 'application/json',
+    });
+    Object.defineProperty(file, 'text', { value: async () => emptyJson });
+    await user.upload(screen.getByLabelText(/Upload GOOD export/i), file);
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /No readable artifacts in that file/i,
+    );
+  });
+
+  it('clears inventory and roster, but only on the second press', async () => {
+    useInventory.getState().replaceAll(SAMPLE_INVENTORY);
+    useRoster.getState().setRoster({ raiden_shogun: { buildLevel: 90 } });
+    const user = userEvent.setup();
+    render(<ImportPanel />);
+
+    await user.click(screen.getByRole('button', { name: /Clear inventory/i }));
+    // First press only arms the control — nothing is destroyed yet, and the
+    // announcement says what the second press will do.
+    expect(useInventory.getState().artifacts.length).toBeGreaterThan(0);
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /cannot be undone/i,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Confirm clear/i }));
+    expect(useInventory.getState().artifacts).toEqual([]);
+    expect(useRoster.getState().entries).toEqual({});
+  });
+
+  it('offers no Clear inventory control when there is nothing to clear', () => {
+    render(<ImportPanel />);
+    expect(
+      screen.queryByRole('button', { name: /Clear inventory/i }),
+    ).toBeNull();
   });
 });

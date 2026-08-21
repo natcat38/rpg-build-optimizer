@@ -24,13 +24,25 @@ import { SLOTS } from '../game/types';
  * A real solve for the hero: same seeded synthetic-inventory generator as
  * docs/speed-report.md, run synchronously (no worker, no mocked client) so it
  * can render on mount without touching the optimize() dispatch path.
+ *
+ * It is a **fixed demo bag**, not the reader's inventory, and the hero copy
+ * says so — the numbers below are the shape of one canned problem, and framing
+ * them as "your" result would be a claim the page hasn't earned.
+ *
+ * `naive` is the size of the *search space* (every slot combination), not work
+ * performed: branch-and-bound visits `explored` leaves and discards `pruned`
+ * subtrees, which is the whole point. Copy that says "searched {naive}" is
+ * describing brute force, which is not what ran.
  */
 export interface HeroExample {
   request: OptimizeRequest;
   build: BuildResult;
   artifacts: Artifact[];
+  /** Size of the search space — every slot combination, not evaluations. */
   naive: number;
+  /** Leaves actually evaluated. */
   explored: number;
+  /** Subtrees discarded by the bound. */
   pruned: number;
 }
 

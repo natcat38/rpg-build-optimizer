@@ -24,7 +24,6 @@ import {
   evaluateObjective,
   satisfies,
   critRatioPenalty,
-  critValue,
   addInto,
   subFrom,
   artifactContribution,
@@ -43,26 +42,6 @@ function poolsBySlot(
     pools[slot] = pool;
   }
   return pools;
-}
-
-function objectiveContribution(
-  a: Artifact,
-  objective: ScalarObjective,
-): number {
-  if (objective === 'crit_value') {
-    let cr = 0,
-      cd = 0;
-    if (a.mainStat === 'crit_rate') cr += a.mainStatValue;
-    if (a.mainStat === 'crit_dmg') cd += a.mainStatValue;
-    for (const s of a.subStats) {
-      if (s.key === 'crit_rate') cr += s.value;
-      if (s.key === 'crit_dmg') cd += s.value;
-    }
-    return critValue(cr, cd);
-  }
-  let v = a.mainStat === objective ? a.mainStatValue : 0;
-  for (const s of a.subStats) if (s.key === objective) v += s.value;
-  return v;
 }
 
 /** Inclusive suffix count: how many of pools[slotIndex..end] contain at least
@@ -161,10 +140,11 @@ function maxInto(acc: StatVec, v: StatVec): void {
 function suffixMaxVectors(
   pools: Record<Slot, Artifact[]>,
   order: Slot[],
+  contributions: Map<string, StatVec>,
 ): StatVec[] {
   const perSlot = order.map((s) => {
     const m: StatVec = {};
-    for (const a of pools[s]) maxInto(m, artifactContribution(a));
+    for (const a of pools[s]) maxInto(m, contributions.get(a.id)!);
     return m;
   });
   const suffix: StatVec[] = new Array(order.length + 1);
@@ -181,9 +161,9 @@ function suffixMaxVectors(
  * Statwise ceiling on what any reachable set-bonus layout can add.
  *
  * A `setRequirement` bounds this hard, so honour it: with a 4pc requirement the
- * fifth piece can never reach a second 2pc, and a 2+2 pins both halves. Without
- * one, fall back to the best single set (2pc+4pc) versus the two best 2pc
- * bonuses, per stat, over the sets actually present in the pools.
+ * fifth piece can never reach a second 2pc, and a 2+2 of two distinct sets pins
+ * both halves. Without one, fall back to the best single set (2pc+4pc) versus
+ * the two best 2pc bonuses, per stat, over the sets actually present in the pools.
  * // ponytail: root-constant ceiling — tighten per node like setBonusCeilingAt
  * // if damage searches ever prove too slow again.
  */
@@ -208,23 +188,36 @@ function setCeilingVector(
     const b = bonus(setRequirement.setKey);
     return sum(b?.two, b?.four);
   }
-  if (setRequirement?.kind === '2+2') {
+  if (
+    setRequirement?.kind === '2+2' &&
+    setRequirement.setKeys[0] !== setRequirement.setKeys[1]
+  ) {
     const [a, b] = setRequirement.setKeys;
     return sum(bonus(a)?.two, bonus(b)?.two);
   }
+  // A 2+2 naming the same set twice collapses to "≥2 of A", which a 5-piece
+  // build can satisfy while also activating A's 4pc — so the two-2pc ceiling
+  // above would be inadmissible and could reject a feasible build. Fall
+  // through to the '2pc' branch below, which bounds that case correctly.
+  const twoPcKey =
+    setRequirement?.kind === '2pc'
+      ? setRequirement.setKey
+      : setRequirement?.kind === '2+2'
+        ? setRequirement.setKeys[0]
+        : undefined;
 
   const ceil: StatVec = {};
   const top1: StatVec = {};
   const top2: StatVec = {};
   const candidates =
-    setRequirement?.kind === '2pc'
+    twoPcKey !== undefined
       ? // The required set's 2pc is guaranteed; the three free pieces can add
         // at most one more 2pc (or upgrade the required set to 4pc). A Set
         // (not an array) so the required key isn't counted twice when it's
         // already among `present` — that would double its own 2pc value into
         // both "top1" and "top2" below instead of pairing it with a genuine
         // second set.
-        new Set([setRequirement.setKey, ...present])
+        new Set([twoPcKey, ...present])
       : present;
   for (const key of candidates) {
     const b = bonus(key);
@@ -274,6 +267,10 @@ export function searchBuilds(
   inventory: Artifact[],
   ctx: OptimizeContext,
 ): OptimizeResult {
+  // Precondition: artifact ids are unique across `inventory`. The per-artifact
+  // caches below (contributions, scalar values, minContrib) and the result's
+  // artifactIds→artifact lookup are all id-keyed, so duplicate ids collapse
+  // into one entry. Every producer mints ids with crypto.randomUUID().
   const k = req.topK ?? 10;
   // `avg_damage` is multiplicative in the totals, so the scalar-additive bound
   // below does not hold for it. Until the vector bound lands the search is
@@ -293,26 +290,49 @@ export function searchBuilds(
   // by the brute-force equivalence tests).
   const order = [...SLOTS].sort((a, b) => pools[a].length - pools[b].length);
 
+  // Contributions are a pure function of the artifact, but the sorts, the
+  // suffix bounds and `recurse` (once per surviving path above the artifact)
+  // all read them — fold each artifact exactly once, here.
+  const contributions = new Map<string, StatVec>();
+  for (const s of order)
+    for (const a of pools[s]) contributions.set(a.id, artifactContribution(a));
+  // The same fold projected onto the scalar objective. Same canonical
+  // definition the leaf score uses (objectiveValue over artifactContribution),
+  // so the pruning bound and the score can never drift apart.
+  const scalarValues = new Map<string, number>();
+  if (scalarObjective)
+    for (const [id, c] of contributions) {
+      const v = objectiveValue(c, scalarObjective);
+      // A NaN/Infinity here (corrupt import, a substat parsed as text) would
+      // poison every comparison in the bound — `NaN <= x` is false, so the
+      // branch never prunes, while `Infinity` prunes everything. Either way the
+      // search silently stops being exact. Fail loudly instead: one isFinite
+      // per artifact, paid once, outside the recursion.
+      if (!Number.isFinite(v)) {
+        throw new Error(
+          `optimizer: artifact ${id} has a non-finite ${scalarObjective} contribution (${v}). ` +
+            'The inventory is corrupt — refusing to search, because a non-finite value ' +
+            'makes the branch-and-bound bound inadmissible.',
+        );
+      }
+      scalarValues.set(id, v);
+    }
+  const scalarOf = (a: Artifact) => scalarValues.get(a.id) ?? 0;
+
   // Surface high-contribution pieces first so the kept list fills with strong
   // builds early and the admissible bound tightens sooner. Iteration order only —
   // the returned optimum is unchanged (covered by the brute-force equivalence test).
   if (scalarObjective) {
-    for (const s of order) {
-      pools[s].sort(
-        (a, b) =>
-          objectiveContribution(b, scalarObjective) -
-          objectiveContribution(a, scalarObjective),
-      );
-    }
+    for (const s of order) pools[s].sort((a, b) => scalarOf(b) - scalarOf(a));
   }
 
   const suffixMax: number[] = new Array(order.length + 1).fill(0);
   if (scalarObjective) {
-    const maxBySlot = order.map((s) =>
-      Math.max(
-        ...pools[s].map((a) => objectiveContribution(a, scalarObjective)),
-      ),
-    );
+    // pools[s] was just sorted descending by exactly this key, so its head is
+    // the per-slot maximum. (Reading it that way also avoids spreading a
+    // full-inventory pool into Math.max — a stack-overflow risk on real
+    // accounts, where one slot can hold hundreds of pieces.)
+    const maxBySlot = order.map((s) => scalarOf(pools[s][0]));
     for (let i = order.length - 1; i >= 0; i--)
       suffixMax[i] = suffixMax[i + 1] + maxBySlot[i];
   }
@@ -323,18 +343,13 @@ export function searchBuilds(
   // function is monotone in every stat it reads (proved in formula.test.ts).
   // Statwise reachability data. Vector-mode bounding needs it; so does the
   // minStats prune below, which applies to every objective.
-  const suffixMaxVec = suffixMaxVectors(pools, order);
+  const suffixMaxVec = suffixMaxVectors(pools, order, contributions);
   const setCeilVec = setCeilingVector(
     ctx,
     pools,
     req.constraints.setRequirement,
   );
   const runningVec: StatVec = {};
-  // Contributions are a pure function of the artifact, but `recurse` reaches
-  // the same artifact once per surviving path above it — compute them once.
-  const contributions = new Map<string, StatVec>();
-  for (const s of order)
-    for (const a of pools[s]) contributions.set(a.id, artifactContribution(a));
   if (!scalarObjective) {
     // Ordering heuristic only (the oracle test proves the optimum is unchanged):
     // rank each piece by the damage it adds on its own.
@@ -411,17 +426,66 @@ export function searchBuilds(
   let pruned = 0;
   const chosen: Artifact[] = [];
 
+  /**
+   * The score a branch must beat to be worth exploring.
+   *
+   * Invariant: `kept` is exactly the anti-clone greedy (drop exact duplicates,
+   * at most 2 per shared 4-piece core, stop at k) applied to every feasible
+   * build found so far — re-run over the whole score-sorted list on every
+   * insertion, so it never drifts from what a from-scratch run would produce.
+   * The threshold is therefore the k-th *survivor*, not the k-th raw build.
+   *
+   * Why that is admissible — the search may only ever return anti-clone
+   * survivors, so a branch whose ceiling cannot beat the current k-th survivor
+   * cannot change the output:
+   *
+   * 1. *Suppression is monotone.* A build is dropped only when ≥2 strictly
+   *    better builds share its 4-piece core. Those two displacers can never
+   *    themselves vanish in a way that revives it: anything that displaces a
+   *    displacer shares the same core, so the core's "2 taken" state only ever
+   *    persists. Later discoveries can push a survivor down the list, never
+   *    resurrect a suppressed build above them.
+   * 2. *Truncating at k is safe.* To evict a survivor currently ranked above
+   *    score `s`, later builds must outrank it — and any newcomer that
+   *    suppresses (rather than outranks) it needs 2 higher same-core builds,
+   *    which themselves occupy at least as many output slots as they displace.
+   *    So the count of survivors at or above `s` never decreases.
+   *
+   * Together: the k-th survivor score is monotonically non-decreasing and is a
+   * lower bound on the final k-th score, so pruning at it is exact.
+   *
+   * WARNING: this proof depends on the anti-clone rule being a **per-core cap**
+   * — a partition matroid, where each build belongs to exactly one core class
+   * with a fixed quota. It is **void** if the rule ever becomes general
+   * diversity clustering (a candidate could then be suppressed by a cluster
+   * that later dissolves), which is precisely the v1.1 idea ADR-0004 defers.
+   * Changing the rule means re-deriving this bound or reverting to a raw
+   * top-`k * 6` retention buffer.
+   */
   function minKeptScore(): number {
     return kept.length >= k ? kept[k - 1].score : -Infinity;
   }
   function offer(b: BuildResult) {
-    // v1.0: a full sort of up to k*6 entries on every feasible leaf. Negligible for
-    // small inventories with heavy pruning; swap for a min-heap in the v1.1 speed report.
-    kept.push(b);
-    kept.sort((x, y) => y.score - x.score);
-    // k*6 margin: the anti-clone filter may return fewer than k builds if the top
-    // candidates share a 4-piece core. A larger/exact margin would need full tracking.
-    if (kept.length > k * 6) kept.length = k * 6;
+    // Cheap reject: `kept` already holds k survivors at least this good, and a
+    // build that ties the k-th cannot displace it (stable order keeps the
+    // earlier find). Mirrors the `<=` in the prune test above.
+    if (kept.length >= k && b.score <= kept[k - 1].score) return;
+    // Binary-insert by descending score, after any equal scores — the same
+    // order Array#sort (stable) gives `bruteForce`, so the two rank ties alike.
+    let lo = 0;
+    let hi = kept.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (kept[mid].score >= b.score) lo = mid + 1;
+      else hi = mid;
+    }
+    kept.splice(lo, 0, b);
+    // Re-run the greedy over the whole sorted list (not just the tail): a
+    // newcomer can un-suppress nothing, but it can itself be suppressed, and it
+    // shifts everything below it by one.
+    const survivors = antiClone(kept, k);
+    kept.length = 0;
+    for (const s of survivors) kept.push(s);
   }
 
   function recurse(
@@ -488,8 +552,7 @@ export function searchBuilds(
       if (relIdx !== undefined) matchedRelevant[relIdx]++;
       recurse(
         slotIndex + 1,
-        runningObjective +
-          (scalarObjective ? objectiveContribution(a, scalarObjective) : 0),
+        runningObjective + (scalarObjective ? scalarOf(a) : 0),
         matchedA + (setKeyA && a.setKey === setKeyA ? 1 : 0),
         matchedB + (setKeyB && a.setKey === setKeyB ? 1 : 0),
       );
@@ -504,12 +567,38 @@ export function searchBuilds(
 
   if (kept.length === 0) return { status: 'infeasible', explored, pruned };
 
-  // Anti-clone cap: drop exact duplicates; at most 2 results per shared 4-piece core.
   const byId = new Map(inventory.map((a) => [a.id, a]));
+  return {
+    status: 'ok',
+    // `kept` is already the anti-clone survivor list (see minKeptScore), so
+    // this call is idempotent — kept as a cheap assertion that the incremental
+    // invariant and the batch rule agree.
+    builds: antiClone(kept, k).map((b) => ({
+      ...b,
+      // Every id came from an inventory artifact (via the pools), so byId always
+      // resolves it — the assertion holds and no defensive filter is needed.
+      diagnostics: buildDiagnostics(
+        ctx,
+        req,
+        b,
+        SLOTS.map((s) => byId.get(b.artifactIds[s])!),
+        explored,
+        pruned,
+      ),
+    })),
+    explored,
+    pruned,
+  };
+}
+
+/** Anti-clone cap over a score-descending candidate list: drop exact
+ *  duplicates, allow at most 2 results per shared 4-piece core, stop at k.
+ *  Shared with `bruteForce` so the oracle test compares like with like. */
+function antiClone(ranked: BuildResult[], k: number): BuildResult[] {
   const seenExact = new Set<string>();
   const coreCount: Record<string, number> = {};
   const final: BuildResult[] = [];
-  for (const b of kept) {
+  for (const b of ranked) {
     const exact = SLOTS.map((s) => b.artifactIds[s]).join(',');
     if (seenExact.has(exact)) continue;
     const core = SLOTS.slice(0, 4)
@@ -518,35 +607,36 @@ export function searchBuilds(
     if ((coreCount[core] ?? 0) >= 2) continue;
     seenExact.add(exact);
     coreCount[core] = (coreCount[core] ?? 0) + 1;
-    // Every id came from an inventory artifact (via the pools), so byId always
-    // resolves it — the assertion holds and no defensive filter is needed.
-    const chosen = SLOTS.map((s) => byId.get(b.artifactIds[s])!);
-    final.push({
-      ...b,
-      diagnostics: buildDiagnostics(ctx, req, b, chosen, explored, pruned),
-    });
+    final.push(b);
     if (final.length >= k) break;
   }
-  return { status: 'ok', builds: final, explored, pruned };
+  return final;
 }
 
-/** Exhaustive reference search — used only by the correctness test. */
+/**
+ * Exhaustive reference search — used only by the correctness test. Returns the
+ * full top-K, filtered exactly as `searchBuilds` filters it: rank every feasible
+ * leaf, then apply the anti-clone cap over *all* of them. No retention buffer:
+ * `searchBuilds` maintains the same greedy incrementally and prunes at the k-th
+ * survivor, so "anti-clone over everything feasible" is the exact spec it
+ * implements, and the oracle must not truncate before applying it.
+ */
 export function bruteForce(
   req: OptimizeRequest,
   inventory: Artifact[],
   ctx: OptimizeContext,
 ): OptimizeResult {
+  const k = req.topK ?? 10;
   const pools = poolsBySlot(inventory, req);
   if (SLOTS.some((s) => pools[s].length === 0))
     return { status: 'infeasible', explored: 0, pruned: 0 };
-  let best: BuildResult | null = null;
+  const feasible: BuildResult[] = [];
   const chosen: Artifact[] = [];
   function rec(i: number) {
     if (i === SLOTS.length) {
       const t = totals(ctx, chosen);
       if (!satisfies(req.constraints, chosen, t)) return;
-      const r = makeBuildResult(ctx, req, [...chosen]);
-      if (!best || r.score > best.score) best = r;
+      feasible.push(makeBuildResult(ctx, req, [...chosen]));
       return;
     }
     for (const a of pools[SLOTS[i]]) {
@@ -556,7 +646,13 @@ export function bruteForce(
     }
   }
   rec(0);
-  return best
-    ? { status: 'ok', builds: [best], explored: 0, pruned: 0 }
-    : { status: 'infeasible', explored: 0, pruned: 0 };
+  if (feasible.length === 0)
+    return { status: 'infeasible', explored: 0, pruned: 0 };
+  feasible.sort((x, y) => y.score - x.score);
+  return {
+    status: 'ok',
+    builds: antiClone(feasible, k),
+    explored: 0,
+    pruned: 0,
+  };
 }

@@ -5,17 +5,22 @@
  * ADR-0003: stat-only set bonuses; elemental 2pc → elemental_dmg.
  * ADR-0006: character/weapon base stats at ascension breakpoints only (1,20,40,50,60,70,80,90).
  *
+ * One of three `tsx`-run repo tools, none of them shipped in the app bundle:
+ * this one bakes the frozen reference dataset, `check-docs.ts` gates ADR and
+ * knowledge-bundle consistency, and `benchmark.ts` times the optimiser.
+ *
  * Main-stat value tables are hardcoded constants (the artifact scaling tables are
  * fixed game constants; genshin-db does not expose a per-level/rarity main-stat table).
- * Linear fill between the known base (level 0) and max (level 20) values is used,
- * which is a known v1.0 approximation – real scaling is non-linear but endpoints
- * are correct. CONCERN: mid-level values may be slightly off; flagged in report.
+ * Linear fill between the known base (level 0) and max (level 20) values is used:
+ * endpoints are exact, mid-level values may be slightly off. Known approximation
+ * as of 2026-08, re-checked per patch via docs/runbooks/patch-refresh.md.
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
+import { BUILD_LEVELS, ELEMENTS, WEAPON_TYPES } from '../src/game/types';
 
 const require = createRequire(import.meta.url);
 // genshin-db uses CommonJS; we use createRequire to load it in an ESM script.
@@ -54,19 +59,11 @@ const SUBSTAT_TO_KEY: Record<string, string> = {
 };
 
 // Allowlists: lowercase the genshindb value, then skip anything non-standard.
-const ELEMENTS = [
-  'pyro',
-  'hydro',
-  'electro',
-  'cryo',
-  'anemo',
-  'geo',
-  'dendro',
-  'physical',
-];
-const WEAPON_TYPES = ['sword', 'claymore', 'polearm', 'bow', 'catalyst'];
-
-const BUILD_LEVELS = [1, 20, 40, 50, 60, 70, 80, 90] as const;
+// `ELEMENTS`, `WEAPON_TYPES` and `BUILD_LEVELS` come from the app's own domain
+// types so the snapshot can never be built against a list the app doesn't
+// recognise.
+const ELEMENT_NAMES: readonly string[] = ELEMENTS;
+const WEAPON_TYPE_NAMES: readonly string[] = WEAPON_TYPES;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -183,15 +180,6 @@ function parse2pc(text: string): Record<string, number> | null {
   return null;
 }
 
-/**
- * Parse a 4pc bonus that is a FLAT STAT only.
- * Strict — returns null for anything conditional/reactive.
- * For v1.0, all known Genshin 4pc bonuses are conditional; this always returns null.
- */
-function parse4pcStatOnly(): Record<string, number> | null {
-  return null;
-}
-
 // ---------------------------------------------------------------------------
 // Main-stat value tables (hardcoded game constants, ADR-0002)
 // ---------------------------------------------------------------------------
@@ -210,10 +198,11 @@ function parse4pcStatOnly(): Record<string, number> | null {
 //   em=28, er_pct=7.8, crit_rate=4.7, crit_dmg=9.3,
 //   elemental_dmg=7.0, physical_dmg=8.7, healing=5.4
 //
-// CONCERN (v1.0): real scaling uses a non-linear lookup table per rarity.
-// Linear fill produces correct values at +0 and +20; mid-level (e.g. +10) may
-// deviate by ~1-3% from in-game values. This is acceptable for v1.0 build
-// optimisation where final-level (+20) artifacts are the primary target.
+// Known approximation as of 2026-08 (re-checked per patch via
+// docs/runbooks/patch-refresh.md): real scaling uses a non-linear lookup table
+// per rarity. Linear fill produces correct values at +0 and +20; mid-level
+// (e.g. +10) may deviate by ~1-3% from in-game values. Acceptable while
+// final-level (+20) artifacts are the primary optimisation target.
 
 /** Build a linear 21-element array from base to max (indices 0..20). */
 function linearFill(base: number, max: number): number[] {
@@ -281,7 +270,14 @@ function buildCharacters() {
     if (!c) continue;
 
     const element = String(c.elementText).toLowerCase();
-    if (!ELEMENTS.includes(element)) continue; // skip non-standard elements
+    if (!ELEMENT_NAMES.includes(element)) continue; // skip non-standard elements
+
+    // Same `weaponText` field the weapon builder below reads, so the two sides
+    // of the "can this character hold this weapon?" comparison are normalised
+    // identically. A character whose weapon class isn't one of the five is not
+    // a playable build target, so drop them rather than emit an unmatchable type.
+    const weaponType = String(c.weaponText).toLowerCase();
+    if (!WEAPON_TYPE_NAMES.includes(weaponType)) continue;
 
     const substattKey = SUBSTAT_TO_KEY[c.substatText] ?? null;
 
@@ -320,6 +316,7 @@ function buildCharacters() {
       key,
       name,
       element,
+      weaponType,
       baseByLevel,
     });
   }
@@ -340,7 +337,7 @@ function buildWeapons() {
     if (!w) continue;
 
     const type = String(w.weaponText).toLowerCase();
-    if (!WEAPON_TYPES.includes(type)) continue;
+    if (!WEAPON_TYPE_NAMES.includes(type)) continue;
 
     const substatKey = SUBSTAT_TO_KEY[w.mainStatText] ?? null;
 
@@ -375,6 +372,10 @@ function buildWeapons() {
       key,
       name,
       type,
+      // Star rating, carried so a weapon picker can rank/annotate options
+      // without a second data source. Non-numeric ratings never occur in the
+      // five weapon classes above, but coerce anyway rather than emit a string.
+      rarity: Number(w.rarity) || 0,
       byLevel,
     });
   }
@@ -404,29 +405,16 @@ function buildSets() {
     // bonus so the set is still requirable as a constraint (ADR-0003) — it just
     // contributes 0 to stat scoring.
     const twoPiece = parse2pc(a.effect2Pc) ?? {};
-    const fourPiece = parse4pcStatOnly();
+    // No `fourPiece`: no known Genshin 4pc bonus is a plain flat stat — every
+    // one is conditional or reactive — so the snapshot never emits one. The
+    // app-side model keeps the `four` field as headroom (ADR-0003).
     if (Object.keys(twoPiece).length === 0) {
       console.log(`  · retained set "${name}" with no scored 2pc bonus`);
     }
 
     const key = goodKey(name); // GOOD-standard set key so imported artifacts match
 
-    const entry: {
-      key: string;
-      name: string;
-      twoPiece: Record<string, number>;
-      fourPiece?: Record<string, number>;
-    } = {
-      key,
-      name,
-      twoPiece,
-    };
-
-    if (fourPiece) {
-      entry.fourPiece = fourPiece;
-    }
-
-    result.push(entry);
+    result.push({ key, name, twoPiece });
   }
 
   return result;

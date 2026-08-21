@@ -1,6 +1,7 @@
 import type { Objective, StatKey, StatVec } from '../game/types';
 import { isStatKey, isObjective } from '../game/types';
-import { objectiveLabel, statLabel } from '../labels';
+import { objectiveLabel, statLabel } from '../labels-core';
+import { MAX_KEY_LEN } from '../state/artifactValidation';
 import type { GapReport } from '../meta/gap';
 
 // ---------------------------------------------------------------------------
@@ -18,19 +19,30 @@ export interface ExplainPayload {
   };
 }
 
-const MAX_KEY_LEN = 64;
 const MAX_TOTALS = 20;
 const STAT_MIN = -10_000;
 const STAT_MAX = 100_000;
 const MAX_LINES = 10;
 const MAX_LINE_LEN = 300;
 
-function isShortStringArray(x: unknown): x is string[] {
+// A dataset character key: identifier characters only. Anything outside this
+// set can't name a character, so it's an injection attempt, not a build.
+const KEY_PATTERN = /^[A-Za-z0-9_'\- ]+$/;
+
+// Gap lines are sentences (they carry %, —, ∞, ~, ':' and set names), so they
+// can't take the key charset. What they must never carry is an angle bracket —
+// that's the only character able to close buildExplainPrompt's <build_data>
+// delimiter — or a control character.
+const LINE_PATTERN = /^[^<>\p{C}]*$/u;
+
+function isSafeLine(s: unknown): s is string {
   return (
-    Array.isArray(x) &&
-    x.length <= MAX_LINES &&
-    x.every((s) => typeof s === 'string' && s.length <= MAX_LINE_LEN)
+    typeof s === 'string' && s.length <= MAX_LINE_LEN && LINE_PATTERN.test(s)
   );
+}
+
+function isShortStringArray(x: unknown): x is string[] {
+  return Array.isArray(x) && x.length <= MAX_LINES && x.every(isSafeLine);
 }
 
 function parseTotals(x: unknown): StatVec | null {
@@ -59,7 +71,8 @@ export function parseExplainPayload(input: unknown): ExplainPayload | null {
   if (
     typeof o.characterKey !== 'string' ||
     o.characterKey.length === 0 ||
-    o.characterKey.length > MAX_KEY_LEN
+    o.characterKey.length > MAX_KEY_LEN ||
+    !KEY_PATTERN.test(o.characterKey)
   )
     return null;
   if (!isObjective(o.objective)) return null;
@@ -71,11 +84,7 @@ export function parseExplainPayload(input: unknown): ExplainPayload | null {
   const g = o.gap as Record<string, unknown>;
   if (!isShortStringArray(g.feasibility)) return null;
   if (!isShortStringArray(g.shortfalls)) return null;
-  if (!(
-    g.action === null ||
-    (typeof g.action === 'string' && g.action.length <= MAX_LINE_LEN)
-  ))
-    return null;
+  if (!(g.action === null || isSafeLine(g.action))) return null;
 
   return {
     characterKey: o.characterKey,
@@ -92,6 +101,10 @@ export function parseExplainPayload(input: unknown): ExplainPayload | null {
 // ---------------------------------------------------------------------------
 // buildExplainPrompt — pure prompt builder, no API calls
 // ---------------------------------------------------------------------------
+
+function strip(s: string): string {
+  return s.replace(/[<>]/g, '');
+}
 
 /**
  * Build the system + user prompt for the explanation call. Pure and
@@ -114,16 +127,20 @@ export function buildExplainPrompt(p: ExplainPayload): {
     .map(([k, v]) => `${statLabel(k)} ${Math.round(v)}`)
     .join(', ');
 
+  // The objective label and stats come from validated enums/numbers; the key
+  // and gap lines are the only caller-supplied text here. Strip angle brackets
+  // from them so nothing interpolated can close the <build_data> block, even
+  // if this is ever called with a payload parseExplainPayload never saw.
   const lines: string[] = [
-    `Character: ${p.characterKey}`,
+    `Character: ${strip(p.characterKey)}`,
     `Objective: maximise ${objectiveLabel(p.objective)}`,
     `Best build stats: ${stats || '(no feasible build found)'}`,
   ];
   if (p.gap.feasibility.length)
-    lines.push(`What's missing: ${p.gap.feasibility.join('; ')}`);
+    lines.push(`What's missing: ${p.gap.feasibility.map(strip).join('; ')}`);
   if (p.gap.shortfalls.length)
-    lines.push(`Shortfalls: ${p.gap.shortfalls.join('; ')}`);
-  if (p.gap.action) lines.push(`Next action: ${p.gap.action}`);
+    lines.push(`Shortfalls: ${p.gap.shortfalls.map(strip).join('; ')}`);
+  if (p.gap.action) lines.push(`Next action: ${strip(p.gap.action)}`);
 
   return { system, user: `<build_data>\n${lines.join('\n')}\n</build_data>` };
 }

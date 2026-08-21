@@ -1,0 +1,420 @@
+{
+  "format": "GOOD",
+  "version": 2,
+  "source": "rpg-build-optimizer synthetic test fixture (not a real account)",
+  "characters": [
+    {
+      "key": "Neuvillette",
+      "level": 90,
+      "constellation": 0,
+      "ascension": 6,
+      "talent": { "auto": 9, "skill": 10, "burst": 10 }
+    },
+    {
+      "key": "Furina",
+      "level": 90,
+      "constellation": 0,
+      "ascension": 6,
+      "talent": { "auto": 6, "skill": 9, "burst": 9 }
+    },
+    {
+      "key": "KaedeharaKazuha",
+      "level": 90,
+      "constellation": 2,
+      "ascension": 6,
+      "talent": { "auto": 8, "skill": 9, "burst": 9 }
+    },
+    {
+      "key": "Charlotte",
+      "level": 80,
+      "constellation": 4,
+      "ascension": 5,
+      "talent": { "auto": 6, "skill": 8, "burst": 8 }
+    },
+    {
+      "key": "RaidenShogun",
+      "level": 90,
+      "constellation": 1,
+      "ascension": 6,
+      "talent": { "auto": 9, "skill": 9, "burst": 10 }
+    },
+    {
+      "key": "Xiangling",
+      "level": 90,
+      "constellation": 6,
+      "ascension": 6,
+      "talent": { "auto": 6, "skill": 9, "burst": 10 }
+    },
+    {
+      "key": "Xingqiu",
+      "level": 80,
+      "constellation": 6,
+      "ascension": 6,
+      "talent": { "auto": 6, "skill": 8, "burst": 9 }
+    },
+    {
+      "key": "Bennett",
+      "level": 90,
+      "constellation": 5,
+      "ascension": 6,
+      "talent": { "auto": 6, "skill": 9, "burst": 9 }
+    }
+  ],
+  "weapons": [
+    {
+      "key": "TomeOfTheEternalFlow",
+      "level": 90,
+      "ascension": 6,
+      "refinement": 1,
+      "location": "Neuvillette"
+    },
+    {
+      "key": "FavoniusSword",
+      "level": 90,
+      "ascension": 6,
+      "refinement": 3,
+      "location": "Furina"
+    },
+    {
+      "key": "SacrificialSword",
+      "level": 90,
+      "ascension": 6,
+      "refinement": 2,
+      "location": "KaedeharaKazuha"
+    },
+    {
+      "key": "FavoniusCodex",
+      "level": 80,
+      "ascension": 6,
+      "refinement": 5,
+      "location": "Charlotte"
+    },
+    {
+      "key": "TheCatch",
+      "level": 90,
+      "ascension": 6,
+      "refinement": 5,
+      "location": "RaidenShogun"
+    },
+    {
+      "key": "DragonsBane",
+      "level": 90,
+      "ascension": 6,
+      "refinement": 3,
+      "location": "Xiangling"
+    },
+    {
+      "key": "TheBlackSword",
+      "level": 90,
+      "ascension": 6,
+      "refinement": 1,
+      "location": "Xingqiu"
+    },
+    {
+      "key": "AquilaFavonia",
+      "level": 90,
+      "ascension": 6,
+      "refinement": 1,
+      "location": "Bennett"
+    }
+  ],
+  "artifacts": [
+    {
+      "setKey": "MarechausseeHunter",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "flower",
+      "mainStatKey": "hp",
+      "substats": [
+        { "key": "critRate_", "value": 10.5 },
+        { "key": "critDMG_", "value": 14.0 },
+        { "key": "atk_", "value": 9.9 },
+        { "key": "enerRech_", "value": 5.2 }
+      ],
+      "location": "Neuvillette",
+      "lock": true
+    },
+    {
+      "setKey": "MarechausseeHunter",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "plume",
+      "mainStatKey": "atk",
+      "substats": [
+        { "key": "critDMG_", "value": 21.8 },
+        { "key": "hp_", "value": 9.3 },
+        { "key": "def", "value": 37 },
+        { "key": "eleMas", "value": 19 }
+      ],
+      "location": "Neuvillette",
+      "lock": true
+    },
+    {
+      "setKey": "MarechausseeHunter",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "sands",
+      "mainStatKey": "hp_",
+      "substats": [
+        { "key": "critRate_", "value": 7.0 },
+        { "key": "critDMG_", "value": 12.4 },
+        { "key": "atk", "value": 33 },
+        { "key": "enerRech_", "value": 10.4 }
+      ],
+      "location": "Neuvillette",
+      "lock": true
+    },
+    {
+      "setKey": "MarechausseeHunter",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "goblet",
+      "mainStatKey": "hydro_dmg_",
+      "substats": [
+        { "key": "critDMG_", "value": 19.4 },
+        { "key": "hp_", "value": 4.7 },
+        { "key": "def_", "value": 12.4 },
+        { "key": "atk", "value": 14 }
+      ],
+      "location": "Neuvillette",
+      "lock": true
+    },
+    {
+      "setKey": "MarechausseeHunter",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "circlet",
+      "mainStatKey": "critRate_",
+      "substats": [
+        { "key": "critDMG_", "value": 17.1 },
+        { "key": "hp_", "value": 10.5 },
+        { "key": "eleMas", "value": 40 },
+        { "key": "enerRech_", "value": 4.5 }
+      ],
+      "location": "Neuvillette",
+      "lock": true
+    },
+    {
+      "setKey": "EmblemOfSeveredFate",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "flower",
+      "mainStatKey": "hp",
+      "substats": [
+        { "key": "critRate_", "value": 8.9 },
+        { "key": "critDMG_", "value": 10.9 },
+        { "key": "enerRech_", "value": 11.0 },
+        { "key": "atk_", "value": 5.3 }
+      ],
+      "location": "RaidenShogun",
+      "lock": true
+    },
+    {
+      "setKey": "EmblemOfSeveredFate",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "plume",
+      "mainStatKey": "atk",
+      "substats": [
+        { "key": "critRate_", "value": 6.6 },
+        { "key": "critDMG_", "value": 14.8 },
+        { "key": "enerRech_", "value": 5.8 },
+        { "key": "def", "value": 23 }
+      ],
+      "location": "RaidenShogun",
+      "lock": true
+    },
+    {
+      "setKey": "EmblemOfSeveredFate",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "sands",
+      "mainStatKey": "enerRech_",
+      "substats": [
+        { "key": "critRate_", "value": 5.4 },
+        { "key": "critDMG_", "value": 18.7 },
+        { "key": "atk_", "value": 4.7 },
+        { "key": "hp", "value": 269 }
+      ],
+      "location": "RaidenShogun",
+      "lock": true
+    },
+    {
+      "setKey": "EmblemOfSeveredFate",
+      "rarity": 5,
+      "level": 19,
+      "slotKey": "goblet",
+      "mainStatKey": "electro_dmg_",
+      "substats": [
+        { "key": "critDMG_", "value": 13.2 },
+        { "key": "atk_", "value": 10.5 },
+        { "key": "eleMas", "value": 23 },
+        { "key": "hp", "value": 508 }
+      ],
+      "location": "RaidenShogun",
+      "lock": true
+    },
+    {
+      "setKey": "EmblemOfSeveredFate",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "circlet",
+      "mainStatKey": "critDMG_",
+      "substats": [
+        { "key": "critRate_", "value": 11.7 },
+        { "key": "atk_", "value": 9.3 },
+        { "key": "enerRech_", "value": 4.5 },
+        { "key": "def_", "value": 5.8 }
+      ],
+      "location": "RaidenShogun",
+      "lock": true
+    },
+    {
+      "setKey": "CrimsonWitchOfFlames",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "sands",
+      "mainStatKey": "eleMas",
+      "substats": [
+        { "key": "critRate_", "value": 7.4 },
+        { "key": "critDMG_", "value": 12.4 },
+        { "key": "enerRech_", "value": 11.7 },
+        { "key": "atk", "value": 27 }
+      ],
+      "location": "Xiangling",
+      "lock": true
+    },
+    {
+      "setKey": "CrimsonWitchOfFlames",
+      "rarity": 5,
+      "level": 18,
+      "slotKey": "goblet",
+      "mainStatKey": "pyro_dmg_",
+      "substats": [
+        { "key": "critRate_", "value": 6.2 },
+        { "key": "eleMas", "value": 33 },
+        { "key": "enerRech_", "value": 10.4 },
+        { "key": "hp_", "value": 4.1 }
+      ],
+      "location": "Xiangling",
+      "lock": true
+    },
+    {
+      "setKey": "CrimsonWitchOfFlames",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "circlet",
+      "mainStatKey": "critRate_",
+      "substats": [
+        { "key": "critDMG_", "value": 15.5 },
+        { "key": "eleMas", "value": 21 },
+        { "key": "atk_", "value": 4.7 },
+        { "key": "def", "value": 19 }
+      ],
+      "location": "Xiangling",
+      "lock": true
+    },
+    {
+      "setKey": "ViridescentVenerer",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "flower",
+      "mainStatKey": "hp",
+      "substats": [
+        { "key": "eleMas", "value": 63 },
+        { "key": "enerRech_", "value": 5.2 },
+        { "key": "critRate_", "value": 3.5 },
+        { "key": "def_", "value": 7.3 }
+      ],
+      "location": "KaedeharaKazuha",
+      "lock": true
+    },
+    {
+      "setKey": "ViridescentVenerer",
+      "rarity": 5,
+      "level": 17,
+      "slotKey": "plume",
+      "mainStatKey": "atk",
+      "substats": [
+        { "key": "eleMas", "value": 40 },
+        { "key": "enerRech_", "value": 9.7 },
+        { "key": "critDMG_", "value": 7.8 },
+        { "key": "hp", "value": 209 }
+      ],
+      "location": "KaedeharaKazuha",
+      "lock": true
+    },
+    {
+      "setKey": "GoldenTroupe",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "goblet",
+      "mainStatKey": "hp_",
+      "substats": [
+        { "key": "critRate_", "value": 9.7 },
+        { "key": "critDMG_", "value": 10.9 },
+        { "key": "enerRech_", "value": 11.0 },
+        { "key": "atk", "value": 18 }
+      ],
+      "location": "Furina",
+      "lock": true
+    },
+    {
+      "setKey": "GoldenTroupe",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "circlet",
+      "mainStatKey": "critDMG_",
+      "substats": [
+        { "key": "critRate_", "value": 7.8 },
+        { "key": "hp_", "value": 9.9 },
+        { "key": "enerRech_", "value": 6.5 },
+        { "key": "eleMas", "value": 19 }
+      ],
+      "location": "Furina",
+      "lock": true
+    },
+    {
+      "setKey": "MaidenBeloved",
+      "rarity": 5,
+      "level": 16,
+      "slotKey": "flower",
+      "mainStatKey": "hp",
+      "substats": [
+        { "key": "enerRech_", "value": 12.3 },
+        { "key": "def_", "value": 11.7 },
+        { "key": "hp_", "value": 4.7 },
+        { "key": "eleMas", "value": 19 }
+      ],
+      "lock": false
+    },
+    {
+      "setKey": "NoblesseOblige",
+      "rarity": 5,
+      "level": 16,
+      "slotKey": "plume",
+      "mainStatKey": "atk",
+      "substats": [
+        { "key": "critRate_", "value": 3.9 },
+        { "key": "def", "value": 44 },
+        { "key": "hp_", "value": 5.8 },
+        { "key": "enerRech_", "value": 4.5 }
+      ],
+      "lock": false
+    },
+    {
+      "setKey": "ShimenawasReminiscence",
+      "rarity": 5,
+      "level": 20,
+      "slotKey": "sands",
+      "mainStatKey": "atk_",
+      "substats": [
+        { "key": "critRate_", "value": 5.8 },
+        { "key": "critDMG_", "value": 13.2 },
+        { "key": "eleMas", "value": 21 },
+        { "key": "hp", "value": 448 }
+      ],
+      "lock": false
+    }
+  ]
+}

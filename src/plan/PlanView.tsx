@@ -5,16 +5,18 @@
  * Eight exact solves are not free, so the plan only runs on an explicit click —
  * never on mount.
  */
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
 import { genshinAdapter } from '../game/genshin/adapter';
-import { computeBuildScore } from '../roster/buildScore';
+import { rosterBuildScores } from '../roster/buildScore';
 import { recommendAbyss } from '../teams/recommend';
-import { COMP_ARCHETYPES } from '../teams/comps';
+import { archetypeName } from '../teams/comps';
 import { META_TARGETS } from '../meta/metaTargets';
-import { objectiveLabel } from '../ui/labels';
+import { objectiveHint, objectiveLabel } from '../labels';
 import { BuildCard } from '../components/BuildCard';
+import { Callout } from '../components/ui/Callout';
+import { cn } from '../components/ui/cn';
 import { optimize } from '../workers/optimizeClient';
 import { composePlan, type Plan, type RunOptimize } from './composePlan';
 import { adviseInvestments, type Advice } from '../invest/advise';
@@ -34,7 +36,7 @@ function MemberCard({
   buildLevel: OptimizeRequest['buildLevel'];
   artifactsById: Record<string, Artifact>;
 }) {
-  const name = genshinAdapter.character(characterKey)?.name ?? characterKey;
+  const name = genshinAdapter.characterName(characterKey);
   const request: OptimizeRequest = {
     characterKey,
     weaponKey,
@@ -45,6 +47,9 @@ function MemberCard({
   return (
     <div data-testid="plan-member" className="space-y-2">
       <h4 className="font-display text-sm font-bold text-paper">{name}</h4>
+      {/* Per member, not per card: Results hoists this above its list because
+          ten cards share one objective, but eight plan members do not. */}
+      <p className="text-xs text-muted">{objectiveHint(objective)}</p>
       {!META_TARGETS[characterKey] && (
         <p className="text-xs text-muted">
           No curated recipe for {name} yet — this is the highest raw{' '}
@@ -61,11 +66,11 @@ function MemberCard({
           ).filter((a): a is Artifact => Boolean(a))}
         />
       ) : (
-        <p className="panel text-sm text-muted">
-          Couldn&apos;t gear {name}: teammates earlier in the plan had first
-          pick of the shared inventory, and the artifacts left don&apos;t meet{' '}
-          {name}&apos;s recommended loadout (required set, main stats and ER).
-          The notes below show which pieces went where.
+        <p className="panel panel-md text-sm text-muted">
+          Couldn’t gear {name}: teammates earlier in the plan had first pick of
+          the shared inventory, and the artifacts left don’t meet {name}’s
+          recommended loadout (required set, main stats and ER). The notes below
+          show which pieces went where.
         </p>
       )}
       {conflicts.length > 0 && (
@@ -92,6 +97,10 @@ export function PlanView({
   const [plan, setPlan] = useState<Plan | null>(null);
   const [progress, setProgress] = useState<[number, number] | null>(null);
   const [failed, setFailed] = useState(false);
+  // A plan is eight awaited solves. If its inputs are replaced mid-flight the
+  // run in progress describes gear the user no longer has, so only the most
+  // recently started run may commit progress, a plan, or a failure.
+  const planToken = useRef(0);
 
   // Resolves each member's chosen artifact ids back to Artifact objects for
   // BuildCard — mirrors Results.tsx's artifactsFor.
@@ -102,12 +111,7 @@ export function PlanView({
   }, [artifacts]);
 
   const { teams, advice } = useMemo(() => {
-    const byLocation: Record<string, Artifact[]> = {};
-    for (const a of artifacts)
-      if (a.location) (byLocation[a.location] ??= []).push(a);
-    const scores: Record<string, number> = {};
-    for (const [key, entry] of Object.entries(entries))
-      scores[key] = computeBuildScore(entry, byLocation[key] ?? []).total;
+    const scores = rosterBuildScores(entries, artifacts);
     const rec = recommendAbyss(scores);
     return {
       teams: rec.teams,
@@ -115,8 +119,29 @@ export function PlanView({
     };
   }, [entries, artifacts, advise]);
 
+  // A plan is a solve over one specific roster + inventory. Re-importing
+  // replaces both, so the eight cards on screen describe gear the user no
+  // longer has. Reset during render, the way Results.tsx resets its share
+  // cues — React re-runs this pass before painting the stale plan.
+  const [planInputs, setPlanInputs] = useState({ entries, artifacts });
+  if (planInputs.entries !== entries || planInputs.artifacts !== artifacts) {
+    setPlanInputs({ entries, artifacts });
+    setPlan(null);
+    setFailed(false);
+    setProgress(null);
+  }
+  // Layout, not passive: layout effects run inside the commit, so the token
+  // is already bumped by the time an awaited solve's continuation — a
+  // microtask, which cannot run until the stack empties — gets to check it.
+  useLayoutEffect(() => {
+    planToken.current++;
+  }, [planInputs]);
+
   async function build() {
-    if (!teams) return;
+    // The button is aria-disabled rather than disabled so it keeps focus
+    // across the run; the guard has to be here.
+    if (!teams || running) return;
+    const token = ++planToken.current;
     setFailed(false);
     setProgress([0, 8]);
     try {
@@ -125,14 +150,18 @@ export function PlanView({
         entries,
         artifacts,
         runOptimize,
-        (d, t) => setProgress([d, t]),
+        (d, t) => {
+          if (planToken.current === token) setProgress([d, t]);
+        },
       );
+      if (planToken.current !== token) return; // superseded
       setPlan(p);
     } catch (err) {
+      if (planToken.current !== token) return;
       console.error('Plan failed', err);
       setFailed(true);
     } finally {
-      setProgress(null);
+      if (planToken.current === token) setProgress(null);
     }
   }
 
@@ -140,16 +169,20 @@ export function PlanView({
 
   return (
     <div className="space-y-4">
-      <div className="panel flex flex-wrap items-center justify-between gap-3">
+      <div className="panel panel-md flex flex-wrap items-center justify-between gap-3">
+        {/* The Section hint above already says "an optimised build for all
+            eight members, plus one farming list"; this line only adds the
+            part it doesn't — who gets first pick of the shared bag. */}
         <p className="text-sm text-muted">
           {teams
-            ? 'Optimises all eight members over your inventory, giving the carries first pick.'
+            ? 'The carries get first pick of the shared inventory.'
             : 'Import a GOOD file — the plan needs a roster to pick teams from.'}
         </p>
         <button
-          className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
+          type="button"
+          className={cn('btn-primary', running && 'animate-pulse-glow')}
           aria-busy={running}
-          disabled={!teams || running}
+          aria-disabled={!teams || running}
           onClick={() => void build()}
         >
           {running
@@ -176,24 +209,29 @@ export function PlanView({
       )}
 
       {failed && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
-        >
+        <Callout tone="error" role="alert">
           Building the plan failed — please try again.
-        </div>
+        </Callout>
       )}
 
       {plan && (
-        <>
+        // While the next plan is solving, the eight cards on screen are the
+        // previous one. Dim them and mark the region busy so the old numbers
+        // aren't read as the new ones.
+        <div
+          aria-busy={running}
+          className={cn(
+            'space-y-4 transition-opacity',
+            running && 'opacity-40',
+          )}
+        >
           {plan.teams.map((team, i) => {
-            const arch = COMP_ARCHETYPES.find((a) => a.id === team.archetypeId);
             const members = new Set(team.members.map((m) => m.characterKey));
             return (
               <section key={team.archetypeId} className="space-y-3">
                 <h3 className="font-display text-base font-bold text-paper">
                   {i === 0 ? 'First half' : 'Second half'} —{' '}
-                  {arch?.name ?? team.archetypeId}
+                  {archetypeName(team.archetypeId)}
                 </h3>
                 {plan.builds
                   .filter((b) => members.has(b.characterKey))
@@ -211,7 +249,7 @@ export function PlanView({
           })}
 
           {advice.length > 0 && (
-            <div className="panel space-y-2">
+            <div className="panel panel-md space-y-2">
               <h3 className="font-display text-base font-bold text-paper">
                 Worth investing in
               </h3>
@@ -230,7 +268,7 @@ export function PlanView({
           )}
 
           {plan.farming.length > 0 && (
-            <div className="panel space-y-2">
+            <div className="panel panel-md space-y-2">
               <h3 className="font-display text-base font-bold text-paper">
                 What to farm
               </h3>
@@ -241,7 +279,7 @@ export function PlanView({
               </ul>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

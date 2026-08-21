@@ -3,6 +3,7 @@ import type { Objective, StatVec } from '../game/types';
 import type { GapReport } from '../meta/gap';
 import { explainBuild } from '../ai/explainClient';
 import { toExplainPayload } from '../ai/explainShared';
+import { Callout } from './ui/Callout';
 
 export function ExplainBuild({
   characterKey,
@@ -19,10 +20,17 @@ export function ExplainBuild({
   const [loading, setLoading] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [error, setError] = useState(false);
+  // Announcements are keyed by this so a second attempt that produces the same
+  // sentence still counts as a change to the live region.
+  const [statusNonce, setStatusNonce] = useState(0);
 
   if (!enabled) return null;
 
   async function run() {
+    // The trigger stays focusable (aria-disabled, not disabled) so a repeat
+    // press doesn't drop focus to <body> mid-request.
+    if (loading) return;
+    setStatusNonce((n) => n + 1);
     setLoading(true);
     setError(false);
     try {
@@ -36,44 +44,75 @@ export function ExplainBuild({
       console.error('Explain build failed', err);
       setError(true);
     } finally {
+      setStatusNonce((n) => n + 1);
       setLoading(false);
     }
   }
 
   return (
     <div className="mt-3">
-      {/* Persistent live region: announcing only works if the container is in
-          the DOM before the text arrives. */}
-      <div aria-live="polite">
-        {explanation && (
-          <div className="panel space-y-2">
+      {/* Persistent live regions: announcing only works if the container is
+          already in the DOM when its text arrives. The panel below is purely
+          visual — its own mount is too late to be observed. */}
+      <p className="sr-only" role="status">
+        <span key={statusNonce}>
+          {loading
+            ? 'Generating explanation…'
+            : explanation
+              ? 'Explanation ready.'
+              : ''}
+        </span>
+      </p>
+      {/* The visible Callout is created on demand, so it cannot carry the
+          alert role itself; this one is always mounted. */}
+      <p className="sr-only" role="alert">
+        {error ? 'Couldn’t generate an explanation right now.' : ''}
+      </p>
+      <div>
+        {(explanation || loading) && (
+          <div className="panel panel-md space-y-2">
             <p className="field-label">AI explanation</p>
-            <p className="text-sm leading-relaxed text-paper/90">
-              {explanation}
-            </p>
+            {loading ? (
+              // Skeleton in the box the text will fill, so the panel doesn't
+              // appear from nowhere once the request lands.
+              <div aria-hidden="true" className="space-y-2">
+                <div className="h-3 w-full animate-pulse rounded bg-white/10" />
+                <div className="h-3 w-11/12 animate-pulse rounded bg-white/10" />
+                <div className="h-3 w-2/3 animate-pulse rounded bg-white/10" />
+              </div>
+            ) : (
+              <p className="text-sm leading-relaxed text-paper/90">
+                {explanation}
+              </p>
+            )}
           </div>
         )}
       </div>
-      {!explanation && (
-        <button
-          className="btn-ghost"
-          onClick={() => void run()}
-          aria-busy={loading}
-          disabled={loading}
-        >
-          {loading ? (
-            'Thinking…'
-          ) : (
-            <>
-              <span aria-hidden="true">✨</span> Explain this build
-            </>
-          )}
-        </button>
-      )}
+      {/* The trigger used to vanish for good on success, so a user who wanted
+          a second take had no way to ask for one. */}
+      <button
+        type="button"
+        className="btn-ghost mt-2"
+        onClick={() => void run()}
+        aria-busy={loading}
+        aria-disabled={loading}
+      >
+        {loading ? (
+          'Thinking…'
+        ) : explanation ? (
+          <>
+            <span aria-hidden="true">✨</span> Regenerate
+          </>
+        ) : (
+          <>
+            <span aria-hidden="true">✨</span> Explain this build
+          </>
+        )}
+      </button>
       {error && (
-        <p className="mt-2 text-sm text-rose">
-          Couldn&apos;t generate an explanation right now. Try again.
-        </p>
+        <Callout tone="error" className="mt-2">
+          Couldn’t generate an explanation right now. Try again.
+        </Callout>
       )}
     </div>
   );

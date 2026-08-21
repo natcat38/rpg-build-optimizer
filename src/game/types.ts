@@ -46,6 +46,20 @@ export const ELEMENTS = [
 
 export type Element = (typeof ELEMENTS)[number];
 
+// The five weapon classes. A character can only equip weapons of their own
+// class, so both sides of that comparison are normalised to this list when the
+// snapshot is built (scripts/build-dataset.ts) — same source-of-truth trick as
+// ELEMENTS above, so the allowlist and the union can't drift.
+export const WEAPON_TYPES = [
+  'sword',
+  'claymore',
+  'polearm',
+  'bow',
+  'catalyst',
+] as const;
+
+export type WeaponType = (typeof WEAPON_TYPES)[number];
+
 export type BuildLevel = 1 | 20 | 40 | 50 | 60 | 70 | 80 | 90;
 export const BUILD_LEVELS: BuildLevel[] = [1, 20, 40, 50, 60, 70, 80, 90];
 

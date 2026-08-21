@@ -10,15 +10,10 @@ import type {
   BuildResult,
   OptimizeRequest,
   StatVec,
-  SubStat,
 } from '../game/types';
-import {
-  isStatKey,
-  isObjective,
-  BUILD_LEVELS,
-  ELEMENTS,
-  SLOTS,
-} from '../game/types';
+import { isStatKey, isObjective, BUILD_LEVELS, SLOTS } from '../game/types';
+import { isPersistedArtifact, MAX_KEY_LEN } from '../state/artifactValidation';
+import { genshinAdapter } from '../game/genshin/adapter';
 
 export interface BuildSnapshot {
   request: OptimizeRequest;
@@ -112,8 +107,8 @@ export async function encodeBuild(snapshot: BuildSnapshot): Promise<string> {
 }
 
 // Bound untrusted strings before they reach regex (formatSetName) / the DOM —
-// a multi-MB key would cause main-thread jank. Mirrors explainShared's MAX_KEY_LEN.
-const MAX_KEY_LEN = 128;
+// a multi-MB key would cause main-thread jank. MAX_KEY_LEN is the shared cap
+// (artifactValidation), the same one the AI proxy payload guard applies.
 // A build is exactly five artifacts (ADR-0005). Cap generously so a crafted
 // ?b= link can't hand us a huge array to validate/render (client-side jank).
 const MAX_ARTIFACTS = 20;
@@ -128,37 +123,38 @@ function isStatVec(x: unknown): x is StatVec {
   );
 }
 
-function isSubStat(x: unknown): x is SubStat {
-  if (typeof x !== 'object' || x === null) return false;
-  const s = x as Record<string, unknown>;
+/** The tiebreak is a cr/(cr+cd) ratio, so anything outside [0,1] is malformed
+ *  rather than merely extreme. */
+function isCritRatioTarget(x: unknown): boolean {
   return (
-    isStatKey(s.key) && typeof s.value === 'number' && Number.isFinite(s.value)
+    x === undefined ||
+    (typeof x === 'number' && Number.isFinite(x) && x >= 0 && x <= 1)
   );
 }
 
-function isArtifact(x: unknown): x is Artifact {
+function isSetRequirement(x: unknown): boolean {
   if (typeof x !== 'object' || x === null) return false;
-  const a = x as Record<string, unknown>;
-  return (
-    isShortString(a.id) &&
-    isShortString(a.setKey) &&
-    (SLOTS as string[]).includes(a.slot as string) &&
-    typeof a.rarity === 'number' &&
-    Number.isFinite(a.rarity) &&
-    typeof a.level === 'number' &&
-    Number.isFinite(a.level) &&
-    isStatKey(a.mainStat) &&
-    typeof a.mainStatValue === 'number' &&
-    Number.isFinite(a.mainStatValue) &&
-    Array.isArray(a.subStats) &&
-    a.subStats.every(isSubStat) &&
-    // Optional (ADR-0014): absent on links minted before element tracking existed.
-    // Only ever meaningful on an elemental_dmg goblet — reject it anywhere else
-    // rather than silently accepting an inconsistent artifact.
-    (a.element === undefined ||
-      ((ELEMENTS as readonly string[]).includes(a.element as string) &&
-        a.slot === 'goblet' &&
-        a.mainStat === 'elemental_dmg'))
+  const r = x as Record<string, unknown>;
+  if (r.kind === '4pc' || r.kind === '2pc') return isShortString(r.setKey);
+  if (r.kind === '2+2') {
+    const keys = r.setKeys;
+    return (
+      Array.isArray(keys) &&
+      keys.length === 2 &&
+      keys.every(isShortString) &&
+      // Equal halves collapse to a plain 2pc, which the optimiser's ceiling
+      // and satisfies() would each read differently — reject rather than
+      // silently reinterpret.
+      keys[0] !== keys[1]
+    );
+  }
+  return false;
+}
+
+function isMainStatLocks(x: unknown): boolean {
+  if (typeof x !== 'object' || x === null) return false;
+  return Object.entries(x).every(
+    ([slot, stat]) => (SLOTS as string[]).includes(slot) && isStatKey(stat),
   );
 }
 
@@ -167,14 +163,32 @@ function isOptimizeRequest(x: unknown): x is OptimizeRequest {
   const r = x as Record<string, unknown>;
   if (!isShortString(r.characterKey) || !isShortString(r.weaponKey))
     return false;
+  // A link the snapshot can't run is not a link — the recipient's "Re-run this
+  // build" would throw out of `baseStats`, which fails loud on an unknown key.
+  // So unlike `canEquip`'s deliberately permissive unknown-key rule, both keys
+  // must resolve here *and* form a legal pairing.
+  if (
+    !genshinAdapter.character(r.characterKey) ||
+    !genshinAdapter.weapon(r.weaponKey) ||
+    !genshinAdapter.canEquip(r.characterKey, r.weaponKey)
+  )
+    return false;
   if (!(BUILD_LEVELS as number[]).includes(r.buildLevel as number))
     return false;
   if (!isObjective(r.objective)) return false;
   if (typeof r.constraints !== 'object' || r.constraints === null) return false;
-  // minStats, if present, reaches the optimizer should a shared request ever be
-  // re-run — validate its keys/values now rather than trust the link.
-  const minStats = (r.constraints as Record<string, unknown>).minStats;
-  if (minStats !== undefined && !isStatVec(minStats)) return false;
+  // The whole constraints object reaches the optimizer should a shared request
+  // ever be re-run — validate every field now rather than trust the link. A
+  // malformed setRequirement in particular would otherwise reach
+  // meetsSetRequirement and setCeilingVector, which each read the union's
+  // members without re-checking `kind`.
+  const c = r.constraints as Record<string, unknown>;
+  if (c.minStats !== undefined && !isStatVec(c.minStats)) return false;
+  if (!isCritRatioTarget(c.critRatioTarget)) return false;
+  if (c.setRequirement !== undefined && !isSetRequirement(c.setRequirement))
+    return false;
+  if (c.mainStatLocks !== undefined && !isMainStatLocks(c.mainStatLocks))
+    return false;
   return true;
 }
 
@@ -211,11 +225,17 @@ export function parseBuildSnapshot(input: unknown): BuildSnapshot | null {
   if (!isBuildResult(build)) return null;
   if (!Array.isArray(artifacts) || artifacts.length > MAX_ARTIFACTS)
     return null;
-  if (!artifacts.every(isArtifact)) return null;
-  // The build's per-slot ids must resolve to a carried artifact, else the link
-  // renders a "valid" build with no gear shown. Keep the snapshot self-consistent.
-  const ids = new Set((artifacts as Artifact[]).map((a) => a.id));
-  if (!SLOTS.every((s) => ids.has(build.artifactIds[s]))) return null;
+  if (!artifacts.every(isPersistedArtifact)) return null;
+  // The build's per-slot ids must resolve to a carried artifact *of that slot*,
+  // else the link renders a "valid" build with no gear shown — or, worse, five
+  // circlets under five slot headings. Indexing by slot also rejects a payload
+  // carrying two pieces for one slot, since the later one wins the map entry
+  // and the earlier slot then fails to match.
+  const bySlot = new Map(
+    (artifacts as Artifact[]).map((a) => [a.slot, a] as const),
+  );
+  if (!SLOTS.every((s) => bySlot.get(s)?.id === build.artifactIds[s]))
+    return null;
   return { request, build, artifacts: artifacts as Artifact[] };
 }
 

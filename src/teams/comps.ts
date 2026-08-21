@@ -1063,3 +1063,35 @@ export const COMP_ARCHETYPES: CompArchetype[] = [
     ],
   },
 ];
+
+// The archetype table is a module constant, so both indexes are built once.
+const BY_ID = new Map(COMP_ARCHETYPES.map((a) => [a.id, a]));
+
+const BY_CHARACTER = new Map<string, CompArchetype[]>();
+for (const a of COMP_ARCHETYPES) {
+  // A character can appear in two slots of one archetype (e.g. Xingqiu as both
+  // applicator and off-field sub), so dedupe before indexing.
+  const keys = new Set(
+    a.slots.flatMap((s) => s.options.map((o) => o.characterKey)),
+  );
+  for (const key of keys) {
+    const list = BY_CHARACTER.get(key);
+    if (list) list.push(a);
+    else BY_CHARACTER.set(key, [a]);
+  }
+}
+
+export function getArchetype(id: string): CompArchetype | undefined {
+  return BY_ID.get(id);
+}
+
+/** Falls back to the raw id rather than crashing: archetype ids travel through
+ *  team instances and gap reports, which outlive any one curation pass. */
+export function archetypeName(id: string): string {
+  return BY_ID.get(id)?.name ?? id;
+}
+
+/** Every archetype this character appears in, at any slot or substitute rank. */
+export function archetypesFor(characterKey: string): CompArchetype[] {
+  return BY_CHARACTER.get(characterKey) ?? [];
+}

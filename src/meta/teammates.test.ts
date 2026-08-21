@@ -1,23 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { TEAMMATES, resolveTeammateName } from './teammates';
+import { TEAMMATES } from './teammates';
 import { genshinAdapter } from '../game/genshin/adapter';
-
-describe('resolveTeammateName', () => {
-  const characters = [
-    { key: 'faruzan', name: 'Faruzan' },
-    { key: 'wanderer', name: 'Wanderer' },
-  ];
-
-  it('resolves a known character to its display name', () => {
-    expect(resolveTeammateName('faruzan', characters)).toBe('Faruzan');
-  });
-
-  it('falls back to the raw key for an unknown character instead of crashing', () => {
-    expect(resolveTeammateName('some_brand_new_character', characters)).toBe(
-      'some_brand_new_character',
-    );
-  });
-});
 
 describe('TEAMMATES', () => {
   const charKeys = new Set(genshinAdapter.characters().map((c) => c.key));
@@ -43,9 +26,7 @@ describe('TEAMMATES', () => {
   it('degrades gracefully for any teammate key not in the dataset (never crashes)', () => {
     for (const entry of Object.values(TEAMMATES)) {
       for (const rec of entry.recs) {
-        expect(() =>
-          resolveTeammateName(rec.characterKey, genshinAdapter.characters()),
-        ).not.toThrow();
+        expect(genshinAdapter.characterName(rec.characterKey)).toBeTruthy();
       }
     }
     // Sanity: at least warn (via this assertion) if we ever cite a teammate

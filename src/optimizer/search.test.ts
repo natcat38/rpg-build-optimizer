@@ -5,6 +5,7 @@ import type {
   OptimizeContext,
   OptimizeRequest,
   OptimizeResult,
+  SetRequirement,
   Slot,
 } from '../game/types';
 import { SLOTS } from '../game/types';
@@ -22,6 +23,23 @@ function expectOk(
     );
   }
   return r;
+}
+
+/** Every returned build's score, in rank order. The oracle comparisons assert
+ *  this whole list, not just the winner: `minKeptScore` prunes at the k-th
+ *  anti-clone survivor, and ranks 2..K are exact only while the incremental
+ *  greedy inside `offer` agrees with a from-scratch run over everything
+ *  feasible. Comparing builds[0] alone cannot see that divergence.
+ *  `bruteForce` applies the same anti-clone cap over all feasible leaves, so
+ *  the two lists are directly comparable. */
+function scoresOf(r: Extract<OptimizeResult, { status: 'ok' }>): number[] {
+  return r.builds.map((b) => b.score);
+}
+
+/** scoresOf equality for float-valued objectives (avg_damage). */
+function expectScoresClose(a: number[], b: number[], digits = 6): void {
+  expect(a).toHaveLength(b.length);
+  a.forEach((s, i) => expect(s).toBeCloseTo(b[i], digits));
 }
 
 const ctx: OptimizeContext = {
@@ -93,7 +111,7 @@ describe('searchBuilds', () => {
       const inv = inventory(3);
       const bnb = expectOk(searchBuilds(req, inv, ctx));
       const bf = expectOk(bruteForce(req, inv, ctx));
-      expect(bnb.builds[0]?.objectiveValue).toBe(bf.builds[0]?.objectiveValue);
+      expect(scoresOf(bnb)).toEqual(scoresOf(bf));
     }
   });
 
@@ -140,7 +158,7 @@ describe('searchBuilds', () => {
       }
       const bnb = expectOk(searchBuilds(reqEr, inv, ctxSets));
       const bf = expectOk(bruteForce(reqEr, inv, ctxSets));
-      expect(bnb.builds[0]?.objectiveValue).toBe(bf.builds[0]?.objectiveValue);
+      expect(scoresOf(bnb)).toEqual(scoresOf(bf));
     }
   });
 
@@ -186,7 +204,7 @@ describe('searchBuilds', () => {
       };
       const bnb = expectOk(searchBuilds(reqLocked, inv, ctx));
       const bf = expectOk(bruteForce(reqLocked, inv, ctx));
-      expect(bnb.builds[0]?.score).toBe(bf.builds[0]?.score);
+      expect(scoresOf(bnb)).toEqual(scoresOf(bf));
     }
   });
 
@@ -225,12 +243,84 @@ describe('searchBuilds', () => {
       };
       const bnb = expectOk(searchBuilds(reqSet, inv, ctx));
       const bf = expectOk(bruteForce(reqSet, inv, ctx));
-      expect(bnb.builds[0]?.score).toBe(bf.builds[0]?.score);
+      expect(scoresOf(bnb)).toEqual(scoresOf(bf));
     }
-    // 2pc / 2+2 share meetsSetRequirement's count-based check (score.ts) with
-    // 4pc — same code path, so this case is representative rather than
-    // needing its own dedicated oracle run.
   });
+
+  // 2pc and 2+2 share meetsSetRequirement's count-based check (score.ts) with
+  // 4pc, but not the pruning bounds: setCeilingVector branches on the
+  // requirement kind into three separate ceilings, and only 2+2 arms the
+  // second-set feasibility bound (remainingB). 4pc is therefore not
+  // representative — each kind needs its own oracle run, with a minStats floor
+  // so setCeilingVector's result is actually load-bearing.
+
+  /** Three sets in every slot, each with a scorable bonus, so a requirement of
+   *  any kind is satisfiable and the set-bonus ceilings genuinely bind. */
+  const ctxSetReq: OptimizeContext = {
+    base: { crit_rate: 5, crit_dmg: 50 },
+    setBonuses: {
+      A: { two: { crit_rate: 10 }, four: { crit_dmg: 40 } },
+      B: { two: { crit_dmg: 30 } },
+      C: { two: { crit_rate: 8 } },
+    },
+  };
+
+  function setInventory(seed: number): Artifact[] {
+    let n = seed * 7919 + 1;
+    const rnd = () => {
+      n = (n * 1103515245 + 12345) & 0x7fffffff;
+      return n;
+    };
+    const keys = ['A', 'B', 'C', 'A'];
+    const inv: Artifact[] = [];
+    let id = 0;
+    for (const slot of SLOTS)
+      for (let i = 0; i < keys.length; i++)
+        inv.push({
+          id: `sq${seed}-${id++}`,
+          setKey: keys[i],
+          slot,
+          rarity: 5,
+          level: 20,
+          mainStat: 'crit_rate',
+          mainStatValue: rnd() % 50,
+          subStats: rnd() % 3 ? [{ key: 'crit_dmg', value: rnd() % 20 }] : [],
+        });
+    return inv;
+  }
+
+  const setReqCases: [string, SetRequirement][] = [
+    ['2pc', { kind: '2pc', setKey: 'A' }],
+    ['2+2', { kind: '2+2', setKeys: ['B', 'C'] }],
+    // ['A','A'] collapses to "≥2 of A", which a five-piece build can satisfy
+    // while also activating A's 4pc. A ceiling that just summed A's 2pc twice
+    // missed that 4pc entirely and reported feasible builds as infeasible.
+    ['2+2 naming the same set twice', { kind: '2+2', setKeys: ['A', 'A'] }],
+  ];
+
+  it.each(setReqCases)(
+    'branch-and-bound matches brute force with a %s setRequirement (full top-K)',
+    (_label, setRequirement) => {
+      let feasibleSeeds = 0;
+      for (let seed = 0; seed < 20; seed++) {
+        const inv = setInventory(seed);
+        const reqSet: OptimizeRequest = {
+          ...req,
+          constraints: { setRequirement, minStats: { crit_dmg: 110 } },
+        };
+        const bnb = searchBuilds(reqSet, inv, ctxSetReq);
+        const bf = bruteForce(reqSet, inv, ctxSetReq);
+        expect(bnb.status).toBe(bf.status);
+        if (bnb.status === 'ok' && bf.status === 'ok') {
+          expect(scoresOf(bnb)).toEqual(scoresOf(bf));
+          feasibleSeeds++;
+        }
+      }
+      // An all-infeasible run would pass vacuously — that is exactly the bug
+      // the inadmissible ceilings produced.
+      expect(feasibleSeeds).toBeGreaterThan(0);
+    },
+  );
 
   it('prunes a sparse 4pc setRequirement without exploring the full pool (regression)', () => {
     // Regression for a real-account perf cliff: a setRequirement used to be
@@ -317,7 +407,7 @@ describe('searchBuilds', () => {
       };
       const bnb = expectOk(searchBuilds(reqRatio, inv, ctx));
       const bf = expectOk(bruteForce(reqRatio, inv, ctx));
-      expect(bnb.builds[0]?.score).toBe(bf.builds[0]?.score);
+      expect(scoresOf(bnb)).toEqual(scoresOf(bf));
     }
   });
 
@@ -355,12 +445,23 @@ describe('searchBuilds', () => {
     expect(r.builds.length).toBeLessThanOrEqual(10);
   });
 
-  it('stays exact when the kept list overflows the k*6 truncation cap (topK=1)', () => {
+  it('stays exact when the kept list is truncated hard (topK=1)', () => {
     counter = 0;
-    const inv = inventory(3); // 3^5 = 243 feasible leaves >> k*6 = 6, forcing truncation
+    const inv = inventory(3); // 3^5 = 243 feasible leaves, all but 1 discarded
     const bnb = expectOk(searchBuilds({ ...req, topK: 1 }, inv, ctx));
     const bf = expectOk(bruteForce({ ...req, topK: 1 }, inv, ctx));
-    expect(bnb.builds[0].objectiveValue).toBe(bf.builds[0]?.objectiveValue);
+    expect(scoresOf(bnb)).toEqual(scoresOf(bf));
+  });
+
+  it('throws on a non-finite scalar contribution instead of pruning silently', () => {
+    // A NaN contribution makes every `upper <= threshold` comparison false, so
+    // the bound stops pruning and stops being meaningful; Infinity prunes
+    // everything. A corrupt inventory must fail loudly, not return a
+    // confident-looking wrong answer.
+    counter = 0;
+    const inv = inventory(3);
+    inv[0] = { ...inv[0], mainStatValue: Number.NaN };
+    expect(() => searchBuilds(req, inv, ctx)).toThrow(/non-finite/);
   });
 
   it('drops exact-duplicate builds via the seenExact guard', () => {
@@ -484,7 +585,7 @@ describe('searchBuilds with the avg_damage objective', () => {
       const inv = randomInventory(seed, 6);
       const fast = expectOk(searchBuilds(dmgReq, inv, dmgCtx));
       const slow = expectOk(bruteForce(dmgReq, inv, dmgCtx));
-      expect(fast.builds[0].score).toBeCloseTo(slow.builds[0].score, 6);
+      expectScoresClose(scoresOf(fast), scoresOf(slow));
       totalPruned += fast.pruned;
     }
     // The bound has to actually engage — an unpruned exhaustive walk would
@@ -507,7 +608,7 @@ describe('searchBuilds with the avg_damage objective', () => {
       const slow = bruteForce(constrained, inv, dmgCtx);
       expect(fast.status).toBe(slow.status);
       if (fast.status === 'ok' && slow.status === 'ok') {
-        expect(fast.builds[0].score).toBeCloseTo(slow.builds[0].score, 6);
+        expectScoresClose(scoresOf(fast), scoresOf(slow));
         for (const b of fast.builds) {
           expect(b.totals.er_pct ?? 0).toBeGreaterThanOrEqual(110);
           const ids = SLOTS.map((s) => b.artifactIds[s]);

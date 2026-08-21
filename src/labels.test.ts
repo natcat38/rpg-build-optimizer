@@ -19,8 +19,13 @@ describe('labels', () => {
     expect(objectiveLabel('em')).toBe('Elemental Mastery');
   });
 
-  it('spaces a PascalCase set key', () => {
-    expect(formatSetName('EmblemOfSeveredFate')).toBe('Emblem Of Severed Fate');
+  it('prefers the dataset name for a known set key', () => {
+    expect(formatSetName('EmblemOfSeveredFate')).toBe('Emblem of Severed Fate');
+    expect(formatSetName('GladiatorsFinale')).toBe("Gladiator's Finale");
+  });
+
+  it('spaces a PascalCase key the snapshot does not know', () => {
+    expect(formatSetName('SomeFutureSetKey')).toBe('Some Future Set Key');
   });
 
   it('formats finite scores and renders a dash for non-finite ones', () => {

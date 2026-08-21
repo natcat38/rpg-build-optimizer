@@ -5,28 +5,40 @@
  * @packageDocumentation
  */
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { ImportPanel } from './ImportPanel';
 import { ArtifactForm } from './ArtifactForm';
 import { OptimizePanel } from './OptimizePanel';
 import { Results } from './Results';
 import { SampleGear } from './SampleGear';
 import { GapSection } from './GapSection';
-import { GameSwitcher } from './GameSwitcher';
 import { RosterView } from '../roster/RosterView';
 import { TeamsView } from '../teams/TeamsView';
 import { PlanView } from '../plan/PlanView';
 import { decodeBuild } from '../share/url';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
-import { useOptimizeRequest, currentRequest } from '../state/optimizeRequest';
-import { useGame } from '../state/game';
+import {
+  useOptimizeRequest,
+  currentRequest,
+  isDefaultSelection,
+} from '../state/optimizeRequest';
+import { bestBuiltCharacter } from '../roster/buildScore';
 import { getGame, type GameDescriptor } from '../game/registry';
 import { optimize } from '../workers/optimizeClient';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
-import { formatReduction } from '../optimizer/benchmark';
+import { genshinAdapter } from '../game/genshin/adapter';
 import { scrollToId } from '../ui/scroll';
-import { objectiveHint } from '../ui/labels';
+import { formatScore, objectiveHint } from '../labels';
+import { Callout } from './ui/Callout';
+import { cn } from './ui/cn';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 
 function Section({
@@ -37,23 +49,33 @@ function Section({
   delay,
   children,
 }: {
-  n: number;
+  /** Omitted for Results: it's an output of the sequence, not a step in it. */
+  n?: number;
   id?: string;
   title: string;
   hint?: string;
   delay: string;
   children: ReactNode;
 }) {
+  // A <section> is only a landmark once it has an accessible name; unnamed,
+  // five of them collapsed into five identical "region" entries.
+  const headingId = useId();
   return (
     <section
       id={id}
-      className="scroll-mt-20 animate-fade-up"
+      aria-labelledby={headingId}
+      className="animate-fade-up scroll-mt-20"
       style={{ animationDelay: delay }}
     >
       <div className="mb-3 flex items-center gap-3">
-        <span className="section-badge">{String(n).padStart(2, '0')}</span>
+        {n != null && (
+          <span className="section-badge">{String(n).padStart(2, '0')}</span>
+        )}
         <div>
-          <h2 className="font-display text-lg font-bold tracking-wide text-paper">
+          <h2
+            id={headingId}
+            className="font-display text-2xl font-bold tracking-tight text-paper"
+          >
             {title}
           </h2>
           {hint && <p className="text-xs text-muted">{hint}</p>}
@@ -64,12 +86,12 @@ function Section({
   );
 }
 
-/** Thesis-only hero: shown while the solved demo is computing, once the user
- *  has their own gear loaded, or for a coming-soon game with nothing to solve yet. */
+/** Thesis-only hero: shown while the solved demo is computing, or once the user
+ *  has their own gear loaded. */
 function ThesisHero({ game }: { game: GameDescriptor }) {
   return (
     <>
-      <h1 className="font-display text-4xl font-black leading-tight text-paper sm:text-5xl">
+      <h1 className="font-display text-4xl font-bold leading-tight text-paper sm:text-5xl">
         RPG Build Optimizer
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
@@ -84,12 +106,9 @@ function ThesisHero({ game }: { game: GameDescriptor }) {
  *  a seeded synthetic inventory (see src/sample/heroExample.ts), plus the exact
  *  search proof — the thing this tool actually does. */
 function SolvedHero({ hero }: { hero: HeroExample }) {
-  const reductionLabel = formatReduction(
-    hero.explored > 0 ? hero.naive / hero.explored : 0,
-  );
   return (
     <>
-      <h1 className="font-display text-4xl font-black leading-tight text-paper sm:text-5xl">
+      <h1 className="font-display text-4xl font-bold leading-tight text-paper sm:text-5xl">
         RPG Build Optimizer
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
@@ -99,60 +118,136 @@ function SolvedHero({ hero }: { hero: HeroExample }) {
       </p>
       <div className="mt-6 flex flex-wrap items-end gap-x-8 gap-y-4">
         <div>
-          <p className="text-[0.7rem] uppercase tracking-[0.18em] text-muted">
-            Crit Value, one real solve
-          </p>
+          <p className="micro-label">Crit Value · fixed demo inventory</p>
           <p className="font-mono text-5xl font-bold leading-none text-accent-bright">
-            {hero.build.objectiveValue.toFixed(1)}
+            {formatScore(hero.build.objectiveValue, 1)}
           </p>
-          <p className="mt-1 max-w-xs text-[0.7rem] text-muted">
+          <p className="mt-1 max-w-xs text-2xs text-muted">
             {objectiveHint('crit_value')}
           </p>
         </div>
-        <p className="max-w-sm font-mono text-xs leading-relaxed text-muted">
-          Searched{' '}
-          <span className="text-paper">{hero.naive.toLocaleString()}</span>{' '}
-          possible builds · evaluated{' '}
-          <span className="text-paper">{hero.explored.toLocaleString()}</span> ·
-          pruned{' '}
-          <span className="text-paper">{hero.pruned.toLocaleString()}</span> ·
-          proven optimal in {reductionLabel} fewer evaluations.
+        {/* The big number is the *space*, not the work: branch-and-bound never
+            visits 100,000 builds, and saying "searched 100,000" claimed
+            brute force. Sentence in the body face, numerals in mono. */}
+        <p className="max-w-sm text-xs leading-relaxed text-muted">
+          Search space:{' '}
+          <span className="font-mono tabular-nums text-paper">
+            {hero.naive.toLocaleString()}
+          </span>{' '}
+          combinations · leaves evaluated:{' '}
+          <span className="font-mono tabular-nums text-paper">
+            {hero.explored.toLocaleString()}
+          </span>{' '}
+          · subtrees pruned:{' '}
+          <span className="font-mono tabular-nums text-paper">
+            {hero.pruned.toLocaleString()}
+          </span>{' '}
+          — optimum proven.
         </p>
       </div>
+      <p className="mt-3 text-2xs text-muted">
+        Solved on load from a fixed 50-piece demo inventory — not your gear, and
+        not a result you asked for.
+      </p>
     </>
   );
 }
 
-function ComingSoon({ game }: { game: GameDescriptor }) {
+/** Step chips for the sticky nav — ids match the Section ids below. Results
+ *  carries no number: it's what the sequence produces, not a step in it. */
+const STEPS: { id: string; n?: string; label: string }[] = [
+  { id: 'step-load', n: '01', label: 'Load' },
+  { id: 'step-roster', n: '02', label: 'Roster' },
+  { id: 'step-teams', n: '03', label: 'Teams' },
+  { id: 'step-plan', n: '04', label: 'Plan' },
+  { id: 'step-optimise', n: '05', label: 'Optimise' },
+  { id: 'results-section', label: 'Results' },
+];
+
+const LOCKED_HINT = 'Import a roster to unlock this step';
+
+/**
+ * Which nav chip the reader is looking at. `aria-current` needs a single
+ * answer, so the topmost intersecting section wins. Guarded rather than
+ * polyfilled: the highlight is an enhancement, and jsdom has no
+ * IntersectionObserver.
+ */
+function useScrollSpy(ids: string[]): string | null {
+  const [active, setActive] = useState<string | null>(null);
+  // The id set changed, so the previous answer describes a nav that no longer
+  // exists: clear it and let the observer's first callback decide. Done in the
+  // render pass, not an effect — React re-runs this pass before painting, so
+  // `aria-current` never lands on a chip that is gone.
+  const [spiedIds, setSpiedIds] = useState(ids);
+  if (spiedIds !== ids) {
+    setSpiedIds(ids);
+    setActive(null);
+  }
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+    const order = ids;
+    const els = order
+      .map((id) => document.getElementById(id))
+      .filter((e): e is HTMLElement => e !== null);
+    if (els.length === 0) return;
+    const seen = new Set<string>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) seen.add(e.target.id);
+          else seen.delete(e.target.id);
+        }
+        const first = order.find((id) => seen.has(id));
+        // Deliberately keep the last answer when nothing is intersecting:
+        // between two sections (or scrolled past the last one) `first` is
+        // undefined, and blanking `aria-current` there makes the highlight
+        // flicker off mid-scroll. The reader is still "at" the section they
+        // last passed, so it stays lit until another one wins.
+        if (first) setActive(first);
+      },
+      // Top band only: a section counts as "current" once its heading has
+      // cleared the sticky nav and before it has left the upper third.
+      { rootMargin: '-72px 0px -60% 0px' },
+    );
+    for (const el of els) io.observe(el);
+    return () => io.disconnect();
+    // `ids` is a memoised array from the caller: a fresh array every render
+    // would tear down and rebuild the observer on every render.
+  }, [ids]);
+  return active;
+}
+
+/** A shared ?b= link opens on someone else's build. Say whose, and offer the
+ *  one action the page can't infer — re-running it over the reader's own bag
+ *  (the request is already hydrated into the Optimise panel). */
+function SharedBuildBanner({ request }: { request: OptimizeRequest }) {
+  const character = genshinAdapter.characterName(request.characterKey);
+  const weapon =
+    genshinAdapter.weapon(request.weaponKey)?.name ?? request.weaponKey;
   return (
-    <div className="panel animate-fade-up space-y-2 text-center">
-      <p className="eyebrow">{game.name}</p>
-      <h2 className="font-display text-xl font-bold text-paper">
-        Support is in the works
-      </h2>
-      <p className="mx-auto max-w-md text-sm text-muted">
-        The {game.gearNounPlural.toLowerCase()} and {game.setNoun.toLowerCase()}{' '}
-        model for {game.name} isn&apos;t wired up to the solver yet. Switch back
-        to Genshin Impact to run a real optimisation today.
-      </p>
-    </div>
+    <Callout
+      tone="info"
+      className="mb-4 flex flex-wrap items-center justify-between gap-3"
+    >
+      <span>
+        Shared build ·{' '}
+        <span className="font-semibold text-paper">{character}</span> · {weapon}{' '}
+        · Lv {request.buildLevel}. It carries its own five pieces — no search
+        ran in your browser.
+      </span>
+      <button
+        type="button"
+        className="btn-ghost flex-none"
+        onClick={() => scrollToId('step-optimise')}
+      >
+        Run it yourself
+      </button>
+    </Callout>
   );
 }
 
-/** Step chips for the sticky nav — ids match the Section ids below. */
-const STEPS: [id: string, n: string, label: string][] = [
-  ['step-load', '01', 'Load'],
-  ['step-roster', '02', 'Roster'],
-  ['step-teams', '03', 'Teams'],
-  ['step-plan', '04', 'Plan'],
-  ['step-optimise', '05', 'Optimise'],
-];
-
 export function App() {
-  const gameId = useGame((s) => s.gameId);
-  const game = getGame(gameId);
-
-  const isLive = game.availability === 'live';
+  const game = getGame('genshin');
 
   const artifacts = useInventory((s) => s.artifacts);
   const rosterEntries = useRoster((s) => s.entries);
@@ -167,18 +262,6 @@ export function App() {
   const [sharedError, setSharedError] = useState(false);
   const [optimizeError, setOptimizeError] = useState(false);
 
-  // Switching games invalidates any Genshin-specific result/request still held
-  // in state — without this, the ComingSoon gate is bypassed by a stale result.
-  useEffect(() => {
-    return useGame.subscribe((s, prev) => {
-      if (s.gameId !== prev.gameId) {
-        setResult(null);
-        setRequest(null);
-        setOptimizeError(false);
-      }
-    });
-  }, []);
-
   // The hero's demo solve is independent of the user's own inventory/state and
   // reasonably cheap (~tens of ms — see heroExample.ts), so it's computed in an
   // effect (after first paint) rather than blocking initial render.
@@ -188,10 +271,24 @@ export function App() {
     // keep showing it even if the user's inventory state changes shape
     // afterward, but still compute it the first time sampleMode turns true
     // (e.g. a returning user who starts with real gear already loaded).
-    if (hero || !isLive || !sampleMode) return;
+    if (hero || !sampleMode) return;
     const id = setTimeout(() => setHero(buildHeroExample()), 0);
     return () => clearTimeout(id);
-  }, [isLive, sampleMode, hero]);
+  }, [sampleMode, hero]);
+
+  // Once a roster exists the app's curated opening pair is no longer the most
+  // useful one — the reader's own best-built character is. Only while the
+  // selection is untouched: a pick the reader (or a shared ?b= link) made must
+  // never be overwritten, which is what `isDefaultSelection` guards. Weapon
+  // legality is left to OptimizePanel, the one place that owns that rule.
+  useEffect(() => {
+    const s = useOptimizeRequest.getState();
+    if (!isDefaultSelection(s)) return;
+    const best = bestBuiltCharacter(rosterEntries, artifacts);
+    if (!best) return;
+    s.setCharacterKey(best.characterKey);
+    if (best.weaponKey) s.setWeaponKey(best.weaponKey);
+  }, [rosterEntries, artifacts]);
 
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get('b');
@@ -237,6 +334,21 @@ export function App() {
 
   const [running, setRunning] = useState(false);
 
+  // One persistent announcement for the whole page. Written by the run itself
+  // rather than by an effect on `result`, so a shared ?b= hydration (which is
+  // not an optimisation) never claims one finished.
+  const [announcement, setAnnouncement] = useState<{
+    nonce: number;
+    text: string;
+  } | null>(null);
+  // A live region only speaks when its content *changes*, so two runs that
+  // finish with the same sentence used to announce once. The nonce keys the
+  // text below, making every announcement a distinct node.
+  const announceNonce = useRef(0);
+  function announce(text: string) {
+    setAnnouncement(text ? { nonce: ++announceNonce.current, text } : null);
+  }
+
   // Guards against a stale run's result clobbering a newer one: OptimizePanel
   // and SampleGear share `running` (below) so their controls disable
   // together, but a same-tick double-trigger can still start two runs before
@@ -251,18 +363,28 @@ export function App() {
     const token = ++runToken.current;
     setRunning(true);
     setOptimizeError(false);
+    // A fresh run replaces whatever Results was showing, so the banner about
+    // the shared build that couldn't be read no longer describes anything.
+    setSharedError(false);
     try {
       const r = await optimize(req, inv);
       if (runToken.current !== token) return; // superseded by a newer run
       setSharedArtifacts(null);
       setResult(r);
       setRequest(req);
+      announce(
+        r.status === 'ok'
+          ? `Optimisation complete — ${r.builds.length} ${r.builds.length === 1 ? 'build' : 'builds'}.`
+          : 'Optimisation complete — no build satisfies all constraints.',
+      );
     } catch (err) {
       if (runToken.current !== token) return;
       // A worker/protocol rejection (or bad game data) must not vanish
       // silently — surface it instead of dropping back to idle with no cue.
       console.error('Optimize failed', err);
+      // The failure is announced by the assertive region below, not here.
       setOptimizeError(true);
+      announce('');
     } finally {
       if (runToken.current === token) setRunning(false);
     }
@@ -276,15 +398,37 @@ export function App() {
     }
   }, [result]);
 
-  const showSolvedHero = isLive && sampleMode && hero;
+  const showSolvedHero = sampleMode && hero;
 
-  // The roster section only exists once a GOOD import has produced one, so the
-  // later sections' numbers shift with it.
+  // The roster sections only exist once a GOOD import has produced one. Their
+  // numbers are fixed anyway: a step that renumbers itself as the page grows
+  // is unciteable, so 05 is always Optimise and the nav shows 02–04 locked.
   const hasRoster = Object.keys(rosterEntries).length > 0;
-  const optimiseN = hasRoster ? 5 : 2;
-  // A coming-soon game replaces every numbered Section with the ComingSoon panel,
-  // so the step nav and skip link would point at ids that aren't in the document.
-  const sectionsVisible = isLive || Boolean(result) || sharedError;
+  const hasResults = Boolean(result && request);
+
+  const unlocked: Record<string, boolean> = {
+    'step-load': true,
+    'step-roster': hasRoster,
+    'step-teams': hasRoster,
+    'step-plan': hasRoster,
+    'step-optimise': true,
+    'results-section': hasResults,
+  };
+  // Memoised because it is a scroll-spy effect dependency: only these two
+  // booleans can change which steps exist, so a new array identity on every
+  // unrelated render would rebuild the IntersectionObserver each time.
+  const liveIds = useMemo(
+    () =>
+      STEPS.filter(
+        (s) =>
+          s.id === 'step-load' ||
+          s.id === 'step-optimise' ||
+          (s.id === 'results-section' ? hasResults : hasRoster),
+      ).map((s) => s.id),
+    [hasRoster, hasResults],
+  );
+  const activeId = useScrollSpy(liveIds);
+  const lockedHintId = useId();
 
   return (
     <main className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
@@ -296,16 +440,13 @@ export function App() {
       </a>
       <header className="mb-10 animate-fade-up">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="eyebrow">RPG Build Optimizer</p>
-          <div className="flex flex-wrap items-center gap-3">
-            {isLive && (
-              <span className="chip">
-                <span className="h-1.5 w-1.5 rounded-full bg-jade" />
-                {game.source} · patch {game.patch}
-              </span>
-            )}
-            <GameSwitcher />
-          </div>
+          {/* Not the h1 again a line above the h1 — the eyebrow's job is to
+              say what kind of thing this is. */}
+          <p className="eyebrow">Exact search · proven optimal</p>
+          <span className="chip">
+            <span className="h-1.5 w-1.5 rounded-full bg-jade" />
+            {game.source} · patch {game.patch}
+          </span>
         </div>
         {showSolvedHero ? (
           <SolvedHero hero={hero} />
@@ -314,155 +455,212 @@ export function App() {
         )}
       </header>
 
-      {hasRoster && sectionsVisible && (
+      {/* Shown from the first visit, not gated on a roster: a visitor who
+          never imports still has two sections to move between, and the locked
+          chips are how the page explains what importing unlocks. */}
+      {liveIds.length >= 2 && (
         <nav
           aria-label="Steps"
-          className="sticky top-0 z-20 -mx-5 mb-6 flex gap-1 overflow-x-auto border-b border-white/5 bg-surface-800/80 px-5 py-2 backdrop-blur-md [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]"
+          className="sticky top-0 z-20 -mx-5 mb-6 flex snap-x scroll-px-5 gap-1 overflow-x-auto border-b border-white/5 bg-surface-800/80 px-5 py-2 backdrop-blur-md [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]"
         >
-          {STEPS.map(([id, n, label]) => (
-            <a
-              key={id}
-              href={`#${id}`}
-              className="chip min-h-11 items-center whitespace-nowrap hover:border-accent/40 hover:text-paper"
-            >
-              <span className="font-mono text-accent-bright">{n}</span> {label}
-            </a>
-          ))}
+          {STEPS.map((s) => {
+            if (!unlocked[s.id]) {
+              // Only the numbered steps ghost: they're what an import
+              // unlocks. Results isn't a step you can reach, so it simply
+              // isn't there until a run produces one.
+              if (!s.n) return null;
+              // A real disabled control, not a styled span: `aria-disabled` on
+              // a <span> announces nothing useful, and the hint lived in
+              // `title` — unreachable by keyboard and invisible to a screen
+              // reader. Solid muted text rather than opacity-40, which took
+              // the label below 4.5:1 against the nav.
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  disabled
+                  aria-describedby={lockedHintId}
+                  className="chip touch-target flex-none cursor-not-allowed snap-start items-center whitespace-nowrap border-white/5 text-muted"
+                >
+                  <span aria-hidden="true">🔒</span>
+                  <span className="font-mono">{s.n}</span>
+                  {s.label}
+                </button>
+              );
+            }
+            const current = activeId === s.id;
+            return (
+              <a
+                key={s.id}
+                href={`#${s.id}`}
+                aria-current={current ? 'true' : undefined}
+                className={cn(
+                  'chip touch-target flex-none snap-start items-center whitespace-nowrap transition-colors hover:border-accent/40 hover:text-paper',
+                  current && 'border-accent/60 bg-accent/10 text-paper',
+                )}
+              >
+                {s.n && (
+                  <span className="font-mono text-accent-bright">{s.n}</span>
+                )}
+                {s.label}
+              </a>
+            );
+          })}
+          {/* The right-edge mask fades the last chip; this spacer is what it
+              fades, so chip 6 doesn't look cut off at the scroll end. */}
+          <span aria-hidden="true" className="w-3 flex-none snap-end" />
+          {/* One hint, referenced by every locked chip. */}
+          <span id={lockedHintId} className="sr-only">
+            {LOCKED_HINT}
+          </span>
         </nav>
       )}
 
-      {/* A decoded shared build (?b=) or its decode error must stay visible even
-          when the active game is coming-soon — the link may point at content
-          from the (live) game it was shared for, independent of the current
-          GameSwitcher selection. */}
       <div id="content" tabIndex={-1}>
-        {!isLive && !result && !sharedError ? (
-          <ComingSoon game={game} />
-        ) : (
-          <>
-            {sharedError && (
-              <div
-                role="alert"
-                className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
-              >
-                This shared build couldn&apos;t be read — it may be from a newer
-                version.
-              </div>
-            )}
+        {/* One persistent live region for the whole page. A region mounted in
+            the same commit as its text is not yet observed, so nothing is
+            announced — hence this, and hence the Callouts below carry no
+            role of their own. */}
+        <p className="sr-only" role="status">
+          {announcement && (
+            <span key={announcement.nonce}>{announcement.text}</span>
+          )}
+        </p>
+        <p className="sr-only" role="alert">
+          {sharedError
+            ? 'This shared build couldn’t be read.'
+            : optimizeError
+              ? 'Optimisation failed.'
+              : ''}
+        </p>
 
-            {optimizeError && (
-              <div
-                role="alert"
-                className="mb-8 animate-fade-up rounded-xl border border-rose/30 bg-rose/10 px-4 py-3 text-sm text-rose"
-              >
-                Optimisation failed — please try again.
-              </div>
-            )}
-
-            <div className="space-y-10">
-              {sampleMode && (
-                <div className="animate-fade-up">
-                  <SampleGear onRun={runCurrent} running={running} />
-                </div>
-              )}
-              <Section
-                n={1}
-                id="step-load"
-                title={`Load your ${game.gearNounPlural.toLowerCase()}`}
-                hint="Import a full inventory, fetch from a UID, or add pieces by hand."
-                delay="0.05s"
-              >
-                <ImportPanel />
-                <details className="group mt-3">
-                  <summary className="inline-flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-flux-bright transition hover:text-flux">
-                    <span className="text-xs transition group-open:rotate-90">
-                      ▶
-                    </span>
-                    Or add one manually
-                  </summary>
-                  <div className="mt-3">
-                    <ArtifactForm />
-                  </div>
-                </details>
-              </Section>
-
-              {hasRoster && (
-                <Section
-                  n={2}
-                  id="step-roster"
-                  title="Your roster"
-                  hint="How built each owned character is, best first."
-                  delay="0.08s"
-                >
-                  <RosterView />
-                </Section>
-              )}
-
-              {hasRoster && (
-                <Section
-                  n={3}
-                  id="step-teams"
-                  title="Endgame teams"
-                  hint="Two Abyss halves that share no character, matched from your roster."
-                  delay="0.09s"
-                >
-                  <TeamsView />
-                </Section>
-              )}
-
-              {hasRoster && (
-                <Section
-                  n={4}
-                  id="step-plan"
-                  title="Your plan"
-                  hint="An optimised build for all eight members, plus one farming list."
-                  delay="0.1s"
-                >
-                  <PlanView />
-                </Section>
-              )}
-
-              <Section
-                n={optimiseN}
-                id="step-optimise"
-                title="Optimise"
-                hint="Choose a character, weapon, and what to maximise."
-                delay="0.1s"
-              >
-                <OptimizePanel onRun={runCurrent} running={running} />
-              </Section>
-
-              {result && request && (
-                <div id="results-section">
-                  <Section n={optimiseN + 1} title="Results" delay="0s">
-                    <GapSection
-                      result={result}
-                      request={request}
-                      artifacts={artifacts}
-                      sharedArtifacts={sharedArtifacts}
-                    />
-                    <Results
-                      result={result}
-                      request={request}
-                      artifactsById={artifactsById}
-                    />
-                  </Section>
-                </div>
-              )}
-            </div>
-          </>
+        {sharedError && (
+          <Callout tone="error" className="mb-8 animate-fade-up">
+            This shared build couldn’t be read — it may be from a newer version.
+          </Callout>
         )}
+
+        {optimizeError && (
+          <Callout tone="error" className="mb-8 animate-fade-up">
+            Optimisation failed — please try again.
+          </Callout>
+        )}
+
+        <div className="space-y-10">
+          {sampleMode && (
+            <div className="animate-fade-up">
+              <SampleGear onRun={runCurrent} running={running} />
+            </div>
+          )}
+          <Section
+            n={1}
+            id="step-load"
+            title="Load your artifacts"
+            hint="Import a full inventory, fetch from a UID, or add pieces by hand."
+            delay="0.05s"
+          >
+            <ImportPanel />
+            <details className="group mt-3">
+              <summary className="focus-ring inline-flex min-h-11 cursor-pointer select-none items-center gap-2 rounded-md py-2 text-sm font-medium text-flux-bright transition hover:text-flux">
+                {/* Decorative twisty — it sits right beside the label it
+                    describes. Matches RosterView's disclosure. */}
+                <span
+                  aria-hidden="true"
+                  className="text-xs transition group-open:rotate-90"
+                >
+                  ▶
+                </span>
+                Or add one manually
+              </summary>
+              <div className="mt-3">
+                <ArtifactForm />
+              </div>
+            </details>
+          </Section>
+
+          {hasRoster && (
+            <Section
+              n={2}
+              id="step-roster"
+              title="Your roster"
+              hint="How built each owned character is, best first."
+              delay="0.08s"
+            >
+              <RosterView />
+            </Section>
+          )}
+
+          {hasRoster && (
+            <Section
+              n={3}
+              id="step-teams"
+              title="Endgame teams"
+              hint="Two Abyss halves that share no character, matched from your roster."
+              delay="0.09s"
+            >
+              <TeamsView />
+            </Section>
+          )}
+
+          {hasRoster && (
+            <Section
+              n={4}
+              id="step-plan"
+              title="Your plan"
+              hint="An optimised build for all eight members, plus one farming list."
+              delay="0.1s"
+            >
+              <PlanView />
+            </Section>
+          )}
+
+          <Section
+            n={5}
+            id="step-optimise"
+            title="Optimise"
+            hint="Choose a character, weapon, and what to maximise."
+            delay="0.1s"
+          >
+            <OptimizePanel onRun={runCurrent} running={running} />
+          </Section>
+
+          {result && request && (
+            <div id="results-section" className="scroll-mt-20">
+              {/* Unnumbered on purpose: Results is what step 05 produces. */}
+              <Section title="Results" delay="0s">
+                {sharedArtifacts && <SharedBuildBanner request={request} />}
+                {/* A run in flight leaves the previous numbers on screen;
+                    dim them and mark the region busy so they aren't read as
+                    the new ones. */}
+                <div
+                  aria-busy={running}
+                  className={cn(
+                    'transition-opacity',
+                    running && 'pointer-events-none opacity-40',
+                  )}
+                >
+                  <GapSection
+                    result={result}
+                    request={request}
+                    artifacts={artifacts}
+                    sharedArtifacts={sharedArtifacts}
+                  />
+                  <Results
+                    result={result}
+                    request={request}
+                    artifactsById={artifactsById}
+                  />
+                </div>
+              </Section>
+            </div>
+          )}
+        </div>
       </div>
 
-      <footer className="mt-16 border-t border-white/5 pt-6 text-center text-xs text-muted/70">
-        Built with branch-and-bound optimization in a Web Worker
-        {isLive && (
-          <>
-            {' '}
-            · Data from {game.source} (patch {game.patch})
-          </>
-        )}{' '}
-        · Not affiliated with the game&apos;s publisher.
+      <footer className="mt-16 border-t border-white/5 pt-6 text-center text-xs text-muted">
+        Built with branch-and-bound optimization in a Web Worker · Data from{' '}
+        {game.source} (patch {game.patch}) · Not affiliated with the game’s
+        publisher.
       </footer>
     </main>
   );

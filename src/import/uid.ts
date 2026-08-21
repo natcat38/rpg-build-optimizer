@@ -1,5 +1,9 @@
 import type { Artifact, Element, Slot, StatKey, SubStat } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
+import {
+  MAX_KEY_LEN,
+  validateArtifactDraft,
+} from '../state/artifactValidation';
 
 export type UidError = { error: 'NOT_FOUND' | 'NO_SHOWCASE' | 'NETWORK' };
 
@@ -67,36 +71,71 @@ export async function fetchUidArtifacts(
   if (!Array.isArray(avatars) || avatars.length === 0)
     return { error: 'NO_SHOWCASE' };
 
+  // Enka's payload is untrusted third-party JSON: every level of the nesting
+  // gets a shape guard, and a piece that fails validation is skipped rather
+  // than thrown on — the same skip-don't-throw contract parseGOOD states.
+  const isObj = (x: unknown): x is Record<string, unknown> =>
+    typeof x === 'object' && x !== null;
+
   const out: Artifact[] = [];
-  for (const av of avatars as Array<{
-    equipList?: Array<{
-      reliquary?: { level?: number };
-      flat?: Record<string, unknown>;
-    }>;
-  }>) {
-    for (const equip of av.equipList ?? []) {
-      const flat = equip.flat as Record<string, unknown> | undefined;
+  for (const av of avatars) {
+    if (!isObj(av)) continue;
+    const equipList = Array.isArray(av.equipList) ? av.equipList : [];
+    for (const equip of equipList) {
+      if (!isObj(equip)) continue;
+      const flat = isObj(equip.flat) ? equip.flat : undefined;
       if (!flat || flat.itemType !== 'ITEM_RELIQUARY') continue;
       const slot = EQUIP_SLOT[flat.equipType as string];
-      const reliquaryMainstat = flat.reliquaryMainstat as
-        { mainPropId?: string; statValue?: number } | undefined;
+      const reliquaryMainstat = isObj(flat.reliquaryMainstat)
+        ? (flat.reliquaryMainstat as {
+            mainPropId?: string;
+            statValue?: number;
+          })
+        : undefined;
       const mainStat = PROP_STAT[reliquaryMainstat?.mainPropId ?? ''];
       if (!slot || !mainStat) continue;
-      const rawSubs = flat.reliquarySubstats as
-        Array<{ appendPropId: string; statValue: number }> | undefined;
-      const subStats: SubStat[] = (rawSubs ?? [])
-        .map((s) => ({ key: PROP_STAT[s.appendPropId], value: s.statValue }))
-        .filter((s): s is SubStat => Boolean(s.key));
-      const level = Math.max(0, (equip.reliquary?.level ?? 1) - 1); // Enka level is 1-based
-      const rarity = (flat.rankLevel as number | undefined) ?? 5;
+      const rawSubs = Array.isArray(flat.reliquarySubstats)
+        ? flat.reliquarySubstats
+        : [];
+      const subStats: SubStat[] = rawSubs
+        .filter(isObj)
+        .map((s) => ({
+          key: PROP_STAT[s.appendPropId as string],
+          value: s.statValue as number,
+        }))
+        .filter((s): s is SubStat => Boolean(s.key) && Number.isFinite(s.value))
+        // A sub-stat can't duplicate the main stat, and there are at most four.
+        .filter((s) => s.key !== mainStat)
+        .slice(0, 4);
+      const reliquary = isObj(equip.reliquary) ? equip.reliquary : undefined;
+      const rawLevel = reliquary?.level;
+      const level = Math.max(
+        0,
+        (typeof rawLevel === 'number' && Number.isFinite(rawLevel)
+          ? rawLevel
+          : 1) - 1, // Enka level is 1-based
+      );
+      // Rarity is not a free number: `mainStatValue` indexes the dataset's
+      // 4★/5★ curves by it, so defaulting a missing or corrupt rankLevel to 5
+      // invented a stat value for a piece Enka never described that way. There
+      // is no fifth-star fallback to guess — skip the piece, as parseGOOD does.
+      const rank = flat.rankLevel;
+      if (rank !== 4 && rank !== 5) continue;
+      const rarity = rank;
+      // Same invariant the manual entry and GOOD paths enforce.
+      if (validateArtifactDraft({ mainStat, level, subStats })) continue;
+      // The hash reaches set lookups and the DOM (formatSetName) like any
+      // other setKey, so it gets the same bound the other two importers apply.
+      const setKey = String(flat.setNameTextMapHash);
+      if (setKey.length === 0 || setKey.length > MAX_KEY_LEN) continue;
       out.push({
         id: crypto.randomUUID(),
         // NOTE: setNameTextMapHash is a NAME HASH, not a GOOD-format set key.
         // UID-imported artifacts will NOT match set-requirement constraints or set
         // bonuses reliably (their setKey is a numeric hash string). This is a known
-        // v1.0 limitation — GOOD file import is the reliable path. Do NOT build a
-        // hash→key mapping here; that is deferred to v1.1.
-        setKey: String(flat.setNameTextMapHash),
+        // limitation — GOOD file import is the reliable path. Do NOT build a
+        // hash→key mapping here; still deferred as of v2 (2026-08).
+        setKey,
         slot,
         rarity,
         level,

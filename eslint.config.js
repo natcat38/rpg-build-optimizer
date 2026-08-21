@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'coverage', '.vercel', '.worktrees', '.playwright-mcp'] },
   {
     extends: [
       js.configs.recommended,
@@ -31,16 +31,16 @@ export default tseslint.config(
     },
   },
   {
-    files: ['api/**/*.ts'],
+    files: ['api/**/*.ts', 'scripts/**/*.ts'],
     languageOptions: {
       globals: globals.node,
     },
   },
   {
-    // Type-aware promise-handling rules, scoped to app + serverless-function
-    // source (not scripts/, which has no covering tsconfig — standalone dev
-    // tooling, not app/test runtime surface).
-    files: ['src/**/*.{ts,tsx}', 'api/**/*.ts'],
+    // Type-aware promise-handling rules. Every tracked TypeScript tree is
+    // covered by a tsconfig (app, api, scripts), so the rules apply to all of
+    // them rather than only the app + serverless-function source.
+    files: ['src/**/*.{ts,tsx}', 'api/**/*.ts', 'scripts/**/*.ts'],
     languageOptions: {
       parserOptions: {
         projectService: true,

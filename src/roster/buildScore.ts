@@ -14,9 +14,9 @@
  * A missing field scores 0 for that component (an unimported talent triple is
  * indistinguishable from an unlevelled one — both mean "no evidence of work").
  */
-import type { Artifact, StatKey } from '../game/types';
+import type { Artifact } from '../game/types';
 import type { RosterEntry } from '../import/good';
-import { critValue } from '../optimizer/score';
+import { artifactContribution, objectiveValue } from '../optimizer/score';
 
 export interface BuildScoreComponent {
   label: string;
@@ -31,12 +31,10 @@ export interface BuildScore {
 
 export type Band = 'built' | 'partial' | 'unbuilt';
 
-/** Crit value a piece contributes on its own — main stat plus sub-stats. */
+/** Crit value a piece contributes on its own — main stat plus sub-stats. The
+ *  optimiser's own fold, so a roster score and a search score can't diverge. */
 function pieceCritValue(a: Artifact): number {
-  const of = (key: StatKey) =>
-    (a.mainStat === key ? a.mainStatValue : 0) +
-    a.subStats.reduce((sum, s) => sum + (s.key === key ? s.value : 0), 0);
-  return critValue(of('crit_rate'), of('crit_dmg'));
+  return objectiveValue(artifactContribution(a), 'crit_value');
 }
 
 /** 180 CV across five pieces is roughly a finished set — good enough as the
@@ -76,9 +74,55 @@ export function band(total: number): Band {
   return 'unbuilt';
 }
 
-/** Band chip colours — one definition, shared by every view that shows a band. */
-export const BAND_STYLE: Record<Band, string> = {
-  built: 'border-jade/40 bg-jade/10 text-jade',
-  partial: 'border-flux/40 bg-flux/10 text-flux-bright',
-  unbuilt: 'border-muted/40 bg-muted/10 text-muted',
-};
+/** An inventory bucketed by the character each piece is equipped on. Loose
+ *  pieces (no `location`) belong to nobody and are dropped. */
+export function groupByLocation(
+  artifacts: Artifact[],
+): Record<string, Artifact[]> {
+  const byLocation: Record<string, Artifact[]> = {};
+  for (const a of artifacts)
+    if (a.location) (byLocation[a.location] ??= []).push(a);
+  return byLocation;
+}
+
+/**
+ * The best-built character on a roster, with whatever they have equipped.
+ *
+ * The one pick an imported account justifies making on the reader's behalf: it
+ * is the character the rest of the page already ranks first, so opening the
+ * optimiser on anyone else means the reader's first action is to correct us.
+ * `undefined` for an empty roster — there is nothing to prefer over the app's
+ * own default.
+ *
+ * Ties resolve by roster insertion order (i.e. GOOD file order). Two characters
+ * scoring identically to the last decimal is not a distinction worth a rule.
+ */
+export function bestBuiltCharacter(
+  entries: Record<string, RosterEntry>,
+  artifacts: Artifact[],
+): { characterKey: string; weaponKey?: string } | undefined {
+  const scores = rosterBuildScores(entries, artifacts);
+  let bestKey: string | undefined;
+  let bestScore = -Infinity;
+  for (const [key, score] of Object.entries(scores)) {
+    if (score > bestScore) {
+      bestScore = score;
+      bestKey = key;
+    }
+  }
+  if (bestKey === undefined) return undefined;
+  return { characterKey: bestKey, weaponKey: entries[bestKey]?.weaponKey };
+}
+
+/** Build-score totals for a whole roster — the shape `recommendAbyss` and the
+ *  investment advice both take. */
+export function rosterBuildScores(
+  entries: Record<string, RosterEntry>,
+  artifacts: Artifact[],
+): Record<string, number> {
+  const byLocation = groupByLocation(artifacts);
+  const scores: Record<string, number> = {};
+  for (const [key, entry] of Object.entries(entries))
+    scores[key] = computeBuildScore(entry, byLocation[key] ?? []).total;
+  return scores;
+}

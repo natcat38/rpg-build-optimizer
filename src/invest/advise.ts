@@ -5,11 +5,11 @@
  * @packageDocumentation
  */
 import { genshinAdapter } from '../game/genshin/adapter';
-import { COMP_ARCHETYPES } from '../teams/comps';
-import { ROLE_LABELS } from '../teams/types';
+import { archetypeName } from '../teams/comps';
+import { ROLE_LABELS } from '../labels';
 import type { ArchetypeGap } from '../teams/recommend';
 import type { RosterEntry } from '../import/good';
-import { WEAPON_OBTAINABILITY, type Obtainability } from './obtainability';
+import { WEAPON_OBTAINABILITY } from './obtainability';
 
 export interface Advice {
   kind: 'character' | 'weapon';
@@ -27,26 +27,13 @@ const MAX_ADVICE = 10;
 /** No banner-schedule data ships with the app — say so rather than guess. */
 const ROTATES = 'Availability rotates — check a banner tracker before pulling.';
 
-const TIER_COPY: Record<Obtainability, string> = {
-  craftable: 'craftable — no wishes needed.',
-  'battle-pass': 'a Battle Pass weapon.',
-  'standard-banner': 'in the permanent wish pool, so it never leaves.',
-  'limited-banner': `a character-banner weapon. ${ROTATES}`,
-  event: 'an event reward — it may not be obtainable right now.',
-};
-
-const charName = (key: string) => genshinAdapter.character(key)?.name ?? key;
-const weaponName = (key: string) =>
-  genshinAdapter.weapons().find((w) => w.key === key)?.name ?? key;
-const archName = (id: string) =>
-  COMP_ARCHETYPES.find((a) => a.id === id)?.name ?? id;
+const weaponName = (key: string) => genshinAdapter.weapon(key)?.name ?? key;
 
 /** The best craftable weapon in the curated table for a given weapon type. */
 function craftableFor(weaponType: string): string | undefined {
-  const byKey = new Map(genshinAdapter.weapons().map((w) => [w.key, w]));
   for (const [key, entry] of Object.entries(WEAPON_OBTAINABILITY)) {
     if (entry.tier !== 'craftable') continue;
-    if (byKey.get(key)?.type === weaponType) return key;
+    if (genshinAdapter.weapon(key)?.type === weaponType) return key;
   }
   return undefined;
 }
@@ -63,14 +50,14 @@ export function adviseInvestments(
     for (const candidate of gap.candidates) {
       // Owned means the slot wasn't really missing them — it means the greedy
       // fill already used them elsewhere, which pulling won't fix.
-      if (candidate in roster || candidate in scores) continue;
+      if (candidate in roster) continue;
       const dedupe = `character:${candidate}:${gap.archetypeId}`;
       if (seen.has(dedupe)) continue;
       seen.add(dedupe);
       out.push({
         kind: 'character',
         subjectKey: candidate,
-        headline: `Owning ${charName(candidate)} unlocks ${archName(
+        headline: `Owning ${genshinAdapter.characterName(candidate)} unlocks ${archetypeName(
           gap.archetypeId,
         )} (+${gap.bestPossibleScore.toFixed(0)} team score)`,
         detail: `They fill the ${ROLE_LABELS[gap.missingRole].toLowerCase()} slot that team is short. ${ROTATES}`,
@@ -82,12 +69,11 @@ export function adviseInvestments(
 
   // Weapon advice: a character the plan leans on holding something that isn't
   // even a recommended weapon, when a craftable option exists for their type.
-  const byKey = new Map(genshinAdapter.weapons().map((w) => [w.key, w]));
   const relevant = new Set(gaps.flatMap((g) => g.candidates));
   for (const key of relevant) {
     const equipped = roster[key]?.weaponKey;
     if (!equipped || equipped in WEAPON_OBTAINABILITY) continue;
-    const type = byKey.get(equipped)?.type;
+    const type = genshinAdapter.weapon(equipped)?.type;
     if (!type) continue;
     const craft = craftableFor(type);
     if (!craft) continue;
@@ -97,8 +83,8 @@ export function adviseInvestments(
     out.push({
       kind: 'weapon',
       subjectKey: craft,
-      headline: `${charName(key)} is holding ${weaponName(equipped)} — ${weaponName(craft)} is a free upgrade path`,
-      detail: `${weaponName(craft)} is ${TIER_COPY.craftable}`,
+      headline: `${genshinAdapter.characterName(key)} is holding ${weaponName(equipped)} — ${weaponName(craft)} is a free upgrade path`,
+      detail: `${weaponName(craft)} is craftable — no wishes needed.`,
       provenance: key,
       upside: scores[key] ?? 0,
     });

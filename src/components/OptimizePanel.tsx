@@ -1,47 +1,43 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, type ReactNode } from 'react';
 import type { BuildLevel, Objective, Slot, StatKey } from '../game/types';
 import { BUILD_LEVELS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
 import { useOptimizeRequest } from '../state/optimizeRequest';
-import { useGame } from '../state/game';
-import { getGame } from '../game/registry';
 import {
-  formatSetName,
+  formatCritRatio,
   isPctStat,
   objectiveLabel,
+  setRequirementLabel,
   SLOT_LABELS,
   statLabel,
-} from '../ui/labels';
+} from '../labels';
+import { cn } from './ui/cn';
 import { Combobox } from './ui/Combobox';
 import {
   META_TARGETS,
   metaToConstraints,
   type MetaTarget,
 } from '../meta/metaTargets';
-import {
-  TEAMMATES,
-  resolveTeammateName,
-  type TeammateRec,
-} from '../meta/teammates';
+import { TEAMMATES, type TeammateRec } from '../meta/teammates';
 import { getDamageProfile } from '../damage/profiles';
 
+// Every objective a curated meta recipe can recommend has to be offerable,
+// or "(Recommended)" points at an option the dropdown doesn't carry — which is
+// how hp_pct and def_pct characters (Hu Tao, Noelle) ended up unable to select
+// the metric their own recipe names. `avg_damage` is the deliberate exception:
+// it is appended per character, only where a damage profile exists.
 const OBJECTIVES: Objective[] = [
   'crit_value',
   'em',
   'atk_pct',
   'atk',
+  'hp_pct',
+  'def_pct',
   'er_pct',
   'elemental_dmg',
 ];
-
-function setRequirementLabel(meta: MetaTarget): string {
-  const req = meta.setRequirement;
-  if (req.kind === '2+2')
-    return req.setKeys.map((k) => `2pc ${formatSetName(k)}`).join(' + ');
-  return `${req.kind} ${formatSetName(req.setKey)}`;
-}
 
 /** Shared shell for the two read-only meta-recipe panels below (recipe
  *  summary, teammate recs) — same border/background/text treatment and a
@@ -74,7 +70,7 @@ function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
     <InfoPanel href={meta.source}>
       <p>
         <span className="font-semibold text-paper">
-          {setRequirementLabel(meta)}
+          {setRequirementLabel(meta.setRequirement)}
         </span>
         {mainsEntries.length > 0 && (
           <>
@@ -90,7 +86,7 @@ function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
         {meta.critRatioTarget != null && meta.critRatioTarget > 0 && (
           <span>
             CR:CD ≈ 1:
-            {((1 - meta.critRatioTarget) / meta.critRatioTarget).toFixed(1)}
+            {formatCritRatio(meta.critRatioTarget)}
           </span>
         )}
         {meta.statTargets &&
@@ -107,15 +103,11 @@ function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
   );
 }
 
-/** Curated "works well with" list (ADR-0007-style: static, sourced). Falls
- *  back to the raw character key rather than crashing if a teammate isn't
- *  in the frozen dataset. */
+/** Curated "works well with" list (ADR-0007-style: static, sourced). */
 function TeammatesSummary({
   entry,
-  characters,
 }: {
   entry: { recs: TeammateRec[]; source: string };
-  characters: { key: string; name: string }[];
 }) {
   return (
     <InfoPanel href={entry.source}>
@@ -124,7 +116,7 @@ function TeammatesSummary({
         {entry.recs.map((r) => (
           <li key={r.characterKey}>
             <span className="font-medium text-paper">
-              {resolveTeammateName(r.characterKey, characters)}
+              {genshinAdapter.characterName(r.characterKey)}
             </span>{' '}
             <span className="text-muted">({r.role})</span> — {r.why}
           </li>
@@ -141,11 +133,13 @@ export function OptimizePanel({
   onRun: () => void | Promise<void>;
   running: boolean;
 }) {
+  const uid = useId();
   const artifacts = useInventory((s) => s.artifacts);
   const rosterEntries = useRoster((s) => s.entries);
-  const game = getGame(useGame((s) => s.gameId));
-  const chars = useMemo(() => genshinAdapter.characters(), []);
-  const weapons = useMemo(() => genshinAdapter.weapons(), []);
+  // Both are the adapter's memoised module-level arrays, stable for the app's
+  // lifetime — safe as `useMemo` dependencies without wrapping.
+  const chars = genshinAdapter.characters();
+  const weapons = genshinAdapter.weapons();
 
   const characterKey = useOptimizeRequest((s) => s.characterKey);
   const weaponKey = useOptimizeRequest((s) => s.weaponKey);
@@ -160,13 +154,36 @@ export function OptimizePanel({
   const setMinER = useOptimizeRequest((s) => s.setMinER);
   const applyPreset = useOptimizeRequest((s) => s.applyPreset);
 
+  // Weapon legality (ADR-0002 data): a character can only equip their own
+  // weapon class, so offering all 235 let the panel hand a catalyst user a
+  // polearm and then call the result "proven optimal". An unknown character key
+  // (a snapshot older than the request) falls back to the full list rather than
+  // an empty picker — no evidence of a class is not evidence of no class.
+  const character = genshinAdapter.character(characterKey);
+  const legalWeapons = character
+    ? genshinAdapter.weaponsOfType(character.weaponType)
+    : weapons;
+  const weaponOptions = useMemo(
+    () =>
+      legalWeapons.map((w) => ({
+        value: w.key,
+        label: w.name,
+        hint: `${w.rarity}★`,
+      })),
+    [legalWeapons],
+  );
+
   function onCharacterChange(key: string) {
+    // `setCharacterKey` already guarantees the weapon stays legal for the new
+    // character (see optimizeRequest's `legalWeapon`), including falling back
+    // to this character's roster-equipped weapon when the current one isn't.
+    // What's left here is the rest of the roster pre-fill: both fields stay
+    // manually overridable afterward (same pre-fill-stay-overridable spirit as
+    // "Use meta build", ADR-0007 / ADR-0015).
     setCharacterKey(key);
-    // Pre-fill from the owned roster; both fields stay manually overridable
-    // afterward (same pre-fill-stay-overridable spirit as "Use meta build",
-    // ADR-0007 / ADR-0015).
     const entry = rosterEntries[key];
-    if (entry?.weaponKey) setWeaponKey(entry.weaponKey);
+    if (entry?.weaponKey && genshinAdapter.canEquip(key, entry.weaponKey))
+      setWeaponKey(entry.weaponKey);
     if (entry?.buildLevel) setBuildLevel(entry.buildLevel);
   }
 
@@ -194,8 +211,9 @@ export function OptimizePanel({
 
   const hasArtifacts = artifacts.length > 0;
   const canRun = hasArtifacts && !!characterKey;
+  const blocked = !canRun || running;
   const hint = !hasArtifacts
-    ? `Add or import ${game.gearNounPlural.toLowerCase()} before optimising.`
+    ? 'Add or import artifacts before optimising.'
     : !characterKey
       ? 'Pick a character to start.'
       : null;
@@ -228,11 +246,17 @@ export function OptimizePanel({
   }, [rosterBuildLevel, buildLevel, setBuildLevel]);
 
   return (
-    <div className="panel space-y-5">
+    <div className="panel panel-md space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
+        {/* Real <label htmlFor>, matching the <select>s below: as a bare
+            <span> the visible label wasn't clickable, so the two halves of
+            the same grid behaved differently. */}
         <div className="block">
-          <span className="field-label">Character</span>
+          <label className="field-label" htmlFor={`${uid}-character`}>
+            Character
+          </label>
           <Combobox
+            id={`${uid}-character`}
             options={charOptions}
             value={characterKey}
             onChange={onCharacterChange}
@@ -240,9 +264,19 @@ export function OptimizePanel({
           />
         </div>
         <div className="block">
-          <span className="field-label">Weapon</span>
+          <label className="field-label" htmlFor={`${uid}-weapon`}>
+            Weapon
+            {/* Naming the class is what makes the short list read as a filter
+                rather than a missing-data bug. `.field-label` uppercases it. */}
+            {character && (
+              <span className="ml-1.5 font-normal text-muted">
+                {character.weaponType}
+              </span>
+            )}
+          </label>
           <Combobox
-            options={weapons.map((w) => ({ value: w.key, label: w.name }))}
+            id={`${uid}-weapon`}
+            options={weaponOptions}
             value={weaponKey}
             onChange={setWeaponKey}
             label="Weapon"
@@ -297,7 +331,7 @@ export function OptimizePanel({
       </div>
 
       {meta && <MetaTargetSummary meta={meta} />}
-      {teammates && <TeammatesSummary entry={teammates} characters={chars} />}
+      {teammates && <TeammatesSummary entry={teammates} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
         {hint ? (
@@ -306,15 +340,20 @@ export function OptimizePanel({
           <p className="text-sm text-muted">
             Searching{' '}
             <span className="font-semibold text-paper">{artifacts.length}</span>{' '}
-            {game.gearNounPlural.toLowerCase()} for the exact optimum.
+            artifacts for the exact optimum.
           </p>
         )}
+        {/* aria-disabled + an early return, not `disabled`: a button that goes
+            disabled while it is the active element hands focus to <body>, so
+            the keyboard user is dropped at the top of the page mid-run. */}
         <div className="flex gap-2">
           {meta && (
             <button
+              type="button"
               className="btn-ghost"
-              disabled={!canRun || running}
+              aria-disabled={blocked}
               onClick={() => {
+                if (blocked) return;
                 applyPreset({
                   characterKey,
                   weaponKey,
@@ -328,10 +367,14 @@ export function OptimizePanel({
             </button>
           )}
           <button
-            className={`btn-primary ${running ? 'animate-pulse-glow' : ''}`}
+            type="button"
+            className={cn('btn-primary', running && 'animate-pulse-glow')}
             aria-busy={running}
-            disabled={!canRun || running}
-            onClick={() => void onRun()}
+            aria-disabled={blocked}
+            onClick={() => {
+              if (blocked) return;
+              void onRun();
+            }}
           >
             {running ? 'Searching…' : 'Optimise'}
           </button>

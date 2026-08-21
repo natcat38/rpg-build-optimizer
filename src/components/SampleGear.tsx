@@ -17,6 +17,9 @@ export function SampleGear({
   const [busy, setBusy] = useState<string | null>(null);
 
   async function load(preset: SamplePreset) {
+    // Matches the buttons' aria-disabled below: they stay focusable so a
+    // keyboard user isn't dropped to <body> mid-run, so the guard lives here.
+    if (busy !== null || running) return;
     setBusy(preset.label);
     clear();
     addMany(SAMPLE_INVENTORY);
@@ -29,7 +32,7 @@ export function SampleGear({
   }
 
   return (
-    <div className="panel space-y-3">
+    <div className="panel panel-md space-y-3">
       <div>
         <h2 className="font-display text-lg font-bold tracking-wide text-paper">
           No gear handy? Try a sample build
@@ -43,8 +46,9 @@ export function SampleGear({
         {SAMPLE_PRESETS.map((p) => (
           <button
             key={p.label}
+            type="button"
             className="btn-ghost"
-            disabled={busy !== null || running}
+            aria-disabled={busy !== null || running}
             aria-busy={busy === p.label}
             onClick={() => void load(p)}
           >

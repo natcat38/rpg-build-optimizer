@@ -3,34 +3,43 @@
 @tailwind utilities;
 
 @layer base {
+  /* Reading signal for the one live game. Values are "r g b" triplets so
+     Tailwind's rgb(var(--x) / <alpha-value>) color functions can apply opacity.
+     A second game would layer a [data-game] override over these defaults —
+     src/game/registry.ts documents that seam. */
   :root {
     color-scheme: dark;
-  }
-
-  /* Per-game reading signal. Values are "r g b" triplets so Tailwind's
-     rgb(var(--x) / <alpha-value>) color functions can apply opacity. */
-  [data-game='genshin'] {
     --accent: 242 182 76;
     --accent-bright: 255 207 118;
     --accent-deep: 185 133 38;
-  }
-  [data-game='wuwa'] {
-    --accent: 76 214 192;
-    --accent-bright: 126 228 212;
-    --accent-deep: 47 156 138;
   }
 
   html {
     scroll-behavior: smooth;
   }
 
+  /* The step nav is sticky at the top, so an element scrolled to by focus
+     (Tab, skip link, in-page anchor) lands underneath it. `scroll-margin-top`
+     on `html` does nothing for that — the margin has to be on the element the
+     browser scrolls *to*. 5rem clears the nav plus a hairline of breathing
+     room. Sections set their own `scroll-mt-20`; this covers the controls. */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex] {
+    scroll-margin-top: 5rem;
+  }
+
   body {
-    @apply bg-surface-800 font-sans text-paper antialiased;
+    @apply font-sans text-paper antialiased;
     min-height: 100vh;
     /* Quiet instrument atmosphere: a faint measurement grid over the graphite
        base, one soft glow tied to the active accent. No grain, no fantasy
        poster — the numbers carry the visual weight, not the background. */
-    background-color: #0f1116;
+    background-color: theme('colors.surface.900');
     background-image:
       radial-gradient(
         ellipse 70% 45% at 50% -10%,
@@ -56,15 +65,15 @@
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #0f1116;
+    background: theme('colors.surface.900');
   }
   ::-webkit-scrollbar-thumb {
-    background: #2a2f3d;
+    background: theme('colors.surface.500');
     border-radius: 999px;
-    border: 2px solid #0f1116;
+    border: 2px solid theme('colors.surface.900');
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #3a4152;
+    background: theme('colors.surface.400');
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -80,10 +89,34 @@
 }
 
 @layer components {
-  /* Instrument panel with a hairline accent border. */
-  .panel {
-    @apply relative rounded-2xl border border-white/10 bg-surface-700/60 p-6 shadow-panel backdrop-blur-md;
+  /* The two cross-cutting recipes. Defined first: the classes below @apply
+     them, and Tailwind can only resolve @apply against a rule it has read. */
+
+  /* The one focus treatment. `ring-offset-surface-900` is not optional —
+     Tailwind's default ringOffsetColor is white, which on this chassis paints
+     a bright halo instead of a gap. */
+  .focus-ring {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-900;
   }
+
+  /* 44px: the minimum comfortable touch target. */
+  .touch-target {
+    @apply min-h-11;
+    touch-action: manipulation; /* no double-tap-zoom delay on mobile */
+  }
+
+  /* Instrument panel with a hairline accent border. Padding is not baked in —
+     pick .panel-md or .panel-sm, or explicit utilities for the odd case. */
+  .panel {
+    @apply relative rounded-2xl border border-white/10 bg-surface-700/60 shadow-panel backdrop-blur-md;
+  }
+  .panel-md {
+    @apply p-6;
+  }
+  .panel-sm {
+    @apply p-5;
+  }
+
   .panel::before {
     content: '';
     position: absolute;
@@ -104,77 +137,92 @@
     pointer-events: none;
   }
 
+  /* The second card tier: a plain bordered slab inside a .panel, for repeated
+     rows and sub-cards that must not compete with the panel's hairline.
+     Padding is the caller's, same as .panel and .well. */
+  .card {
+    @apply rounded-xl border border-white/10 bg-surface-700/40;
+  }
+
+  /* The square single-glyph tick: geometry only, no colour. One recipe so a
+     section index and a grade marker are the same shape at the same two
+     sizes rather than two hand-matched near-misses. */
+  .tick {
+    @apply grid flex-none place-items-center rounded-lg border text-sm font-bold;
+  }
+  .tick-lg {
+    @apply h-9 w-9;
+  }
+  .tick-sm {
+    @apply h-8 w-8;
+  }
+
   /* Calibrated section index — a numbered tick, not an ornament. */
   .section-badge {
-    @apply relative grid h-9 w-9 flex-none place-items-center rounded-lg border border-accent/30 bg-accent/10 font-mono text-sm font-bold text-accent-bright;
+    @apply tick tick-lg relative border-accent/30 bg-accent/10 font-mono text-accent-bright;
+  }
+  /* Same tick one step down, for use inside a card rather than beside an h2. */
+  .section-badge-sm {
+    @apply tick-sm;
+  }
+
+  /* The uppercase micro-label idiom: the smallest type the app sets. */
+  .micro-label {
+    @apply text-2xs uppercase tracking-label text-muted;
   }
 
   /* Form field shell — labels above dark controls. */
   .field-label {
-    @apply mb-1.5 block text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted;
+    @apply micro-label mb-1.5 block font-semibold;
   }
   .field {
-    @apply w-full rounded-lg border border-white/10 bg-surface-900/70 px-3 py-2 text-sm text-paper
-      outline-none transition-colors placeholder:text-muted/60
-      focus-visible:border-accent/60 focus-visible:ring-2 focus-visible:ring-accent/25;
-    min-height: 2.75rem; /* 44px: the minimum comfortable touch target */
-    touch-action: manipulation; /* no double-tap-zoom delay on mobile */
+    @apply focus-ring touch-target w-full rounded-lg border border-white/10 bg-surface-900/70 px-3 py-2 text-sm text-paper transition-colors placeholder:text-muted/60 focus-visible:border-accent/60;
   }
-  /* A CSS background-image can't read a custom property, so the chevron is
-     duplicated per game rather than themed by --accent like everything else. */
+  /* A CSS background-image can't read a custom property, so the chevron's
+     stroke is the accent hex written out rather than themed by --accent like
+     everything else. A second game would override this rule alongside the
+     accent triplet above. */
   select.field {
     @apply cursor-pointer appearance-none bg-no-repeat pr-9;
     background-position: right 0.75rem center;
-  }
-  [data-game='genshin'] select.field {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f2b64c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   }
-  [data-game='wuwa'] select.field {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234cd6c0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  }
   select.field option {
-    background-color: #1b1e27;
-    color: #e9e7e0;
+    background-color: theme('colors.surface.700');
+    color: theme('colors.paper');
   }
 
-  /* Primary action — the accent reading, made actionable. */
+  /* Primary action — the accent reading, made actionable.
+     `aria-disabled:` repeats every `disabled:` rule because an async action
+     that goes truly `disabled` mid-click drops focus to <body>. Those buttons
+     set aria-disabled and early-return instead, and still have to look off. */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold
-      text-surface-900 shadow-glow-accent transition-[transform,filter]
-      hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0
-      disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:brightness-100;
+    @apply focus-ring touch-target inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-surface-900 shadow-glow-accent transition-[transform,filter] hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:brightness-100 aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:translate-y-0 aria-disabled:hover:brightness-100;
     background: linear-gradient(
       150deg,
       rgb(var(--accent-bright)),
       rgb(var(--accent)) 60%,
       rgb(var(--accent-deep))
     );
-    min-height: 2.75rem;
-    touch-action: manipulation;
   }
 
   /* Secondary action — the constraint signal, ghosted. */
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-flux/30 bg-flux/5 px-4 py-2
-      text-sm font-semibold text-flux-bright transition-colors
-      hover:border-flux/60 hover:bg-flux/10
-      disabled:cursor-not-allowed disabled:opacity-40;
-    min-height: 2.75rem;
-    touch-action: manipulation;
+    @apply focus-ring touch-target inline-flex items-center justify-center gap-2 rounded-lg border border-flux/30 bg-flux/5 px-4 py-2 text-sm font-semibold text-flux-bright transition-colors hover:border-flux/60 hover:bg-flux/10 disabled:cursor-not-allowed disabled:opacity-40 aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:border-flux/30 aria-disabled:hover:bg-flux/5;
   }
 
   /* Recessed well — the one inset-panel treatment, for nested lists and
-     read-only detail blocks inside a .panel. */
+     read-only detail blocks inside a .panel. Padding is the caller's: wells
+     wrap everything from a two-line row to a whole upload form. */
   .well {
     @apply rounded-lg border border-white/5 bg-surface-900/40;
   }
 
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1
-      font-mono text-[0.7rem] tracking-wide text-muted;
+    @apply focus-ring inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-2xs tracking-wide text-muted;
   }
 
   .eyebrow {
-    @apply font-mono text-[0.7rem] uppercase tracking-[0.4em] text-accent/80;
+    @apply font-mono text-2xs uppercase tracking-eyebrow text-accent/80;
   }
 }
