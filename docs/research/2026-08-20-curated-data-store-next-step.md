@@ -19,8 +19,8 @@ reasoning behind it.
 
 **E (consume community data) is out for this problem** — and this is the one
 finding that changes the brief's framing. Genshin Optimizer's data records
-(`libs/gi/sheets/`) are *mechanical* game data: set effects and weapon passives,
-structurable from `genshin-db` params. The brief's problem is *editorial* data:
+(`libs/gi/sheets/`) are _mechanical_ game data: set effects and weapon passives,
+structurable from `genshin-db` params. The brief's problem is _editorial_ data:
 which set a guide recommends, what ER floor, which stat to lock. No community
 project publishes that as structured data — GO computes builds, it does not
 curate recommendations. E therefore cannot replace the hand-transcription of
@@ -62,16 +62,16 @@ the confidence-aware UI presentation.
 ## Does one recipe per character survive? (the brief's schema exercise)
 
 Mostly answered already by the verification pass, which faced the three
-documented disagreement cases and resolved each with a *rule*, not a coin flip:
+documented disagreement cases and resolved each with a _rule_, not a coin flip:
 
 - **skirk** — KQM's Marechaussee is conditional on Furina; Prydwen's Finale is
-  unconditional. Rule: *the unconditional answer wins* (team unknown at solve
+  unconditional. Rule: _the unconditional answer wins_ (team unknown at solve
   time). One recipe survives; the condition belongs in data, not a comment.
 - **escoffier / citlali** — sources disagree on a main stat, or a lock fights
-  the ER floor. Rule: *disagreement → leave unlocked*; the objective and floor
+  the ER floor. Rule: _disagreement → leave unlocked_; the objective and floor
   already encode intent. One recipe survives.
 - **kokomi / xianyun ER ranges** — one number loses the condition. But
-  `erTarget` is a *floor*, and the encoding rule already says record the
+  `erTarget` is a _floor_, and the encoding rule already says record the
   representative common-team figure. The range belongs in data (`erRange` +
   note) for the next verifier, not as multiple recipes.
 
@@ -99,9 +99,9 @@ files as a follow-up, not in this pass.
    - `erRange?: [number, number]` (documentation for the next verifier;
      `erTarget` remains the single enforced floor)
    - `notes?: string` (the encoding judgement, promoted out of comments)
-   Populate from the verification doc — every value in it is already sourced
-   (ranges in "Known range-dependence", stances in "Third-source pass",
-   confidence in the table).
+     Populate from the verification doc — every value in it is already sourced
+     (ranges in "Known range-dependence", stances in "Third-source pass",
+     confidence in the table).
 3. **Validation test** (`metaTargets.validation.test.ts`), encoding the learned
    rules: no crit-stat circlet lock; no ER-locked sands together with an
    `erTarget` unless the floor is satisfiable (the "recipe fights itself"
