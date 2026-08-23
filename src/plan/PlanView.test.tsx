@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, act, waitFor } from '@testing-library/react';
+import { render, screen, act, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PlanView } from './PlanView';
 import { useRoster } from '../state/roster';
@@ -101,11 +101,121 @@ describe('PlanView', () => {
       screen.getByRole('button', { name: /Build my Abyss plan/i }),
     );
 
-    expect(await screen.findByText('What to farm')).toBeInTheDocument();
-    const cards = screen.getAllByTestId('plan-member');
-    expect(cards).toHaveLength(8);
+    expect(await screen.findByText('What to Farm')).toBeInTheDocument();
+    // The plan leads with a summary: one row per member across two halves,
+    // every card collapsed until asked for.
+    const rows = screen.getAllByTestId('plan-summary-row');
+    expect(rows).toHaveLength(8);
+    expect(screen.getByText(/First Half/)).toBeInTheDocument();
+    expect(screen.getByText(/Second Half/)).toBeInTheDocument();
+    expect(screen.queryAllByTestId('plan-member')).toHaveLength(0);
+  });
+
+  it('expands one member’s full card from its summary row', async () => {
+    const user = userEvent.setup();
+    seed();
+    render(<PlanView runOptimize={run} />);
+    await user.click(
+      screen.getByRole('button', { name: /Build my Abyss plan/i }),
+    );
+    await screen.findByText('What to Farm');
+
+    const first = screen.getAllByTestId('plan-summary-row')[0];
+    const details = within(first).getByRole('group');
+    expect(details).not.toHaveAttribute('open');
+    // The whole row is the control: clicking its summary opens the card.
+    const summary = first.querySelector('summary')!;
+    await user.click(summary);
+    expect(details).toHaveAttribute('open');
+    const card = screen.getByTestId('plan-member');
+    expect(details).toContainElement(card);
+    // Only this row's card mounted — the other seven are still closed.
+    expect(screen.getAllByTestId('plan-member')).toHaveLength(1);
     // Damage-objective members carry the estimate caveat.
     expect(screen.getAllByText(/estimated damage/i).length).toBeGreaterThan(0);
+
+    // Closing hides the card again (it stays mounted — re-rendering eight
+    // artifacts on every toggle is not free).
+    await user.click(summary);
+    expect(details).not.toHaveAttribute('open');
+    expect(card).not.toBeVisible();
+  });
+
+  it('collapses every row again when a new plan is built', async () => {
+    const user = userEvent.setup();
+    seed();
+    render(<PlanView runOptimize={run} />);
+    const button = screen.getByRole('button', {
+      name: /Build my Abyss plan/i,
+    });
+    await user.click(button);
+    await screen.findByText('What to Farm');
+
+    const summary = screen
+      .getAllByTestId('plan-summary-row')[0]
+      .querySelector('summary')!;
+    await user.click(summary);
+    expect(screen.getAllByTestId('plan-member')).toHaveLength(1);
+
+    await user.click(button);
+    await screen.findByText('What to Farm');
+    expect(
+      screen
+        .getAllByTestId('plan-summary-row')
+        .every((r) => !r.querySelector('details')!.hasAttribute('open')),
+    ).toBe(true);
+    expect(screen.queryAllByTestId('plan-member')).toHaveLength(0);
+  });
+
+  it('puts the farming and investment lists above the per-member detail', async () => {
+    const user = userEvent.setup();
+    seed();
+    const { container } = render(<PlanView runOptimize={run} />);
+    await user.click(
+      screen.getByRole('button', { name: /Build my Abyss plan/i }),
+    );
+    await screen.findByText('What to Farm');
+
+    const order = [...container.querySelectorAll('h3')].map(
+      (h) => h.textContent ?? '',
+    );
+    const farm = order.findIndex((t) => t.includes('What to Farm'));
+    const summary = order.findIndex((t) => t.includes('First Half'));
+    expect(summary).toBeGreaterThanOrEqual(0);
+    expect(farm).toBeGreaterThan(summary);
+    // …and nothing between them but the eight collapsed rows.
+    expect(screen.queryAllByTestId('plan-member')).toHaveLength(0);
+  });
+
+  it('links the curated source for weapon advice', async () => {
+    const user = userEvent.setup();
+    seed();
+    render(
+      <PlanView
+        runOptimize={run}
+        advise={() => [
+          {
+            kind: 'weapon',
+            subjectKey: 'the_catch',
+            headline: 'Holding a stat stick',
+            detail: 'The Catch is craftable.',
+            provenance: 'xiangling',
+            upside: 1,
+            source: 'https://example.test/The_Catch',
+          },
+        ]}
+      />,
+    );
+    await user.click(
+      screen.getByRole('button', { name: /Build my Abyss plan/i }),
+    );
+    await screen.findByText('What to Farm');
+
+    const link = screen.getByRole('link', { name: /source/i });
+    expect(link).toHaveAttribute('href', 'https://example.test/The_Catch');
+    expect(link).toHaveAttribute('rel', 'noreferrer');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveTextContent(/opens in new tab/i);
   });
 
   it('renders investment advice with provenance when there is any', async () => {
@@ -115,10 +225,10 @@ describe('PlanView', () => {
     await user.click(
       screen.getByRole('button', { name: /Build my Abyss plan/i }),
     );
-    await screen.findByText('What to farm');
+    await screen.findByText('What to Farm');
     // The seeded roster is eight characters, so plenty of archetypes are one
     // character short and yield advice.
-    expect(screen.getByText('Worth investing in')).toBeInTheDocument();
+    expect(screen.getByText('Worth Investing In')).toBeInTheDocument();
     expect(screen.getAllByTestId('advice').length).toBeGreaterThan(0);
   });
 
@@ -158,7 +268,7 @@ describe('PlanView', () => {
       await waitFor(() => expect(solved).toBe(8));
     });
     // The superseded run commits nothing: no plan, no progress, no error.
-    expect(screen.queryByText('What to farm')).toBeNull();
+    expect(screen.queryByText('What to Farm')).toBeNull();
     expect(screen.queryByText(/Optimising member/i)).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
   });
@@ -170,7 +280,7 @@ describe('PlanView', () => {
     await user.click(
       screen.getByRole('button', { name: /Build my Abyss plan/i }),
     );
-    await screen.findByText('What to farm');
-    expect(screen.queryByText('Worth investing in')).not.toBeInTheDocument();
+    await screen.findByText('What to Farm');
+    expect(screen.queryByText('Worth Investing In')).not.toBeInTheDocument();
   });
 });

@@ -495,6 +495,7 @@ describe('searchBuilds with the avg_damage objective', () => {
     hits: [
       {
         name: 'skill',
+        kind: 'skill',
         scaling: 'atk',
         multiplier: 250,
         bonus: 'elemental',
@@ -503,6 +504,7 @@ describe('searchBuilds with the avg_damage objective', () => {
       },
       {
         name: 'burst',
+        kind: 'burst',
         scaling: 'atk',
         multiplier: 400,
         bonus: 'elemental',
@@ -514,8 +516,12 @@ describe('searchBuilds with the avg_damage objective', () => {
   const dmgCtx: OptimizeContext = {
     base: { atk: 900, crit_rate: 5, crit_dmg: 50, er_pct: 100 },
     setBonuses: {
-      SetA: { two: { atk_pct: 18 } },
-      SetB: { two: { elemental_dmg: 15 } },
+      // Non-empty `four` on both sets: the vector bound folds the set-bonus
+      // ceiling into the optimistic stat vector, so a 4pc that only lights up
+      // at the leaf is exactly the case that could make it inadmissible
+      // (ADR-0020 routes every curated 4pc through this same channel).
+      SetA: { two: { atk_pct: 18 }, four: { crit_dmg: 40 } },
+      SetB: { two: { elemental_dmg: 15 }, four: { elemental_dmg: 25 } },
     },
     damage: { profile, enemy: { level: 100, res: 0.1 }, charLevel: 90 },
   };

@@ -20,6 +20,10 @@ export interface Advice {
   provenance: string;
   /** Team-score points unlocked; the ranking key. */
   upside: number;
+  /** Curated wiki page for the subject, where the table has one. Surfaced as
+   *  a quiet "source" link so a reader can re-verify the claim; it plays no
+   *  part in the ranking. */
+  source?: string;
 }
 
 const MAX_ADVICE = 10;
@@ -87,6 +91,7 @@ export function adviseInvestments(
       detail: `${weaponName(craft)} is craftable — no wishes needed.`,
       provenance: key,
       upside: scores[key] ?? 0,
+      source: WEAPON_OBTAINABILITY[craft]?.source,
     });
   }
 

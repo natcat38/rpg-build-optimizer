@@ -35,7 +35,7 @@ export function SampleGear({
     <div className="panel panel-md space-y-3">
       <div>
         <h2 className="font-display text-lg font-bold tracking-wide text-paper">
-          No gear handy? Try a sample build
+          No Gear Handy? Try a Sample Build
         </h2>
         <p className="text-xs text-muted">
           Loads a realistic sample account and optimises it in one click — each

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 import { META_TARGETS } from '../meta/metaTargets';
 import { computeGapReport } from '../meta/gap';
@@ -21,11 +22,19 @@ export function GapSection({
   sharedArtifacts: Artifact[] | null;
 }) {
   const meta = META_TARGETS[request.characterKey];
-  // Only for meta characters on freshly-optimised (non-shared) builds.
-  if (sharedArtifacts || !meta) return null;
-
   const build = result.status === 'ok' ? (result.builds[0] ?? null) : null;
-  const report = computeGapReport(meta, artifacts, build);
+  // A full pass over the inventory per render. Memoised because App re-renders
+  // for reasons that have nothing to do with gear — while a search runs it
+  // re-rendered several times a second, and the report is a pure function of
+  // these three inputs.
+  const report = useMemo(
+    () => (meta ? computeGapReport(meta, artifacts, build) : null),
+    [meta, artifacts, build],
+  );
+
+  // Only for meta characters on freshly-optimised (non-shared) builds. After
+  // the hooks above: a bail-out before them would change the hook order.
+  if (sharedArtifacts || !meta || !report) return null;
 
   return (
     <div className="mb-4">

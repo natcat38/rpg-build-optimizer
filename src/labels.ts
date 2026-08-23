@@ -9,6 +9,7 @@
 import type { Tone } from './components/ui/tone';
 import { genshinAdapter } from './game/genshin/adapter';
 import type { SetRequirement } from './game/types';
+import type { Grade } from './meta/grade';
 import type { Band } from './roster/buildScore';
 import type { Role } from './teams/types';
 
@@ -31,6 +32,16 @@ export const BAND_TONE: Record<Band, Tone> = {
   built: 'jade',
   partial: 'flux',
   unbuilt: 'muted',
+};
+
+/** Grade letter → the shared UI tone — one definition, so the same letter
+ *  reads as the same colour whether it is on a card or on a summary row. */
+export const GRADE_TONE: Record<Grade, Tone> = {
+  S: 'accent',
+  A: 'jade',
+  B: 'flux',
+  C: 'muted',
+  D: 'rose',
 };
 
 /** Band → its user-visible label. The union's members are lowercase keys, not

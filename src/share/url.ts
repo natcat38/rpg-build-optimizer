@@ -205,11 +205,44 @@ function isBuildResult(x: unknown): x is BuildResult {
   if (typeof b.artifactIds !== 'object' || b.artifactIds === null) return false;
   const ids = b.artifactIds as Record<string, unknown>;
   if (!SLOTS.every((s) => typeof ids[s] === 'string')) return false;
-  // diagnostics is required to exist but not deep-validated: shared builds never
-  // reach gap analysis (GapSection gates on `sharedArtifacts`), the only reader
-  // of diagnostics.marginalBySlot. Deep-validate here if that gate is ever lifted.
-  if (typeof b.diagnostics !== 'object' || b.diagnostics === null) return false;
+  if (!isBuildDiagnostics(b.diagnostics)) return false;
   return true;
+}
+
+// Binding constraints are sentences, not keys ("Energy Recharge ≥ 160 (build
+// has 172.4)"), so they get their own bounds rather than MAX_KEY_LEN. Both caps
+// are generous against what `diagnostics.ts` actually emits (one line per
+// minStat plus a set line) and tight enough that a crafted ?b= link cannot hand
+// the DOM a wall of text.
+const MAX_BINDING_CONSTRAINTS = 32;
+const MAX_BINDING_CONSTRAINT_LEN = 300;
+
+/** Deep-validate `BuildDiagnostics`. Both fields reach the DOM: BuildCard
+ *  prints `bindingConstraints` verbatim and meters `marginalBySlot`, so a
+ *  malformed one is an unreadable link, not something to render past. */
+function isBuildDiagnostics(x: unknown): boolean {
+  if (typeof x !== 'object' || x === null) return false;
+  const d = x as Record<string, unknown>;
+  if (
+    !Array.isArray(d.bindingConstraints) ||
+    d.bindingConstraints.length > MAX_BINDING_CONSTRAINTS ||
+    !d.bindingConstraints.every(
+      (c: unknown) =>
+        typeof c === 'string' && c.length <= MAX_BINDING_CONSTRAINT_LEN,
+    )
+  )
+    return false;
+  const m = d.marginalBySlot;
+  if (typeof m !== 'object' || m === null) return false;
+  // Partial by type — `search.ts` emits an empty map on the single-build path —
+  // so the rule is "no key that isn't a slot, no value that isn't a finite
+  // number", not "exactly five entries".
+  return Object.entries(m).every(
+    ([slot, v]) =>
+      (SLOTS as string[]).includes(slot) &&
+      typeof v === 'number' &&
+      Number.isFinite(v),
+  );
 }
 
 /**

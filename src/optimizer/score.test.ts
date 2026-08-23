@@ -185,6 +185,7 @@ describe('evaluateObjective', () => {
           hits: [
             {
               name: 'h',
+              kind: 'skill',
               scaling: 'atk',
               multiplier: 100,
               bonus: 'elemental',

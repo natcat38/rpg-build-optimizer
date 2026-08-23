@@ -169,15 +169,21 @@ describe('weapon legality lives in the request, not the panel', () => {
     );
   });
 
+  it('falls back to the accessible pick when the recipe names no BiS', () => {
+    // Zhongli's shield-bot guide ranks no 5-star, only cheap ER/HP sticks.
+    expect(META_TARGETS.zhongli.weapon).toBeUndefined();
+    useOptimizeRequest.getState().setCharacterKey('zhongli');
+    expect(useOptimizeRequest.getState().weaponKey).toBe(
+      META_TARGETS.zhongli.weaponAccessible,
+    );
+  });
+
   it('falls back to the first legal weapon when neither roster nor meta names one', () => {
-    // raiden_shogun's recipe names no signature weapon.
-    expect(META_TARGETS.raiden_shogun.weapon).toBeUndefined();
-    useOptimizeRequest.getState().setCharacterKey('raiden_shogun');
+    // Aino carries no curated recipe at all.
+    expect(META_TARGETS.aino).toBeUndefined();
+    useOptimizeRequest.getState().setCharacterKey('aino');
     expect(
-      genshinAdapter.canEquip(
-        'raiden_shogun',
-        useOptimizeRequest.getState().weaponKey,
-      ),
+      genshinAdapter.canEquip('aino', useOptimizeRequest.getState().weaponKey),
     ).toBe(true);
   });
 
@@ -203,6 +209,38 @@ describe('weapon legality lives in the request, not the panel', () => {
     expect(
       genshinAdapter.weapon(useOptimizeRequest.getState().weaponKey),
     ).toBeTruthy();
+  });
+
+  it('raises the build level to a rostered character’s own, and no further', () => {
+    useRoster
+      .getState()
+      .setRoster({ raiden_shogun: { weaponKey: 'the_catch', buildLevel: 80 } });
+    useOptimizeRequest.getState().setBuildLevel(70);
+    useOptimizeRequest.getState().setCharacterKey('raiden_shogun');
+    // A character can't be de-levelled, so the roster value is a floor.
+    expect(useOptimizeRequest.getState().buildLevel).toBe(80);
+    // ...and only a floor: a higher target the reader picked stands.
+    useOptimizeRequest.getState().setBuildLevel(90);
+    useOptimizeRequest.getState().setCharacterKey('nahida');
+    useOptimizeRequest.getState().setCharacterKey('raiden_shogun');
+    expect(useOptimizeRequest.getState().buildLevel).toBe(90);
+  });
+
+  it('keeps a manual weapon override across a flip away and back', () => {
+    // The roster prefill is a *prefill*: it fires when the current weapon is
+    // illegal for the new character, not every time that character is picked.
+    useRoster
+      .getState()
+      .setRoster({ raiden_shogun: { weaponKey: 'the_catch' } });
+    useOptimizeRequest.getState().setCharacterKey('raiden_shogun');
+    expect(useOptimizeRequest.getState().weaponKey).toBe('the_catch');
+    useOptimizeRequest.getState().setWeaponKey('staff_of_homa');
+    // Nahida is a catalyst user, so the polearm can't survive the round trip
+    // on its own — but Raiden's own override must not be re-applied over it.
+    useOptimizeRequest.getState().setCharacterKey('xiangling'); // polearm user
+    expect(useOptimizeRequest.getState().weaponKey).toBe('staff_of_homa');
+    useOptimizeRequest.getState().setCharacterKey('raiden_shogun');
+    expect(useOptimizeRequest.getState().weaponKey).toBe('staff_of_homa');
   });
 
   it('leaves the selection alone for a character the snapshot does not carry', () => {

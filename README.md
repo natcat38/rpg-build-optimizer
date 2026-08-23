@@ -54,7 +54,7 @@ Vite · React 19 · TypeScript (strict) · Tailwind CSS · Zustand · Web Worker
 
 ## AI: Explain this build
 
-An optional Claude-powered plain-English explanation of the optimised build, served through a Vercel serverless function so the API key stays server-side ([ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md)). No personal data is sent. It sits behind the `VITE_AI_ENABLED` build flag and is **off on the public demo** to cap API spend — enable it locally per [CONTRIBUTING.md](CONTRIBUTING.md).
+An optional Claude-powered plain-English explanation of the optimised build, served through a Vercel serverless function so the API key stays server-side ([ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md)). No personal data is sent. It sits behind the `VITE_AI_ENABLED` build flag and is **off on the public demo**, because it runs against a personal Anthropic account and every click costs the maintainer money. Enable it locally per [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Data & license
 
