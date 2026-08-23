@@ -127,3 +127,9 @@ export function formatStat(key: StatKey, value: number): string {
 export function formatCritRatio(target: number): string {
   return ((1 - target) / target).toFixed(1);
 }
+
+/** A count of things the search touched, grouped for reading. One helper so
+ *  every counter in the UI is grouped the same way. */
+export function formatCount(n: number): string {
+  return n.toLocaleString();
+}

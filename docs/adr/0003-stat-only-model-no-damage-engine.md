@@ -1,6 +1,6 @@
 # 0003. Stat-only model, no damage engine
 
-- Status: Superseded by [0016](0016-damage-engine-objective.md) (stat-only model remains the fallback objective)
+- Status: Superseded by [0016](0016-damage-engine-objective.md) (stat-only model remains the fallback objective); the set-bonus rule below is amended by [0020](0020-four-piece-set-bonuses-at-full-uptime.md)
 - Date: 2026-06-06
 
 ## Context
@@ -28,3 +28,12 @@ Modelling rules:
 - Fast, correct for every character, zero per-character maintenance.
 - A direct, documented limitation: two builds both satisfying "4pc Emblem" are ranked purely by stats — the 4pc's damage _effect_ does not move the score. This is stated openly in the UI and docs; being explicit about the model's edges is a strength.
 - A damage engine, weapon-passive modelling, and 4pc-effect modelling are all explicitly out of scope (possible far-future phase).
+
+## Amendment (2026-08-22): conditional 4-piece effects are now scored
+
+The rule "**Conditional / non-stat 4-piece effects are not scored**" above no
+longer holds. [ADR-0020](0020-four-piece-set-bonuses-at-full-uptime.md) models
+them from a curated table at a stated **full-uptime / max-stacks** assumption,
+so a 4pc is both a constraint and a contribution to the score. The rest of this
+decision — the totals formula, weapon passives left unmodelled, `elemental_dmg`
+resolution, build levels — is unchanged.

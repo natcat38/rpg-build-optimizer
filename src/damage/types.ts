@@ -7,8 +7,22 @@ export type Reaction =
   | 'aggravate'
   | 'spread';
 
+/** Which of the game's DMG-bonus buckets a hit belongs to. Set bonuses like
+ *  Gladiator's 4pc ("+35% Normal Attack DMG") are restricted to one of these,
+ *  so a hit has to declare which one it is (see `setBonuses.ts`). */
+export const HIT_KINDS = [
+  'normal',
+  'charged',
+  'plunge',
+  'skill',
+  'burst',
+] as const;
+
+export type HitKind = (typeof HIT_KINDS)[number];
+
 export interface DamageHit {
   name: string; // "Charged Attack (per tick)"
+  kind: HitKind; // which DMG-bonus bucket a hit-kind-restricted 4pc applies to
   scaling: 'atk' | 'hp' | 'def' | 'em';
   multiplier: number; // % of scaling stat at talent lv9 (e.g. 200 = 200%)
   bonus: 'elemental' | 'physical'; // which DMG% bucket applies

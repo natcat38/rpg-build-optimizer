@@ -9,7 +9,7 @@ describe('ArtifactForm', () => {
 
   it('adds a valid artifact to the inventory', async () => {
     render(<ArtifactForm />);
-    await userEvent.click(screen.getByText('Add artifact'));
+    await userEvent.click(screen.getByText(/add artifact/i));
     expect(useInventory.getState().artifacts.length).toBe(1);
   });
 
@@ -18,7 +18,7 @@ describe('ArtifactForm', () => {
     const level = screen.getByLabelText(/Level/i);
     await userEvent.clear(level);
     await userEvent.type(level, '25');
-    await userEvent.click(screen.getByText('Add artifact'));
+    await userEvent.click(screen.getByText(/add artifact/i));
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Level must be between 0 and 20.',
     );

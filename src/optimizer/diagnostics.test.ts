@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { buildDiagnostics } from './diagnostics';
+import {
+  buildDiagnostics,
+  emptySlotCause,
+  unreachableMinStats,
+} from './diagnostics';
 import type {
   Artifact,
   OptimizeContext,
@@ -137,5 +141,152 @@ describe('buildDiagnostics', () => {
     };
     const diag = buildDiagnostics(ctx, req, b, chosen, 0, 0);
     expect(diag.bindingConstraints).toHaveLength(0);
+  });
+});
+
+describe('binding set requirement formatting', () => {
+  it('names the set in words rather than dumping its JSON', () => {
+    const { chosen, b } = makeChosenAndBuild(1, 1);
+    const req: OptimizeRequest = {
+      characterKey: 'c',
+      weaponKey: 'w',
+      buildLevel: 90,
+      constraints: {
+        setRequirement: { kind: '4pc', setKey: 'EmblemOfSeveredFate' },
+      },
+      objective: 'crit_value',
+    };
+    const msg = buildDiagnostics(ctx, req, b, chosen, 1, 0)
+      .bindingConstraints[0];
+    expect(msg).toBe('Set requirement: 4pc Emblem of Severed Fate');
+    expect(msg).not.toContain('{');
+    expect(msg).not.toContain('"');
+  });
+});
+
+describe('unreachableMinStats', () => {
+  const inv = (): Artifact[] =>
+    SLOTS.map((s, i) => ({
+      id: `reach-${s}`,
+      setKey: i < 2 ? 'A' : 'B',
+      slot: s,
+      rarity: 5,
+      level: 20,
+      mainStat: 'er_pct' as const,
+      mainStatValue: 10,
+      subStats: [],
+    }));
+  const req = (
+    constraints: OptimizeRequest['constraints'],
+  ): OptimizeRequest => ({
+    characterKey: 'c',
+    weaponKey: 'w',
+    buildLevel: 90,
+    constraints,
+    objective: 'crit_value',
+  });
+
+  it('reports only the floors that are out of reach', () => {
+    const c: OptimizeContext = { base: { er_pct: 100 }, setBonuses: {} };
+    const out = unreachableMinStats(
+      c,
+      req({ minStats: { er_pct: 200, crit_rate: 0 } }),
+      inv(),
+    );
+    expect(out).toEqual([{ key: 'er_pct', need: 200, best: 150 }]);
+  });
+
+  it('reports nothing when a slot has no legal piece — that is not a floor', () => {
+    const c: OptimizeContext = { base: { er_pct: 100 }, setBonuses: {} };
+    expect(
+      unreachableMinStats(
+        c,
+        req({
+          minStats: { er_pct: 200 },
+          mainStatLocks: { circlet: 'crit_rate' },
+        }),
+        inv(),
+      ),
+    ).toEqual([]);
+  });
+
+  it('sorts the worst relative shortfall first', () => {
+    const c: OptimizeContext = {
+      base: { er_pct: 100, crit_rate: 100 },
+      setBonuses: {},
+    };
+    const out = unreachableMinStats(
+      c,
+      // ER short by 25% of its floor; crit_rate short by 50% of its.
+      req({ minStats: { er_pct: 200, crit_rate: 200 } }),
+      inv(),
+    );
+    expect(out.map((o) => o.key)).toEqual(['crit_rate', 'er_pct']);
+  });
+
+  it('never understates what the search can actually build', () => {
+    // A 2pc requirement leaves three free slots. The old hand-rolled bound
+    // dropped free slots it could not fill from the required set, so it
+    // reported a ceiling *below* builds the search really finds. The search's
+    // own bound is admissible by construction: it can only over-state.
+    const c: OptimizeContext = {
+      base: {},
+      setBonuses: { A: { two: { er_pct: 20 } } },
+    };
+    const inventory = inv();
+    const out = unreachableMinStats(
+      c,
+      req({
+        minStats: { er_pct: 68 },
+        setRequirement: { kind: '2pc', setKey: 'A' },
+      }),
+      inventory,
+    );
+    // 5 pieces x 10 + a 20 2pc = 70 >= 68, so this floor is NOT unreachable.
+    expect(out).toEqual([]);
+  });
+});
+
+describe('emptySlotCause', () => {
+  const piece = (slot: Slot, mainStat: 'er_pct' | 'crit_rate'): Artifact => ({
+    id: `empty-${slot}-${mainStat}`,
+    setKey: 'A',
+    slot,
+    rarity: 5,
+    level: 20,
+    mainStat,
+    mainStatValue: 10,
+    subStats: [],
+  });
+  const req = (
+    constraints: OptimizeRequest['constraints'],
+  ): OptimizeRequest => ({
+    characterKey: 'c',
+    weaponKey: 'w',
+    buildLevel: 90,
+    constraints,
+    objective: 'crit_value',
+  });
+
+  it('names the slot and the lock that empties it', () => {
+    const inventory = SLOTS.map((s) => piece(s, 'er_pct'));
+    expect(
+      emptySlotCause(
+        req({ mainStatLocks: { circlet: 'crit_rate' } }),
+        inventory,
+      ),
+    ).toMatch(/no circlet with a CRIT Rate main stat/i);
+  });
+
+  it('names a slot the inventory simply has nothing for', () => {
+    const inventory = SLOTS.filter((s) => s !== 'sands').map((s) =>
+      piece(s, 'er_pct'),
+    );
+    expect(emptySlotCause(req({}), inventory)).toMatch(/no sands at all/i);
+  });
+
+  it('is null when every slot has a legal piece', () => {
+    const inventory = SLOTS.map((s) => piece(s, 'er_pct'));
+    expect(emptySlotCause(req({}), inventory)).toBeNull();
   });
 });

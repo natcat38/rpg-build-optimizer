@@ -24,6 +24,22 @@ things can't follow the seam and say so in a comment: the `select.field`
 chevron (a `background-image` data-URI can't read a custom property) and the
 scrollbar greys.
 
+**Element hues are a token set, not a seam.** `element.pyro`/`hydro`/`electro`/
+`cryo`/`anemo`/`geo`/`dendro` in [`tailwind.config.js`](../tailwind.config.js)
+are the seven canonical game hues, brightened for this chassis: each is stored
+as an `rgb(r g b / <alpha-value>)` triplet like the accent, so `/alpha`
+modifiers work, and each clears 4.5:1 as **text** on `surface-900` (the darkest
+ground the app paints). Unlike the accent they are constant — an element is a
+fact about the dataset, not a per-game reading. Domain code never writes these
+classes: `ELEMENT_TONE` in
+[`src/components/ui/elementTone.ts`](../src/components/ui/elementTone.ts) and
+the [`ElementName`](../src/components/ui/ElementName.tsx) component own
+the mapping, and `ElementName` always prints the element's name beside its dot,
+so hue is a second channel and never the only one.
+
+**Copy case.** Chrome copy (buttons, headings, chips, labels) is Title Case;
+body, hints and status sentences are sentence case.
+
 ## Component classes
 
 Defined in `@layer components` in [`src/index.css`](../src/index.css).
@@ -55,8 +71,8 @@ imports from `game/`, `meta/` or `roster/`.
   each a border-`/40` + fill-`/10` + text triplet. Every tinted surface in the
   app resolves through it, so a band chip, a grade marker and an error callout
   are the same system rather than three hand-tuned near-misses. Domain code maps
-  its own vocabulary onto a `Tone` (`BAND_TONE` in `labels.ts`, `GRADE_TONE` in
-  `BuildCard.tsx`) rather than writing classes.
+  its own vocabulary onto a `Tone` (`BAND_TONE` and `GRADE_TONE`, both in
+  `labels.ts`) rather than writing classes.
 - **`Callout`** — every inline message. `tone="error"|"success"|"info"`; the
   caller supplies `role="alert"` (unprompted failure) or `role="status"`
   (confirmation of the user's own action).
@@ -64,10 +80,28 @@ imports from `game/`, `meta/` or `roster/`.
   `"radiogroup"`. Owns roving tabindex and moves DOM focus **with** the
   selection; horizontal only, so Up/Down still scroll the drawer it lives in.
 - **`Badge`** / **`Marker`** — pill and square-tick classifications.
+- **`ElementName`** — an element's name in that element's hue, with a
+  decorative dot. The only sanctioned way to print an element.
+- **`GradeMarker`** — a build's grade letter as a `Marker`, with the one
+  `role="img"` + `aria-label` sentence that explains what the letter means.
+  Every view that shows a grade goes through it.
+- **`CharacterLine`** — the identity line "element · weapon", with one
+  separator and one "No weapon equipped" fallback.
+- **`SourceLink`** — an outbound citation: bakes in `target="_blank"`,
+  `rel="noreferrer"` and the screen-reader "(opens in new tab)", so no caller
+  can open a tab without saying so.
+- **`Disclosure`** — native `details`/`summary` with the app's twisty
+  (`group-open:rotate-90`), the focus ring and two sizes/tones. The browser
+  owns the expanded state and the aria wiring; callers own only what is inside.
+- **`SearchCounts`** — "N leaves evaluated · M subtrees pruned", worded and
+  set identically in the hero proof line, the exact-search line above the
+  results, and the live progress line.
 - **`Meter`** — a decorative bar restating a number printed beside it, hence
   `aria-hidden`. A bar that is the _only_ carrier of its value needs real
   `role="progressbar"` semantics and does not belong here (PlanView's live
-  progress bar is bespoke for that reason).
+  progress bar is bespoke for that reason). The optimiser's own progress line
+  has no total to divide by, so it is neither: a plain pulsing `div`, marked
+  `aria-hidden`, beside the counters that carry the real signal.
 - **`Combobox`** — the searchable single-select. Takes an optional `id`,
   applied to whichever control is showing (button when closed, input when open,
   at the same position). Both are labelable elements, so a sibling

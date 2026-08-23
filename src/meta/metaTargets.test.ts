@@ -16,14 +16,17 @@ describe('META_TARGETS', () => {
     }
   });
 
-  it('every named signature weapon is one the character can equip', () => {
+  it('every named weapon is one the character can equip', () => {
     for (const [key, m] of Object.entries(META_TARGETS)) {
-      if (m.weapon == null) continue;
-      expect(genshinAdapter.weapon(m.weapon), `${key} weapon`).toBeDefined();
-      expect(
-        genshinAdapter.canEquip(m.characterKey, m.weapon),
-        `${key}: ${m.weapon} is the wrong weapon class`,
-      ).toBe(true);
+      for (const field of ['weapon', 'weaponAccessible'] as const) {
+        const w = m[field];
+        if (w == null) continue;
+        expect(genshinAdapter.weapon(w), `${key} ${field}`).toBeDefined();
+        expect(
+          genshinAdapter.canEquip(m.characterKey, w),
+          `${key}.${field}: ${w} is the wrong weapon class`,
+        ).toBe(true);
+      }
     }
   });
 

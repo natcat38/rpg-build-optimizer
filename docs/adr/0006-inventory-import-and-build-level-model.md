@@ -22,6 +22,6 @@ Re-imports de-dupe against existing artifacts by content hash.
 
 ## Consequences
 
-- For real optimisation the player uses a GOOD file; UID is a convenience/demo, complemented by the v1.1 "Try with example gear" sample inventory.
+- For real optimisation the player uses a GOOD file; UID is a convenience/demo, complemented by the v1.1 "Try a sample build" sample inventory.
 - One level control instead of separate character/weapon controls halves the UI and matches reality.
 - The +20 projection, when added, is the stepping stone toward gap analysis's theoretical-ceiling ideas ([0007]).

@@ -19,6 +19,7 @@ const t = {
 };
 const hit: DamageHit = {
   name: 'test',
+  kind: 'skill',
   scaling: 'atk',
   multiplier: 200,
   bonus: 'elemental',
