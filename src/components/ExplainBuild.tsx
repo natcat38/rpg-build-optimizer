@@ -105,7 +105,7 @@ export function ExplainBuild({
           </>
         ) : (
           <>
-            <span aria-hidden="true">✨</span> Explain this build
+            <span aria-hidden="true">✨</span> Explain This Build
           </>
         )}
       </button>

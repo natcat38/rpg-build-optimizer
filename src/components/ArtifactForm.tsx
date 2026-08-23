@@ -203,7 +203,7 @@ export function ArtifactForm() {
       </p>
       {added && <Callout tone="success">{added.text}</Callout>}
       <button type="submit" className="btn-primary">
-        Add artifact
+        Add Artifact
       </button>
     </form>
   );

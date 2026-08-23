@@ -16,6 +16,7 @@ import {
 import { ImportPanel } from './ImportPanel';
 import { ArtifactForm } from './ArtifactForm';
 import { OptimizePanel } from './OptimizePanel';
+import { searchProgressStore } from './searchProgress';
 import { Results } from './Results';
 import { SampleGear } from './SampleGear';
 import { GapSection } from './GapSection';
@@ -32,12 +33,18 @@ import {
 } from '../state/optimizeRequest';
 import { bestBuiltCharacter } from '../roster/buildScore';
 import { getGame, type GameDescriptor } from '../game/registry';
-import { optimize } from '../workers/optimizeClient';
+import {
+  optimizeRun,
+  isOptimizeCancelled,
+  type OptimizeHandle,
+} from '../workers/optimizeClient';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { scrollToId } from '../ui/scroll';
-import { formatScore, objectiveHint } from '../labels';
+import { formatCount, formatScore, objectiveHint } from '../labels';
 import { Callout } from './ui/Callout';
+import { Disclosure } from './ui/Disclosure';
+import { SearchCounts } from './ui/SearchCounts';
 import { cn } from './ui/cn';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 
@@ -132,17 +139,11 @@ function SolvedHero({ hero }: { hero: HeroExample }) {
         <p className="max-w-sm text-xs leading-relaxed text-muted">
           Search space:{' '}
           <span className="font-mono tabular-nums text-paper">
-            {hero.naive.toLocaleString()}
+            {formatCount(hero.naive)}
           </span>{' '}
-          combinations · leaves evaluated:{' '}
-          <span className="font-mono tabular-nums text-paper">
-            {hero.explored.toLocaleString()}
-          </span>{' '}
-          · subtrees pruned:{' '}
-          <span className="font-mono tabular-nums text-paper">
-            {hero.pruned.toLocaleString()}
-          </span>{' '}
-          — optimum proven.
+          combinations ·{' '}
+          <SearchCounts explored={hero.explored} pruned={hero.pruned} /> —
+          optimum proven.
         </p>
       </div>
       <p className="mt-3 text-2xs text-muted">
@@ -240,7 +241,7 @@ function SharedBuildBanner({ request }: { request: OptimizeRequest }) {
         className="btn-ghost flex-none"
         onClick={() => scrollToId('step-optimise')}
       >
-        Run it yourself
+        Run It Yourself
       </button>
     </Callout>
   );
@@ -279,15 +280,16 @@ export function App() {
   // Once a roster exists the app's curated opening pair is no longer the most
   // useful one — the reader's own best-built character is. Only while the
   // selection is untouched: a pick the reader (or a shared ?b= link) made must
-  // never be overwritten, which is what `isDefaultSelection` guards. Weapon
-  // legality is left to OptimizePanel, the one place that owns that rule.
+  // never be overwritten, which is what `isDefaultSelection` guards. The
+  // weapon is not set here: `setCharacterKey` already prefers this
+  // character's roster-equipped weapon, and does it through `legalWeapon`, so
+  // a weapon key the frozen snapshot doesn't carry never reaches the store.
   useEffect(() => {
     const s = useOptimizeRequest.getState();
     if (!isDefaultSelection(s)) return;
     const best = bestBuiltCharacter(rosterEntries, artifacts);
     if (!best) return;
     s.setCharacterKey(best.characterKey);
-    if (best.weaponKey) s.setWeaponKey(best.weaponKey);
   }, [rosterEntries, artifacts]);
 
   useEffect(() => {
@@ -333,6 +335,9 @@ export function App() {
   }, [sharedArtifacts, artifacts]);
 
   const [running, setRunning] = useState(false);
+  // Progress counters and the elapsed clock live in `searchProgressStore`,
+  // not in this component's state: they change several times a second, and
+  // held here every tick re-rendered the whole page instead of one line.
 
   // One persistent announcement for the whole page. Written by the run itself
   // rather than by an effect on `result`, so a shared ?b= hydration (which is
@@ -355,19 +360,41 @@ export function App() {
   // either's disable reaches the DOM — this token makes only the most
   // recently started run allowed to commit its outcome or clear `running`.
   const runToken = useRef(0);
+  // The run in flight, so it can be stopped — by Cancel, or by the next run
+  // superseding it. Without this a superseded search kept burning a core to
+  // produce an answer nobody was allowed to commit.
+  const currentRun = useRef<OptimizeHandle | null>(null);
+
+  function cancelCurrent() {
+    // Deliberately does *not* advance runToken: the in-flight run's own
+    // rejection handler is what clears `running` and announces, and it only
+    // does that while its token is still current.
+    currentRun.current?.cancel();
+  }
 
   async function runCurrent() {
     const req = currentRequest(useOptimizeRequest.getState());
     const inv = useInventory.getState().artifacts;
     if (inv.length === 0 || !req.characterKey) return;
     const token = ++runToken.current;
+    // Token first, then stop the old worker: the superseded run's rejection
+    // now sees a stale token and bows out silently.
+    const superseded = currentRun.current;
+    superseded?.cancel();
     setRunning(true);
+    // Restarts the clock as well as clearing the counters, so a superseding
+    // run doesn't inherit the elapsed time of the one it replaced.
+    searchProgressStore.start();
     setOptimizeError(false);
     // A fresh run replaces whatever Results was showing, so the banner about
     // the shared build that couldn't be read no longer describes anything.
     setSharedError(false);
     try {
-      const r = await optimize(req, inv);
+      const run = optimizeRun(req, inv, (p) => {
+        if (runToken.current === token) searchProgressStore.report(p);
+      });
+      currentRun.current = run;
+      const r = await run.result;
       if (runToken.current !== token) return; // superseded by a newer run
       setSharedArtifacts(null);
       setResult(r);
@@ -379,6 +406,12 @@ export function App() {
       );
     } catch (err) {
       if (runToken.current !== token) return;
+      // The user stopped it on purpose: no error banner, and the results
+      // region simply un-dims with whatever it was already showing.
+      if (isOptimizeCancelled(err)) {
+        announce('Optimisation cancelled.');
+        return;
+      }
       // A worker/protocol rejection (or bad game data) must not vanish
       // silently — surface it instead of dropping back to idle with no cue.
       console.error('Optimize failed', err);
@@ -386,7 +419,11 @@ export function App() {
       setOptimizeError(true);
       announce('');
     } finally {
-      if (runToken.current === token) setRunning(false);
+      if (runToken.current === token) {
+        currentRun.current = null;
+        setRunning(false);
+        searchProgressStore.stop();
+      }
     }
   }
 
@@ -436,7 +473,7 @@ export function App() {
         href="#content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface-700 focus:px-4 focus:py-2 focus:text-paper"
       >
-        Skip to content
+        Skip to Content
       </a>
       <header className="mb-10 animate-fade-up">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -555,34 +592,28 @@ export function App() {
           <Section
             n={1}
             id="step-load"
-            title="Load your artifacts"
+            title="Load Your Artifacts"
             hint="Import a full inventory, fetch from a UID, or add pieces by hand."
             delay="0.05s"
           >
             <ImportPanel />
-            <details className="group mt-3">
-              <summary className="focus-ring inline-flex min-h-11 cursor-pointer select-none items-center gap-2 rounded-md py-2 text-sm font-medium text-flux-bright transition hover:text-flux">
-                {/* Decorative twisty — it sits right beside the label it
-                    describes. Matches RosterView's disclosure. */}
-                <span
-                  aria-hidden="true"
-                  className="text-xs transition group-open:rotate-90"
-                >
-                  ▶
-                </span>
-                Or add one manually
-              </summary>
+            <Disclosure
+              className="mt-3"
+              size="md"
+              tone="flux"
+              label="Or Add One Manually"
+            >
               <div className="mt-3">
                 <ArtifactForm />
               </div>
-            </details>
+            </Disclosure>
           </Section>
 
           {hasRoster && (
             <Section
               n={2}
               id="step-roster"
-              title="Your roster"
+              title="Your Roster"
               hint="How built each owned character is, best first."
               delay="0.08s"
             >
@@ -594,7 +625,7 @@ export function App() {
             <Section
               n={3}
               id="step-teams"
-              title="Endgame teams"
+              title="Endgame Teams"
               hint="Two Abyss halves that share no character, matched from your roster."
               delay="0.09s"
             >
@@ -606,7 +637,7 @@ export function App() {
             <Section
               n={4}
               id="step-plan"
-              title="Your plan"
+              title="Your Plan"
               hint="An optimised build for all eight members, plus one farming list."
               delay="0.1s"
             >
@@ -621,7 +652,11 @@ export function App() {
             hint="Choose a character, weapon, and what to maximise."
             delay="0.1s"
           >
-            <OptimizePanel onRun={runCurrent} running={running} />
+            <OptimizePanel
+              onRun={runCurrent}
+              running={running}
+              onCancel={cancelCurrent}
+            />
           </Section>
 
           {result && request && (
@@ -649,6 +684,14 @@ export function App() {
                     result={result}
                     request={request}
                     artifactsById={artifactsById}
+                    onRelax={(value: number) => {
+                      // "No build meets an ER floor of N" is only actionable
+                      // if the page can lower it, so the offer to relax is
+                      // wired to the store *and* to a fresh run — the reader
+                      // shouldn't have to press Optimise again.
+                      useOptimizeRequest.getState().setMinER(String(value));
+                      void runCurrent();
+                    }}
                   />
                 </div>
               </Section>

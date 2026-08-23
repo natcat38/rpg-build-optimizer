@@ -26,9 +26,10 @@ export interface MetaTarget {
    *  metaToConstraints for why these never become minStats. */
   statTargets?: StatVec;
   /**
-   * The guide's signature weapon, where naming one is uncontroversial. Present
-   * on a handful of entries only: for most characters the pick is team- and
-   * constellation-dependent, and a curated table has no business guessing.
+   * The guide's best-in-slot 5-star — usually the character's signature.
+   * Transcribed from the top of the `source` guide's own weapon ranking; where
+   * the guide's overall #1 is not a 5-star, this is its highest-ranked 5-star
+   * and the entry carries a comment saying so.
    *
    * Deliberately NOT fed into `metaToConstraints` — the optimiser searches
    * artifacts, not weapons, and "Use meta build" must not silently reassign a
@@ -37,6 +38,13 @@ export interface MetaTarget {
    * always be one the character can actually equip (guarded in the test).
    */
   weapon?: string;
+  /**
+   * The guide's best non-limited pick: its highest-ranked 4-star, craftable,
+   * battle-pass or event weapon — what a reader without the signature can
+   * actually hold. Same rules as `weapon`: transcribed, never inferred, never
+   * a constraint, and always equippable by the character.
+   */
+  weaponAccessible?: string;
 }
 
 export const META_TARGETS: Record<string, MetaTarget> = {
@@ -47,6 +55,7 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 130,
     objective: 'crit_value',
     weapon: 'splendor_of_tranquil_waters',
+    weaponAccessible: 'festering_desire',
     source: 'https://keqingmains.com/furina/',
   },
   nahida: {
@@ -55,6 +64,7 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'em', goblet: 'em' },
     objective: 'crit_value',
     weapon: 'a_thousand_floating_dreams',
+    weaponAccessible: 'sacrificial_fragments',
     source: 'https://keqingmains.com/nahida/',
     statTargets: { em: 900 },
   },
@@ -68,7 +78,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 140,
     critRatioTarget: 0.333,
     objective: 'crit_value',
-    weapon: 'verdict',
+    weapon: 'gest_of_the_mighty_wolf', // guide ranks Gest #1 over the signature Verdict (re-read 2026-08)
+    weaponAccessible: 'serpent_spine',
     source: 'https://keqingmains.com/navia/',
   },
   neuvillette: {
@@ -78,6 +89,7 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     critRatioTarget: 0.333,
     objective: 'crit_value',
     weapon: 'tome_of_the_eternal_flow',
+    weaponAccessible: 'sacrificial_jade',
     source: 'https://keqingmains.com/neuvillette/',
   },
   hu_tao: {
@@ -86,6 +98,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'hp_pct', goblet: 'elemental_dmg' },
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'staff_of_homa',
+    weaponAccessible: 'ballad_of_the_fjords',
     source: 'https://keqingmains.com/hutao/',
   },
   arataki_itto: {
@@ -94,6 +108,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'def_pct', goblet: 'elemental_dmg' },
     erTarget: 130,
     objective: 'crit_value',
+    weapon: 'redhorn_stonethresher',
+    weaponAccessible: 'serpent_spine',
     source: 'https://keqingmains.com/itto/',
   },
   raiden_shogun: {
@@ -103,6 +119,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 200,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'engulfing_lightning',
+    weaponAccessible: "wavebreaker's_fin",
     source: 'https://keqingmains.com/raiden/',
   },
   xiao: {
@@ -112,6 +130,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 120,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'primordial_jade_wingedspear',
+    weaponAccessible: 'lithic_spear',
     source: 'https://keqingmains.com/xiao/',
     statTargets: { crit_rate: 70 },
   },
@@ -124,6 +144,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'atk_pct', goblet: 'elemental_dmg' },
     erTarget: 100,
     objective: 'crit_value',
+    weapon: 'tome_of_the_eternal_flow',
+    weaponAccessible: 'the_widsith', // guide ranks R5 Widsith #1 overall; weapon takes its top 5-star
     source: 'https://keqingmains.com/klee/',
   },
   tartaglia: {
@@ -132,6 +154,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'atk_pct', goblet: 'elemental_dmg' },
     erTarget: 125,
     objective: 'crit_value',
+    weapon: 'polar_star',
+    weaponAccessible: 'the_viridescent_hunt',
     source: 'https://keqingmains.com/childe/',
   },
   keqing: {
@@ -139,6 +163,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     setRequirement: { kind: '4pc', setKey: 'ThunderingFury' },
     mains: { sands: 'atk_pct', goblet: 'elemental_dmg' },
     objective: 'crit_value',
+    weapon: 'freedomsworn',
+    weaponAccessible: 'toukabou_shigure',
     source: 'https://keqingmains.com/keqing/',
   },
   kamisato_ayaka: {
@@ -147,6 +173,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'atk_pct', goblet: 'elemental_dmg' },
     erTarget: 140,
     objective: 'crit_value',
+    weapon: 'mistsplitter_reforged',
+    weaponAccessible: 'finale_of_the_deep',
     source: 'https://keqingmains.com/ayaka/',
   },
   yoimiya: {
@@ -154,6 +182,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     setRequirement: { kind: '4pc', setKey: 'ShimenawasReminiscence' },
     mains: { sands: 'atk_pct', goblet: 'elemental_dmg' },
     objective: 'crit_value',
+    weapon: 'thundering_pulse',
+    weaponAccessible: 'rust',
     source: 'https://keqingmains.com/yoimiya/',
   },
   alhaitham: {
@@ -162,6 +192,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'em', goblet: 'elemental_dmg' },
     erTarget: 105,
     objective: 'crit_value',
+    weapon: 'light_of_foliar_incision',
+    weaponAccessible: 'wolffang',
     source: 'https://keqingmains.com/q/alhaitham-quickguide',
     statTargets: { em: 200 },
   },
@@ -171,6 +203,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'em', goblet: 'elemental_dmg' },
     erTarget: 140,
     objective: 'crit_value',
+    weapon: 'staff_of_the_scarlet_sands',
+    weaponAccessible: 'ballad_of_the_fjords',
     source: 'https://keqingmains.com/q/cyno-quickguide',
   },
   wanderer: {
@@ -180,6 +214,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 100,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: "tulaytullah's_remembrance",
+    weaponAccessible: 'the_widsith',
     source: 'https://keqingmains.com/wanderer/',
   },
   ganyu: {
@@ -189,6 +225,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 111,
     critRatioTarget: 0.167,
     objective: 'crit_value',
+    weapon: "hunter's_path",
+    weaponAccessible: 'hamayumi',
     source: 'https://keqingmains.com/ganyu/',
     statTargets: { crit_rate: 35, crit_dmg: 200, atk: 1800 },
   },
@@ -198,6 +236,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'atk_pct', goblet: 'elemental_dmg' },
     erTarget: 150,
     objective: 'crit_value',
+    weapon: "crimson_moon's_semblance",
+    weaponAccessible: 'deathmatch',
     source: 'https://keqingmains.com/q/arlecchino-quickguide',
   },
   xingqiu: {
@@ -206,6 +246,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'er_pct', goblet: 'elemental_dmg' },
     erTarget: 140,
     objective: 'crit_value',
+    weapon: 'primordial_jade_cutter',
+    weaponAccessible: 'wolffang',
     source: 'https://keqingmains.com/xingqiu/',
   },
   yelan: {
@@ -215,6 +257,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 160,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'aqua_simulacra',
+    weaponAccessible: 'favonius_warbow',
     source: 'https://keqingmains.com/yelan/',
     statTargets: { hp: 30000, crit_rate: 70, crit_dmg: 140 },
   },
@@ -225,6 +269,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 160,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'staff_of_the_scarlet_sands',
+    weaponAccessible: "wavebreaker's_fin",
     source: 'https://keqingmains.com/xiangling/',
   },
   bennett: {
@@ -233,6 +279,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'er_pct', goblet: 'hp_pct' },
     erTarget: 180,
     objective: 'hp_pct',
+    weapon: 'mistsplitter_reforged',
+    weaponAccessible: 'the_alley_flash',
     source: 'https://keqingmains.com/bennett/',
   },
   kaedehara_kazuha: {
@@ -241,6 +289,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'em', goblet: 'em' },
     erTarget: 190,
     objective: 'em',
+    weapon: 'freedomsworn',
+    weaponAccessible: "xiphos'_moonlight",
     source: 'https://keqingmains.com/kazuha/',
   },
   zhongli: {
@@ -248,6 +298,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     setRequirement: { kind: '2pc', setKey: 'TenacityOfTheMillelith' },
     mains: { sands: 'hp_pct', goblet: 'hp_pct', circlet: 'hp_pct' },
     objective: 'hp_pct',
+    // shield-bot guide names no 5-star BiS, only these ER/HP sticks
+    weaponAccessible: 'black_tassel',
     source: 'https://keqingmains.com/zhongli/',
   },
   kuki_shinobu: {
@@ -256,6 +308,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'em', goblet: 'em', circlet: 'em' },
     erTarget: 135,
     objective: 'em',
+    weapon: 'freedomsworn',
+    weaponAccessible: "xiphos'_moonlight",
     source: 'https://keqingmains.com/q/shinobu-quickguide/',
   },
   faruzan: {
@@ -264,6 +318,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'er_pct' },
     erTarget: 275,
     objective: 'crit_value',
+    weapon: 'elegy_for_the_end',
+    weaponAccessible: 'favonius_warbow', // guide's BiS is this 4-star; weapon takes its top 5-star
     source: 'https://keqingmains.com/faruzan/',
   },
   sigewinne: {
@@ -272,6 +328,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'hp_pct', goblet: 'hp_pct' },
     erTarget: 115,
     objective: 'hp_pct',
+    weapon: 'silvershower_heartstrings',
+    weaponAccessible: 'recurve_bow',
     source: 'https://keqingmains.com/q/sigewinne-quickguide',
     statTargets: { hp: 65000 },
   },
@@ -282,6 +340,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 160,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'polar_star',
+    weaponAccessible: "mouun's_moon",
     source: 'https://keqingmains.com/sara/',
   },
   wriothesley: {
@@ -290,6 +350,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'atk_pct', goblet: 'elemental_dmg' },
     erTarget: 100,
     objective: 'crit_value',
+    weapon: 'cashflow_supervision',
+    weaponAccessible: 'the_widsith', // guide's #2 (Clash of Kings) is post-6.7; using its next 4-star
     source: 'https://keqingmains.com/q/wriothesley-quickguide/',
   },
   clorinde: {
@@ -298,6 +360,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'atk_pct', goblet: 'elemental_dmg' },
     erTarget: 110,
     objective: 'crit_value',
+    weapon: 'absolution',
+    weaponAccessible: 'the_black_sword',
     source: 'https://keqingmains.com/q/clorinde-quickguide/',
   },
   // --- Comp-ideal picks, verified against KQM guides on 2026-08-20 -------------
@@ -313,6 +377,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 140,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'uraku_misugiri',
+    weaponAccessible: 'cinnabar_spindle',
     source: 'https://keqingmains.com/q/albedo-quickguide/',
   },
   baizhu: {
@@ -321,6 +387,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'hp_pct', goblet: 'hp_pct', circlet: 'hp_pct' },
     erTarget: 150,
     objective: 'hp_pct',
+    weapon: "jadefall's_splendor",
+    weaponAccessible: 'prototype_amber',
     source: 'https://keqingmains.com/q/baizhu-quickguide/',
   },
   charlotte: {
@@ -329,6 +397,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'er_pct', goblet: 'atk_pct', circlet: 'healing' },
     erTarget: 200,
     objective: 'atk_pct',
+    weapon: "kagura's_verity",
+    weaponAccessible: 'prototype_amber', // guide's BiS is this 4-star; weapon takes its top 5-star
     source: 'https://keqingmains.com/q/charlotte-quickguide/',
   },
   chasca: {
@@ -338,6 +408,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 110,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: "astral_vulture's_crimson_plumage",
+    weaponAccessible: 'flowerwreathed_feathers',
     source: 'https://keqingmains.com/q/chasca-quickguide/',
   },
   chevreuse: {
@@ -346,6 +418,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'hp_pct', goblet: 'hp_pct', circlet: 'hp_pct' },
     erTarget: 100,
     objective: 'hp_pct',
+    weapon: 'symphonist_of_scents',
+    weaponAccessible: 'favonius_lance',
     source: 'https://keqingmains.com/q/chevreuse-quickguide/',
     statTargets: { hp: 40000 },
   },
@@ -358,6 +432,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { goblet: 'em' },
     erTarget: 175,
     objective: 'em',
+    weapon: "starcaller's_watch",
+    weaponAccessible: 'thrilling_tales_of_dragon_slayers',
     source: 'https://keqingmains.com/q/citlali-quickguide/',
   },
   emilie: {
@@ -367,6 +443,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 140,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'lumidouce_elegy',
+    weaponAccessible: 'deathmatch',
     source: 'https://keqingmains.com/q/emilie-quickguide/',
   },
   // Sands unlocked: KQM says ATK%, Prydwen prefers ER% to reach the requirement.
@@ -378,6 +456,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 150,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'symphonist_of_scents',
+    weaponAccessible: 'favonius_lance',
     source: 'https://keqingmains.com/q/escoffier-quickguide/',
   },
   fischl: {
@@ -387,6 +467,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 130,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'polar_star',
+    weaponAccessible: 'the_stringless',
     source: 'https://keqingmains.com/fischl/',
   },
   // Gorou's own multipliers are DEF-scaling, but the guide is explicit that his
@@ -398,6 +480,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'er_pct', goblet: 'elemental_dmg' },
     erTarget: 220,
     objective: 'crit_value',
+    weapon: 'elegy_for_the_end',
+    weaponAccessible: 'favonius_warbow', // guide's BiS is this 4-star; weapon takes its top 5-star
     source: 'https://keqingmains.com/q/gorou-quickguide/',
   },
   kamisato_ayato: {
@@ -407,6 +491,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 140,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'haran_geppaku_futsu',
+    weaponAccessible: 'the_black_sword',
     source: 'https://keqingmains.com/ayato/',
   },
   kinich: {
@@ -416,6 +502,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 110,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'fang_of_the_mountain_king',
+    weaponAccessible: 'serpent_spine',
     source: 'https://keqingmains.com/q/kinich-quickguide/',
   },
   // No erTarget: her Burst charges off Fighting Spirit, not Energy, and the guide
@@ -426,6 +514,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'atk_pct', goblet: 'elemental_dmg' },
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'a_thousand_blazing_suns',
+    weaponAccessible: 'serpent_spine',
     source: 'https://keqingmains.com/q/mavuika-quickguide/',
   },
   // HP-scaling on-field DPS: the HP% sands guarantees the scaling stat and the
@@ -436,6 +526,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'hp_pct', goblet: 'elemental_dmg' },
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: "surf's_up",
+    weaponAccessible: 'sacrificial_jade',
     source: 'https://keqingmains.com/q/mualani-quickguide/',
   },
   nilou: {
@@ -447,6 +539,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'hp_pct', goblet: 'hp_pct', circlet: 'hp_pct' },
     erTarget: 200,
     objective: 'hp_pct',
+    weapon: 'key_of_khajnisut',
+    weaponAccessible: "xiphos'_moonlight",
     source: 'https://keqingmains.com/q/nilou-quickguide/',
     statTargets: { hp: 30000 },
   },
@@ -457,6 +551,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 140,
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'elegy_for_the_end',
+    weaponAccessible: 'favonius_warbow',
     source: 'https://keqingmains.com/q/ororon-quickguide/',
   },
   // Her kit gives -100% CRIT Rate, so the Healing Bonus circlet is mandatory
@@ -467,6 +563,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'hp_pct', goblet: 'elemental_dmg', circlet: 'healing' },
     erTarget: 220,
     objective: 'hp_pct',
+    weapon: 'everlasting_moonglow',
+    weaponAccessible: 'prototype_amber',
     source: 'https://keqingmains.com/q/kokomi-quickguide/',
   },
   shenhe: {
@@ -475,6 +573,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'atk_pct', goblet: 'atk_pct', circlet: 'atk_pct' },
     erTarget: 160,
     objective: 'atk_pct',
+    weapon: 'calamity_queller',
+    weaponAccessible: 'favonius_lance',
     source: 'https://keqingmains.com/q/shenhe-quickguide/',
   },
   // No erTarget: her Burst runs on Serpent's Subtlety, not Energy.
@@ -487,6 +587,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'atk_pct', goblet: 'elemental_dmg' },
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: 'azurelight',
+    weaponAccessible: 'calamity_of_eshu',
     source: 'https://keqingmains.com/q/skirk-quickguide/',
   },
   xianyun: {
@@ -495,6 +597,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'er_pct', goblet: 'atk_pct', circlet: 'atk_pct' },
     erTarget: 230,
     objective: 'atk_pct',
+    weapon: "crane's_echoing_call",
+    weaponAccessible: 'favonius_codex',
     source: 'https://keqingmains.com/q/xianyun-quickguide/',
   },
   xilonen: {
@@ -503,6 +607,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'def_pct', goblet: 'def_pct', circlet: 'def_pct' },
     erTarget: 150,
     objective: 'def_pct',
+    weapon: 'peak_patrol_song',
+    weaponAccessible: 'favonius_sword',
     source: 'https://keqingmains.com/q/xilonen-quickguide/',
   },
   // Stellar-Conduct Yae, which landed in 6.7 alongside the Disenchantment set —
@@ -514,6 +620,8 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     mains: { sands: 'atk_pct', goblet: 'atk_pct' },
     critRatioTarget: 0.333,
     objective: 'crit_value',
+    weapon: "kagura's_verity",
+    // guide's only non-5-star pick (Echoes of the Heart) is post-6.7
     source: 'https://keqingmains.com/q/yae-quickguide/',
   },
 };

@@ -183,7 +183,7 @@ export function ImportPanel() {
           </span>
           {count > 0 && (
             <button type="button" className="btn-ghost" onClick={onClear}>
-              {confirmingClear ? 'Confirm clear' : 'Clear inventory'}
+              {confirmingClear ? 'Confirm Clear' : 'Clear Inventory'}
             </button>
           )}
         </div>
@@ -193,7 +193,7 @@ export function ImportPanel() {
         {/* GOOD file upload */}
         <div className="well rounded-xl p-4">
           <label className="field-label" htmlFor="good-file">
-            Upload GOOD export
+            Upload GOOD Export
           </label>
           <p className="mb-3 text-xs text-muted">
             Your full inventory, from Genshin Optimizer or similar.

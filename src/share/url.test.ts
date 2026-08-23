@@ -301,6 +301,86 @@ describe('decodeBuild validation', () => {
     });
   });
 
+  it('rejects a diagnostics object missing the fields the card reads', async () => {
+    // `diagnostics: {}` used to sail through — the guard only checked that it
+    // was an object, and BuildCard then destructured undefined fields out of it.
+    const json = JSON.stringify({
+      request,
+      build: { ...build, diagnostics: {} },
+      artifacts,
+    });
+    expect(await decodeBuild(toBase64UrlParam(json))).toEqual({
+      error: 'UNREADABLE',
+    });
+  });
+
+  it('rejects marginalBySlot entries that are not a slot, or not a finite number', async () => {
+    for (const marginalBySlot of [
+      { notASlot: 1 },
+      { flower: 'lots' },
+      { flower: null },
+    ]) {
+      const json = JSON.stringify({
+        request,
+        build: {
+          ...build,
+          diagnostics: { ...build.diagnostics, marginalBySlot },
+        },
+        artifacts,
+      });
+      expect(await decodeBuild(toBase64UrlParam(json))).toEqual({
+        error: 'UNREADABLE',
+      });
+    }
+  });
+
+  it('rejects bindingConstraints that are not bounded strings', async () => {
+    for (const bindingConstraints of [
+      'one constraint',
+      [42],
+      ['a'.repeat(301)],
+      Array.from({ length: 33 }, (_, i) => `c${i}`),
+    ]) {
+      const json = JSON.stringify({
+        request,
+        build: {
+          ...build,
+          diagnostics: { ...build.diagnostics, bindingConstraints },
+        },
+        artifacts,
+      });
+      expect(await decodeBuild(toBase64UrlParam(json))).toEqual({
+        error: 'UNREADABLE',
+      });
+    }
+  });
+
+  it('still decodes a fully-populated diagnostics payload', async () => {
+    const param = await encodeBuild({
+      request,
+      build: {
+        ...build,
+        diagnostics: {
+          bindingConstraints: ['Energy Recharge ≥ 200 (build has 214.0)'],
+          marginalBySlot: {
+            flower: 1,
+            plume: 2,
+            sands: 3,
+            goblet: 4,
+            circlet: 5,
+          },
+          explored: 10,
+          pruned: 3,
+        },
+      },
+      artifacts,
+    });
+    const out = await decodeBuild(param);
+    expect(out).not.toHaveProperty('error');
+    if (!('error' in out))
+      expect(out.build.diagnostics.marginalBySlot.goblet).toBe(4);
+  });
+
   it('rejects a share param whose decompressed payload exceeds the size cap (decompression-bomb guard)', async () => {
     // diagnostics is intentionally not deep-validated (see parseBuildSnapshot's
     // comment) — so a huge field hidden there is otherwise a validly-shaped

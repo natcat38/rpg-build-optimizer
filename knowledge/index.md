@@ -31,7 +31,7 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 
 - [ADR-0001 — client-side-only architecture](../docs/adr/0001-client-side-only-architecture.md)
 - [ADR-0002 — frozen bundled reference dataset](../docs/adr/0002-frozen-bundled-reference-dataset.md)
-- [ADR-0003 — stat-only model, no damage engine](../docs/adr/0003-stat-only-model-no-damage-engine.md) _(superseded by ADR-0016)_
+- [ADR-0003 — stat-only model, no damage engine](../docs/adr/0003-stat-only-model-no-damage-engine.md) _(superseded by ADR-0016, amended by ADR-0020)_
 - [ADR-0004 — exact branch-and-bound optimisation](../docs/adr/0004-exact-branch-and-bound-optimisation.md)
 - [ADR-0005 — self-contained share links](../docs/adr/0005-self-contained-share-links.md)
 - [ADR-0006 — inventory import and build-level model](../docs/adr/0006-inventory-import-and-build-level-model.md) _(amended by ADR-0015)_
@@ -48,6 +48,7 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0017 — curated comp-archetype database](../docs/adr/0017-curated-comp-database.md)
 - [ADR-0018 — mode-aware team recommendation](../docs/adr/0018-mode-aware-team-recommendation.md)
 - [ADR-0019 — the Plan page](../docs/adr/0019-plan-output.md)
+- [ADR-0020 — 4-piece set bonuses at full uptime](../docs/adr/0020-four-piece-set-bonuses-at-full-uptime.md) _(amends ADR-0003)_
 
 ## v2 (shipped)
 

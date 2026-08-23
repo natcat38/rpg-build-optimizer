@@ -7,7 +7,7 @@ export function GapReport({ report }: { report: GapReportData }) {
   return (
     <div className="panel panel-md space-y-3">
       <h3 className="font-display text-lg font-bold tracking-wide text-paper">
-        Gap vs meta build
+        Gap vs Meta Build
       </h3>
 
       {allMet ? (

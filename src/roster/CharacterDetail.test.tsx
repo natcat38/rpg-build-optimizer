@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CharacterDetail } from './CharacterDetail';
 import type { Artifact } from '../game/types';
 import type { RosterEntry } from '../import/good';
+import { getDamageProfile } from '../damage/profiles';
 
 const entry: RosterEntry = {
   buildLevel: 90,
@@ -66,6 +67,90 @@ describe('CharacterDetail', () => {
     expect(
       screen.getByText(/No curated recipe for this character yet/i),
     ).toBeInTheDocument();
+  });
+
+  it('links the damage profile source only when it is a second source', async () => {
+    const user = userEvent.setup();
+    // Alhaitham's damage profile cites the full guide, his recipe the quick
+    // guide — two genuinely different pages.
+    render(
+      <CharacterDetail characterKey="alhaitham" entry={entry} artifacts={[]} />,
+    );
+    await user.click(screen.getByRole('tab', { name: /recommended/i }));
+    const link = screen.getByRole('link', {
+      name: /damage profile source\s*\(opens in new tab\)/i,
+    });
+    expect(link).toHaveAttribute('href', getDamageProfile('alhaitham')?.source);
+    expect(link).toHaveAttribute('rel', 'noreferrer');
+    expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('omits the damage profile link when it repeats the recipe source', async () => {
+    const user = userEvent.setup();
+    render(
+      <CharacterDetail
+        characterKey="kamisato_ayaka"
+        entry={entry}
+        artifacts={[]}
+      />,
+    );
+    await user.click(screen.getByRole('tab', { name: /recommended/i }));
+    expect(
+      screen.queryByRole('link', { name: /damage profile source/i }),
+    ).toBeNull();
+    expect(
+      screen.getByRole('link', { name: /source guide \(KQM\)/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('states what the recipe’s 4pc bonus assumes', async () => {
+    const user = userEvent.setup();
+    render(
+      <CharacterDetail
+        characterKey="kamisato_ayaka"
+        entry={entry}
+        artifacts={[]}
+      />,
+    );
+    await user.click(screen.getByRole('tab', { name: /recommended/i }));
+    expect(screen.getByRole('tabpanel')).toHaveTextContent(
+      /Blizzard Strayer 4pc: Assumes the target is Frozen/,
+    );
+  });
+
+  it('says why a 4pc is not scored when it is unmodelled', async () => {
+    const user = userEvent.setup();
+    // Kazuha's recipe is 4pc Viridescent Venerer, which ADR-0020 leaves
+    // deliberately unmodelled.
+    render(
+      <CharacterDetail
+        characterKey="kaedehara_kazuha"
+        entry={entry}
+        artifacts={[]}
+      />,
+    );
+    await user.click(screen.getByRole('tab', { name: /recommended/i }));
+    expect(screen.getByRole('tabpanel')).toHaveTextContent(
+      /4pc not scored: Swirl DMG/,
+    );
+  });
+
+  it('says a hit-kind 4pc is unscored when the recipe ranks by a scalar stat', async () => {
+    const user = userEvent.setup();
+    // Raiden's recipe is 4pc Emblem, whose only channel is Burst DMG from ER —
+    // nothing a crit_value ranking can read, so quoting its uptime here would
+    // imply a number that never enters the score.
+    render(
+      <CharacterDetail
+        characterKey="raiden_shogun"
+        entry={{ ...entry, weaponKey: 'engulfing_lightning' }}
+        artifacts={[]}
+      />,
+    );
+    await user.click(screen.getByRole('tab', { name: /recommended/i }));
+    expect(screen.getByRole('tabpanel')).toHaveTextContent(
+      /Emblem of Severed Fate 4pc: not scored on this objective/,
+    );
   });
 
   it('moves between tabs with arrow keys, taking focus along', async () => {

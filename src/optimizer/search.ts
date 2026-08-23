@@ -238,6 +238,40 @@ function setCeilingVector(
   return ceil;
 }
 
+/**
+ * The statwise ceiling the search itself uses when it prunes on `minStats`:
+ * the character/weapon base, plus the per-slot statwise-max of everything
+ * still selectable under the main-stat locks, plus the set-bonus ceiling for
+ * the requirement in force.
+ *
+ * Exported so the diagnostics can explain an infeasible run with the very
+ * bound that rejected it — an optimistic (admissible) over-estimate, so a
+ * floor above this ceiling is provably unreachable, and one below it may still
+ * be unreachable for reasons the bound cannot see.
+ *
+ * Returns `null` when some slot has no legal piece at all — the search's own
+ * hard-infeasible case, where no ceiling is meaningful.
+ */
+export function reachableCeiling(
+  ctx: OptimizeContext,
+  req: OptimizeRequest,
+  inventory: Artifact[],
+): StatVec | null {
+  const pools = poolsBySlot(inventory, req);
+  if (SLOTS.some((s) => pools[s].length === 0)) return null;
+  const order = [...SLOTS];
+  const contributions = new Map<string, StatVec>();
+  for (const s of order)
+    for (const a of pools[s]) contributions.set(a.id, artifactContribution(a));
+  const ceiling: StatVec = { ...ctx.base };
+  addInto(ceiling, suffixMaxVectors(pools, order, contributions)[0]);
+  addInto(
+    ceiling,
+    setCeilingVector(ctx, pools, req.constraints.setRequirement),
+  );
+  return ceiling;
+}
+
 function makeBuildResult(
   ctx: OptimizeContext,
   req: OptimizeRequest,
@@ -262,10 +296,31 @@ function makeBuildResult(
   };
 }
 
+/** A snapshot of the search's own counters, mid-flight. */
+export interface SearchProgress {
+  /** Leaves (complete five-piece builds) evaluated so far. */
+  explored: number;
+  /** Subtrees rejected by a bound so far. */
+  pruned: number;
+}
+
+export interface SearchOptions {
+  /**
+   * Called periodically while the search runs, so a long solve can report
+   * progress instead of looking frozen. Purely observational: it sees the
+   * counters, it cannot steer the search, and nothing about pruning or
+   * iteration order depends on whether it is supplied.
+   */
+  onProgress?: (progress: SearchProgress) => void;
+  /** Minimum wall-clock gap between `onProgress` calls. */
+  progressIntervalMs?: number;
+}
+
 export function searchBuilds(
   req: OptimizeRequest,
   inventory: Artifact[],
   ctx: OptimizeContext,
+  options?: SearchOptions,
 ): OptimizeResult {
   // Precondition: artifact ids are unique across `inventory`. The per-artifact
   // caches below (contributions, scalar values, minContrib) and the result's
@@ -426,6 +481,25 @@ export function searchBuilds(
   let pruned = 0;
   const chosen: Artifact[] = [];
 
+  // Progress reporting. Two guards keep it off the hot path when nobody is
+  // listening: `onProgress` is captured as a local (so the common case is one
+  // truthiness test per node) and the clock is only read once every 256
+  // nodes. Node count, not leaf count: a heavily-pruned search can spend
+  // seconds without reaching a single leaf.
+  const onProgress = options?.onProgress;
+  const progressIntervalMs = options?.progressIntervalMs ?? 80;
+  let visited = 0;
+  // -Infinity, not the start time: the first tick should land as soon as there
+  // is anything to say, rather than making the reader wait out a full interval
+  // staring at zeroes.
+  let lastReportAt = -Infinity;
+  function reportProgress() {
+    const now = Date.now();
+    if (now - lastReportAt < progressIntervalMs) return;
+    lastReportAt = now;
+    onProgress!({ explored, pruned });
+  }
+
   /**
    * The score a branch must beat to be worth exploring.
    *
@@ -494,6 +568,7 @@ export function searchBuilds(
     matchedA: number,
     matchedB: number,
   ) {
+    if (onProgress && (++visited & 0xff) === 0) reportProgress();
     if (slotIndex === order.length) {
       explored++;
       const t = totals(ctx, chosen);

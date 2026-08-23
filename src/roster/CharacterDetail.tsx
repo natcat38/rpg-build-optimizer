@@ -9,8 +9,8 @@ import { computeBuildScore } from './buildScore';
 import { META_TARGETS } from '../meta/metaTargets';
 import { archetypesFor } from '../teams/comps';
 import { getDamageProfile } from '../damage/profiles';
+import { fourPieceAssumptions } from '../damage/setBonuses';
 import {
-  elementLabel,
   formatScore,
   formatSetName,
   formatStat,
@@ -22,6 +22,8 @@ import {
   SLOT_LABELS,
 } from '../labels';
 import { Segmented } from '../components/ui/Segmented';
+import { CharacterLine } from '../components/ui/CharacterLine';
+import { SourceLink } from '../components/ui/SourceLink';
 import type { RosterEntry } from '../import/good';
 import type { Artifact, Slot, StatKey } from '../game/types';
 import { SLOTS } from '../game/types';
@@ -52,7 +54,14 @@ export function CharacterDetail({
     [entry, artifacts],
   );
   const meta = META_TARGETS[characterKey];
+  const profile = getDamageProfile(characterKey);
   const comps = archetypesFor(characterKey);
+  // Only a 4pc recipe lights up a 4-piece bonus; a 2+2 or 2pc requirement has
+  // no set effect to state an assumption about.
+  const fourPcKey =
+    meta?.setRequirement.kind === '4pc'
+      ? meta.setRequirement.setKey
+      : undefined;
 
   return (
     <div className="space-y-4">
@@ -77,12 +86,7 @@ export function CharacterDetail({
         {tab === 'Overview' && (
           <>
             <p className="text-muted">
-              {[
-                char?.element && elementLabel(char.element),
-                weaponName ?? 'No weapon equipped',
-              ]
-                .filter(Boolean)
-                .join(' · ')}
+              <CharacterLine element={char?.element} weaponName={weaponName} />
               {entry.level != null && ` · Lv ${entry.level}`}
               {entry.constellation != null && ` · C${entry.constellation}`}
             </p>
@@ -165,16 +169,46 @@ export function CharacterDetail({
                     .join(', ')}
                 </p>
               )}
-              <a
+              <SourceLink
                 className="text-xs text-flux-bright underline"
                 href={meta.source}
-                target="_blank"
-                rel="noreferrer"
               >
                 Source guide (KQM)
-                <span className="sr-only"> (opens in new tab)</span>
-              </a>
-              {!getDamageProfile(characterKey) && (
+              </SourceLink>
+              {/* The damage profile is usually cited from the very same KQM
+                  page as the recipe above, and two links to one page read as
+                  two sources. Only shown when it really is a second one. */}
+              {profile && profile.source !== meta.source && (
+                <p>
+                  <SourceLink
+                    className="text-xs text-muted underline"
+                    href={profile.source}
+                  >
+                    Damage Profile Source
+                  </SourceLink>
+                </p>
+              )}
+              {/* What the 4pc number assumes (ADR-0020), or why there is no
+                  number — the unmodelled sets, the wrong weapon class and the
+                  hit-kind bonuses a scalar objective can't see all come back
+                  from the same call now. Quiet on purpose: it qualifies the
+                  figure above rather than competing with it. */}
+              {fourPcKey &&
+                fourPieceAssumptions(
+                  [fourPcKey],
+                  {
+                    hasDamage: meta.objective === 'avg_damage',
+                    weaponType: entry.weaponKey
+                      ? genshinAdapter.weapon(entry.weaponKey)?.type
+                      : undefined,
+                  },
+                  formatSetName,
+                ).map((line) => (
+                  <p key={line} className="text-2xs leading-relaxed text-muted">
+                    {line}
+                  </p>
+                ))}
+              {!profile && (
                 <p className="text-xs text-muted">
                   No curated damage profile yet — builds for this character are
                   ranked by {objectiveLabel(meta.objective)} instead of

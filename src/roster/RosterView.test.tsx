@@ -37,6 +37,14 @@ describe('RosterView', () => {
     ).toBeInTheDocument();
   });
 
+  it('tints the element name with that element’s hue, name still written', () => {
+    useRoster.getState().setRoster({ neuvillette: {}, amber: {} });
+    render(<RosterView />);
+    // Colour is a second channel, never the only one: the word is still there.
+    expect(screen.getByText('Hydro')).toHaveClass('text-element-hydro');
+    expect(screen.getByText('Pyro')).toHaveClass('text-element-pyro');
+  });
+
   it('renders every entry with a band, and the breakdown on expand', async () => {
     const user = userEvent.setup();
     useRoster.getState().setRoster({
