@@ -22,7 +22,8 @@ import {
   SLOT_LABELS,
 } from '../labels';
 import { Segmented } from '../components/ui/Segmented';
-import { ElementName } from '../components/ui/ElementName';
+import { CharacterLine } from '../components/ui/CharacterLine';
+import { SourceLink } from '../components/ui/SourceLink';
 import type { RosterEntry } from '../import/good';
 import type { Artifact, Slot, StatKey } from '../game/types';
 import { SLOTS } from '../game/types';
@@ -85,13 +86,7 @@ export function CharacterDetail({
         {tab === 'Overview' && (
           <>
             <p className="text-muted">
-              {char?.element && (
-                <>
-                  <ElementName element={char.element} />
-                  {' · '}
-                </>
-              )}
-              {weaponName ?? 'No weapon equipped'}
+              <CharacterLine element={char?.element} weaponName={weaponName} />
               {entry.level != null && ` · Lv ${entry.level}`}
               {entry.constellation != null && ` · C${entry.constellation}`}
             </p>
@@ -174,29 +169,23 @@ export function CharacterDetail({
                     .join(', ')}
                 </p>
               )}
-              <a
+              <SourceLink
                 className="text-xs text-flux-bright underline"
                 href={meta.source}
-                target="_blank"
-                rel="noreferrer"
               >
                 Source guide (KQM)
-                <span className="sr-only"> (opens in new tab)</span>
-              </a>
+              </SourceLink>
               {/* The damage profile is usually cited from the very same KQM
                   page as the recipe above, and two links to one page read as
                   two sources. Only shown when it really is a second one. */}
               {profile && profile.source !== meta.source && (
                 <p>
-                  <a
+                  <SourceLink
                     className="text-xs text-muted underline"
                     href={profile.source}
-                    target="_blank"
-                    rel="noreferrer"
                   >
                     Damage Profile Source
-                    <span className="sr-only"> (opens in new tab)</span>
-                  </a>
+                  </SourceLink>
                 </p>
               )}
               {/* What the 4pc number assumes (ADR-0020), or why there is no

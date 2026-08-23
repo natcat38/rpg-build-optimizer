@@ -16,6 +16,9 @@ const WATCHED = [
   'src/optimizer/search.ts',
   'src/optimizer/score.ts',
   'src/optimizer/benchmark.ts',
+  'src/optimizer/context.ts',
+  'src/damage/setBonuses.ts',
+  'src/damage/profiles.ts',
 ];
 const REPORT = 'docs/speed-report.md';
 
@@ -25,17 +28,28 @@ if (!base) {
   process.exit(0);
 }
 
-let changed: string[];
-try {
-  changed = execFileSync('git', ['diff', '--name-only', `${base}...HEAD`], {
+function diff(range: string): string[] {
+  return execFileSync('git', ['diff', '--name-only', range], {
     encoding: 'utf-8',
   })
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean);
+}
+
+let changed: string[];
+try {
+  // Three-dot needs a merge base, which a shallow CI clone does not have — it
+  // fetches the base commit itself, not the history joining the two. Fall back
+  // to the plain two-commit diff, which only needs both endpoints.
+  try {
+    changed = diff(`${base}...HEAD`);
+  } catch {
+    changed = diff(`${base}..HEAD`);
+  }
 } catch {
   console.log(
-    `bench:check — cannot diff against ${base} (shallow clone?), skipping.`,
+    `bench:check — cannot diff against ${base} (commit not fetched?), skipping.`,
   );
   process.exit(0);
 }

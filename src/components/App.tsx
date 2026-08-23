@@ -41,8 +41,10 @@ import {
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { scrollToId } from '../ui/scroll';
-import { formatScore, objectiveHint } from '../labels';
+import { formatCount, formatScore, objectiveHint } from '../labels';
 import { Callout } from './ui/Callout';
+import { Disclosure } from './ui/Disclosure';
+import { SearchCounts } from './ui/SearchCounts';
 import { cn } from './ui/cn';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
 
@@ -137,17 +139,11 @@ function SolvedHero({ hero }: { hero: HeroExample }) {
         <p className="max-w-sm text-xs leading-relaxed text-muted">
           Search space:{' '}
           <span className="font-mono tabular-nums text-paper">
-            {hero.naive.toLocaleString()}
+            {formatCount(hero.naive)}
           </span>{' '}
-          combinations · leaves evaluated:{' '}
-          <span className="font-mono tabular-nums text-paper">
-            {hero.explored.toLocaleString()}
-          </span>{' '}
-          · subtrees pruned:{' '}
-          <span className="font-mono tabular-nums text-paper">
-            {hero.pruned.toLocaleString()}
-          </span>{' '}
-          — optimum proven.
+          combinations ·{' '}
+          <SearchCounts explored={hero.explored} pruned={hero.pruned} /> —
+          optimum proven.
         </p>
       </div>
       <p className="mt-3 text-2xs text-muted">
@@ -601,22 +597,16 @@ export function App() {
             delay="0.05s"
           >
             <ImportPanel />
-            <details className="group mt-3">
-              <summary className="focus-ring inline-flex min-h-11 cursor-pointer select-none items-center gap-2 rounded-md py-2 text-sm font-medium text-flux-bright transition hover:text-flux">
-                {/* Decorative twisty — it sits right beside the label it
-                    describes. Matches RosterView's disclosure. */}
-                <span
-                  aria-hidden="true"
-                  className="text-xs transition group-open:rotate-90"
-                >
-                  ▶
-                </span>
-                Or Add One Manually
-              </summary>
+            <Disclosure
+              className="mt-3"
+              size="md"
+              tone="flux"
+              label="Or Add One Manually"
+            >
               <div className="mt-3">
                 <ArtifactForm />
               </div>
-            </details>
+            </Disclosure>
           </Section>
 
           {hasRoster && (

@@ -6,7 +6,6 @@
  * never on mount.
  */
 import {
-  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -22,8 +21,8 @@ import { archetypeName } from '../teams/comps';
 import { META_TARGETS } from '../meta/metaTargets';
 import { formatScore, objectiveHint, objectiveLabel } from '../labels';
 import { gradeBuild, type Grade } from '../meta/grade';
-import { Marker } from '../components/ui/Marker';
-import type { Tone } from '../components/ui/tone';
+import { GradeMarker } from '../components/ui/GradeMarker';
+import { SourceLink } from '../components/ui/SourceLink';
 import { BuildCard } from '../components/BuildCard';
 import { Callout } from '../components/ui/Callout';
 import { cn } from '../components/ui/cn';
@@ -32,16 +31,6 @@ import { composePlan, type Plan, type RunOptimize } from './composePlan';
 import { adviseInvestments, type Advice } from '../invest/advise';
 import type { Artifact, OptimizeRequest } from '../game/types';
 import { SLOTS } from '../game/types';
-
-// Mirrors the map in BuildCard: the same letter must read as the same colour
-// whether it is on a card or on a summary row.
-const GRADE_TONE: Record<Grade, Tone> = {
-  S: 'accent',
-  A: 'jade',
-  B: 'flux',
-  C: 'muted',
-  D: 'rose',
-};
 
 /** The grade a member's winning build would earn, or null when the character
  *  has no curated stat targets (or failed to gear). */
@@ -53,66 +42,60 @@ function memberGrade(b: Plan['builds'][number]): Grade | null {
 
 /** One line of the team summary: who, how well they scored, how close to the
  *  endgame stat line, and whether the shared bag cost them anything — with the
- *  whole row as the disclosure control for that member's full card. */
+ *  whole row as the disclosure control for that member's full card.
+ *
+ *  Native `details`/`summary`: the browser owns the expanded state and the
+ *  aria wiring, so the only state left here is "has this row ever been
+ *  opened" — a member's card is eight artifacts of rendering, so it is
+ *  mounted on first open and kept mounted after. */
 function SummaryRow({
   build,
-  expanded,
-  onToggle,
-  panelId,
   children,
 }: {
   build: Plan['builds'][number];
-  expanded: boolean;
-  onToggle: () => void;
-  panelId: string;
   children: ReactNode;
 }) {
   const name = genshinAdapter.characterName(build.characterKey);
   const grade = memberGrade(build);
+  const [mounted, setMounted] = useState(false);
   const value =
     build.result.status === 'ok'
       ? formatScore(build.result.builds[0].objectiveValue)
       : null;
   return (
     <li data-testid="plan-summary-row">
-      <button
-        type="button"
-        aria-expanded={expanded}
-        aria-controls={panelId}
-        onClick={onToggle}
-        className="focus-ring touch-target flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-white/5"
+      <details
+        className="group"
+        onToggle={(e) => {
+          if (e.currentTarget.open) setMounted(true);
+        }}
       >
-        <span aria-hidden="true" className="w-3 flex-none text-xs text-muted">
-          {expanded ? '–' : '+'}
-        </span>
-        <span className="min-w-0 flex-1 truncate text-sm text-paper">
-          {name}
-        </span>
-        {value !== null ? (
-          <span className="font-mono text-sm tabular-nums text-accent-bright">
-            {value}
-          </span>
-        ) : (
-          <span className="text-xs text-muted">no build</span>
-        )}
-        {grade && (
-          <Marker
-            tone={GRADE_TONE[grade]}
-            role="img"
-            aria-label={`Grade ${grade} — how close this build is to endgame stat targets`}
+        <summary className="focus-ring touch-target flex w-full cursor-pointer select-none items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-white/5">
+          <span
+            aria-hidden="true"
+            className="w-3 flex-none text-2xs text-muted transition group-open:rotate-90"
           >
-            {grade}
-          </Marker>
-        )}
-        <span className="w-20 flex-none text-right text-2xs text-muted">
-          {build.conflicts.length > 0
-            ? `${build.conflicts.length} conflict${build.conflicts.length === 1 ? '' : 's'}`
-            : ''}
-        </span>
-      </button>
-      <div id={panelId} hidden={!expanded} className="px-3 pb-3 pt-1">
-        {expanded && children}
-      </div>
+            ▶
+          </span>
+          <span className="min-w-0 flex-1 truncate text-sm text-paper">
+            {name}
+          </span>
+          {value !== null ? (
+            <span className="font-mono text-sm tabular-nums text-accent-bright">
+              {value}
+            </span>
+          ) : (
+            <span className="text-xs text-muted">no build</span>
+          )}
+          {grade && <GradeMarker grade={grade} />}
+          <span className="w-20 flex-none text-right text-2xs text-muted">
+            {build.conflicts.length > 0
+              ? `${build.conflicts.length} conflict${build.conflicts.length === 1 ? '' : 's'}`
+              : ''}
+          </span>
+        </summary>
+        <div className="px-3 pb-3 pt-1">{mounted && children}</div>
+      </details>
     </li>
   );
 }
@@ -192,11 +175,10 @@ export function PlanView({
   const [progress, setProgress] = useState<[number, number] | null>(null);
   const [failed, setFailed] = useState(false);
   // Eight full cards is ~3,500px of scrolling, so the plan leads with a
-  // summary and each member's card is opened on demand. Default: all closed.
-  const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<string>>(
-    new Set(),
-  );
-  const panelBase = useId();
+  // summary and each member's card is opened on demand. `planSeq` keys the
+  // rendered plan, so a freshly built plan remounts the rows — which is what
+  // collapses them, now that `details` owns its own open state.
+  const [planSeq, setPlanSeq] = useState(0);
   // A plan is eight awaited solves. If its inputs are replaced mid-flight the
   // run in progress describes gear the user no longer has, so only the most
   // recently started run may commit progress, a plan, or a failure.
@@ -229,7 +211,6 @@ export function PlanView({
     setPlan(null);
     setFailed(false);
     setProgress(null);
-    setExpandedKeys(new Set());
   }
   // Layout, not passive: layout effects run inside the commit, so the token
   // is already bumped by the time an awaited solve's continuation — a
@@ -237,14 +218,6 @@ export function PlanView({
   useLayoutEffect(() => {
     planToken.current++;
   }, [planInputs]);
-
-  function toggleMember(key: string) {
-    setExpandedKeys((prev) => {
-      const next = new Set(prev);
-      if (!next.delete(key)) next.add(key);
-      return next;
-    });
-  }
 
   async function build() {
     // The button is aria-disabled rather than disabled so it keeps focus
@@ -265,7 +238,7 @@ export function PlanView({
       );
       if (planToken.current !== token) return; // superseded
       setPlan(p);
-      setExpandedKeys(new Set());
+      setPlanSeq((n) => n + 1);
     } catch (err) {
       if (planToken.current !== token) return;
       console.error('Plan failed', err);
@@ -329,6 +302,7 @@ export function PlanView({
         // previous one. Dim them and mark the region busy so the old numbers
         // aren't read as the new ones.
         <div
+          key={planSeq}
           aria-busy={running}
           className={cn(
             'space-y-4 transition-opacity',
@@ -350,13 +324,7 @@ export function PlanView({
                   {plan.builds
                     .filter((b) => members.has(b.characterKey))
                     .map((b) => (
-                      <SummaryRow
-                        key={b.characterKey}
-                        build={b}
-                        expanded={expandedKeys.has(b.characterKey)}
-                        onToggle={() => toggleMember(b.characterKey)}
-                        panelId={`${panelBase}-${b.characterKey}`}
-                      >
+                      <SummaryRow key={b.characterKey} build={b}>
                         <MemberCard
                           {...b}
                           weaponKey={entries[b.characterKey]?.weaponKey ?? ''}
@@ -399,15 +367,12 @@ export function PlanView({
                       {a.source && (
                         <>
                           {' '}
-                          <a
+                          <SourceLink
                             href={a.source}
-                            target="_blank"
-                            rel="noreferrer"
                             className="focus-ring underline decoration-dotted underline-offset-2 hover:text-paper"
                           >
                             source
-                            <span className="sr-only"> (opens in new tab)</span>
-                          </a>
+                          </SourceLink>
                         </>
                       )}
                     </p>

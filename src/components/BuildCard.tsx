@@ -17,23 +17,15 @@ import {
   statLabel,
 } from '../labels';
 import { META_TARGETS } from '../meta/metaTargets';
-import { gradeBuild, type Grade } from '../meta/grade';
+import { gradeBuild } from '../meta/grade';
 import { countSets } from '../optimizer/score';
 import { fourPieceAssumptions } from '../damage/setBonuses';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { SlotGlyph } from './SlotGlyph';
 import { cn } from './ui/cn';
-import { Marker } from './ui/Marker';
 import { Meter } from './ui/Meter';
-import type { Tone } from './ui/tone';
-
-const GRADE_TONE: Record<Grade, Tone> = {
-  S: 'accent',
-  A: 'jade',
-  B: 'flux',
-  C: 'muted',
-  D: 'rose',
-};
+import { GradeMarker } from './ui/GradeMarker';
+import { Disclosure } from './ui/Disclosure';
 
 const SHOW: StatKey[] = [
   'atk',
@@ -112,16 +104,9 @@ function DrivingThis({
   const peak = Math.max(...marginals.map((m) => Math.abs(m.value)), 0);
 
   return (
-    <details className="group">
-      <summary className="focus-ring inline-flex cursor-pointer select-none items-center gap-2 rounded-md py-1 text-muted transition hover:text-paper/80">
-        <span
-          aria-hidden="true"
-          className="text-2xs transition group-open:rotate-90"
-        >
-          ▶
-        </span>
-        <span className="micro-label">What’s Driving This Build</span>
-      </summary>
+    <Disclosure
+      label={<span className="micro-label">What’s Driving This Build</span>}
+    >
       <div className="mt-2 space-y-2 text-xs text-muted">
         {bindingConstraints.length > 0 && (
           <ul className="space-y-0.5">
@@ -160,7 +145,7 @@ function DrivingThis({
           </p>
         ))}
       </div>
-    </details>
+    </Disclosure>
   );
 }
 
@@ -234,21 +219,7 @@ export function BuildCard({
             </div>
             <Fingerprint filled={(s) => bySlot.has(s)} />
           </div>
-          {grade && (
-            // A bare letter in a role-less span is not a name a screen reader
-            // can make anything of, and `title` alone is neither the name nor
-            // reachable without a mouse. role="img" + aria-label makes the
-            // whole sentence the accessible name; `title` stays as the
-            // sighted reader's tooltip.
-            <Marker
-              tone={GRADE_TONE[grade.grade]}
-              role="img"
-              aria-label={`Grade ${grade.grade} — how close this build is to endgame stat targets`}
-              title={`Grade ${grade.grade} — how close this build is to endgame stat targets`}
-            >
-              {grade.grade}
-            </Marker>
-          )}
+          {grade && <GradeMarker grade={grade.grade} />}
         </div>
         {onShare && (
           <button className="btn-ghost" onClick={() => void onShare()}>

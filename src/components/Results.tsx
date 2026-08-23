@@ -11,6 +11,7 @@ import { BuildCard } from './BuildCard';
 import { encodeBuild } from '../share/url';
 import { Callout } from './ui/Callout';
 import { Meter } from './ui/Meter';
+import { SearchCounts } from './ui/SearchCounts';
 import {
   formatSetName,
   formatStat,
@@ -293,15 +294,8 @@ export function Results({
             {/* Sentence in the body face, numerals in mono: a full sentence set
                 in mono reads as output, not prose. */}
             <span className="text-muted">
-              Explored{' '}
-              <span className="font-mono tabular-nums text-paper">
-                {result.explored.toLocaleString()}
-              </span>{' '}
-              · pruned{' '}
-              <span className="font-mono tabular-nums text-paper">
-                {result.pruned.toLocaleString()}
-              </span>{' '}
-              subtrees before the optimum was proven.
+              <SearchCounts explored={result.explored} pruned={result.pruned} />{' '}
+              before the optimum was proven.
             </span>
           </div>
           <Meter

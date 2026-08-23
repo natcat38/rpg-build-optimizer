@@ -21,6 +21,8 @@ import {
 } from '../labels';
 import { cn } from './ui/cn';
 import { Combobox } from './ui/Combobox';
+import { SearchCounts } from './ui/SearchCounts';
+import { SourceLink } from './ui/SourceLink';
 import { searchProgressStore } from './searchProgress';
 import {
   META_TARGETS,
@@ -53,15 +55,12 @@ function InfoPanel({ href, children }: { href: string; children: ReactNode }) {
   return (
     <div className="well p-3 text-xs text-muted">
       {children}
-      <a
+      <SourceLink
         className="mt-1.5 inline-block text-accent hover:underline"
         href={href}
-        target="_blank"
-        rel="noreferrer"
       >
         Source
-        <span className="sr-only"> (opens in new tab)</span>
-      </a>
+      </SourceLink>
     </div>
   );
 }
@@ -152,14 +151,11 @@ function SearchProgressLine({ onCancel }: { onCancel: () => void }) {
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <p className="text-xs text-muted">
           Searching —{' '}
-          <span className="font-mono tabular-nums text-paper">
-            {(progress?.explored ?? 0).toLocaleString()}
-          </span>{' '}
-          leaves evaluated ·{' '}
-          <span className="font-mono tabular-nums text-paper">
-            {(progress?.pruned ?? 0).toLocaleString()}
-          </span>{' '}
-          subtrees pruned ·{' '}
+          <SearchCounts
+            explored={progress?.explored ?? 0}
+            pruned={progress?.pruned ?? 0}
+          />{' '}
+          ·{' '}
           <span className="font-mono tabular-nums text-paper">
             {(elapsedMs / 1000).toFixed(1)}s
           </span>

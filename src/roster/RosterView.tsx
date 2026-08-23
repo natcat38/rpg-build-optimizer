@@ -12,7 +12,7 @@ import { AppDrawer } from '../components/ui/Drawer';
 import { CharacterDetail } from './CharacterDetail';
 import { scrollToId } from '../ui/scroll';
 import { BAND_TONE, bandLabel, formatScore } from '../labels';
-import { ElementName } from '../components/ui/ElementName';
+import { CharacterLine } from '../components/ui/CharacterLine';
 import { Badge } from '../components/ui/Badge';
 import { Meter } from '../components/ui/Meter';
 
@@ -51,10 +51,7 @@ function Row({
             {name}
           </span>
           <span className="block truncate text-xs text-muted">
-            {element && <ElementName element={element} />}
-            {element && weaponName && ' · '}
-            {weaponName}
-            {!element && !weaponName && 'No weapon equipped'}
+            <CharacterLine element={element} weaponName={weaponName} />
           </span>
           {equippedCount === 0 && (
             <span className="block text-xs text-flux-bright">

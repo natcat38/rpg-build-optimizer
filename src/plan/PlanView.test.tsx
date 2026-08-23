@@ -120,21 +120,50 @@ describe('PlanView', () => {
     );
     await screen.findByText('What to Farm');
 
-    const row = within(screen.getAllByTestId('plan-summary-row')[0]).getByRole(
-      'button',
-    );
-    expect(row).toHaveAttribute('aria-expanded', 'false');
-    await user.click(row);
-    expect(row).toHaveAttribute('aria-expanded', 'true');
+    const first = screen.getAllByTestId('plan-summary-row')[0];
+    const details = within(first).getByRole('group');
+    expect(details).not.toHaveAttribute('open');
+    // The whole row is the control: clicking its summary opens the card.
+    const summary = first.querySelector('summary')!;
+    await user.click(summary);
+    expect(details).toHaveAttribute('open');
+    const card = screen.getByTestId('plan-member');
+    expect(details).toContainElement(card);
+    // Only this row's card mounted — the other seven are still closed.
     expect(screen.getAllByTestId('plan-member')).toHaveLength(1);
-    // The disclosure names the region it controls.
-    expect(
-      document.getElementById(row.getAttribute('aria-controls')!),
-    ).toContainElement(screen.getByTestId('plan-member'));
     // Damage-objective members carry the estimate caveat.
     expect(screen.getAllByText(/estimated damage/i).length).toBeGreaterThan(0);
 
-    await user.click(row);
+    // Closing hides the card again (it stays mounted — re-rendering eight
+    // artifacts on every toggle is not free).
+    await user.click(summary);
+    expect(details).not.toHaveAttribute('open');
+    expect(card).not.toBeVisible();
+  });
+
+  it('collapses every row again when a new plan is built', async () => {
+    const user = userEvent.setup();
+    seed();
+    render(<PlanView runOptimize={run} />);
+    const button = screen.getByRole('button', {
+      name: /Build my Abyss plan/i,
+    });
+    await user.click(button);
+    await screen.findByText('What to Farm');
+
+    const summary = screen
+      .getAllByTestId('plan-summary-row')[0]
+      .querySelector('summary')!;
+    await user.click(summary);
+    expect(screen.getAllByTestId('plan-member')).toHaveLength(1);
+
+    await user.click(button);
+    await screen.findByText('What to Farm');
+    expect(
+      screen
+        .getAllByTestId('plan-summary-row')
+        .every((r) => !r.querySelector('details')!.hasAttribute('open')),
+    ).toBe(true);
     expect(screen.queryAllByTestId('plan-member')).toHaveLength(0);
   });
 

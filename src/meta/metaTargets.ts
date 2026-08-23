@@ -78,7 +78,7 @@ export const META_TARGETS: Record<string, MetaTarget> = {
     erTarget: 140,
     critRatioTarget: 0.333,
     objective: 'crit_value',
-    weapon: 'gest_of_the_mighty_wolf',
+    weapon: 'gest_of_the_mighty_wolf', // guide ranks Gest #1 over the signature Verdict (re-read 2026-08)
     weaponAccessible: 'serpent_spine',
     source: 'https://keqingmains.com/navia/',
   },

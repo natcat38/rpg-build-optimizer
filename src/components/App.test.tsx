@@ -115,7 +115,9 @@ describe('App — overlapping optimise runs', () => {
       resolveB(makeResult(222));
       await pendingB;
     });
-    expect(screen.getByText(/explored/i)).toHaveTextContent('222');
+    expect(
+      screen.getByText(/before the optimum was proven/i),
+    ).toHaveTextContent('222');
 
     // ...then run A (started first) resolves late. Its stale result must
     // NOT clobber B's, which is the one the user is now looking at.
@@ -123,7 +125,9 @@ describe('App — overlapping optimise runs', () => {
       resolveA(makeResult(111));
       await pendingA;
     });
-    expect(screen.getByText(/explored/i)).toHaveTextContent('222');
+    expect(
+      screen.getByText(/before the optimum was proven/i),
+    ).toHaveTextContent('222');
   });
 });
 

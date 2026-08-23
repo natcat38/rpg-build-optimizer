@@ -203,7 +203,7 @@ describe('Results', () => {
       />,
     );
     expect(screen.queryByText(/Exact search/i)).toBeNull();
-    expect(screen.queryByText(/Explored/i)).toBeNull();
+    expect(screen.queryByText(/leaves evaluated/i)).toBeNull();
   });
 
   it('reports the search when one actually ran', () => {
@@ -222,6 +222,10 @@ describe('Results', () => {
       />,
     );
     expect(screen.getByText(/Exact search/i)).toBeInTheDocument();
+    // Same wording as the hero proof line and the live progress line.
+    expect(screen.getByText(/leaves evaluated/i)).toHaveTextContent(
+      '7 leaves evaluated · 3 subtrees pruned before the optimum was proven.',
+    );
   });
 });
 
