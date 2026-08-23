@@ -47,7 +47,24 @@ a ranking either way. Transformative-reaction bonuses stay out under [0016].
   ("+35% Normal Attack DMG"). Not a sheet stat, so it **never** reaches a
   scalar objective. It is folded into `elemental_dmg` only for `avg_damage`,
   weighted by the share of that character's damage profile the buffed hit kinds
-  account for, measured at the character's base stats.
+  account for.
+
+Two details of that weighting are decisions rather than mechanics:
+
+- **Which sheet the shares are measured at.** Ratios have to be read off _some_
+  stat vector, and the character's bare `base` is the wrong one: 0 EM, 5% CRIT
+  Rate, no ATK% — a sheet nobody plays, which systematically under-weights the
+  reaction-carrying hits against the unreacted ones. The shares are therefore
+  measured at `base` overlaid with a representative endgame vector: the
+  character's curated `META_TARGETS.statTargets` where they exist, and
+  `REPRESENTATIVE_ENDGAME_SHEET` (EM 300, CRIT Rate 70%, CRIT DMG 140%, ATK 50%)
+  otherwise. They are computed **once per run**, in `buildContext`, and handed
+  to every `fourPieceVector` call — the shares belong to the profile, not to the
+  set, and a per-set recomputation could only drift.
+- **What they are normalised by.** The elemental sum, not the total damage. The
+  bonus lands in `elemental_dmg`, which a physical hit never reads, so dividing
+  by a total that counted physical hits would shrink every share toward zero and
+  quietly discount the set on a part-physical profile.
 
 `DamageHit` therefore gained a `kind` field (`normal | charged | plunge | skill
 | burst`) — every curated profile hit declares which DMG-bonus bucket it is in.
@@ -59,10 +76,12 @@ Two special cases are handled by data rather than by exception:
   them when the request's weapon does not match. An _unknown_ weapon key keeps
   the bonus, matching `canEquip`'s "absence of evidence is not evidence".
 - **Emblem of Severed Fate** scales with the build's own ER, which is not a
-  constant. It is resolved once against the damage profile's `erRequirement`
-  (the ER floor the build is being optimised toward), not against each
-  candidate's ER. A per-build value would make the bound non-constant; see
-  admissibility below.
+  constant. It is resolved once against the ER floor the build is being
+  optimised _toward_, not against each candidate's ER. A per-build value would
+  make the bound non-constant; see admissibility below. The floor's precedence,
+  applied in `buildContext` and passed down as `fourPieceVector`'s `erFloor`,
+  is: the request's `constraints.minStats.er_pct` first — that is the number the
+  user told the search to hit — then the profile's `erRequirement`, then 100.
 
 ### Where the bonus is applied
 
@@ -99,10 +118,19 @@ optimiser still returns the provable optimum of the objective it is given.
 - Builds that satisfy the same 4pc requirement are no longer ranked as if the
   set were inert, which was [0003]'s most-cited limitation.
 - Every damage figure now rests on stated assumptions ("3 Marechaussee stacks",
-  "the target is Frozen"). `fourPieceAssumptions(setKeys)` returns one line per
-  set a build actually activates; the UI prints these under the damage-profile
-  source line in `CharacterDetail`, beside the existing
-  `estimated — for comparing builds, not matching in-game numbers` copy.
+  "the target is Frozen"). `fourPieceAssumptions(setKeys, { hasDamage,
+weaponType })` returns one line per set a build actually activates. The lines
+  render in two places: under the damage-profile source in `CharacterDetail`'s
+  Recommended tab, and inside `BuildCard`'s "What's Driving This Build"
+  disclosure.
+- **Silence is not a disclosure.** The same call also states the three ways a
+  4pc can score nothing, so an unscored set is never mistaken for a scored one:
+  `UNMODELLED_FOUR_PIECE` sets print `<Set> 4pc not scored: <reason>`; a
+  hit-kind-only set under a scalar objective prints "not scored on this
+  objective"; a set whose `weaponTypes` gate does not match prints "not scored
+  for this weapon class". Where the bonus _is_ folded, the line says so — the
+  Elemental DMG total on the card includes a modelled hit-kind bonus, and a
+  reader comparing that figure against their in-game sheet needs to know it.
 - Optimistic by design. Vermillion Hereafter at 4 HP-loss stacks and Blizzard
   Strayer against a permanently Frozen target flatter those sets relative to an
   unconditional one. Full uptime is a convention, chosen because it matches how

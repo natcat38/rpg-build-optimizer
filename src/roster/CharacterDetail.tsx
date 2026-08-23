@@ -9,10 +9,7 @@ import { computeBuildScore } from './buildScore';
 import { META_TARGETS } from '../meta/metaTargets';
 import { archetypesFor } from '../teams/comps';
 import { getDamageProfile } from '../damage/profiles';
-import {
-  fourPieceAssumptions,
-  UNMODELLED_FOUR_PIECE,
-} from '../damage/setBonuses';
+import { fourPieceAssumptions } from '../damage/setBonuses';
 import {
   formatScore,
   formatSetName,
@@ -203,24 +200,24 @@ export function CharacterDetail({
                 </p>
               )}
               {/* What the 4pc number assumes (ADR-0020), or why there is no
-                  number. Quiet on purpose: it qualifies the figure above
-                  rather than competing with it. */}
+                  number — the unmodelled sets, the wrong weapon class and the
+                  hit-kind bonuses a scalar objective can't see all come back
+                  from the same call now. Quiet on purpose: it qualifies the
+                  figure above rather than competing with it. */}
               {fourPcKey &&
-                (UNMODELLED_FOUR_PIECE[fourPcKey] ? (
-                  <p className="text-2xs leading-relaxed text-muted">
-                    4pc not scored: {UNMODELLED_FOUR_PIECE[fourPcKey]}
+                fourPieceAssumptions(
+                  [fourPcKey],
+                  {
+                    hasDamage: meta.objective === 'avg_damage',
+                    weaponType: entry.weaponKey
+                      ? genshinAdapter.weapon(entry.weaponKey)?.type
+                      : undefined,
+                  },
+                  formatSetName,
+                ).map((line) => (
+                  <p key={line} className="text-2xs leading-relaxed text-muted">
+                    {line}
                   </p>
-                ) : (
-                  fourPieceAssumptions([fourPcKey], formatSetName).map(
-                    (line) => (
-                      <p
-                        key={line}
-                        className="text-2xs leading-relaxed text-muted"
-                      >
-                        {line}
-                      </p>
-                    ),
-                  )
                 ))}
               {!profile && (
                 <p className="text-xs text-muted">

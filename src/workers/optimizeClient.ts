@@ -13,7 +13,7 @@ import type { WorkerRequest, WorkerResponse } from './protocol';
 // being optimised for. Off-element goblets are still legal gear (their
 // sub-stats count) but their elemental_dmg main stat is dead weight in-game,
 // so zero it out before the solver ever sees it — no solver changes needed.
-function zeroOffElementGoblets(
+export function zeroOffElementGoblets(
   inventory: Artifact[],
   characterKey: string,
 ): Artifact[] {
@@ -30,7 +30,6 @@ function zeroOffElementGoblets(
 export interface OptimizeProgress {
   explored: number;
   pruned: number;
-  elapsedMs: number;
 }
 
 /**
@@ -45,16 +44,10 @@ export class OptimizeCancelledError extends Error {
   }
 }
 
-/** True for the rejection an aborted run produces. Structural as well as
- *  instanceof, so a rejection that crossed a module or realm boundary still
- *  reads as a cancellation rather than a crash. */
+/** True for the rejection an aborted run produces. The only producer of that
+ *  rejection is `dispatch` in this module, so an instanceof test is exact. */
 export function isOptimizeCancelled(err: unknown): boolean {
-  return (
-    err instanceof OptimizeCancelledError ||
-    (typeof err === 'object' &&
-      err !== null &&
-      (err as { cancelled?: unknown }).cancelled === true)
-  );
+  return err instanceof OptimizeCancelledError;
 }
 
 /** A run in flight: its eventual result, plus the handle that stops it. */
@@ -96,7 +89,17 @@ function dispatch(
             { req, inventory, ctx },
             onProgress && ((p) => onProgress(p)),
           );
-          settle(() => resolve(readSearchResponse(response)));
+          // `readSearchResponse` throws on an error envelope, and it must
+          // throw *inside* settle's callback — after `settled` is already
+          // true, the outer catch below could no longer settle anything, so
+          // the promise would hang forever.
+          settle(() => {
+            try {
+              resolve(readSearchResponse(response));
+            } catch (err) {
+              reject(err);
+            }
+          });
         } catch (err) {
           settle(() => reject(err));
         }

@@ -120,11 +120,27 @@ function legalWeapon(characterKey: string, wanted: string): string {
 
 export const useOptimizeRequest = create<OptimizeRequestState>((set, get) => ({
   ...defaults(),
+  // Selecting a character is also where the roster pre-fill happens, so every
+  // writer gets it — not just the picker that used to re-apply it afterward.
+  // Precedence: the weapon is whatever `legalWeapon` allows (the current pick
+  // if this character can hold it, otherwise their roster-equipped weapon, and
+  // only then the curated fallbacks), so a manual override survives flipping
+  // away and back. The build level is a floor, not a preference — a rostered
+  // character cannot be de-levelled — so the roster's value is raised to
+  // rather than replaced by. Both stay editable afterward (ADR-0007/ADR-0015).
   setCharacterKey: (characterKey) =>
-    set((s) => ({
-      characterKey,
-      weaponKey: legalWeapon(characterKey, s.weaponKey),
-    })),
+    set((s) => {
+      const rosterLevel =
+        useRoster.getState().entries[characterKey]?.buildLevel;
+      return {
+        characterKey,
+        weaponKey: legalWeapon(characterKey, s.weaponKey),
+        buildLevel:
+          rosterLevel != null && rosterLevel > s.buildLevel
+            ? rosterLevel
+            : s.buildLevel,
+      };
+    }),
   setWeaponKey: (weaponKey) => set({ weaponKey }),
   setBuildLevel: (buildLevel) => set({ buildLevel }),
   setObjective: (objective) => set({ objective }),

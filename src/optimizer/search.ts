@@ -238,6 +238,40 @@ function setCeilingVector(
   return ceil;
 }
 
+/**
+ * The statwise ceiling the search itself uses when it prunes on `minStats`:
+ * the character/weapon base, plus the per-slot statwise-max of everything
+ * still selectable under the main-stat locks, plus the set-bonus ceiling for
+ * the requirement in force.
+ *
+ * Exported so the diagnostics can explain an infeasible run with the very
+ * bound that rejected it — an optimistic (admissible) over-estimate, so a
+ * floor above this ceiling is provably unreachable, and one below it may still
+ * be unreachable for reasons the bound cannot see.
+ *
+ * Returns `null` when some slot has no legal piece at all — the search's own
+ * hard-infeasible case, where no ceiling is meaningful.
+ */
+export function reachableCeiling(
+  ctx: OptimizeContext,
+  req: OptimizeRequest,
+  inventory: Artifact[],
+): StatVec | null {
+  const pools = poolsBySlot(inventory, req);
+  if (SLOTS.some((s) => pools[s].length === 0)) return null;
+  const order = [...SLOTS];
+  const contributions = new Map<string, StatVec>();
+  for (const s of order)
+    for (const a of pools[s]) contributions.set(a.id, artifactContribution(a));
+  const ceiling: StatVec = { ...ctx.base };
+  addInto(ceiling, suffixMaxVectors(pools, order, contributions)[0]);
+  addInto(
+    ceiling,
+    setCeilingVector(ctx, pools, req.constraints.setRequirement),
+  );
+  return ceiling;
+}
+
 function makeBuildResult(
   ctx: OptimizeContext,
   req: OptimizeRequest,
@@ -268,8 +302,6 @@ export interface SearchProgress {
   explored: number;
   /** Subtrees rejected by a bound so far. */
   pruned: number;
-  /** Wall-clock time since the search started. */
-  elapsedMs: number;
 }
 
 export interface SearchOptions {
@@ -456,17 +488,16 @@ export function searchBuilds(
   // seconds without reaching a single leaf.
   const onProgress = options?.onProgress;
   const progressIntervalMs = options?.progressIntervalMs ?? 80;
-  const startedAt = Date.now();
   let visited = 0;
-  // -Infinity, not `startedAt`: the first tick should land as soon as there is
-  // anything to say, rather than making the reader wait out a full interval
+  // -Infinity, not the start time: the first tick should land as soon as there
+  // is anything to say, rather than making the reader wait out a full interval
   // staring at zeroes.
   let lastReportAt = -Infinity;
   function reportProgress() {
     const now = Date.now();
     if (now - lastReportAt < progressIntervalMs) return;
     lastReportAt = now;
-    onProgress!({ explored, pruned, elapsedMs: now - startedAt });
+    onProgress!({ explored, pruned });
   }
 
   /**

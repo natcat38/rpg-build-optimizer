@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type {
   Artifact,
   BuildResult,
@@ -20,12 +20,13 @@ import {
 } from '../labels';
 import { buildContext } from '../optimizer/context';
 import {
+  emptySlotCause,
   unreachableMinStats,
   type StatCeiling,
 } from '../optimizer/diagnostics';
+import { zeroOffElementGoblets } from '../workers/optimizeClient';
 import { setRequirementGap } from '../meta/gap';
 import { useInventory } from '../state/inventory';
-import { useOptimizeRequest } from '../state/optimizeRequest';
 
 /** One card's worth of result: the build shown, plus any further builds that
  *  scored exactly the same. */
@@ -138,12 +139,18 @@ const SHARE_STATUS: Record<Share['status'], string> = {
 
 /**
  * Why the search came back empty, in the reader's terms — when it can be
- * pinned on one constraint. Two causes are cheap to name and cover almost
- * every real case: a set requirement the inventory can't form at all, and a
- * minStat floor no reachable build clears.
+ * pinned on one constraint. Three causes are cheap to name and cover almost
+ * every real case: a set requirement the inventory can't form at all, a slot
+ * with no legal piece (usually a main-stat lock), and a minStat floor above
+ * the search's own optimistic ceiling.
  *
- * Returns null when neither is individually to blame (two floors that clash
- * only together, say) — the generic advice is the honest answer there.
+ * The ceiling is admissible, so a floor it names is provably unreachable —
+ * but it is optimistic, so a floor below it can still be unreachable in
+ * practice. The copy says "optimistic ceiling" rather than "best reachable"
+ * for exactly that reason.
+ *
+ * Returns null when none of the three is individually to blame (two floors
+ * that clash only together, say) — the generic advice is the honest answer.
  */
 function infeasibleCause(
   request: OptimizeRequest,
@@ -157,6 +164,8 @@ function infeasibleCause(
         gap.have === 1 ? '' : 's'
       } across slots — need ${gap.need}.`,
     };
+  const empty = emptySlotCause(request, inventory);
+  if (empty) return { text: empty };
   let ceilings: StatCeiling[];
   try {
     ceilings = unreachableMinStats(buildContext(request), request, inventory);
@@ -169,10 +178,12 @@ function infeasibleCause(
   const worst = ceilings[0];
   if (!worst) return null;
   return {
-    text: `Best reachable ${statLabel(worst.key)} is ${formatStat(
+    text: `Even the optimistic ceiling for ${statLabel(
       worst.key,
-      worst.best,
-    )} — your floor is ${formatStat(worst.key, worst.need)}.`,
+    )} is ${formatStat(worst.key, worst.best)} — your floor is ${formatStat(
+      worst.key,
+      worst.need,
+    )}.`,
     relax: worst,
   };
 }
@@ -181,16 +192,39 @@ export function Results({
   result,
   request,
   artifactsById,
+  onRelax,
 }: {
   result: OptimizeResult;
   request: OptimizeRequest;
   artifactsById: Record<string, Artifact>;
+  /** Lower the Energy Recharge floor to `value`. Owned by the panel that holds
+   *  the request, so the relax button here stays a pure callback. */
+  onRelax: (value: number) => void;
 }) {
-  const inventory = useInventory((s) => s.artifacts);
-  const setMinER = useOptimizeRequest((s) => s.setMinER);
+  const liveInventory = useInventory((s) => s.artifacts);
+  // Limitation: this is the *live* roster, not a snapshot of the one the run
+  // searched. Editing gear after an infeasible run can therefore re-explain it
+  // against pieces the search never saw. The run's inventory isn't carried on
+  // the result, so live is the closest honest approximation.
+  //
+  // Goblets are zeroed the same way the worker zeroes them before searching
+  // (ADR-0014) — diagnosing on the raw roster credited off-element goblets
+  // with an elemental_dmg main stat the solver had already discarded, which
+  // made an unreachable elemental floor look reachable.
+  const inventory = useMemo(
+    () => zeroOffElementGoblets(liveInventory, request.characterKey),
+    [liveInventory, request.characterKey],
+  );
   const [share, setShare] = useState<Share | null>(null);
   const shareNonce = useRef(0);
   const [showAll, setShowAll] = useState(false);
+  // Both the ceiling walk and the set-requirement gap are inventory-sized, and
+  // this component re-renders on every share click — memoise on the two inputs
+  // the answer actually depends on.
+  const cause = useMemo(
+    () => infeasibleCause(request, inventory),
+    [request, inventory],
+  );
 
   // A new run replaces every card, so a confirmation pinned to the old card
   // index would sit under an unrelated build. Reset during render rather than
@@ -203,7 +237,6 @@ export function Results({
   }
 
   if (result.status === 'infeasible') {
-    const cause = infeasibleCause(request, inventory);
     // Only ER has a setter to offer: it's the one floor the panel exposes.
     const relaxTo =
       cause?.relax?.key === 'er_pct' ? Math.floor(cause.relax.best) : null;
@@ -215,10 +248,7 @@ export function Results({
             'Try relaxing the set requirement or the Energy Recharge minimum.'}
         </p>
         {relaxTo != null && (
-          <button
-            className="btn-ghost mt-2"
-            onClick={() => setMinER(String(relaxTo))}
-          >
+          <button className="btn-ghost mt-2" onClick={() => onRelax(relaxTo)}>
             Relax to {relaxTo}%
           </button>
         )}

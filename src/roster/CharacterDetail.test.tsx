@@ -135,6 +135,24 @@ describe('CharacterDetail', () => {
     );
   });
 
+  it('says a hit-kind 4pc is unscored when the recipe ranks by a scalar stat', async () => {
+    const user = userEvent.setup();
+    // Raiden's recipe is 4pc Emblem, whose only channel is Burst DMG from ER —
+    // nothing a crit_value ranking can read, so quoting its uptime here would
+    // imply a number that never enters the score.
+    render(
+      <CharacterDetail
+        characterKey="raiden_shogun"
+        entry={{ ...entry, weaponKey: 'engulfing_lightning' }}
+        artifacts={[]}
+      />,
+    );
+    await user.click(screen.getByRole('tab', { name: /recommended/i }));
+    expect(screen.getByRole('tabpanel')).toHaveTextContent(
+      /Emblem of Severed Fate 4pc: not scored on this objective/,
+    );
+  });
+
   it('moves between tabs with arrow keys, taking focus along', async () => {
     const user = userEvent.setup();
     render(

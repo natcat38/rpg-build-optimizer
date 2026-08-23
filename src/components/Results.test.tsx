@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Results } from './Results';
@@ -27,7 +27,14 @@ describe('Results', () => {
       explored: 10,
       pruned: 2,
     };
-    render(<Results result={r} request={req} artifactsById={{}} />);
+    render(
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={{}}
+      />,
+    );
     expect(
       screen.getByText(/No build satisfies all constraints/i),
     ).toBeInTheDocument();
@@ -111,7 +118,14 @@ describe('Results', () => {
         },
       ],
     };
-    render(<Results result={r} request={req} artifactsById={artifactsById} />);
+    render(
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={artifactsById}
+      />,
+    );
     expect(screen.getByText(/240/)).toBeInTheDocument();
     expect(
       screen.getAllByText(/Emblem of Severed Fate/i).length,
@@ -143,7 +157,14 @@ describe('Results', () => {
       pruned: 50,
       builds: [build, { ...build }, { ...build }],
     };
-    render(<Results result={r} request={req} artifactsById={{}} />);
+    render(
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={{}}
+      />,
+    );
     expect(screen.getAllByText(/Crit Value = 2/)).toHaveLength(1);
   });
 
@@ -173,7 +194,14 @@ describe('Results', () => {
         },
       ],
     };
-    render(<Results result={r} request={req} artifactsById={{}} />);
+    render(
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={{}}
+      />,
+    );
     expect(screen.queryByText(/Exact search/i)).toBeNull();
     expect(screen.queryByText(/Explored/i)).toBeNull();
   });
@@ -185,7 +213,14 @@ describe('Results', () => {
       pruned: 3,
       builds: [],
     };
-    render(<Results result={r} request={req} artifactsById={{}} />);
+    render(
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={{}}
+      />,
+    );
     expect(screen.getByText(/Exact search/i)).toBeInTheDocument();
   });
 });
@@ -246,7 +281,14 @@ describe('Results ties and deltas', () => {
       pruned: 50,
       builds: [scored(240, 'c1'), scored(240, 'c2'), scored(230, 'c1')],
     };
-    render(<Results result={r} request={req} artifactsById={circletsById} />);
+    render(
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={circletsById}
+      />,
+    );
     // Two cards, not three: the tie is one answer, shown once.
     expect(screen.getAllByText(/240\.0/)).toHaveLength(1);
     expect(
@@ -261,7 +303,14 @@ describe('Results ties and deltas', () => {
       pruned: 50,
       builds: [scored(240, 'c1'), scored(236.6, 'c2')],
     };
-    render(<Results result={r} request={req} artifactsById={circletsById} />);
+    render(
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={circletsById}
+      />,
+    );
     expect(screen.getByText('−3.4')).toBeInTheDocument();
     expect(screen.queryByText('−0.0')).toBeNull();
   });
@@ -278,6 +327,7 @@ describe('Results ties and deltas', () => {
     };
     render(
       <Results
+        onRelax={() => {}}
         result={r}
         request={{ ...req, constraints: { critRatioTarget: 2 } }}
         artifactsById={circletsById}
@@ -304,7 +354,14 @@ describe('Results ties and deltas', () => {
         scored(220, 'c2'),
       ],
     };
-    render(<Results result={r} request={req} artifactsById={circletsById} />);
+    render(
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={circletsById}
+      />,
+    );
     expect(
       screen.getByText(/4 builds shown — near-duplicates/i),
     ).toBeInTheDocument();
@@ -325,7 +382,14 @@ describe('Results ties and deltas', () => {
       pruned: 50,
       builds,
     };
-    render(<Results result={r} request={req} artifactsById={circletsById} />);
+    render(
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={circletsById}
+      />,
+    );
     expect(screen.queryByText(/220\.0/)).toBeNull();
 
     await user.click(
@@ -342,7 +406,14 @@ describe('Results ties and deltas', () => {
       pruned: 50,
       builds: [scored(240, 'c1'), scored(230, 'c2')],
     };
-    render(<Results result={r} request={req} artifactsById={circletsById} />);
+    render(
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={circletsById}
+      />,
+    );
     expect(
       screen.getByText(/2 builds shown — near-duplicates/i),
     ).toBeInTheDocument();
@@ -355,7 +426,14 @@ describe('Results ties and deltas', () => {
       pruned: 0,
       builds: [scored(240, 'c1')],
     };
-    render(<Results result={r} request={req} artifactsById={circletsById} />);
+    render(
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={circletsById}
+      />,
+    );
     expect(screen.queryByText(/builds shown/i)).toBeNull();
   });
 });
@@ -391,11 +469,13 @@ describe('Results — infeasible cause', () => {
 
   it('names an ER floor no build can reach, and relaxes it on request', async () => {
     const user = userEvent.setup();
+    const onRelax = vi.fn();
     useInventory.setState({
       artifacts: SLOTS.map((s) => erPiece(s, 'EmblemOfSeveredFate')),
     });
     render(
       <Results
+        onRelax={onRelax}
         result={infeasible}
         request={{ ...realReq, constraints: { minStats: { er_pct: 500 } } }}
         artifactsById={{}}
@@ -403,15 +483,36 @@ describe('Results — infeasible cause', () => {
     );
     expect(
       screen.getByText(
-        /Best reachable Energy Recharge is .* your floor is 500/i,
+        /Even the optimistic ceiling for Energy Recharge is .* your floor is 500/i,
       ),
     ).toBeInTheDocument();
 
-    const relax = screen.getByRole('button', { name: /Relax to \d+%/ });
+    // The button reports the value; the panel that owns the request applies it.
+    const relax = screen.getByRole('button', { name: /Relax to (\d+)%/ });
+    const shown = Number(/Relax to (\d+)%/.exec(relax.textContent ?? '')![1]);
     await user.click(relax);
+    expect(onRelax).toHaveBeenCalledWith(shown);
+    expect(shown).toBeLessThan(500);
+  });
+
+  it('names the slot when a main-stat lock leaves it with no legal piece', () => {
+    useInventory.setState({
+      artifacts: SLOTS.map((s) => erPiece(s, 'EmblemOfSeveredFate')),
+    });
+    render(
+      <Results
+        onRelax={() => {}}
+        result={infeasible}
+        request={{
+          ...realReq,
+          constraints: { mainStatLocks: { circlet: 'crit_rate' } },
+        }}
+        artifactsById={{}}
+      />,
+    );
     expect(
-      useOptimizeRequest.getState().constraints.minStats?.er_pct,
-    ).toBeLessThan(500);
+      screen.getByText(/You own no circlet with a CRIT Rate main stat/i),
+    ).toBeInTheDocument();
   });
 
   it('names a set requirement the inventory cannot form', () => {
@@ -420,6 +521,7 @@ describe('Results — infeasible cause', () => {
     });
     render(
       <Results
+        onRelax={() => {}}
         result={infeasible}
         request={{
           ...realReq,
@@ -438,8 +540,18 @@ describe('Results — infeasible cause', () => {
   });
 
   it('falls back to the generic advice when no single constraint is to blame', () => {
+    // A complete roster and no constraints: nothing is individually to blame,
+    // so there is nothing honest to name.
+    useInventory.setState({
+      artifacts: SLOTS.map((s) => erPiece(s, 'EmblemOfSeveredFate')),
+    });
     render(
-      <Results result={infeasible} request={realReq} artifactsById={{}} />,
+      <Results
+        onRelax={() => {}}
+        result={infeasible}
+        request={realReq}
+        artifactsById={{}}
+      />,
     );
     expect(
       screen.getByText(/Try relaxing the set requirement/i),
@@ -456,7 +568,12 @@ describe('Results — desktop comparison grid', () => {
       builds: [scored(240, 'c1'), scored(230, 'c2')],
     };
     const { container } = render(
-      <Results result={r} request={req} artifactsById={circletsById} />,
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={circletsById}
+      />,
     );
     const grid = container.querySelector('[class~="lg:grid-cols-2"]');
     expect(grid).not.toBeNull();

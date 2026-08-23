@@ -33,6 +33,10 @@ tables underneath it are not.
    - `src/teams/comps.ts` — comp archetypes. New Abyss blessings can change which
      archetypes are top-tier, so **re-rank the `tier` values**, not just the rosters.
    - `src/damage/profiles.ts` — rotations and talent multipliers.
+   - `src/damage/setBonuses.ts` — curated 4pc bonuses ([ADR-0020](../adr/0020-four-piece-set-bonuses-at-full-uptime.md)).
+     Re-verify each entry against its `source` wiki page, and re-check
+     `UNMODELLED_FOUR_PIECE`: a new patch's sets need an entry one side or the
+     other, and a reworked set can move between them.
    - `src/meta/teammates.ts` — teammate suggestions.
 
 4. **Add entries for new characters.** Every character who is a weight-1.0 "ideal" pick

@@ -4,13 +4,13 @@ import type {
   OptimizeRequest,
   BuildResult,
   BuildDiagnostics,
-  SetRequirement,
   Slot,
   StatKey,
 } from '../game/types';
 import { SLOTS } from '../game/types';
-import { totals, evaluateObjective, artifactContribution } from './score';
-import { statLabel, setRequirementLabel } from '../labels';
+import { totals, evaluateObjective } from './score';
+import { statLabel, setRequirementLabel, SLOT_LABELS } from '../labels';
+import { reachableCeiling } from './search';
 
 /** A minStat is "binding" when the build clears it by less than this fraction
  *  of the target. 5% is a display heuristic (call a constraint "just barely
@@ -52,118 +52,64 @@ export interface StatCeiling {
   key: StatKey;
   /** The floor the request asks for. */
   need: number;
-  /** The best total this stat can reach over the inventory, set requirement
-   *  and main-stat locks included. */
+  /** The optimistic ceiling for this stat — the same admissible bound the
+   *  search prunes `minStats` with (`reachableCeiling`). No build over this
+   *  inventory can exceed it; some builds may fall short of it. */
   best: number;
 }
 
-/** Pairs of indices into a 5-slot list — the ten ways to place a "2pc" half. */
-function pairs(slots: Slot[]): [Slot, Slot][] {
-  const out: [Slot, Slot][] = [];
-  for (let i = 0; i < slots.length; i++)
-    for (let j = i + 1; j < slots.length; j++) out.push([slots[i], slots[j]]);
-  return out;
-}
-
 /**
- * Every slot→set layout that satisfies the requirement, as a map of the slots
- * it pins (unlisted slots are free). Small by construction: 1 layout with no
- * requirement, 5 for a 4pc, 10 for a 2pc, 30 for a 2+2 — cheap enough to walk
- * exhaustively rather than search.
+ * The first slot with no legal piece, named in the reader's terms — the
+ * search's own hard-infeasible case (`poolsBySlot` yielding an empty pool).
+ * A main-stat lock is the usual culprit, so say so when one is in force.
  */
-function setLayouts(req?: SetRequirement): Partial<Record<Slot, string>>[] {
-  if (!req) return [{}];
-  if (req.kind === '4pc')
-    return SLOTS.map((free) => {
-      const layout: Partial<Record<Slot, string>> = {};
-      for (const s of SLOTS) if (s !== free) layout[s] = req.setKey;
-      return layout;
-    });
-  // A 2+2 naming the same set twice is just "≥2 of that set" — the same shape
-  // as a 2pc, and pairing it against itself would demand four pieces.
-  const two = (setKey: string) =>
-    pairs([...SLOTS]).map(([a, b]) => ({ [a]: setKey, [b]: setKey }));
-  if (req.kind === '2pc' || req.setKeys[0] === req.setKeys[1])
-    return two(req.kind === '2pc' ? req.setKey : req.setKeys[0]);
-  const [ka, kb] = req.setKeys;
-  const out: Partial<Record<Slot, string>>[] = [];
-  for (const [a, b] of pairs([...SLOTS])) {
-    const rest = SLOTS.filter((s) => s !== a && s !== b);
-    for (const [c, d] of pairs(rest))
-      out.push({ [a]: ka, [b]: ka, [c]: kb, [d]: kb });
-  }
-  return out;
-}
-
-/**
- * The highest total of `key` any build over `inventory` can reach while
- * honouring the set requirement and the main-stat locks — or `null` when the
- * set requirement itself cannot be formed from the inventory at all.
- *
- * Per slot this takes the piece contributing most of `key`, which is exact for
- * the artifact contributions (they simply add) but blind to a set bonus a
- * *different* piece in a free slot might have triggered. So it can understate
- * by one incidental 2pc bonus; it never overstates the artifact side, and the
- * layout's own bonuses are counted because the chosen five run through
- * `totals`.
- */
-export function maxReachable(
-  ctx: OptimizeContext,
+export function emptySlotCause(
   req: OptimizeRequest,
   inventory: Artifact[],
-  key: StatKey,
-): number | null {
+): string | null {
   const locks = req.constraints.mainStatLocks;
-  let best: number | null = null;
-  for (const layout of setLayouts(req.constraints.setRequirement)) {
-    const chosen: Artifact[] = [];
-    let feasible = true;
-    for (const slot of SLOTS) {
-      const want = layout[slot];
-      const lock = locks?.[slot];
-      let pick: Artifact | undefined;
-      let pickValue = -Infinity;
-      for (const a of inventory) {
-        if (a.slot !== slot) continue;
-        if (want && a.setKey !== want) continue;
-        if (lock && a.mainStat !== lock) continue;
-        const v = artifactContribution(a)[key] ?? 0;
-        if (v > pickValue) {
-          pickValue = v;
-          pick = a;
-        }
-      }
-      // A pinned slot with nothing to put in it kills this layout; a free slot
-      // can simply stay empty.
-      if (!pick && want) {
-        feasible = false;
-        break;
-      }
-      if (pick) chosen.push(pick);
-    }
-    if (!feasible) continue;
-    const value = totals(ctx, chosen)[key] ?? 0;
-    if (best === null || value > best) best = value;
+  for (const slot of SLOTS) {
+    const lock = locks?.[slot];
+    const any = inventory.some(
+      (a) => a.slot === slot && (!lock || a.mainStat === lock),
+    );
+    if (any) continue;
+    return lock
+      ? `You own no ${SLOT_LABELS[slot].toLowerCase()} with a ${statLabel(
+          lock,
+        )} main stat.`
+      : `You own no ${SLOT_LABELS[slot].toLowerCase()} at all.`;
   }
-  return best;
+  return null;
 }
 
 /**
- * The minStat floors no build over this inventory can reach, cheapest-first
- * cause for an infeasible search. An empty list means the floors are all
- * individually reachable — the clash is elsewhere (two floors that can't be
- * met by the same five pieces, say), and the caller should stay vague.
+ * The minStat floors provably out of reach, worst relative shortfall first.
+ *
+ * Measured against `reachableCeiling` — the very bound the search prunes
+ * `minStats` with. That makes this list sound but not complete: a floor listed
+ * here is genuinely unreachable, while an empty list only means no single
+ * floor is *provably* to blame (two floors that clash only together, an
+ * optimistic set bonus no real layout can pair with the pieces that carry the
+ * stat), and the caller should stay vague.
  */
 export function unreachableMinStats(
   ctx: OptimizeContext,
   req: OptimizeRequest,
   inventory: Artifact[],
 ): StatCeiling[] {
+  const ceiling = reachableCeiling(ctx, req, inventory);
+  if (!ceiling) return [];
   const out: StatCeiling[] = [];
   for (const key of Object.keys(req.constraints.minStats ?? {}) as StatKey[]) {
     const need = req.constraints.minStats![key] ?? 0;
-    const best = maxReachable(ctx, req, inventory, key);
-    if (best !== null && best < need) out.push({ key, need, best });
+    const best = ceiling[key] ?? 0;
+    if (best < need) out.push({ key, need, best });
   }
-  return out;
+  // Relative, not absolute: a 50-point ER gap and a 50-point ATK gap are not
+  // the same size of problem, and the reader wants the one they are furthest
+  // from clearing named first.
+  return out.sort(
+    (a, b) => (b.need - b.best) / b.need - (a.need - a.best) / a.need,
+  );
 }

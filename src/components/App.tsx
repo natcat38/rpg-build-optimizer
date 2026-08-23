@@ -16,6 +16,7 @@ import {
 import { ImportPanel } from './ImportPanel';
 import { ArtifactForm } from './ArtifactForm';
 import { OptimizePanel } from './OptimizePanel';
+import { searchProgressStore } from './searchProgress';
 import { Results } from './Results';
 import { SampleGear } from './SampleGear';
 import { GapSection } from './GapSection';
@@ -36,7 +37,6 @@ import {
   optimizeRun,
   isOptimizeCancelled,
   type OptimizeHandle,
-  type OptimizeProgress,
 } from '../workers/optimizeClient';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
 import { genshinAdapter } from '../game/genshin/adapter';
@@ -284,15 +284,16 @@ export function App() {
   // Once a roster exists the app's curated opening pair is no longer the most
   // useful one — the reader's own best-built character is. Only while the
   // selection is untouched: a pick the reader (or a shared ?b= link) made must
-  // never be overwritten, which is what `isDefaultSelection` guards. Weapon
-  // legality is left to OptimizePanel, the one place that owns that rule.
+  // never be overwritten, which is what `isDefaultSelection` guards. The
+  // weapon is not set here: `setCharacterKey` already prefers this
+  // character's roster-equipped weapon, and does it through `legalWeapon`, so
+  // a weapon key the frozen snapshot doesn't carry never reaches the store.
   useEffect(() => {
     const s = useOptimizeRequest.getState();
     if (!isDefaultSelection(s)) return;
     const best = bestBuiltCharacter(rosterEntries, artifacts);
     if (!best) return;
     s.setCharacterKey(best.characterKey);
-    if (best.weaponKey) s.setWeaponKey(best.weaponKey);
   }, [rosterEntries, artifacts]);
 
   useEffect(() => {
@@ -338,17 +339,9 @@ export function App() {
   }, [sharedArtifacts, artifacts]);
 
   const [running, setRunning] = useState(false);
-  const [progress, setProgress] = useState<OptimizeProgress | null>(null);
-  // Elapsed is ticked here rather than read off the progress messages: the
-  // synchronous fallback (and the gap before the first tick) produces none,
-  // and a clock that stops moving reads as a hang.
-  const [elapsedMs, setElapsedMs] = useState(0);
-  useEffect(() => {
-    if (!running) return;
-    const startedAt = Date.now();
-    const id = setInterval(() => setElapsedMs(Date.now() - startedAt), 200);
-    return () => clearInterval(id);
-  }, [running]);
+  // Progress counters and the elapsed clock live in `searchProgressStore`,
+  // not in this component's state: they change several times a second, and
+  // held here every tick re-rendered the whole page instead of one line.
 
   // One persistent announcement for the whole page. Written by the run itself
   // rather than by an effect on `result`, so a shared ?b= hydration (which is
@@ -393,15 +386,16 @@ export function App() {
     const superseded = currentRun.current;
     superseded?.cancel();
     setRunning(true);
-    setProgress(null);
-    setElapsedMs(0);
+    // Restarts the clock as well as clearing the counters, so a superseding
+    // run doesn't inherit the elapsed time of the one it replaced.
+    searchProgressStore.start();
     setOptimizeError(false);
     // A fresh run replaces whatever Results was showing, so the banner about
     // the shared build that couldn't be read no longer describes anything.
     setSharedError(false);
     try {
       const run = optimizeRun(req, inv, (p) => {
-        if (runToken.current === token) setProgress(p);
+        if (runToken.current === token) searchProgressStore.report(p);
       });
       currentRun.current = run;
       const r = await run.result;
@@ -432,7 +426,7 @@ export function App() {
       if (runToken.current === token) {
         currentRun.current = null;
         setRunning(false);
-        setProgress(null);
+        searchProgressStore.stop();
       }
     }
   }
@@ -671,8 +665,6 @@ export function App() {
             <OptimizePanel
               onRun={runCurrent}
               running={running}
-              progress={progress}
-              elapsedMs={elapsedMs}
               onCancel={cancelCurrent}
             />
           </Section>
@@ -702,6 +694,14 @@ export function App() {
                     result={result}
                     request={request}
                     artifactsById={artifactsById}
+                    onRelax={(value: number) => {
+                      // "No build meets an ER floor of N" is only actionable
+                      // if the page can lower it, so the offer to relax is
+                      // wired to the store *and* to a fresh run — the reader
+                      // shouldn't have to press Optimise again.
+                      useOptimizeRequest.getState().setMinER(String(value));
+                      void runCurrent();
+                    }}
                   />
                 </div>
               </Section>

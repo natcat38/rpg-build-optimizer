@@ -1,4 +1,10 @@
-import { useEffect, useId, useMemo, type ReactNode } from 'react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import type { BuildLevel, Objective, Slot, StatKey } from '../game/types';
 import { BUILD_LEVELS } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
@@ -15,8 +21,7 @@ import {
 } from '../labels';
 import { cn } from './ui/cn';
 import { Combobox } from './ui/Combobox';
-import { Meter } from './ui/Meter';
-import type { OptimizeProgress } from '../workers/optimizeClient';
+import { searchProgressStore } from './searchProgress';
 import {
   META_TARGETS,
   metaToConstraints,
@@ -133,16 +138,15 @@ function TeammatesSummary({
  * unknowable up front — branch-and-bound's whole point is that it never visits
  * the full space — so the bar is deliberately indeterminate and the honest
  * numbers (leaves evaluated, subtrees pruned, elapsed) carry the real signal.
+ * Rendered only while a run is in flight, so Cancel always has something to
+ * cancel.
  */
-function SearchProgressLine({
-  progress,
-  elapsedMs,
-  onCancel,
-}: {
-  progress: OptimizeProgress | null;
-  elapsedMs: number;
-  onCancel?: () => void;
-}) {
+function SearchProgressLine({ onCancel }: { onCancel: () => void }) {
+  const { progress, elapsedMs } = useSyncExternalStore(
+    searchProgressStore.subscribe,
+    searchProgressStore.getSnapshot,
+    searchProgressStore.getSnapshot,
+  );
   return (
     <div className="space-y-1.5 border-t border-white/5 pt-3">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
@@ -155,29 +159,25 @@ function SearchProgressLine({
           <span className="font-mono tabular-nums text-paper">
             {(progress?.pruned ?? 0).toLocaleString()}
           </span>{' '}
-          pruned ·{' '}
+          subtrees pruned ·{' '}
           <span className="font-mono tabular-nums text-paper">
             {(elapsedMs / 1000).toFixed(1)}s
           </span>
         </p>
-        {/* Same aria-disabled + early-return pattern as the run buttons: this
-            button is the active element the moment it is used, and flipping
-            `disabled` under a keyboard user drops focus to <body>. */}
-        <button
-          type="button"
-          className="btn-ghost"
-          aria-disabled={!onCancel}
-          onClick={() => {
-            if (!onCancel) return;
-            onCancel();
-          }}
-        >
+        {/* Plain `onClick`, no aria-disabled guard: this line only exists
+            while a run is in flight, so there is always something to cancel. */}
+        <button type="button" className="btn-ghost" onClick={onCancel}>
           Cancel
         </button>
       </div>
-      {/* No total to divide by, so the bar pulses rather than filling — it
-          says "still working", which is all anyone can honestly claim. */}
-      <Meter value={100} size="sm" className="animate-pulse" />
+      {/* Not a Meter: a progress bar pinned at 100% claims the search is
+          finished. There is no total to divide by, so this is a decorative
+          pulse that says "still working" and nothing more — the counters
+          above carry every fact. */}
+      <div
+        aria-hidden="true"
+        className="h-1 animate-pulse rounded-full bg-accent/40"
+      />
     </div>
   );
 }
@@ -185,15 +185,13 @@ function SearchProgressLine({
 export function OptimizePanel({
   onRun,
   running,
-  progress = null,
-  elapsedMs = 0,
   onCancel,
 }: {
   onRun: () => void | Promise<void>;
   running: boolean;
-  progress?: OptimizeProgress | null;
-  elapsedMs?: number;
-  onCancel?: () => void;
+  /** Required: whenever `running` is true the panel offers a Cancel button,
+   *  and a Cancel that cancels nothing is worse than no Cancel. */
+  onCancel: () => void;
 }) {
   const uid = useId();
   const artifacts = useInventory((s) => s.artifacts);
@@ -234,20 +232,6 @@ export function OptimizePanel({
       })),
     [legalWeapons],
   );
-
-  function onCharacterChange(key: string) {
-    // `setCharacterKey` already guarantees the weapon stays legal for the new
-    // character (see optimizeRequest's `legalWeapon`), including falling back
-    // to this character's roster-equipped weapon when the current one isn't.
-    // What's left here is the rest of the roster pre-fill: both fields stay
-    // manually overridable afterward (same pre-fill-stay-overridable spirit as
-    // "Use meta build", ADR-0007 / ADR-0015).
-    setCharacterKey(key);
-    const entry = rosterEntries[key];
-    if (entry?.weaponKey && genshinAdapter.canEquip(key, entry.weaponKey))
-      setWeaponKey(entry.weaponKey);
-    if (entry?.buildLevel) setBuildLevel(entry.buildLevel);
-  }
 
   function onObjectiveChange(next: Objective) {
     setObjective(next);
@@ -321,7 +305,7 @@ export function OptimizePanel({
             id={`${uid}-character`}
             options={charOptions}
             value={characterKey}
-            onChange={onCharacterChange}
+            onChange={setCharacterKey}
             label="Character"
           />
         </div>
@@ -443,13 +427,7 @@ export function OptimizePanel({
         </div>
       </div>
 
-      {running && (
-        <SearchProgressLine
-          progress={progress}
-          elapsedMs={elapsedMs}
-          onCancel={onCancel}
-        />
-      )}
+      {running && <SearchProgressLine onCancel={onCancel} />}
     </div>
   );
 }

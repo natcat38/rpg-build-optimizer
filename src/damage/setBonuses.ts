@@ -247,9 +247,10 @@ export const UNMODELLED_FOUR_PIECE: Record<string, string> = {
  * sheet stat: in the KQM formula it lands in the DMG-bonus bucket of *some*
  * hits only. The optimiser's pruning bound, however, can only see a `StatVec`
  * (ADR-0004), so the bonus has to become one. It is converted to the
- * `elemental_dmg` that would produce the same total at the character's **base**
- * stats: `Σ_kind pct[kind] × share[kind]`, where `share[kind]` is that kind's
- * fraction of the profile's weighted damage. The share drifts slightly as
+ * `elemental_dmg` that would produce the same total at a **representative
+ * endgame sheet**: `Σ_kind pct[kind] × share[kind]`, where `share[kind]` is that
+ * kind's fraction of the profile's weighted *elemental* damage (see
+ * `weightedHitKindShares`). The share drifts slightly as
  * artifacts change the totals, so this is an approximation — but it lives
  * entirely inside the stat vector, so the bound and the leaf score use the very
  * same number and admissibility (ADR-0004) is untouched.
@@ -261,6 +262,15 @@ export function fourPieceVector(
     damage?: DamageContext;
     /** character + weapon base stats; required whenever `damage` is given. */
     base?: StatVec;
+    /** Hit-kind shares, computed once per run by `buildContext` (ADR-0020) so
+     *  every set reads the identical vector and the shares are measured at a
+     *  representative endgame sheet rather than the EM-less base. Falls back to
+     *  measuring at `base` when omitted. */
+    shares?: Partial<Record<HitKind, number>>;
+    /** ER% the Emblem bonus is resolved against. Precedence is the caller's:
+     *  the request's `minStats.er_pct`, else the profile's `erRequirement`,
+     *  else 100. Omitted here means "fall back to the profile". */
+    erFloor?: number;
   } = {},
 ): StatVec | undefined {
   const entry = FOUR_PIECE_BONUSES[setKey];
@@ -275,12 +285,12 @@ export function fourPieceVector(
   const out: StatVec = { ...entry.sheet };
   const dmg = opts.damage;
   if (dmg && (entry.hitDmg || entry.burstDmgFromEr)) {
-    const shares = weightedHitKindShares(opts.base ?? {}, dmg);
+    const shares = opts.shares ?? weightedHitKindShares(opts.base ?? {}, dmg);
     let bonus = 0;
     for (const [kind, pct] of Object.entries(entry.hitDmg ?? {}))
       bonus += pct * (shares[kind as HitKind] ?? 0);
     if (entry.burstDmgFromEr) {
-      const er = dmg.profile.erRequirement ?? 100;
+      const er = opts.erFloor ?? dmg.profile.erRequirement ?? 100;
       const pct = Math.min(
         entry.burstDmgFromEr.cap,
         (entry.burstDmgFromEr.pctOfEr / 100) * er,
@@ -293,34 +303,75 @@ export function fourPieceVector(
 }
 
 /**
- * Each hit kind's share of the profile's weighted damage, measured at the
- * character's base stats (the shared crit/DEF/RES factor cancels in the ratio,
- * so only the per-hit factor matters). Only `elemental` hits count toward the
- * numerator — the bonus is folded into `elemental_dmg`, which a physical hit
- * would never read.
+ * A stand-in endgame sheet, used when the character has no `META_TARGETS`
+ * `statTargets` to measure the shares against (ADR-0020). Measuring at the bare
+ * `base` vector would read the shares off a character with 0 EM, 5% CRIT Rate
+ * and no ATK% — a sheet nobody actually plays, which systematically
+ * under-weights reaction and crit-heavy hits against unreacted ones. These are
+ * deliberately unremarkable "a built character" numbers rather than a ceiling.
  */
-function weightedHitKindShares(
-  base: StatVec,
+export const REPRESENTATIVE_ENDGAME_SHEET: StatVec = {
+  em: 300,
+  crit_rate: 70,
+  crit_dmg: 140,
+  atk_pct: 50,
+};
+
+/**
+ * Each hit kind's share of the profile's weighted **elemental** damage.
+ *
+ * `sheet` is the stat vector the shares are measured at — `buildContext` passes
+ * the character's base merged with a representative endgame vector (their
+ * `META_TARGETS.statTargets` when curated, else
+ * `REPRESENTATIVE_ENDGAME_SHEET`), because the shares are ratios and the
+ * EM-less, crit-less base sheet is not the sheet the ratios will be read at.
+ *
+ * The denominator is the elemental sum, not the total: the bonus is folded into
+ * `elemental_dmg`, which a physical hit never reads, so normalising by a total
+ * that includes physical hits would shrink every share toward zero and silently
+ * discount the set on a part-physical profile.
+ */
+export function weightedHitKindShares(
+  sheet: StatVec,
   dmg: DamageContext,
 ): Partial<Record<HitKind, number>> {
   const shares: Partial<Record<HitKind, number>> = {};
-  let total = 0;
+  let elemental = 0;
   for (const hit of dmg.profile.hits) {
-    const d = hit.weight * computeHitDamage(base, base, hit, dmg);
-    total += d;
-    if (hit.bonus === 'elemental')
-      shares[hit.kind] = (shares[hit.kind] ?? 0) + d;
+    if (hit.bonus !== 'elemental') continue;
+    // The shared crit/DEF/RES factor cancels in the ratio, so only the per-hit
+    // factor would strictly matter; computeHitDamage is used whole for clarity.
+    const d = hit.weight * computeHitDamage(sheet, sheet, hit, dmg);
+    elemental += d;
+    shares[hit.kind] = (shares[hit.kind] ?? 0) + d;
   }
-  if (total <= 0) return {};
+  if (elemental <= 0) return {};
   for (const k of Object.keys(shares) as HitKind[])
-    shares[k] = (shares[k] ?? 0) / total;
+    shares[k] = (shares[k] ?? 0) / elemental;
   return shares;
 }
 
-/** The uptime assumptions behind whatever 4pc bonuses a build actually lights
- *  up — one line per set, for the UI to print under the damage figure. */
+/** Whether a modelled entry has anything but hit-kind-restricted DMG%, i.e.
+ *  whether it contributes at all to a non-damage objective. */
+function hasSheetPart(e: FourPieceBonus): boolean {
+  return e.sheet !== undefined && Object.keys(e.sheet).length > 0;
+}
+
+/**
+ * One line per 4pc a build actually carries, saying either what the modelled
+ * number assumes or — the case that used to be silent — why there is no number
+ * (ADR-0020). A set can be unscored three ways: its effect has no honest
+ * self-buff value at all (`UNMODELLED_FOUR_PIECE`), it is a hit-kind bonus and
+ * the objective is a scalar stat rather than damage, or its weapon gate does
+ * not match the build's weapon.
+ */
 export function fourPieceAssumptions(
   setKeys: Iterable<string>,
+  opts: {
+    /** The run is ranking by `avg_damage`, so the hit-kind channel is live. */
+    hasDamage: boolean;
+    weaponType?: WeaponType;
+  },
   // Display-name resolver injected by the caller: this module must stay free
   // of the dataset adapter (the API bundle imports it), so it cannot call
   // formatSetName itself. Defaults to the raw key.
@@ -328,8 +379,32 @@ export function fourPieceAssumptions(
 ): string[] {
   const out: string[] = [];
   for (const key of setKeys) {
+    const name = setName(key);
     const e = FOUR_PIECE_BONUSES[key];
-    if (e) out.push(`${setName(key)} 4pc: ${e.uptime}`);
+    if (!e) {
+      const reason = UNMODELLED_FOUR_PIECE[key];
+      if (reason) out.push(`${name} 4pc not scored: ${reason}`);
+      continue;
+    }
+    if (
+      e.weaponTypes &&
+      opts.weaponType !== undefined &&
+      !e.weaponTypes.includes(opts.weaponType)
+    ) {
+      out.push(`${name} 4pc: not scored for this weapon class.`);
+      continue;
+    }
+    const hitKindOnly = !hasSheetPart(e);
+    if (hitKindOnly && !opts.hasDamage) {
+      out.push(`${name} 4pc: not scored on this objective.`);
+      continue;
+    }
+    const folded =
+      opts.hasDamage &&
+      (e.hitDmg !== undefined || e.burstDmgFromEr !== undefined)
+        ? ' Its hit-kind DMG bonus is modelled as the equivalent Elemental DMG%, so the Elemental DMG figure above already includes it.'
+        : '';
+    out.push(`${name} 4pc: ${e.uptime}${folded}`);
   }
   return out;
 }

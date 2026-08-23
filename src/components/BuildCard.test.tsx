@@ -201,6 +201,20 @@ describe('BuildCard slot marks', () => {
   });
 });
 
+/** Four pieces of one set: the minimum that lights a 4pc bonus up. */
+function fourOf(setKey: string): Artifact[] {
+  return (['flower', 'plume', 'sands', 'goblet'] as const).map((slot, i) => ({
+    id: `a${i}`,
+    setKey,
+    slot,
+    rarity: 5,
+    level: 20,
+    mainStat: 'hp',
+    mainStatValue: 4780,
+    subStats: [],
+  }));
+}
+
 describe('BuildCard — what drives the build', () => {
   const req: OptimizeRequest = {
     characterKey: 'furina', // no statTargets, so nothing else competes for the eye
@@ -227,7 +241,7 @@ describe('BuildCard — what drives the build', () => {
 
     await user.click(summary);
     expect(screen.getByText(/4pc Emblem of Severed Fate/)).toBeVisible();
-    expect(screen.getByText(/Where the score comes from/i)).toBeVisible();
+    expect(screen.getByText('Where the Score Comes From')).toBeVisible();
     // One line per slot the diagnostics actually measured — not all five.
     expect(screen.getByText('40.0')).toBeInTheDocument();
     expect(screen.getByText('12.5')).toBeInTheDocument();
@@ -251,23 +265,13 @@ describe('BuildCard — what drives the build', () => {
 
   it('states what an activated 4pc assumes', async () => {
     const user = userEvent.setup();
-    const piece = (id: string, slot: Artifact['slot']): Artifact => ({
-      id,
-      setKey: 'BlizzardStrayer',
-      slot,
-      rarity: 5,
-      level: 20,
-      mainStat: 'hp',
-      mainStatValue: 4780,
-      subStats: [],
-    });
-    const four: Artifact[] = [
-      piece('a1', 'flower'),
-      piece('a2', 'plume'),
-      piece('a3', 'sands'),
-      piece('a4', 'goblet'),
-    ];
-    render(<BuildCard build={explained} request={req} artifacts={four} />);
+    render(
+      <BuildCard
+        build={explained}
+        request={req}
+        artifacts={fourOf('BlizzardStrayer')}
+      />,
+    );
     await user.click(screen.getByText(/What’s driving this build/i));
     expect(
       screen.getByText(/Blizzard Strayer 4pc: Assumes the target is Frozen/),
@@ -277,5 +281,71 @@ describe('BuildCard — what drives the build', () => {
   it('says nothing about sets when no 4pc is activated', () => {
     render(<BuildCard build={explained} request={req} artifacts={[]} />);
     expect(screen.queryByText(/4pc: Assumes/)).toBeNull();
+  });
+
+  it('says a hit-kind 4pc is unscored on a scalar objective instead of quoting its uptime', async () => {
+    const user = userEvent.setup();
+    render(
+      <BuildCard
+        build={explained}
+        request={req}
+        artifacts={fourOf('EmblemOfSeveredFate')}
+      />,
+    );
+    await user.click(screen.getByText(/What’s driving this build/i));
+    expect(
+      screen.getByText(
+        /Emblem of Severed Fate 4pc: not scored on this objective/,
+      ),
+    ).toBeVisible();
+  });
+
+  it('names the weapon class when the set does nothing for this weapon', async () => {
+    const user = userEvent.setup();
+    render(
+      <BuildCard
+        build={explained}
+        request={{ ...req, weaponKey: "amos'_bow" }}
+        artifacts={fourOf('GladiatorsFinale')}
+      />,
+    );
+    await user.click(screen.getByText(/What’s driving this build/i));
+    expect(
+      screen.getByText(
+        /Gladiator's Finale 4pc: not scored for this weapon class/,
+      ),
+    ).toBeVisible();
+  });
+
+  it('gives the reason a deliberately unmodelled 4pc scores nothing', async () => {
+    const user = userEvent.setup();
+    render(
+      <BuildCard
+        build={explained}
+        request={req}
+        artifacts={fourOf('ThunderingFury')}
+      />,
+    );
+    await user.click(screen.getByText(/What’s driving this build/i));
+    expect(screen.getByText(/Thundering Fury 4pc not scored:/)).toBeVisible();
+  });
+
+  it('survives a share link whose diagnostics fields are missing', () => {
+    // parseBuildSnapshot rejects these, but the card is the last line of
+    // defence and must not take the whole result list down with it.
+    const broken = {
+      ...build,
+      diagnostics: undefined,
+    } as unknown as BuildResult;
+    expect(() =>
+      render(
+        <BuildCard
+          build={broken}
+          request={req}
+          artifacts={fourOf('BlizzardStrayer')}
+        />,
+      ),
+    ).not.toThrow();
+    expect(screen.getByText(/What’s driving this build/i)).toBeInTheDocument();
   });
 });

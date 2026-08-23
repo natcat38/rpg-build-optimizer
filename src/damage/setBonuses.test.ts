@@ -4,6 +4,8 @@ import {
   UNMODELLED_FOUR_PIECE,
   fourPieceAssumptions,
   fourPieceVector,
+  weightedHitKindShares,
+  REPRESENTATIVE_ENDGAME_SHEET,
 } from './setBonuses';
 import { DAMAGE_PROFILES } from './profiles';
 import { targetFunctionScore } from './formula';
@@ -190,12 +192,121 @@ describe('the bonus reaches the score only at four pieces', () => {
 });
 
 describe('fourPieceAssumptions', () => {
-  it('returns one line per modelled set and skips unmodelled ones', () => {
-    const lines = fourPieceAssumptions([
-      'BlizzardStrayer',
-      'ViridescentVenerer',
-    ]);
+  it('states the uptime for a set that is actually scored', () => {
+    const lines = fourPieceAssumptions(['BlizzardStrayer'], {
+      hasDamage: true,
+    });
     expect(lines).toHaveLength(1);
     expect(lines[0]).toContain('BlizzardStrayer 4pc:');
+    expect(lines[0]).toContain('Frozen');
+  });
+
+  it('says why an unmodelled set has no number instead of staying silent', () => {
+    const lines = fourPieceAssumptions(['ThunderingFury'], {
+      hasDamage: true,
+    });
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain('ThunderingFury 4pc not scored:');
+    expect(lines[0]).toContain(UNMODELLED_FOUR_PIECE.ThunderingFury);
+  });
+
+  it('discloses that a hit-kind set is unscored on a scalar objective', () => {
+    // Raiden's Emblem is burst-DMG-from-ER only: nothing a crit_value run can
+    // read, and the old copy printed its uptime as if it counted.
+    expect(
+      fourPieceAssumptions(['EmblemOfSeveredFate'], {
+        hasDamage: false,
+      }),
+    ).toEqual(['EmblemOfSeveredFate 4pc: not scored on this objective.']);
+  });
+
+  it('discloses the weapon gate rather than an uptime that cannot apply', () => {
+    expect(
+      fourPieceAssumptions(['GladiatorsFinale'], {
+        hasDamage: true,
+        weaponType: 'bow',
+      }),
+    ).toEqual(['GladiatorsFinale 4pc: not scored for this weapon class.']);
+    // …and the same set on a matching weapon is a normal uptime line.
+    const ok = fourPieceAssumptions(['GladiatorsFinale'], {
+      hasDamage: true,
+      weaponType: 'claymore',
+    });
+    expect(ok[0]).toContain('GladiatorsFinale 4pc: Unconditional');
+  });
+
+  it('says the hit-kind bonus is folded into the Elemental DMG figure', () => {
+    const [line] = fourPieceAssumptions(['GoldenTroupe'], { hasDamage: true });
+    expect(line).toContain('Elemental DMG');
+  });
+
+  it('renders the caller-supplied display name', () => {
+    const [line] = fourPieceAssumptions(
+      ['BlizzardStrayer'],
+      { hasDamage: true },
+      () => 'Blizzard Strayer',
+    );
+    expect(line).toContain('Blizzard Strayer 4pc:');
+  });
+});
+
+describe('weightedHitKindShares', () => {
+  it('normalises by the elemental sum, so a part-physical profile is not discounted', () => {
+    const d = dmg('hu_tao');
+    const shares = weightedHitKindShares({ ...base, em: 300 }, d);
+    const sum = Object.values(shares).reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(1, 10);
+  });
+
+  it('is measured at the supplied sheet, not silently at a bare base', () => {
+    const d = dmg('hu_tao');
+    const bare = weightedHitKindShares(base, d);
+    const endgame = weightedHitKindShares(
+      { ...base, ...REPRESENTATIVE_ENDGAME_SHEET },
+      d,
+    );
+    // Reaction-carrying hits scale with EM, so the two sheets do not agree —
+    // which is the whole reason buildContext stopped passing the bare base.
+    expect(endgame).not.toEqual(bare);
+  });
+});
+
+describe('the Emblem ER floor', () => {
+  const emblemBonus = (erFloor?: number) => {
+    const d = dmg('raiden_shogun');
+    const opts = {
+      damage: d,
+      base,
+      ...(erFloor === undefined ? {} : { erFloor }),
+    };
+    return fourPieceVector('EmblemOfSeveredFate', opts)?.elemental_dmg ?? 0;
+  };
+
+  it('resolves against the caller-supplied floor rather than the profile', () => {
+    expect(emblemBonus(250)).toBeGreaterThan(emblemBonus(100));
+  });
+
+  it('falls back to the profile requirement when no floor is given', () => {
+    const er = DAMAGE_PROFILES.raiden_shogun.erRequirement ?? 100;
+    expect(emblemBonus()).toBeCloseTo(emblemBonus(er), 10);
+  });
+
+  it("buildContext prefers the request's own ER floor", () => {
+    const req = {
+      characterKey: 'raiden_shogun',
+      weaponKey: 'the_catch',
+      buildLevel: 90 as const,
+      objective: 'avg_damage' as const,
+    };
+    const low = buildContext({ ...req, constraints: {} });
+    const high = buildContext({
+      ...req,
+      constraints: { minStats: { er_pct: 300 } },
+    });
+    expect(
+      high.setBonuses.EmblemOfSeveredFate.four?.elemental_dmg ?? 0,
+    ).toBeGreaterThan(
+      low.setBonuses.EmblemOfSeveredFate.four?.elemental_dmg ?? 0,
+    );
   });
 });

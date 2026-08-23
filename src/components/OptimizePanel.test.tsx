@@ -3,6 +3,7 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { OptimizePanel } from './OptimizePanel';
+import { searchProgressStore } from './searchProgress';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
@@ -17,33 +18,69 @@ describe('OptimizePanel', () => {
   });
 
   it('renders no progress line while idle', () => {
-    render(<OptimizePanel onRun={vi.fn()} running={false} />);
+    render(
+      <OptimizePanel onRun={vi.fn()} running={false} onCancel={vi.fn()} />,
+    );
     expect(screen.queryByRole('button', { name: /^cancel$/i })).toBeNull();
     expect(screen.queryByText(/leaves evaluated/i)).toBeNull();
   });
 
   it('renders the progress line with counters, elapsed time and Cancel while running', () => {
-    render(
-      <OptimizePanel
-        onRun={vi.fn()}
-        running
-        progress={{ explored: 12345, pruned: 678, elapsedMs: 2500 }}
-        elapsedMs={2500}
-        onCancel={vi.fn()}
-      />,
-    );
-    expect(screen.getByText('12,345')).toBeInTheDocument();
-    expect(screen.getByText('678')).toBeInTheDocument();
-    expect(screen.getByText('2.5s')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /^cancel$/i }),
-    ).toBeInTheDocument();
+    vi.useFakeTimers();
+    try {
+      searchProgressStore.start();
+      render(<OptimizePanel onRun={vi.fn()} running onCancel={vi.fn()} />);
+      act(() => {
+        searchProgressStore.report({ explored: 12345, pruned: 678 });
+        // A whole number of the store's 200ms ticks, so the displayed
+        // elapsed is exactly the time advanced.
+        vi.advanceTimersByTime(2400);
+      });
+      expect(screen.getByText('12,345')).toBeInTheDocument();
+      expect(screen.getByText('678')).toBeInTheDocument();
+      expect(screen.getByText('2.4s')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /^cancel$/i }),
+      ).toBeInTheDocument();
+    } finally {
+      searchProgressStore.stop();
+      vi.useRealTimers();
+    }
   });
 
   it('shows zeroes before the first progress tick rather than nothing', () => {
-    render(<OptimizePanel onRun={vi.fn()} running onCancel={vi.fn()} />);
-    expect(screen.getAllByText('0').length).toBeGreaterThan(0);
-    expect(screen.getByText('0.0s')).toBeInTheDocument();
+    searchProgressStore.start();
+    try {
+      render(<OptimizePanel onRun={vi.fn()} running onCancel={vi.fn()} />);
+      expect(screen.getAllByText('0').length).toBeGreaterThan(0);
+      expect(screen.getByText('0.0s')).toBeInTheDocument();
+    } finally {
+      searchProgressStore.stop();
+    }
+  });
+
+  it('restarts the clock when a second run supersedes the first', () => {
+    vi.useFakeTimers();
+    try {
+      searchProgressStore.start();
+      render(<OptimizePanel onRun={vi.fn()} running onCancel={vi.fn()} />);
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(screen.getByText('3.0s')).toBeInTheDocument();
+      // The superseding run: elapsed is its own, not the previous run's.
+      act(() => {
+        searchProgressStore.start();
+      });
+      expect(screen.getByText('0.0s')).toBeInTheDocument();
+      act(() => {
+        vi.advanceTimersByTime(600);
+      });
+      expect(screen.getByText('0.6s')).toBeInTheDocument();
+    } finally {
+      searchProgressStore.stop();
+      vi.useRealTimers();
+    }
   });
 
   it('calls onCancel from the Cancel button', async () => {
@@ -53,20 +90,21 @@ describe('OptimizePanel', () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  // Same reason the run buttons use it: `disabled` on the active element
-  // hands focus to <body> mid-run.
-  it('marks Cancel aria-disabled (not disabled) when there is nothing to cancel', () => {
-    render(<OptimizePanel onRun={vi.fn()} running />);
+  // Cancel exists only while a run is in flight, and `onCancel` is a required
+  // prop — so it is never rendered in a state where pressing it does nothing.
+  it('renders Cancel as a live, enabled button while running', () => {
+    const onCancel = vi.fn();
+    render(<OptimizePanel onRun={vi.fn()} running onCancel={onCancel} />);
     const cancel = screen.getByRole('button', { name: /^cancel$/i });
-    expect(cancel).toHaveAttribute('aria-disabled', 'true');
     expect(cancel).not.toBeDisabled();
+    expect(cancel).not.toHaveAttribute('aria-disabled');
   });
 
   // aria-disabled, not `disabled`: going disabled mid-run drops focus to
   // <body>. The guard is an early return in the click handler.
   it('blocks Optimise with a hint when no artifacts exist', async () => {
     const onRun = vi.fn();
-    render(<OptimizePanel onRun={onRun} running={false} />);
+    render(<OptimizePanel onRun={onRun} running={false} onCancel={vi.fn()} />);
     const btn = screen.getByRole('button', { name: /Optimise/i });
     expect(btn).toHaveAttribute('aria-disabled', 'true');
     await userEvent.click(btn);
@@ -87,7 +125,9 @@ describe('OptimizePanel', () => {
       mainStatValue: 1,
       subStats: [],
     });
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     expect(screen.getByRole('button', { name: /Optimise/i })).toHaveAttribute(
       'aria-disabled',
       'false',
@@ -117,7 +157,9 @@ describe('OptimizePanel meta prefill', () => {
   it('shows "Use meta build" for a character with a meta recipe', () => {
     addFlower();
     useOptimizeRequest.getState().setCharacterKey('furina');
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     expect(
       screen.getByRole('button', { name: /Use meta build/i }),
     ).toBeInTheDocument();
@@ -125,7 +167,9 @@ describe('OptimizePanel meta prefill', () => {
 
   it('hides "Use meta build" for a character without a meta recipe', () => {
     useOptimizeRequest.getState().setCharacterKey('zzz_not_meta');
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     expect(
       screen.queryByRole('button', { name: /Use meta build/i }),
     ).toBeNull();
@@ -135,7 +179,7 @@ describe('OptimizePanel meta prefill', () => {
     addFlower();
     useOptimizeRequest.getState().setCharacterKey('navia');
     const onRun = vi.fn();
-    render(<OptimizePanel onRun={onRun} running={false} />);
+    render(<OptimizePanel onRun={onRun} running={false} onCancel={vi.fn()} />);
     await userEvent.click(
       screen.getByRole('button', { name: /Use meta build/i }),
     );
@@ -150,7 +194,9 @@ describe('OptimizePanel meta prefill', () => {
   it('shows a read-only summary of the meta recipe, including statTargets', () => {
     addFlower();
     useOptimizeRequest.getState().setCharacterKey('xiao');
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     expect(screen.getByText(/4pc Vermillion Hereafter/i)).toBeInTheDocument();
     expect(screen.getByText(/ER target 120%/i)).toBeInTheDocument();
     expect(screen.getByText(/CRIT Rate 70%/i)).toBeInTheDocument();
@@ -164,14 +210,18 @@ describe('OptimizePanel meta prefill', () => {
 
   it('omits the summary for a character without a meta recipe', () => {
     useOptimizeRequest.getState().setCharacterKey('zzz_not_meta');
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     expect(screen.queryByRole('link', { name: /Source/i })).toBeNull();
   });
 
   it('marks the character\'s meta objective as "(Recommended)" in the Maximise dropdown', () => {
     // kaedehara_kazuha's meta objective is 'em', not the common 'crit_value'.
     useOptimizeRequest.getState().setCharacterKey('kaedehara_kazuha');
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     const select = screen.getByRole('combobox', { name: /Maximise/i });
     const options = within(select).getAllByRole(
       'option',
@@ -184,7 +234,9 @@ describe('OptimizePanel meta prefill', () => {
 
   it('marks no objective as recommended for a character without a meta recipe', () => {
     useOptimizeRequest.getState().setCharacterKey('zzz_not_meta');
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     const select = screen.getByRole('combobox', { name: /Maximise/i });
     const options = within(select).getAllByRole(
       'option',
@@ -203,14 +255,18 @@ describe('OptimizePanel teammates', () => {
 
   it('shows "Works well with" recs for a covered character', () => {
     useOptimizeRequest.getState().setCharacterKey('xiao');
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     expect(screen.getByText(/Works well with/i)).toBeInTheDocument();
     expect(screen.getByText(/Faruzan/)).toBeInTheDocument();
   });
 
   it('omits the teammates section for a character without recs', () => {
     useOptimizeRequest.getState().setCharacterKey('zzz_not_meta');
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     expect(screen.queryByText(/Works well with/i)).toBeNull();
   });
 });
@@ -227,7 +283,9 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
       raiden_shogun: { weaponKey: 'the_catch', buildLevel: 90 },
     });
     const user = userEvent.setup();
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
 
     // The trigger opens on the curated marquee default (Furina), not on
     // whatever the dataset happens to sort first.
@@ -252,7 +310,7 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
     });
     const user = userEvent.setup();
     const { rerender } = render(
-      <OptimizePanel onRun={() => {}} running={false} />,
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
     );
 
     await user.click(screen.getByRole('combobox', { name: 'Character' }));
@@ -273,7 +331,9 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
     expect(useOptimizeRequest.getState().weaponKey).toBe('engulfing_lightning');
 
     // An unrelated re-render must not revert the manual override.
-    rerender(<OptimizePanel onRun={() => {}} running={false} />);
+    rerender(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     expect(useOptimizeRequest.getState().weaponKey).toBe('engulfing_lightning');
     expect(screen.getByRole('combobox', { name: 'Weapon' })).toHaveTextContent(
       /Engulfing Lightning/i,
@@ -283,7 +343,9 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
   it('sorts owned characters first with an "Owned" marker', async () => {
     useRoster.getState().setRoster({ raiden_shogun: { buildLevel: 90 } });
     const user = userEvent.setup();
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
 
     await user.click(screen.getByRole('combobox', { name: 'Character' }));
     const items = screen.getAllByRole('option');
@@ -292,7 +354,9 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
 
   it('leaves the character list unchanged when the roster is empty', async () => {
     const user = userEvent.setup();
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
 
     await user.click(screen.getByRole('combobox', { name: 'Character' }));
     const items = screen.getAllByRole('option');
@@ -303,7 +367,9 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
   it("disables build levels below a rostered character's achieved level", () => {
     useRoster.getState().setRoster({ raiden_shogun: { buildLevel: 90 } });
     useOptimizeRequest.getState().setCharacterKey('raiden_shogun');
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
 
     const select = screen.getByRole('combobox', { name: /Build level/i });
     const options = within(select).getAllByRole(
@@ -318,7 +384,9 @@ describe('OptimizePanel roster prefill (ADR-0015)', () => {
   });
 
   it('does not disable any build level for an unrostered character', () => {
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     const select = screen.getByRole('combobox', { name: /Build level/i });
     const options = within(select).getAllByRole(
       'option',
@@ -336,7 +404,9 @@ describe('avg_damage objective', () => {
 
   it('offers Average damage only for characters with a damage profile', async () => {
     const user = userEvent.setup();
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     const maximise = screen.getByLabelText(/Maximise/i);
 
     act(() => useOptimizeRequest.getState().setCharacterKey('neuvillette'));
@@ -372,7 +442,9 @@ describe('OptimizePanel weapon typing', () => {
     const user = userEvent.setup();
     // Nahida is a catalyst user; The Catch is a polearm.
     act(() => useOptimizeRequest.getState().setCharacterKey('nahida'));
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
 
     await user.click(screen.getByRole('combobox', { name: 'Weapon' }));
     const values = within(screen.getByRole('listbox', { name: 'Weapon' }))
@@ -391,7 +463,9 @@ describe('OptimizePanel weapon typing', () => {
 
   it('re-picks a legal weapon when the character changes to another class', async () => {
     const user = userEvent.setup();
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     // The default pair is a sword user with a sword.
     expect(
       genshinAdapter.weapon(useOptimizeRequest.getState().weaponKey)?.type,
@@ -413,7 +487,9 @@ describe('OptimizePanel weapon typing', () => {
     useRoster.getState().setRoster({
       raiden_shogun: { weaponKey: 'engulfing_lightning', buildLevel: 90 },
     });
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     act(() => useOptimizeRequest.getState().setCharacterKey('raiden_shogun'));
 
     await waitFor(() =>
@@ -426,7 +502,9 @@ describe('OptimizePanel weapon typing', () => {
   it('falls back to the full list for a character the snapshot does not carry', async () => {
     const user = userEvent.setup();
     act(() => useOptimizeRequest.getState().setCharacterKey('zzz_not_meta'));
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
 
     await user.click(screen.getByRole('combobox', { name: 'Weapon' }));
     // Scoped to the weapon listbox — the two native <select>s on this panel
@@ -449,7 +527,9 @@ describe('OptimizePanel objective coverage', () => {
   // (hp_pct for Hu Tao, def_pct for Noelle) recommended nothing at all, and
   // the user couldn't select the metric the app itself told them to use.
   it('offers every objective a meta recipe can recommend', () => {
-    render(<OptimizePanel onRun={() => {}} running={false} />);
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
     const select = screen.getByRole('combobox', { name: /Maximise/i });
     const offered = new Set(
       (within(select).getAllByRole('option') as HTMLOptionElement[]).map(

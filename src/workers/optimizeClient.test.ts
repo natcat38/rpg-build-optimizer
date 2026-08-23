@@ -89,6 +89,36 @@ describe('optimize (deep entry, sync fallback)', () => {
     await expect(run.result).rejects.toSatisfy(isOptimizeCancelled);
   });
 
+  it('rejects (rather than hanging) when the fallback returns an error envelope', async () => {
+    // Regression: the error envelope's throw used to escape *after* the
+    // promise was marked settled, so nothing could ever resolve or reject it
+    // and the UI sat on "Searching…" forever.
+    vi.resetModules();
+    vi.doMock('./protocol', async () => {
+      const actual =
+        await vi.importActual<typeof import('./protocol')>('./protocol');
+      return {
+        ...actual,
+        runSearchRequest: () => ({ type: 'error', message: 'boom' }),
+      };
+    });
+    try {
+      const mod = await import('./optimizeClient');
+      const req: OptimizeRequest = {
+        characterKey: genshinAdapter.characters()[0].key,
+        weaponKey: genshinAdapter.weapons()[0].key,
+        buildLevel: 90,
+        constraints: {},
+        objective: 'crit_value',
+        topK: 3,
+      };
+      await expect(mod.optimize(req, inv)).rejects.toThrow('boom');
+    } finally {
+      vi.doUnmock('./protocol');
+      vi.resetModules();
+    }
+  });
+
   it('leaves an on-element goblet main stat untouched', async () => {
     const chars = genshinAdapter.characters();
     const character = chars[0];
@@ -195,16 +225,14 @@ describe('optimize (real Worker path)', () => {
     };
     stubWorker((w) => {
       w.onmessage?.({
-        data: { type: 'progress', explored: 5, pruned: 2, elapsedMs: 120 },
+        data: { type: 'progress', explored: 5, pruned: 2 },
       } as MessageEvent);
       w.onmessage?.({ data: { type: 'done', result } } as MessageEvent);
     });
     const seen: unknown[] = [];
     const run = optimizeRun(req, inv, (p) => seen.push(p));
     await expect(run.result).resolves.toEqual(result);
-    expect(seen).toEqual([
-      { type: 'progress', explored: 5, pruned: 2, elapsedMs: 120 },
-    ]);
+    expect(seen).toEqual([{ type: 'progress', explored: 5, pruned: 2 }]);
   });
 
   it('cancel terminates the worker and rejects with a cancellation', async () => {

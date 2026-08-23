@@ -7,6 +7,7 @@ import { useRoster } from '../state/roster';
 import type { Artifact, BuildResult, OptimizeResult } from '../game/types';
 import { OptimizeCancelledError } from '../workers/optimizeClient';
 import { SLOTS } from '../game/types';
+import { genshinAdapter } from '../game/genshin/adapter';
 
 const { optimizeRun } = vi.hoisted(() => ({ optimizeRun: vi.fn() }));
 // Only the dispatch is faked: OptimizeCancelledError / isOptimizeCancelled stay
@@ -174,9 +175,8 @@ describe('App — optimise progress and cancel', () => {
     const onProgress = optimizeRun.mock.calls[0][2] as (p: {
       explored: number;
       pruned: number;
-      elapsedMs: number;
     }) => void;
-    act(() => onProgress({ explored: 1234, pruned: 99, elapsedMs: 400 }));
+    act(() => onProgress({ explored: 1234, pruned: 99 }));
     expect(screen.getByText('1,234')).toBeInTheDocument();
     expect(screen.getByText('99')).toBeInTheDocument();
   });
@@ -364,6 +364,21 @@ describe('App — roster-aware default selection', () => {
     expect(s.weaponKey).toBe('engulfing_lightning');
   });
 
+  it('never lets a roster weapon the snapshot does not carry reach the store', () => {
+    // Hydration sets only the character; `setCharacterKey` resolves the
+    // weapon through `legalWeapon`, which rejects unresolvable keys — so a
+    // roster naming a weapon this snapshot lacks can't poison the request.
+    useRoster.getState().setRoster({
+      raiden_shogun: { weaponKey: 'not_a_real_weapon', buildLevel: 90 },
+    });
+    render(<App />);
+    const s = useOptimizeRequest.getState();
+    expect(s.characterKey).toBe('raiden_shogun');
+    expect(s.weaponKey).not.toBe('not_a_real_weapon');
+    expect(genshinAdapter.weapon(s.weaponKey)).toBeTruthy();
+    expect(genshinAdapter.canEquip('raiden_shogun', s.weaponKey)).toBe(true);
+  });
+
   it('never overwrites a selection the reader already made', () => {
     useOptimizeRequest.getState().setCharacterKey('navia');
     useRoster.getState().setRoster({
@@ -371,5 +386,55 @@ describe('App — roster-aware default selection', () => {
     });
     render(<App />);
     expect(useOptimizeRequest.getState().characterKey).toBe('navia');
+  });
+});
+
+describe('App — relaxing an infeasible constraint', () => {
+  const ARTIFACTS: Artifact[] = SLOTS.map((slot) => ({
+    id: `relax-${slot}`,
+    setKey: 'EmblemOfSeveredFate',
+    slot,
+    rarity: 5,
+    level: 20,
+    mainStat: 'hp',
+    mainStatValue: 4780,
+    subStats: [],
+  }));
+
+  beforeEach(() => {
+    optimizeRun.mockReset();
+    useInventory.getState().clear();
+    useInventory.getState().addMany(ARTIFACTS);
+    useOptimizeRequest.getState().reset();
+    useRoster.getState().clear();
+    window.history.pushState({}, '', '/');
+  });
+  afterEach(() => useRoster.getState().clear());
+
+  it('lowers the ER floor and re-runs from the Results relax button', async () => {
+    // None of these pieces carry ER, so a 999% floor is unsatisfiable.
+    useOptimizeRequest.getState().setMinER('999');
+    const infeasible: OptimizeResult = {
+      status: 'infeasible',
+      explored: 0,
+      pruned: 0,
+    };
+    optimizeRun.mockReturnValue(handleFor(Promise.resolve(infeasible)));
+
+    render(<App />);
+    await act(async () => {
+      screen.getByRole('button', { name: /^optimise$/i }).click();
+    });
+    expect(optimizeRun).toHaveBeenCalledTimes(1);
+
+    const relax = screen.getByRole('button', { name: /^relax to /i });
+    await act(async () => {
+      relax.click();
+    });
+
+    // The offer is only honest if pressing it actually re-runs the search.
+    expect(optimizeRun).toHaveBeenCalledTimes(2);
+    const floor = useOptimizeRequest.getState().constraints.minStats?.er_pct;
+    expect(floor).toBeLessThan(999);
   });
 });

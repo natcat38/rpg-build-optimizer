@@ -20,6 +20,7 @@ import { META_TARGETS } from '../meta/metaTargets';
 import { gradeBuild, type Grade } from '../meta/grade';
 import { countSets } from '../optimizer/score';
 import { fourPieceAssumptions } from '../damage/setBonuses';
+import { genshinAdapter } from '../game/genshin/adapter';
 import { SlotGlyph } from './SlotGlyph';
 import { cn } from './ui/cn';
 import { Marker } from './ui/Marker';
@@ -70,21 +71,34 @@ function Fingerprint({ filled }: { filled: (s: Slot) => boolean }) {
  */
 function DrivingThis({
   build,
+  request,
   artifacts,
 }: {
   build: BuildResult;
+  request: OptimizeRequest;
   artifacts: Artifact[];
 }) {
-  const { bindingConstraints, marginalBySlot } = build.diagnostics;
-  // What the 4pc's contribution assumes (ADR-0020) — the last line of the
-  // disclosure, not a headline.
+  // Optional-chained on purpose: a shared `?b=` link is untrusted input, and
+  // `parseBuildSnapshot` is the only thing standing between it and this
+  // readout. Belt and braces — a missing field skips the row rather than
+  // throwing the whole result list away.
+  const bindingConstraints = build.diagnostics?.bindingConstraints ?? [];
+  // What the 4pc's contribution assumes, or why it isn't scored (ADR-0020) —
+  // the last lines of the disclosure, not a headline.
   const assumptions = fourPieceAssumptions(
     Object.entries(countSets(artifacts))
       .filter(([, n]) => n >= 4)
       .map(([key]) => key),
+    {
+      hasDamage: request.objective === 'avg_damage',
+      weaponType: genshinAdapter.weapon(request.weaponKey)?.type,
+    },
     formatSetName,
   );
-  const marginals = SLOTS.map((s) => ({ slot: s, value: marginalBySlot[s] }))
+  const marginals = SLOTS.map((s) => ({
+    slot: s,
+    value: build.diagnostics?.marginalBySlot?.[s],
+  }))
     .filter((m): m is { slot: Slot; value: number } => m.value != null)
     .filter((m) => Number.isFinite(m.value));
   if (
@@ -118,7 +132,7 @@ function DrivingThis({
         )}
         {marginals.length > 0 && (
           <div>
-            <p className="micro-label">Where the score comes from</p>
+            <p className="micro-label">Where the Score Comes From</p>
             <ul className="mt-1 space-y-1">
               {marginals.map((m) => (
                 <li key={m.slot} className="flex items-center gap-2">
@@ -371,7 +385,7 @@ export function BuildCard({
       {/* Rank 1 only (and the single shared build, which carries no rank): the
           same notes under every card would be five disclosures of noise. */}
       {(rank == null || rank === 1) && (
-        <DrivingThis build={build} artifacts={artifacts} />
+        <DrivingThis build={build} request={request} artifacts={artifacts} />
       )}
     </div>
   );

@@ -105,7 +105,6 @@ describe('runSearchRequest progress', () => {
     expect(seen.length).toBeGreaterThan(0);
     expect(seen[0].type).toBe('progress');
     expect(seen[0].explored + seen[0].pruned).toBeGreaterThan(0);
-    expect(seen[0].elapsedMs).toBeGreaterThanOrEqual(0);
   });
 
   it('is identical with and without an observer (the hook cannot steer the search)', () => {
@@ -136,7 +135,6 @@ describe('readSearchResponse', () => {
       type: 'progress',
       explored: 1,
       pruned: 0,
-      elapsedMs: 1,
     };
     expect(() => readSearchResponse(envelope)).toThrow(/not a final response/);
   });
