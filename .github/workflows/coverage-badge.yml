@@ -1,0 +1,33 @@
+name: Coverage badge
+
+# Publishes a shields.io endpoint JSON to the `badges` branch on pushes to main.
+# README badge: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/natcat38/rpg-build-optimizer/badges/coverage.json
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  badge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - run: npm run test:coverage
+      - name: Write and push badge JSON
+        run: |
+          PCT=$(node -e "console.log(require('./coverage/coverage-summary.json').total.lines.pct.toFixed(1))")
+          COLOR=$(node -e "const p=$PCT; console.log(p>=90?'brightgreen':p>=80?'green':p>=70?'yellow':'red')")
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git checkout --orphan badges-new
+          git rm -rf --quiet . || true
+          printf '{"schemaVersion":1,"label":"coverage","message":"%s%%","color":"%s"}\n' "$PCT" "$COLOR" > coverage.json
+          git add coverage.json
+          git commit -m "coverage badge: $PCT%"
+          git push --force origin badges-new:badges

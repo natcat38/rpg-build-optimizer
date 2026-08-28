@@ -56,6 +56,13 @@ Vite · React 19 · TypeScript (strict) · Tailwind CSS · Zustand · Web Worker
 
 An optional Claude-powered plain-English explanation of the optimised build, served through a Vercel serverless function so the API key stays server-side ([ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md)). No personal data is sent. It sits behind the `VITE_AI_ENABLED` build flag and is **off on the public demo**, because it runs against a personal Anthropic account and every click costs the maintainer money. Enable it locally per [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Non-goals
+
+- **Full rotation damage simulation** (energy, cooldowns, buff uptime) — the damage objective ranks a character's own artifacts via a closed-form target function, not a rotation sim; that's gcsim's job ([ADR-0016](docs/adr/0016-damage-engine-objective.md)).
+- **Public leaderboards or accounts** — the app is 100% client-side with no backend and nothing stored server-side; a build gallery would require introducing one ([ADR-0001](docs/adr/0001-client-side-only-architecture.md)).
+- **i18n** — all copy is curated, hand-written English content (labels, meta targets, comp archetypes); translating it is out of scope for a single-maintainer portfolio project.
+- **Multi-game support** — the speculative `GameAdapter` seam for a second game was removed as unearned complexity; `genshinAdapter` is now a concrete, Genshin-specific object ([ADR-0012](docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md)).
+
 ## Data & license
 
 Game reference data is derived at build time from [genshin-db](https://github.com/theBowja/genshin-db) and bundled as a frozen snapshot — numeric data only, no game assets ([`DATA_LICENSE`](./DATA_LICENSE)). On top of it sits a hand-curated layer transcribed from KQM sources — 52 meta build recipes, 30 comp archetypes, 18 damage profiles — re-verified each patch ([docs/runbooks/patch-refresh.md](docs/runbooks/patch-refresh.md)).

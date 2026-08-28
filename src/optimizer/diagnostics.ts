@@ -9,7 +9,15 @@ import type {
 } from '../game/types';
 import { SLOTS } from '../game/types';
 import { totals, evaluateObjective } from './score';
-import { statLabel, setRequirementLabel, SLOT_LABELS } from '../labels';
+// `../labels-core`, not `../labels`: this module runs inside the optimize
+// worker (via `search.ts`), which must not statically import the adapter —
+// see the `data.generated.json` note in `labels-core.ts` and the `setNames`
+// doc on `OptimizeContext`.
+import {
+  statLabel,
+  setRequirementLabelFrom,
+  SLOT_LABELS,
+} from '../labels-core';
 import { reachableCeiling } from './search';
 
 /** A minStat is "binding" when the build clears it by less than this fraction
@@ -28,7 +36,7 @@ export function buildDiagnostics(
   const binding: string[] = [];
   if (req.constraints.setRequirement)
     binding.push(
-      `Set requirement: ${setRequirementLabel(req.constraints.setRequirement)}`,
+      `Set requirement: ${setRequirementLabelFrom(req.constraints.setRequirement, ctx.setNames)}`,
     );
   for (const k of Object.keys(req.constraints.minStats ?? {}) as StatKey[]) {
     const need = req.constraints.minStats![k] ?? 0;

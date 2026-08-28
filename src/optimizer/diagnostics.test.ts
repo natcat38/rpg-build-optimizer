@@ -156,11 +156,34 @@ describe('binding set requirement formatting', () => {
       },
       objective: 'crit_value',
     };
-    const msg = buildDiagnostics(ctx, req, b, chosen, 1, 0)
+    // `ctx.setNames` is what a real `buildContext` call populates from the
+    // adapter (diagnostics.ts itself must stay adapter-free — see the import
+    // comment there); supply the one entry this test exercises directly.
+    const namedCtx: OptimizeContext = {
+      ...ctx,
+      setNames: { EmblemOfSeveredFate: 'Emblem of Severed Fate' },
+    };
+    const msg = buildDiagnostics(namedCtx, req, b, chosen, 1, 0)
       .bindingConstraints[0];
     expect(msg).toBe('Set requirement: 4pc Emblem of Severed Fate');
     expect(msg).not.toContain('{');
     expect(msg).not.toContain('"');
+  });
+
+  it('falls back to a spaced-out key when setNames has no entry (worker context without a match)', () => {
+    const { chosen, b } = makeChosenAndBuild(1, 1);
+    const req: OptimizeRequest = {
+      characterKey: 'c',
+      weaponKey: 'w',
+      buildLevel: 90,
+      constraints: {
+        setRequirement: { kind: '4pc', setKey: 'SomeFutureSetKey' },
+      },
+      objective: 'crit_value',
+    };
+    const msg = buildDiagnostics(ctx, req, b, chosen, 1, 0)
+      .bindingConstraints[0];
+    expect(msg).toBe('Set requirement: 4pc Some Future Set Key');
   });
 });
 

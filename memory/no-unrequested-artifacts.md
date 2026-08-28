@@ -1,7 +1,7 @@
 ---
 name: no-unrequested-artifacts
-description: "User does not want Artifacts published unless explicitly requested (global preference, 2026-08-20)"
-metadata: 
+description: 'User does not want Artifacts published unless explicitly requested (global preference, 2026-08-20)'
+metadata:
   node_type: memory
   type: feedback
   originSessionId: 99087584-9048-40ed-a7d5-80c826109456
