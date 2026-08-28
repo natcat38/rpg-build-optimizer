@@ -226,6 +226,62 @@
       }
     },
     {
+      "key": "alyosha",
+      "name": "Alyosha",
+      "element": "electro",
+      "weaponType": "polearm",
+      "baseByLevel": {
+        "1": {
+          "hp": 1002.97,
+          "atk": 22.26,
+          "def": 58.94,
+          "er_pct": 0
+        },
+        "20": {
+          "hp": 2576.63,
+          "atk": 57.19,
+          "def": 151.42,
+          "er_pct": 0
+        },
+        "40": {
+          "hp": 4981.8,
+          "atk": 110.57,
+          "def": 292.77,
+          "er_pct": 0
+        },
+        "50": {
+          "hp": 6342.63,
+          "atk": 140.77,
+          "def": 372.74,
+          "er_pct": 6.67
+        },
+        "60": {
+          "hp": 7880.92,
+          "atk": 174.91,
+          "def": 463.14,
+          "er_pct": 13.33
+        },
+        "70": {
+          "hp": 9240.75,
+          "atk": 205.09,
+          "def": 543.05,
+          "er_pct": 13.33
+        },
+        "80": {
+          "hp": 10601.58,
+          "atk": 235.29,
+          "def": 623.03,
+          "er_pct": 20
+        },
+        "90": {
+          "hp": 11962.41,
+          "atk": 265.5,
+          "def": 703,
+          "er_pct": 26.67
+        }
+      }
+    },
+    {
       "key": "amber",
       "name": "Amber",
       "element": "pyro",
@@ -4370,6 +4426,62 @@
       }
     },
     {
+      "key": "odette",
+      "name": "Odette",
+      "element": "cryo",
+      "weaponType": "sword",
+      "baseByLevel": {
+        "1": {
+          "hp": 1010.52,
+          "atk": 26.07,
+          "def": 61.27,
+          "crit_dmg": 50
+        },
+        "20": {
+          "hp": 2621.29,
+          "atk": 67.62,
+          "def": 158.92,
+          "crit_dmg": 50
+        },
+        "40": {
+          "hp": 5218.74,
+          "atk": 134.62,
+          "def": 316.4,
+          "crit_dmg": 50
+        },
+        "50": {
+          "hp": 6712.5,
+          "atk": 173.16,
+          "def": 406.97,
+          "crit_dmg": 59.6
+        },
+        "60": {
+          "hp": 8420.56,
+          "atk": 217.22,
+          "def": 510.53,
+          "crit_dmg": 69.2
+        },
+        "70": {
+          "hp": 9931.5,
+          "atk": 256.19,
+          "def": 602.13,
+          "crit_dmg": 69.2
+        },
+        "80": {
+          "hp": 11452.55,
+          "atk": 295.43,
+          "def": 694.35,
+          "crit_dmg": 78.8
+        },
+        "90": {
+          "hp": 12980.67,
+          "atk": 334.85,
+          "def": 787,
+          "crit_dmg": 88.4
+        }
+      }
+    },
+    {
       "key": "ororon",
       "name": "Ororon",
       "element": "electro",
@@ -7552,6 +7664,46 @@
       }
     },
     {
+      "key": "blade_of_atonement",
+      "name": "Blade of Atonement",
+      "type": "claymore",
+      "rarity": 4,
+      "byLevel": {
+        "1": {
+          "atk": 43.73,
+          "atk_pct": 6
+        },
+        "20": {
+          "atk": 118.57,
+          "atk_pct": 10.6
+        },
+        "40": {
+          "atk": 225.99,
+          "atk_pct": 15.45
+        },
+        "50": {
+          "atk": 293.36,
+          "atk_pct": 17.87
+        },
+        "60": {
+          "atk": 360.9,
+          "atk_pct": 20.3
+        },
+        "70": {
+          "atk": 428.69,
+          "atk_pct": 22.72
+        },
+        "80": {
+          "atk": 496.72,
+          "atk_pct": 25.14
+        },
+        "90": {
+          "atk": 564.78,
+          "atk_pct": 27.56
+        }
+      }
+    },
+    {
       "key": "bloodsoaked_ruins",
       "name": "Bloodsoaked Ruins",
       "type": "polearm",
@@ -7832,6 +7984,46 @@
       }
     },
     {
+      "key": "clash_of_kings",
+      "name": "Clash of Kings",
+      "type": "catalyst",
+      "rarity": 4,
+      "byLevel": {
+        "1": {
+          "atk": 42.4,
+          "crit_rate": 6
+        },
+        "20": {
+          "atk": 108.93,
+          "crit_rate": 10.6
+        },
+        "40": {
+          "atk": 204.83,
+          "crit_rate": 15.45
+        },
+        "50": {
+          "atk": 265.86,
+          "crit_rate": 17.87
+        },
+        "60": {
+          "atk": 326.78,
+          "crit_rate": 20.3
+        },
+        "70": {
+          "atk": 387.66,
+          "crit_rate": 22.72
+        },
+        "80": {
+          "atk": 448.68,
+          "crit_rate": 25.14
+        },
+        "90": {
+          "atk": 509.61,
+          "crit_rate": 27.56
+        }
+      }
+    },
+    {
       "key": "cloudforged",
       "name": "Cloudforged",
       "type": "bow",
@@ -7948,6 +8140,46 @@
         "90": {
           "atk": 401.29,
           "atk_pct": 35.19
+        }
+      }
+    },
+    {
+      "key": "covenant_of_frost_and_snow",
+      "name": "Covenant of Frost and Snow",
+      "type": "bow",
+      "rarity": 4,
+      "byLevel": {
+        "1": {
+          "atk": 42.4,
+          "def_pct": 11.26
+        },
+        "20": {
+          "atk": 108.93,
+          "def_pct": 19.9
+        },
+        "40": {
+          "atk": 204.83,
+          "def_pct": 28.99
+        },
+        "50": {
+          "atk": 265.86,
+          "def_pct": 33.54
+        },
+        "60": {
+          "atk": 326.78,
+          "def_pct": 38.09
+        },
+        "70": {
+          "atk": 387.66,
+          "def_pct": 42.63
+        },
+        "80": {
+          "atk": 448.68,
+          "def_pct": 47.18
+        },
+        "90": {
+          "atk": 509.61,
+          "def_pct": 51.73
         }
       }
     },
@@ -8498,6 +8730,46 @@
       }
     },
     {
+      "key": "echoes_of_the_heart",
+      "name": "Echoes of the Heart",
+      "type": "catalyst",
+      "rarity": 4,
+      "byLevel": {
+        "1": {
+          "atk": 43.73,
+          "atk_pct": 6
+        },
+        "20": {
+          "atk": 118.57,
+          "atk_pct": 10.6
+        },
+        "40": {
+          "atk": 225.99,
+          "atk_pct": 15.45
+        },
+        "50": {
+          "atk": 293.36,
+          "atk_pct": 17.87
+        },
+        "60": {
+          "atk": 360.9,
+          "atk_pct": 20.3
+        },
+        "70": {
+          "atk": 428.69,
+          "atk_pct": 22.72
+        },
+        "80": {
+          "atk": 496.72,
+          "atk_pct": 25.14
+        },
+        "90": {
+          "atk": 564.78,
+          "atk_pct": 27.56
+        }
+      }
+    },
+    {
       "key": "elegy_for_the_end",
       "name": "Elegy for the End",
       "type": "bow",
@@ -8534,6 +8806,46 @@
         "90": {
           "atk": 608.07,
           "er_pct": 55.13
+        }
+      }
+    },
+    {
+      "key": "emberwell",
+      "name": "Emberwell",
+      "type": "sword",
+      "rarity": 4,
+      "byLevel": {
+        "1": {
+          "atk": 42.4,
+          "em": 36
+        },
+        "20": {
+          "atk": 108.93,
+          "em": 63.61
+        },
+        "40": {
+          "atk": 204.83,
+          "em": 92.7
+        },
+        "50": {
+          "atk": 265.86,
+          "em": 107.24
+        },
+        "60": {
+          "atk": 326.78,
+          "em": 121.79
+        },
+        "70": {
+          "atk": 387.66,
+          "em": 136.3
+        },
+        "80": {
+          "atk": 448.68,
+          "em": 150.84
+        },
+        "90": {
+          "atk": 509.61,
+          "em": 165.38
         }
       }
     },
@@ -8734,6 +9046,46 @@
         "90": {
           "atk": 608.07,
           "hp_pct": 49.62
+        }
+      }
+    },
+    {
+      "key": "exaiphanes_blade",
+      "name": "Exaiphanes Blade",
+      "type": "sword",
+      "rarity": 5,
+      "byLevel": {
+        "1": {
+          "atk": 45.94,
+          "crit_rate": 7.2
+        },
+        "20": {
+          "atk": 121.73,
+          "crit_rate": 12.72
+        },
+        "40": {
+          "atk": 235.2,
+          "crit_rate": 18.54
+        },
+        "50": {
+          "atk": 308.42,
+          "crit_rate": 21.45
+        },
+        "60": {
+          "atk": 382.43,
+          "crit_rate": 24.36
+        },
+        "70": {
+          "atk": 456.99,
+          "crit_rate": 27.26
+        },
+        "80": {
+          "atk": 532.23,
+          "crit_rate": 30.17
+        },
+        "90": {
+          "atk": 608.07,
+          "crit_rate": 33.08
         }
       }
     },
@@ -9498,6 +9850,46 @@
       }
     },
     {
+      "key": "forged_by_the_golden_melody",
+      "name": "Forged by the Golden Melody",
+      "type": "claymore",
+      "rarity": 4,
+      "byLevel": {
+        "1": {
+          "atk": 42.4,
+          "crit_rate": 6
+        },
+        "20": {
+          "atk": 108.93,
+          "crit_rate": 10.6
+        },
+        "40": {
+          "atk": 204.83,
+          "crit_rate": 15.45
+        },
+        "50": {
+          "atk": 265.86,
+          "crit_rate": 17.87
+        },
+        "60": {
+          "atk": 326.78,
+          "crit_rate": 20.3
+        },
+        "70": {
+          "atk": 387.66,
+          "crit_rate": 22.72
+        },
+        "80": {
+          "atk": 448.68,
+          "crit_rate": 25.14
+        },
+        "90": {
+          "atk": 509.61,
+          "crit_rate": 27.56
+        }
+      }
+    },
+    {
       "key": "fractured_halo",
       "name": "Fractured Halo",
       "type": "polearm",
@@ -9614,6 +10006,46 @@
         "90": {
           "atk": 509.61,
           "atk_pct": 41.35
+        }
+      }
+    },
+    {
+      "key": "frostbreath",
+      "name": "Frostbreath",
+      "type": "polearm",
+      "rarity": 4,
+      "byLevel": {
+        "1": {
+          "atk": 42.4,
+          "er_pct": 10
+        },
+        "20": {
+          "atk": 108.93,
+          "er_pct": 17.67
+        },
+        "40": {
+          "atk": 204.83,
+          "er_pct": 25.75
+        },
+        "50": {
+          "atk": 265.86,
+          "er_pct": 29.79
+        },
+        "60": {
+          "atk": 326.78,
+          "er_pct": 33.83
+        },
+        "70": {
+          "atk": 387.66,
+          "er_pct": 37.86
+        },
+        "80": {
+          "atk": 448.68,
+          "er_pct": 41.9
+        },
+        "90": {
+          "atk": 509.61,
+          "er_pct": 45.94
         }
       }
     },
@@ -9978,6 +10410,46 @@
       }
     },
     {
+      "key": "heretic's_molten_blade",
+      "name": "Heretic's Molten Blade",
+      "type": "sword",
+      "rarity": 4,
+      "byLevel": {
+        "1": {
+          "atk": 42.4,
+          "crit_rate": 6
+        },
+        "20": {
+          "atk": 108.93,
+          "crit_rate": 10.6
+        },
+        "40": {
+          "atk": 204.83,
+          "crit_rate": 15.45
+        },
+        "50": {
+          "atk": 265.86,
+          "crit_rate": 17.87
+        },
+        "60": {
+          "atk": 326.78,
+          "crit_rate": 20.3
+        },
+        "70": {
+          "atk": 387.66,
+          "crit_rate": 22.72
+        },
+        "80": {
+          "atk": 448.68,
+          "crit_rate": 25.14
+        },
+        "90": {
+          "atk": 509.61,
+          "crit_rate": 27.56
+        }
+      }
+    },
+    {
       "key": "hunter's_bow",
       "name": "Hunter's Bow",
       "type": "bow",
@@ -10186,6 +10658,46 @@
         "90": {
           "atk": 608.07,
           "hp_pct": 49.62
+        }
+      }
+    },
+    {
+      "key": "jade_vista",
+      "name": "Jade Vista",
+      "type": "bow",
+      "rarity": 4,
+      "byLevel": {
+        "1": {
+          "atk": 42.4,
+          "crit_rate": 6
+        },
+        "20": {
+          "atk": 108.93,
+          "crit_rate": 10.6
+        },
+        "40": {
+          "atk": 204.83,
+          "crit_rate": 15.45
+        },
+        "50": {
+          "atk": 265.86,
+          "crit_rate": 17.87
+        },
+        "60": {
+          "atk": 326.78,
+          "crit_rate": 20.3
+        },
+        "70": {
+          "atk": 387.66,
+          "crit_rate": 22.72
+        },
+        "80": {
+          "atk": 448.68,
+          "crit_rate": 25.14
+        },
+        "90": {
+          "atk": 509.61,
+          "crit_rate": 27.56
         }
       }
     },
@@ -13774,6 +14286,46 @@
       }
     },
     {
+      "key": "song_of_the_vigil",
+      "name": "Song of the Vigil",
+      "type": "polearm",
+      "rarity": 4,
+      "byLevel": {
+        "1": {
+          "atk": 43.73,
+          "em": 24
+        },
+        "20": {
+          "atk": 118.57,
+          "em": 42.41
+        },
+        "40": {
+          "atk": 225.99,
+          "em": 61.8
+        },
+        "50": {
+          "atk": 293.36,
+          "em": 71.5
+        },
+        "60": {
+          "atk": 360.9,
+          "em": 81.19
+        },
+        "70": {
+          "atk": 428.69,
+          "em": 90.86
+        },
+        "80": {
+          "atk": 496.72,
+          "em": 100.56
+        },
+        "90": {
+          "atk": 564.78,
+          "em": 110.26
+        }
+      }
+    },
+    {
       "key": "splendor_of_tranquil_waters",
       "name": "Splendor of Tranquil Waters",
       "type": "sword",
@@ -15520,6 +16072,46 @@
       }
     },
     {
+      "key": "whitelake_frostfeather",
+      "name": "Whitelake Frostfeather",
+      "type": "sword",
+      "rarity": 5,
+      "byLevel": {
+        "1": {
+          "atk": 47.54,
+          "crit_rate": 4.8
+        },
+        "20": {
+          "atk": 133.29,
+          "crit_rate": 8.48
+        },
+        "40": {
+          "atk": 260.56,
+          "crit_rate": 12.36
+        },
+        "50": {
+          "atk": 341.43,
+          "crit_rate": 14.3
+        },
+        "60": {
+          "atk": 423.4,
+          "crit_rate": 16.24
+        },
+        "70": {
+          "atk": 506.22,
+          "crit_rate": 18.17
+        },
+        "80": {
+          "atk": 589.85,
+          "crit_rate": 20.11
+        },
+        "90": {
+          "atk": 674.33,
+          "crit_rate": 22.05
+        }
+      }
+    },
+    {
       "key": "white_tassel",
       "name": "White Tassel",
       "type": "polearm",
@@ -15926,6 +16518,13 @@
       }
     },
     {
+      "key": "HeartOfTheFurnace",
+      "name": "Heart of the Furnace",
+      "twoPiece": {
+        "atk_pct": 18
+      }
+    },
+    {
       "key": "HuskOfOpulentDreams",
       "name": "Husk of Opulent Dreams",
       "twoPiece": {
@@ -16029,6 +16628,13 @@
       "key": "RetracingBolide",
       "name": "Retracing Bolide",
       "twoPiece": {}
+    },
+    {
+      "key": "ScarletProof",
+      "name": "Scarlet Proof",
+      "twoPiece": {
+        "atk_pct": 18
+      }
     },
     {
       "key": "Scholar",
