@@ -12,7 +12,8 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, '**/.worktrees/**'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html'],
+      // json-summary feeds the coverage-badge workflow.
+      reporter: ['text', 'html', 'json-summary'],
     },
   },
 });

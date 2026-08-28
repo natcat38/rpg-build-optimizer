@@ -41,6 +41,8 @@ A second workflow, `.github/workflows/okf.yml`, validates the `knowledge/` bundl
 
 Write the failing test first, then the implementation. Every task should leave `npm test`, `npm run lint`, and `npm run typecheck` green before it is committed.
 
+`main` is protected: changes land via PR (no direct pushes), history stays linear (merge commits are rejected — rebase or squash), CI must pass before merging, and force-pushes/branch deletion are blocked.
+
 **Windows/CRLF gotcha:** with `core.autocrlf` on, a repo-wide `npm run format:check` fails locally on line endings while CI is green. Format only the files you changed:
 
 ```bash

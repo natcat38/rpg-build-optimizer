@@ -1,0 +1,21 @@
+name: Lighthouse
+
+# Report-only Lighthouse run against production. Not a merge gate.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1' # weekly, Monday 06:00 UTC
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      # The action's report upload reads the commit via `git rev-parse HEAD`,
+      # so it needs a checkout even though the run targets a deployed URL.
+      - uses: actions/checkout@v7
+      - uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: https://rpg-build-optimizer.vercel.app
+          uploadArtifacts: true
+          temporaryPublicStorage: true

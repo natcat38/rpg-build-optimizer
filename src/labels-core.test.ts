@@ -40,6 +40,32 @@ describe('serverless bundle boundary', () => {
   });
 });
 
+// The optimize worker (`workers/optimize.worker.ts` -> `workers/protocol.ts`
+// -> `optimizer/search.ts` -> `optimizer/diagnostics.ts`) is the same kind of
+// boundary as the serverless function above: a static import of the adapter
+// (or of `../labels`, which imports it) anywhere on that path would bundle
+// the 321 KB `data.generated.json` snapshot a second time, alongside the main
+// thread's own copy. `OptimizeContext.setNames` (populated on the main thread
+// in `optimizer/context.ts`, structured-cloned to the worker) is what lets
+// `diagnostics.ts` render set names without reaching for the adapter itself.
+const LABELS_IMPORT = /from '\.\.\/labels'/;
+
+describe('optimize worker bundle boundary', () => {
+  it('diagnostics reaches neither the adapter nor adapter-bound labels', () => {
+    const text = src('./optimizer/diagnostics.ts');
+    expect(text).not.toMatch(ADAPTER_IMPORT);
+    expect(text).not.toMatch(LABELS_IMPORT);
+  });
+
+  it('search and protocol (which diagnostics sits behind) stay adapter-free', () => {
+    for (const rel of ['./optimizer/search.ts', './workers/protocol.ts']) {
+      const text = src(rel);
+      expect(text).not.toMatch(ADAPTER_IMPORT);
+      expect(text).not.toMatch(LABELS_IMPORT);
+    }
+  });
+});
+
 describe('labels-core', () => {
   it('labels a known stat and falls back to the raw key', () => {
     expect(statLabel('crit_rate')).toBe('CRIT Rate');

@@ -20,7 +20,9 @@
     "build:data": "tsx scripts/build-dataset.ts",
     "bench": "tsx scripts/benchmark.ts",
     "docs:check": "tsx scripts/check-docs.ts",
-    "bench:check": "tsx scripts/check-bench.ts"
+    "bench:check": "tsx scripts/check-bench.ts",
+    "size:check": "tsx scripts/check-size.ts",
+    "size:update": "tsx scripts/check-size.ts --update"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",

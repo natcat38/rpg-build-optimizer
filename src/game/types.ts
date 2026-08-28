@@ -127,6 +127,15 @@ export interface OptimizeContext {
   setBonuses: Record<string, { two?: StatVec; four?: StatVec }>;
   /** damage profile + enemy assumptions; required by the `avg_damage` objective. */
   damage?: DamageContext;
+  /** dataset set key -> display name, for the worker's set-requirement
+   *  diagnostics (`setRequirementLabelFrom`). Populated once here, on the
+   *  main thread where the adapter is available, and structured-cloned to
+   *  the worker with the rest of this context — the worker itself must not
+   *  statically import the adapter (see the note on `data.generated.json`
+   *  in `labels-core.ts`), or its own bundle balloons by ~321 KB. Optional
+   *  so hand-built contexts (tests, `benchmark.ts`) don't need it; a key
+   *  it's missing just falls back to a spaced-out raw key. */
+  setNames?: Record<string, string>;
 }
 
 export interface BuildDiagnostics {

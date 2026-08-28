@@ -3,6 +3,7 @@
 Find the **best five-piece artifact build** for a Genshin Impact character from the gear you actually own — then share it with a single link. Fast, focused, and 100% client-side.
 
 [![CI](https://github.com/natcat38/rpg-build-optimizer/actions/workflows/ci.yml/badge.svg)](https://github.com/natcat38/rpg-build-optimizer/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fnatcat38%2Frpg-build-optimizer%2Fbadges%2Fcoverage.json)](https://github.com/natcat38/rpg-build-optimizer/actions/workflows/coverage-badge.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 **▶ Live demo:** https://rpg-build-optimizer.vercel.app
@@ -55,6 +56,13 @@ Vite · React 19 · TypeScript (strict) · Tailwind CSS · Zustand · Web Worker
 ## AI: Explain this build
 
 An optional Claude-powered plain-English explanation of the optimised build, served through a Vercel serverless function so the API key stays server-side ([ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md)). No personal data is sent. It sits behind the `VITE_AI_ENABLED` build flag and is **off on the public demo**, because it runs against a personal Anthropic account and every click costs the maintainer money. Enable it locally per [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Non-goals
+
+- **Full rotation damage simulation** (energy, cooldowns, buff uptime) — the damage objective ranks a character's own artifacts via a closed-form target function, not a rotation sim; that's gcsim's job ([ADR-0016](docs/adr/0016-damage-engine-objective.md)).
+- **Public leaderboards or accounts** — the app is 100% client-side with no backend and nothing stored server-side; a build gallery would require introducing one ([ADR-0001](docs/adr/0001-client-side-only-architecture.md)).
+- **i18n** — all copy is curated, hand-written English content (labels, meta targets, comp archetypes); translating it is out of scope for a single-maintainer portfolio project.
+- **Multi-game support** — the speculative `GameAdapter` seam for a second game was removed as unearned complexity; `genshinAdapter` is now a concrete, Genshin-specific object ([ADR-0012](docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md)).
 
 ## Data & license
 

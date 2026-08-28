@@ -1,7 +1,7 @@
 ---
 name: autocrlf-formatcheck-gotcha
-description: "Why `npm run format:check` fails locally on Windows but passes in CI"
-metadata: 
+description: 'Why `npm run format:check` fails locally on Windows but passes in CI'
+metadata:
   node_type: memory
   type: project
   originSessionId: 47b4390b-dd27-425a-9f25-d0790b1d71e5

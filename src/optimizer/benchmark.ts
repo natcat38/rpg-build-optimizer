@@ -11,9 +11,9 @@ import { genshinAdapter } from '../game/genshin/adapter';
 import { buildContext } from './context';
 import { searchBuilds } from './search';
 
-/** Shared "N× fewer evaluations" formatting — used by both the doc-generating
- *  benchmark script (scripts/benchmark.ts) and the browser hero demo
- *  (src/components/App.tsx) so the same concept reads consistently everywhere. */
+/** Shared "N× fewer evaluations" formatting — used by the doc-generating
+ *  benchmark script (scripts/benchmark.ts) so the concept reads consistently
+ *  wherever that script reports it. */
 export function formatReduction(r: number): string {
   if (r < 1) return `${r.toFixed(2)}×`;
   if (r < 10) return `${r.toFixed(1)}×`;

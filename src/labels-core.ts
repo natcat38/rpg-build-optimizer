@@ -13,7 +13,7 @@
  * @packageDocumentation
  */
 
-import type { Objective, Slot, StatKey } from './game/types';
+import type { Objective, SetRequirement, Slot, StatKey } from './game/types';
 
 /** Human-friendly display names for stat keys. */
 export const STAT_LABELS: Record<StatKey, string> = {
@@ -120,6 +120,43 @@ export function formatScore(n: number, digits = 1): string {
 export function formatStat(key: StatKey, value: number): string {
   const pct = isPctStat(key);
   return `${formatScore(value, pct ? 1 : 0)}${pct ? '%' : ''}`;
+}
+
+/**
+ * The adapter-free half of `labels.ts`'s `formatSetName`: given a lookup
+ * table (dataset set key -> display name) instead of reaching for the
+ * adapter directly, prefers the real display name and falls back to spacing
+ * out the PascalCase key for one the table doesn't carry. Split out so a
+ * caller that cannot statically import the adapter — the optimize worker,
+ * which would otherwise drag the 321 KB `data.generated.json` snapshot into
+ * its own bundle alongside the main thread's copy (see `OptimizeContext`'s
+ * `setNames`, populated once on the main thread and structured-cloned in) —
+ * can still render real set names instead of a raw key.
+ */
+export function formatSetNameFrom(
+  setKey: string,
+  names: Record<string, string> | undefined,
+): string {
+  const key = String(setKey ?? '');
+  return (
+    names?.[key] ??
+    key
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+      .trim()
+  );
+}
+
+/** The adapter-free half of `labels.ts`'s `setRequirementLabel` — see
+ *  {@link formatSetNameFrom} for why this takes a names table instead of
+ *  reaching for the adapter. */
+export function setRequirementLabelFrom(
+  r: SetRequirement,
+  names: Record<string, string> | undefined,
+): string {
+  if (r.kind === '2+2')
+    return `2pc ${formatSetNameFrom(r.setKeys[0], names)} + 2pc ${formatSetNameFrom(r.setKeys[1], names)}`;
+  return `${r.kind} ${formatSetNameFrom(r.setKey, names)}`;
 }
 
 /** Crit-ratio targets are stored as CRIT Rate's share of CR+CD; players read
