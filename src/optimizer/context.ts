@@ -57,15 +57,21 @@ export function buildContext(req: OptimizeRequest): OptimizeContext {
   // until someone commits to an uptime assumption. Resolved once, here, so the
   // pruning bound and the leaf score read the identical vector (ADR-0004).
   const setBonuses: OptimizeContext['setBonuses'] = {};
+  // Set display names, for the worker's set-requirement diagnostics
+  // (`setRequirementLabelFrom`) — see the `setNames` doc on `OptimizeContext`
+  // for why this is resolved here instead of the worker reaching for the
+  // adapter itself.
+  const setNames: Record<string, string> = {};
   const weaponType = genshinAdapter.weapon(req.weaponKey)?.type;
   for (const s of genshinAdapter.sets()) {
     const four: StatVec | undefined =
       fourPieceVector(s.key, { weaponType, damage, base, shares, erFloor }) ??
       s.fourPiece;
     setBonuses[s.key] = { two: s.twoPiece, four };
+    setNames[s.key] = s.name;
   }
 
-  const ctx: OptimizeContext = { base, setBonuses };
+  const ctx: OptimizeContext = { base, setBonuses, setNames };
   if (damage) ctx.damage = damage;
   return ctx;
 }
