@@ -3,6 +3,7 @@
 Find the **best five-piece artifact build** for a Genshin Impact character from the gear you actually own — then share it with a single link. Fast, focused, and 100% client-side.
 
 [![CI](https://github.com/natcat38/rpg-build-optimizer/actions/workflows/ci.yml/badge.svg)](https://github.com/natcat38/rpg-build-optimizer/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fnatcat38%2Frpg-build-optimizer%2Fbadges%2Fcoverage.json)](https://github.com/natcat38/rpg-build-optimizer/actions/workflows/coverage-badge.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 **▶ Live demo:** https://rpg-build-optimizer.vercel.app
