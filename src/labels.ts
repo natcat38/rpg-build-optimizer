@@ -12,8 +12,16 @@ import type { SetRequirement } from './game/types';
 import type { Grade } from './meta/grade';
 import type { Band } from './roster/buildScore';
 import type { Role } from './teams/types';
+import { formatSetNameFrom, setRequirementLabelFrom } from './labels-core';
 
 export * from './labels-core';
+
+// Built once from the live adapter so `formatSetName`/`setRequirementLabel`
+// below can defer to the adapter-free lookups in `labels-core.ts` (see the
+// comment on `formatSetNameFrom` for why that split exists).
+const SET_NAMES: Record<string, string> = Object.fromEntries(
+  genshinAdapter.sets().map((s) => [s.key, s.name]),
+);
 
 /** Display names for team roles — user-visible copy lives here, not next to the
  *  `Role` union it labels. */
@@ -63,19 +71,10 @@ export function bandLabel(b: Band): string {
  *  first: inventories persisted before the import guards landed can still
  *  hold a non-string setKey, and this runs during render. */
 export function formatSetName(setKey: string): string {
-  const key = String(setKey ?? '');
-  return (
-    genshinAdapter.setName(key) ??
-    key
-      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-      .trim()
-  );
+  return formatSetNameFrom(setKey, SET_NAMES);
 }
 
 /** The one rendering of a meta recipe's set requirement. */
 export function setRequirementLabel(r: SetRequirement): string {
-  if (r.kind === '2+2')
-    return `2pc ${formatSetName(r.setKeys[0])} + 2pc ${formatSetName(r.setKeys[1])}`;
-  return `${r.kind} ${formatSetName(r.setKey)}`;
+  return setRequirementLabelFrom(r, SET_NAMES);
 }

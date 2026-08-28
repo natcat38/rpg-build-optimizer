@@ -30,8 +30,10 @@ jobs:
         if: env.BENCH_BASE_SHA != ''
       - run: npm run bench:check
       - run: npm run format:check
-      - run: npm test
+      - run: npm run test:coverage
       - run: npm run build
+      # Bundle-size drift gate; refresh with `npm run size:update` when growth is intentional.
+      - run: npm run size:check
       # Generated dataset must stay in sync with its build script + genshin-db.
       - run: npm run build:data
       - run: git diff --exit-code src/game/genshin/data.generated.json

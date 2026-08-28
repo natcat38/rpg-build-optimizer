@@ -1,7 +1,7 @@
 ---
 name: subagent-spend-limit-is-5hr
-description: "How to react when subagent dispatch fails with a \"monthly spend limit\" message"
-metadata: 
+description: 'How to react when subagent dispatch fails with a "monthly spend limit" message'
+metadata:
   node_type: memory
   type: feedback
   originSessionId: 47b4390b-dd27-425a-9f25-d0790b1d71e5

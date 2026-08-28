@@ -15,6 +15,11 @@ describe('buildContext', () => {
     });
     expect(ctx.base.atk ?? 0).toBeGreaterThan(0);
     expect(Object.keys(ctx.setBonuses).length).toBeGreaterThan(0);
+    // Populated so the worker can render set-requirement diagnostics without
+    // itself importing the adapter (see `OptimizeContext.setNames`).
+    expect(ctx.setNames?.[genshinAdapter.sets()[0].key]).toBe(
+      genshinAdapter.sets()[0].name,
+    );
   });
 
   it('attaches the damage context only for the avg_damage objective', () => {
