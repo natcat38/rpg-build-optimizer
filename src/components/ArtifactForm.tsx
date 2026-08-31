@@ -153,7 +153,7 @@ export function ArtifactForm() {
         <label className="block">
           <span className="field-label">Level</span>
           <input
-            id="level-input"
+            id={`${uid}-level`}
             ref={levelRef}
             className="field"
             type="number"

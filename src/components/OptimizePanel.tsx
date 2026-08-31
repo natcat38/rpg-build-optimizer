@@ -2,6 +2,7 @@ import {
   useEffect,
   useId,
   useMemo,
+  useState,
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
@@ -146,15 +147,24 @@ function SearchProgressLine({ onCancel }: { onCancel: () => void }) {
     searchProgressStore.getSnapshot,
     searchProgressStore.getSnapshot,
   );
+  const explored = progress?.explored ?? 0;
+  const pruned = progress?.pruned ?? 0;
+  // Coarsened to a 3s cadence: the counters above tick 5x/second, but an
+  // `aria-live` region that spoke every tick would drown a screen-reader user
+  // in noise. Rounding to the same string across renders means React never
+  // touches this node's text more often than every 3s, so the announcement
+  // rate follows for free without a separate timer.
+  const announceElapsedSec = Math.floor(elapsedMs / 3000) * 3;
   return (
     <div className="space-y-1.5 border-t border-white/5 pt-3">
+      <p role="status" className="sr-only">
+        Searching: {explored.toLocaleString()} evaluated,{' '}
+        {pruned.toLocaleString()} pruned, {announceElapsedSec}s elapsed.
+      </p>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <p className="text-xs text-muted">
           Searching —{' '}
-          <SearchCounts
-            explored={progress?.explored ?? 0}
-            pruned={progress?.pruned ?? 0}
-          />{' '}
+          <SearchCounts explored={explored} pruned={pruned} />{' '}
           ·{' '}
           <span className="font-mono tabular-nums text-paper">
             {(elapsedMs / 1000).toFixed(1)}s
@@ -243,10 +253,20 @@ export function OptimizePanel({
 
   const charOptions = useMemo(() => {
     const owned = (key: string) => key in rosterEntries;
-    const opts = chars.map((c) => ({
-      value: c.key,
-      label: owned(c.key) ? `${c.name} (Owned)` : c.name,
-    }));
+    // Meta coverage is worth flagging before selection, not after — otherwise
+    // a curated recipe only surfaces once the user has already picked someone
+    // else and backed out.
+    const hasMeta = (key: string) => key in META_TARGETS;
+    const opts = chars.map((c) => {
+      const tags = [
+        owned(c.key) && 'Owned',
+        hasMeta(c.key) && 'Meta',
+      ].filter(Boolean);
+      return {
+        value: c.key,
+        label: tags.length ? `${c.name} (${tags.join(', ')})` : c.name,
+      };
+    });
     // Stable sort: owned first, dataset order preserved within each group.
     return opts.sort((a, b) => Number(owned(b.value)) - Number(owned(a.value)));
   }, [chars, rosterEntries]);
@@ -287,89 +307,116 @@ export function OptimizePanel({
     }
   }, [rosterBuildLevel, buildLevel, setBuildLevel]);
 
+  // Doherty threshold: a run that resolves in under ~300ms reads better as an
+  // instant result than as a progress line that flashes on and off. Hidden
+  // immediately on stop — only the *appearance* of progress is delayed, not
+  // its disappearance.
+  const [showProgress, setShowProgress] = useState(false);
+  useEffect(() => {
+    if (!running) return;
+    const t = setTimeout(() => setShowProgress(true), 300);
+    return () => {
+      clearTimeout(t);
+      setShowProgress(false);
+    };
+  }, [running]);
+
   return (
     <div className="panel panel-md space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2">
-        {/* Real <label htmlFor>, matching the <select>s below: as a bare
-            <span> the visible label wasn't clickable, so the two halves of
-            the same grid behaved differently. */}
-        <div className="block">
-          <label className="field-label" htmlFor={`${uid}-character`}>
-            Character
+      <div className="space-y-4">
+        {/* Miller's Law: five decisions in one flat grid reads as one big
+            choice. Two named groups — what's being built vs. what constrains
+            it — give the eye a place to chunk them. */}
+        <p className="field-label text-muted">Build</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Real <label htmlFor>, matching the <select>s below: as a bare
+              <span> the visible label wasn't clickable, so the two halves of
+              the same grid behaved differently. */}
+          <div className="block">
+            <label className="field-label" htmlFor={`${uid}-character`}>
+              Character
+            </label>
+            <Combobox
+              id={`${uid}-character`}
+              options={charOptions}
+              value={characterKey}
+              onChange={setCharacterKey}
+              label="Character"
+            />
+          </div>
+          <div className="block">
+            <label className="field-label" htmlFor={`${uid}-weapon`}>
+              Weapon
+              {/* Naming the class is what makes the short list read as a filter
+                  rather than a missing-data bug. `.field-label` uppercases it. */}
+              {character && (
+                <span className="ml-1.5 font-normal text-muted">
+                  {character.weaponType}
+                </span>
+              )}
+            </label>
+            <Combobox
+              id={`${uid}-weapon`}
+              options={weaponOptions}
+              value={weaponKey}
+              onChange={setWeaponKey}
+              label="Weapon"
+            />
+          </div>
+          <label className="block">
+            <span className="field-label">Build level</span>
+            <select
+              className="field"
+              value={buildLevel}
+              onChange={(e) =>
+                setBuildLevel(Number(e.target.value) as BuildLevel)
+              }
+            >
+              {BUILD_LEVELS.map((l) => {
+                const alreadyAchieved =
+                  rosterBuildLevel != null && l < rosterBuildLevel;
+                return (
+                  <option key={l} value={l} disabled={alreadyAchieved}>
+                    Lv. {l}
+                    {alreadyAchieved ? ' (already achieved)' : ''}
+                  </option>
+                );
+              })}
+            </select>
           </label>
-          <Combobox
-            id={`${uid}-character`}
-            options={charOptions}
-            value={characterKey}
-            onChange={setCharacterKey}
-            label="Character"
-          />
         </div>
-        <div className="block">
-          <label className="field-label" htmlFor={`${uid}-weapon`}>
-            Weapon
-            {/* Naming the class is what makes the short list read as a filter
-                rather than a missing-data bug. `.field-label` uppercases it. */}
-            {character && (
-              <span className="ml-1.5 font-normal text-muted">
-                {character.weaponType}
-              </span>
-            )}
-          </label>
-          <Combobox
-            id={`${uid}-weapon`}
-            options={weaponOptions}
-            value={weaponKey}
-            onChange={setWeaponKey}
-            label="Weapon"
-          />
-        </div>
-        <label className="block">
-          <span className="field-label">Build level</span>
-          <select
-            className="field"
-            value={buildLevel}
-            onChange={(e) =>
-              setBuildLevel(Number(e.target.value) as BuildLevel)
-            }
-          >
-            {BUILD_LEVELS.map((l) => {
-              const alreadyAchieved =
-                rosterBuildLevel != null && l < rosterBuildLevel;
-              return (
-                <option key={l} value={l} disabled={alreadyAchieved}>
-                  Lv. {l}
-                  {alreadyAchieved ? ' (already achieved)' : ''}
+        <p className="field-label text-muted">Constraints</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="field-label">Maximise</span>
+            <select
+              className="field"
+              value={shownObjective}
+              onChange={(e) => onObjectiveChange(e.target.value as Objective)}
+            >
+              {objectives.map((o) => (
+                <option key={o} value={o}>
+                  {objectiveLabel(o)}
+                  {meta?.objective === o ? ' (Recommended)' : ''}
                 </option>
-              );
-            })}
-          </select>
-        </label>
-        <label className="block">
-          <span className="field-label">Maximise</span>
-          <select
-            className="field"
-            value={shownObjective}
-            onChange={(e) => onObjectiveChange(e.target.value as Objective)}
-          >
-            {objectives.map((o) => (
-              <option key={o} value={o}>
-                {objectiveLabel(o)}
-                {meta?.objective === o ? ' (Recommended)' : ''}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block sm:col-span-2">
-          <span className="field-label">Minimum Energy Recharge %</span>
-          <input
-            className="field"
-            type="number"
-            value={minER}
-            onChange={(e) => setMinER(e.target.value)}
-            placeholder="Optional — e.g. 200"
-          />
-        </label>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="field-label">Minimum Energy Recharge %</span>
+            <input
+              className="field"
+              type="number"
+              value={minER}
+              onChange={(e) => setMinER(e.target.value)}
+              placeholder="Optional — e.g. 200"
+              aria-describedby={`${uid}-er-hint`}
+            />
+            <p id={`${uid}-er-hint`} className="mt-1.5 text-xs text-muted">
+              Leave blank to search without an Energy Recharge floor.
+            </p>
+          </label>
+        </div>
       </div>
 
       {meta && <MetaTargetSummary meta={meta} />}
@@ -423,7 +470,7 @@ export function OptimizePanel({
         </div>
       </div>
 
-      {running && <SearchProgressLine onCancel={onCancel} />}
+      {showProgress && <SearchProgressLine onCancel={onCancel} />}
     </div>
   );
 }

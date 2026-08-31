@@ -84,9 +84,11 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(14px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        // Opacity only — animating `boxShadow` forces paint on every frame,
+        // where opacity stays on the compositor.
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgb(var(--accent) / 0.5)' },
-          '50%': { boxShadow: '0 0 0 8px rgb(var(--accent) / 0)' },
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.6' },
         },
       },
       animation: {

@@ -165,7 +165,7 @@ describe('binding set requirement formatting', () => {
     };
     const msg = buildDiagnostics(namedCtx, req, b, chosen, 1, 0)
       .bindingConstraints[0];
-    expect(msg).toBe('Set requirement: 4pc Emblem of Severed Fate');
+    expect(msg).toBe('Set requirement: 4-piece Emblem of Severed Fate');
     expect(msg).not.toContain('{');
     expect(msg).not.toContain('"');
   });
@@ -183,7 +183,7 @@ describe('binding set requirement formatting', () => {
     };
     const msg = buildDiagnostics(ctx, req, b, chosen, 1, 0)
       .bindingConstraints[0];
-    expect(msg).toBe('Set requirement: 4pc Some Future Set Key');
+    expect(msg).toBe('Set requirement: 4-piece Some Future Set Key');
   });
 });
 

@@ -86,6 +86,7 @@ export function App() {
   );
   const [sharedError, setSharedError] = useState(false);
   const [optimizeError, setOptimizeError] = useState(false);
+  const [optimizeErrorDetail, setOptimizeErrorDetail] = useState('');
 
   // The hero's demo solve is independent of the user's own inventory/state and
   // reasonably cheap (~tens of ms — see heroExample.ts), so it's computed in an
@@ -210,6 +211,7 @@ export function App() {
     // run doesn't inherit the elapsed time of the one it replaced.
     searchProgressStore.start();
     setOptimizeError(false);
+    setOptimizeErrorDetail('');
     // A fresh run replaces whatever Results was showing, so the banner about
     // the shared build that couldn't be read no longer describes anything.
     setSharedError(false);
@@ -241,6 +243,7 @@ export function App() {
       console.error('Optimize failed', err);
       // The failure is announced by the assertive region below, not here.
       setOptimizeError(true);
+      setOptimizeErrorDetail(err instanceof Error ? err.message : '');
       announce('');
     } finally {
       if (runToken.current === token) {
@@ -292,10 +295,10 @@ export function App() {
   const lockedHintId = useId();
 
   return (
-    <main className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
+    <div className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
       <a
         href="#content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface-700 focus:px-4 focus:py-2 focus:text-paper"
+        className="focus-ring sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface-700 focus:px-4 focus:py-2 focus:text-paper"
       >
         Skip to Content
       </a>
@@ -316,13 +319,14 @@ export function App() {
         )}
       </header>
 
+      <main>
       {/* Shown from the first visit, not gated on a roster: a visitor who
           never imports still has two sections to move between, and the locked
           chips are how the page explains what importing unlocks. */}
       {liveIds.length >= 2 && (
         <nav
           aria-label="Steps"
-          className="sticky top-0 z-20 -mx-5 mb-6 flex snap-x scroll-px-5 gap-1 overflow-x-auto border-b border-white/5 bg-surface-800/80 px-5 py-2 backdrop-blur-md [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]"
+          className="sticky top-0 z-20 -mx-5 mb-6 flex snap-x scroll-px-5 gap-2 overflow-x-auto border-b border-white/5 bg-surface-800/80 px-5 py-2 backdrop-blur-md [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]"
         >
           {STEPS.map((s) => {
             if (!unlocked[s.id]) {
@@ -330,17 +334,20 @@ export function App() {
               // unlocks. Results isn't a step you can reach, so it simply
               // isn't there until a run produces one.
               if (!s.n) return null;
-              // A real disabled control, not a styled span: `aria-disabled` on
-              // a <span> announces nothing useful, and the hint lived in
-              // `title` — unreachable by keyboard and invisible to a screen
-              // reader. Solid muted text rather than opacity-40, which took
-              // the label below 4.5:1 against the nav.
+              // A real button, not a styled span: `aria-disabled` on a <span>
+              // announces nothing useful, and the hint lived in `title` —
+              // unreachable by keyboard and invisible to a screen reader.
+              // `aria-disabled` + an early return rather than `disabled`: a
+              // button that goes disabled while it is the active element
+              // hands focus to <body>. Solid muted text rather than
+              // opacity-40, which took the label below 4.5:1 against the nav.
               return (
                 <button
                   key={s.id}
                   type="button"
-                  disabled
+                  aria-disabled="true"
                   aria-describedby={lockedHintId}
+                  onClick={(e) => e.preventDefault()}
                   className="chip touch-target flex-none cursor-not-allowed snap-start items-center whitespace-nowrap border-white/5 text-muted"
                 >
                   <span aria-hidden="true">🔒</span>
@@ -396,14 +403,43 @@ export function App() {
         </p>
 
         {sharedError && (
-          <Callout tone="error" className="mb-8 animate-fade-up">
-            This shared build couldn’t be read — it may be from a newer version.
+          <Callout
+            tone="error"
+            className="mb-8 flex flex-wrap items-center justify-between gap-3 animate-fade-up"
+          >
+            <span>
+              This shared build couldn’t be read — it may be from a newer
+              version.
+            </span>
+            <button
+              type="button"
+              className="btn-ghost flex-none"
+              onClick={() => {
+                setSharedError(false);
+                window.history.pushState({}, '', '/');
+              }}
+            >
+              Start Fresh
+            </button>
           </Callout>
         )}
 
         {optimizeError && (
-          <Callout tone="error" className="mb-8 animate-fade-up">
-            Optimisation failed — please try again.
+          <Callout
+            tone="error"
+            className="mb-8 flex flex-wrap items-center justify-between gap-3 animate-fade-up"
+          >
+            <span>
+              Optimisation failed
+              {optimizeErrorDetail ? ` — ${optimizeErrorDetail}` : ''}.
+            </span>
+            <button
+              type="button"
+              className="btn-ghost flex-none"
+              onClick={() => void runCurrent()}
+            >
+              Retry
+            </button>
           </Callout>
         )}
 
@@ -514,12 +550,12 @@ export function App() {
                     result={result}
                     request={request}
                     artifactsById={artifactsById}
-                    onRelax={(value: number) => {
-                      // "No build meets an ER floor of N" is only actionable
+                    onRelax={(key, value) => {
+                      // "No build meets a stat floor of N" is only actionable
                       // if the page can lower it, so the offer to relax is
                       // wired to the store *and* to a fresh run — the reader
                       // shouldn't have to press Optimise again.
-                      useOptimizeRequest.getState().setMinER(String(value));
+                      useOptimizeRequest.getState().relaxMinStat(key, value);
                       void runCurrent();
                     }}
                   />
@@ -529,12 +565,13 @@ export function App() {
           )}
         </div>
       </div>
+      </main>
 
       <footer className="mt-16 border-t border-white/5 pt-6 text-center text-xs text-muted">
         Built with branch-and-bound optimization in a Web Worker · Data from{' '}
         {game.source} (patch {game.patch}) · Not affiliated with the game’s
         publisher.
       </footer>
-    </main>
+    </div>
   );
 }

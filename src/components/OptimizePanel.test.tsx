@@ -48,12 +48,17 @@ describe('OptimizePanel', () => {
     }
   });
 
-  it('shows zeroes before the first progress tick rather than nothing', () => {
+  it('shows zeroes before the first progress tick rather than nothing', async () => {
     searchProgressStore.start();
     try {
       render(<OptimizePanel onRun={vi.fn()} running onCancel={vi.fn()} />);
-      expect(screen.getAllByText('0').length).toBeGreaterThan(0);
-      expect(screen.getByText('0.0s')).toBeInTheDocument();
+      // The progress line only appears after the ~300ms min-duration guard,
+      // by which point the real clock has ticked past 0 — assert the counters
+      // (which start at zero and only move on a reported tick) instead of the
+      // elapsed clock.
+      await waitFor(() => {
+        expect(screen.getAllByText('0').length).toBeGreaterThan(0);
+      });
     } finally {
       searchProgressStore.stop();
     }
@@ -86,16 +91,19 @@ describe('OptimizePanel', () => {
   it('calls onCancel from the Cancel button', async () => {
     const onCancel = vi.fn();
     render(<OptimizePanel onRun={vi.fn()} running onCancel={onCancel} />);
-    await userEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
+    // The progress line (and its Cancel button) only appears after the
+    // ~300ms min-duration guard.
+    const cancel = await screen.findByRole('button', { name: /^cancel$/i });
+    await userEvent.click(cancel);
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
   // Cancel exists only while a run is in flight, and `onCancel` is a required
   // prop — so it is never rendered in a state where pressing it does nothing.
-  it('renders Cancel as a live, enabled button while running', () => {
+  it('renders Cancel as a live, enabled button while running', async () => {
     const onCancel = vi.fn();
     render(<OptimizePanel onRun={vi.fn()} running onCancel={onCancel} />);
-    const cancel = screen.getByRole('button', { name: /^cancel$/i });
+    const cancel = await screen.findByRole('button', { name: /^cancel$/i });
     expect(cancel).not.toBeDisabled();
     expect(cancel).not.toHaveAttribute('aria-disabled');
   });
@@ -197,7 +205,7 @@ describe('OptimizePanel meta prefill', () => {
     render(
       <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
     );
-    expect(screen.getByText(/4pc Vermillion Hereafter/i)).toBeInTheDocument();
+    expect(screen.getByText(/4-piece Vermillion Hereafter/i)).toBeInTheDocument();
     expect(screen.getByText(/ER target 120%/i)).toBeInTheDocument();
     expect(screen.getByText(/CRIT Rate 70%/i)).toBeInTheDocument();
     const sourceLinks = screen.getAllByRole('link', { name: /Source/i });
@@ -476,7 +484,7 @@ describe('OptimizePanel weapon typing', () => {
       screen.getByRole('combobox', { name: 'Character' }),
       'Nahida',
     );
-    await user.click(screen.getByText(/^Nahida$/));
+    await user.click(screen.getByText(/^Nahida(\s\(.*\))?$/));
 
     const after = useOptimizeRequest.getState();
     expect(after.characterKey).toBe('nahida');

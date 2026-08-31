@@ -48,7 +48,7 @@ export function Section({
         <div>
           <h2
             id={headingId}
-            className="font-display text-2xl font-bold tracking-tight text-paper"
+            className="font-display text-2xl font-bold tracking-tight text-paper text-pretty"
           >
             {title}
           </h2>
@@ -65,7 +65,7 @@ export function Section({
 export function ThesisHero({ game }: { game: GameDescriptor }) {
   return (
     <>
-      <h1 className="font-display text-4xl font-bold leading-tight text-paper sm:text-5xl">
+      <h1 className="font-display text-4xl font-bold leading-tight text-paper text-balance sm:text-5xl">
         RPG Build Optimizer
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
@@ -82,7 +82,7 @@ export function ThesisHero({ game }: { game: GameDescriptor }) {
 export function SolvedHero({ hero }: { hero: HeroExample }) {
   return (
     <>
-      <h1 className="font-display text-4xl font-bold leading-tight text-paper sm:text-5xl">
+      <h1 className="font-display text-4xl font-bold leading-tight text-paper text-balance sm:text-5xl">
         RPG Build Optimizer
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
@@ -117,6 +117,9 @@ export function SolvedHero({ hero }: { hero: HeroExample }) {
         Solved on load from a fixed 50-piece demo inventory — not your gear, and
         not a result you asked for.
       </p>
+      <a href="#step-load" className="btn-ghost mt-4 inline-flex">
+        Load your gear
+      </a>
     </>
   );
 }

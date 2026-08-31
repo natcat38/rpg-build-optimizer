@@ -197,7 +197,7 @@
      that goes truly `disabled` mid-click drops focus to <body>. Those buttons
      set aria-disabled and early-return instead, and still have to look off. */
   .btn-primary {
-    @apply focus-ring touch-target inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-surface-900 shadow-glow-accent transition-[transform,filter] hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:brightness-100 aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:translate-y-0 aria-disabled:hover:brightness-100;
+    @apply focus-ring touch-target inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-surface-900 shadow-glow-accent transition-[transform,opacity] hover:-translate-y-0.5 hover:opacity-90 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:opacity-40 aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:translate-y-0 aria-disabled:hover:opacity-40;
     background: linear-gradient(
       150deg,
       rgb(var(--accent-bright)),
