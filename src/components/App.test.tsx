@@ -163,15 +163,16 @@ describe('App — optimise progress and cancel', () => {
     return { result, cancel };
   }
 
-  it('shows live progress counters and a Cancel button while a run is in flight', () => {
+  it('shows live progress counters and a Cancel button while a run is in flight', async () => {
     pendingRun();
     render(<App />);
     act(() => {
       screen.getByRole('button', { name: /^optimise$/i }).click();
     });
 
+    // The progress line (and Cancel) appears after the ~300ms min-duration guard.
     expect(
-      screen.getByRole('button', { name: /^cancel$/i }),
+      await screen.findByRole('button', { name: /^cancel$/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/leaves evaluated/i)).toBeInTheDocument();
 
@@ -194,8 +195,10 @@ describe('App — optimise progress and cancel', () => {
     const optimiseBtn = screen.getByRole('button', { name: /searching/i });
     expect(optimiseBtn).toHaveAttribute('aria-busy', 'true');
 
+    // The progress line (and Cancel) appears after the ~300ms min-duration guard.
+    const cancelBtn = await screen.findByRole('button', { name: /^cancel$/i });
     await act(async () => {
-      screen.getByRole('button', { name: /^cancel$/i }).click();
+      cancelBtn.click();
       await result.catch(() => {});
     });
 
@@ -275,7 +278,8 @@ describe('App — step nav', () => {
     // mouse-only `title`.
     const locked = within(nav).getAllByRole('button');
     expect(locked).toHaveLength(3);
-    for (const chip of locked) expect(chip).toBeDisabled();
+    for (const chip of locked)
+      expect(chip).toHaveAttribute('aria-disabled', 'true');
     expect(
       within(nav).getByRole('button', { name: /roster/i }),
     ).toHaveAccessibleDescription(/unlock this step/i);
@@ -431,7 +435,7 @@ describe('App — relaxing an infeasible constraint', () => {
     });
     expect(optimizeRun).toHaveBeenCalledTimes(1);
 
-    const relax = screen.getByRole('button', { name: /^relax to /i });
+    const relax = screen.getByRole('button', { name: /^relax .* to /i });
     await act(async () => {
       relax.click();
     });

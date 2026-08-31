@@ -4,6 +4,7 @@ import type {
   Objective,
   OptimizeConstraints,
   OptimizeRequest,
+  StatKey,
 } from '../game/types';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { META_TARGETS } from '../meta/metaTargets';
@@ -30,6 +31,8 @@ export interface OptimizeRequestState {
   setObjective: (o: Objective) => void;
   /** Write the ER floor from a text input value. Empty string or NaN removes the floor. */
   setMinER: (v: string) => void;
+  /** Lower (or set) any minStats floor — used by the "Relax X to Y" recovery action. */
+  relaxMinStat: (key: StatKey, value: number) => void;
   applyPreset: (p: PresetInput) => void;
   reset: () => void;
 }
@@ -144,6 +147,16 @@ export const useOptimizeRequest = create<OptimizeRequestState>((set, get) => ({
   setWeaponKey: (weaponKey) => set({ weaponKey }),
   setBuildLevel: (buildLevel) => set({ buildLevel }),
   setObjective: (objective) => set({ objective }),
+  relaxMinStat: (key, value) => {
+    if (!Number.isFinite(value) || value < 0) return;
+    const prev = get().constraints;
+    set({
+      constraints: {
+        ...prev,
+        minStats: { ...(prev.minStats ?? {}), [key]: value },
+      },
+    });
+  },
   setMinER: (v) => {
     const num = v.trim() === '' ? NaN : Number(v);
     const prev = get().constraints;

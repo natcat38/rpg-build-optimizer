@@ -6,7 +6,7 @@ export function GapReport({ report }: { report: GapReportData }) {
     report.feasibility.length === 0 && report.shortfalls.length === 0;
   return (
     <div className="panel panel-md space-y-3">
-      <h3 className="font-display text-lg font-bold tracking-wide text-paper">
+      <h3 className="text-pretty font-display text-lg font-bold tracking-wide text-paper">
         Gap vs Meta Build
       </h3>
 

@@ -155,8 +155,8 @@ export function setRequirementLabelFrom(
   names: Record<string, string> | undefined,
 ): string {
   if (r.kind === '2+2')
-    return `2pc ${formatSetNameFrom(r.setKeys[0], names)} + 2pc ${formatSetNameFrom(r.setKeys[1], names)}`;
-  return `${r.kind} ${formatSetNameFrom(r.setKey, names)}`;
+    return `2-piece ${formatSetNameFrom(r.setKeys[0], names)} + 2-piece ${formatSetNameFrom(r.setKeys[1], names)}`;
+  return `${r.kind === '4pc' ? '4-piece' : '2-piece'} ${formatSetNameFrom(r.setKey, names)}`;
 }
 
 /** Crit-ratio targets are stored as CRIT Rate's share of CR+CD; players read

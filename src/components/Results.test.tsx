@@ -491,11 +491,16 @@ describe('Results — infeasible cause', () => {
       ),
     ).toBeInTheDocument();
 
-    // The button reports the value; the panel that owns the request applies it.
-    const relax = screen.getByRole('button', { name: /Relax to (\d+)%/ });
-    const shown = Number(/Relax to (\d+)%/.exec(relax.textContent ?? '')![1]);
+    // The button reports the key and value; the panel that owns the request
+    // applies it.
+    const relax = screen.getByRole('button', {
+      name: /Relax Energy Recharge to ([\d.]+)%/,
+    });
+    const shown = Number(
+      /Relax Energy Recharge to ([\d.]+)%/.exec(relax.textContent ?? '')![1],
+    );
     await user.click(relax);
-    expect(onRelax).toHaveBeenCalledWith(shown);
+    expect(onRelax).toHaveBeenCalledWith('er_pct', shown);
     expect(shown).toBeLessThan(500);
   });
 
@@ -564,7 +569,7 @@ describe('Results — infeasible cause', () => {
 });
 
 describe('Results — desktop comparison grid', () => {
-  it('lays the cards out two-up from lg with rank 1 spanning both columns', () => {
+  it('lays the cards out two-up from md with rank 1 spanning both columns', () => {
     const r: OptimizeResult = {
       status: 'ok',
       explored: 100,
@@ -579,10 +584,10 @@ describe('Results — desktop comparison grid', () => {
         artifactsById={circletsById}
       />,
     );
-    const grid = container.querySelector('[class~="lg:grid-cols-2"]');
+    const grid = container.querySelector('[class~="md:grid-cols-2"]');
     expect(grid).not.toBeNull();
     expect(grid).toHaveClass('grid');
-    expect(grid!.firstElementChild).toHaveClass('lg:col-span-2');
+    expect(grid!.firstElementChild).toHaveClass('md:col-span-2');
     expect(grid!.children).toHaveLength(2);
   });
 });

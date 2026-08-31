@@ -193,7 +193,12 @@ export function BuildCard({
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           {rank != null && (
-            <span className="section-badge section-badge-sm">{rank}</span>
+            <span
+              className="section-badge section-badge-sm"
+              aria-label={`Rank ${rank}`}
+            >
+              {rank}
+            </span>
           )}
           <div>
             <p className="micro-label">{objectiveLabel(request.objective)}</p>

@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from 'react';
+import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
 import { parseGOOD, parseGOODRoster } from '../import/good';
 import { fetchUidArtifacts, type UidError } from '../import/uid';
 import { mergeNew } from '../import/dedupe';
@@ -27,7 +27,7 @@ interface Notice {
 }
 
 const BAD_FILE =
-  "That file isn't a recognised inventory export. Expected a GOOD-format .json.";
+  'That file isn’t a recognised inventory export. Expected a GOOD-format .json.';
 
 /** "1 artifact" / "2 artifacts". English's regular plural is all this panel
  *  needs, and a count of one printed as "1 artifacts" reads as a bug in the
@@ -55,6 +55,22 @@ export function ImportPanel() {
   const [uid, setUid] = useState('');
   const [busy, setBusy] = useState(false);
   const [confirmingClear, setConfirmingClear] = useState(false);
+  const clearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fileInputId = useId();
+  const uidInputId = useId();
+
+  // The confirm state has no undo of its own, so it must not linger forever:
+  // an idle tab left on "Confirm Clear" is a footgun for whoever touches the
+  // button next expecting the original one-step label.
+  useEffect(() => {
+    if (!confirmingClear) return;
+    clearTimeoutRef.current = setTimeout(() => {
+      setConfirmingClear(false);
+    }, 5000);
+    return () => {
+      if (clearTimeoutRef.current) clearTimeout(clearTimeoutRef.current);
+    };
+  }, [confirmingClear]);
 
   function mergeDedupe(incoming: Artifact[], suffix = '') {
     // An import replaces the demo bag rather than merging with it. The sample
@@ -104,7 +120,10 @@ export function ImportPanel() {
     // Two-step, because this is the one control on the panel that destroys
     // work and there is no undo. `disabled` is not involved: the button stays
     // fully operable and simply means something different on the second press,
-    // with the label saying so rather than a dialog interrupting.
+    // with the label saying so rather than a dialog interrupting. A separate
+    // Cancel button and a 5s auto-reset (above) both back out of the armed
+    // state, since a bare label swap with no way out is a trap for a second
+    // accidental click.
     if (!confirmingClear) {
       setConfirmingClear(true);
       setNotice({
@@ -117,6 +136,11 @@ export function ImportPanel() {
     useInventory.getState().clear();
     useRoster.getState().clear();
     setNotice({ tone: 'info', text: 'Inventory and roster cleared.' });
+  }
+
+  function onCancelClear() {
+    setConfirmingClear(false);
+    setNotice(null);
   }
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
@@ -182,9 +206,28 @@ export function ImportPanel() {
             <span>{plural(count, 'artifact')} loaded</span>
           </span>
           {count > 0 && (
-            <button type="button" className="btn-ghost" onClick={onClear}>
-              {confirmingClear ? 'Confirm Clear' : 'Clear Inventory'}
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                className={
+                  confirmingClear
+                    ? 'btn-ghost border border-rose text-rose hover:bg-rose/10'
+                    : 'btn-ghost'
+                }
+                onClick={onClear}
+              >
+                {confirmingClear ? 'Confirm Clear' : 'Clear Inventory'}
+              </button>
+              {confirmingClear && (
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={onCancelClear}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -192,24 +235,24 @@ export function ImportPanel() {
       <div className="grid gap-5 sm:grid-cols-2">
         {/* GOOD file upload */}
         <div className="well rounded-xl p-4">
-          <label className="field-label" htmlFor="good-file">
+          <label className="field-label" htmlFor={fileInputId}>
             Upload GOOD Export
           </label>
           <p className="mb-3 text-xs text-muted">
             Your full inventory, from Genshin Optimizer or similar.
           </p>
           <input
-            id="good-file"
+            id={fileInputId}
             type="file"
             accept="application/json,.json"
             onChange={(e) => void onFile(e)}
-            className="focus-ring block w-full cursor-pointer rounded-md text-xs text-muted file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-accent/15 file:px-3 file:py-2 file:font-semibold file:text-accent-bright hover:file:bg-accent/25"
+            className="focus-ring touch-target block w-full cursor-pointer rounded-md text-xs text-muted file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-accent/15 file:px-3 file:py-2 file:font-semibold file:text-accent-bright hover:file:bg-accent/25"
           />
         </div>
 
         {/* UID import */}
         <div className="well rounded-xl p-4">
-          <label className="field-label" htmlFor="uid-input">
+          <label className="field-label" htmlFor={uidInputId}>
             Import by UID
           </label>
           <p className="mb-3 text-xs text-muted">
@@ -225,7 +268,7 @@ export function ImportPanel() {
             }}
           >
             <input
-              id="uid-input"
+              id={uidInputId}
               className="field"
               name="uid"
               value={uid}

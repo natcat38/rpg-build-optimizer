@@ -5,6 +5,7 @@ import type {
   OptimizeResult,
   OptimizeRequest,
   Slot,
+  StatKey,
 } from '../game/types';
 import { SLOTS } from '../game/types';
 import { BuildCard } from './BuildCard';
@@ -198,9 +199,9 @@ export function Results({
   result: OptimizeResult;
   request: OptimizeRequest;
   artifactsById: Record<string, Artifact>;
-  /** Lower the Energy Recharge floor to `value`. Owned by the panel that holds
+  /** Lower the `key` minStat floor to `value`. Owned by the panel that holds
    *  the request, so the relax button here stays a pure callback. */
-  onRelax: (value: number) => void;
+  onRelax: (key: StatKey, value: number) => void;
 }) {
   const liveInventory = useInventory((s) => s.artifacts);
   // Limitation: this is the *live* roster, not a snapshot of the one the run
@@ -238,19 +239,22 @@ export function Results({
   }
 
   if (result.status === 'infeasible') {
-    // Only ER has a setter to offer: it's the one floor the panel exposes.
-    const relaxTo =
-      cause?.relax?.key === 'er_pct' ? Math.floor(cause.relax.best) : null;
+    // Whichever minStat floor is provably out of reach gets the relax offer —
+    // not just Energy Recharge, which used to be the only one wired up.
+    const relax = cause?.relax;
+    const relaxTo = relax ? Math.floor(relax.best) : null;
     return (
       <Callout tone="error" role="status">
         <p className="font-semibold">No build satisfies all constraints.</p>
         <p className="mt-1 opacity-80">
-          {cause?.text ??
-            'Try relaxing the set requirement or the Energy Recharge minimum.'}
+          {cause?.text ?? 'Try relaxing the set requirement or a minimum stat.'}
         </p>
-        {relaxTo != null && (
-          <button className="btn-ghost mt-2" onClick={() => onRelax(relaxTo)}>
-            Relax to {relaxTo}%
+        {relax && relaxTo != null && (
+          <button
+            className="btn-ghost mt-2"
+            onClick={() => onRelax(relax.key, relaxTo)}
+          >
+            Relax {statLabel(relax.key)} to {formatStat(relax.key, relaxTo)}
           </button>
         )}
       </Callout>
@@ -310,15 +314,18 @@ export function Results({
       <p className="text-xs text-muted">{objectiveHint(request.objective)}</p>
       {shortList && (
         <p className="text-xs text-muted">
-          {groups.length} builds shown — near-duplicates sharing the same core
+          {groups.length} builds shown — near-duplicates sharing the same core{' '}
+          <span title="Same artifact set and main stats in every slot.">
+            (same artifact set and main stats)
+          </span>{' '}
           are filtered.
         </p>
       )}
-      {/* Two-up from lg so the podium can be compared side by side; rank 1
+      {/* Two-up from md so the podium can be compared side by side; rank 1
           keeps the full width, since it's the answer and the runners-up are
-          the alternatives to it. One column below lg — the card's own
+          the alternatives to it. One column below md — the card's own
           sm:grid-cols-2 internals need the room. */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {visible.map((g, i) => {
           const b = g.build;
           const arts = artifactsFor(b);
@@ -327,7 +334,7 @@ export function Results({
               key={i}
               className={
                 g.rank === 1
-                  ? 'animate-fade-up lg:col-span-2'
+                  ? 'animate-fade-up md:col-span-2'
                   : 'animate-fade-up'
               }
               style={{ animationDelay: `${i * 0.04}s` }}
