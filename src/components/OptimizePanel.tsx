@@ -151,15 +151,19 @@ function SearchProgressLine({ onCancel }: { onCancel: () => void }) {
   const pruned = progress?.pruned ?? 0;
   // Coarsened to a 3s cadence: the counters above tick 5x/second, but an
   // `aria-live` region that spoke every tick would drown a screen-reader user
-  // in noise. Rounding to the same string across renders means React never
-  // touches this node's text more often than every 3s, so the announcement
-  // rate follows for free without a separate timer.
+  // in noise. The whole announcement — counters included — is frozen per 3s
+  // bucket, so React only touches this node's text when the bucket rolls over.
   const announceElapsedSec = Math.floor(elapsedMs / 3000) * 3;
+  const announcement = useMemo(
+    () =>
+      `Searching: ${explored.toLocaleString()} evaluated, ${pruned.toLocaleString()} pruned, ${announceElapsedSec}s elapsed.`,
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- counters are deliberately sampled only when the 3s bucket changes
+    [announceElapsedSec],
+  );
   return (
     <div className="space-y-1.5 border-t border-white/5 pt-3">
       <p role="status" className="sr-only">
-        Searching: {explored.toLocaleString()} evaluated,{' '}
-        {pruned.toLocaleString()} pruned, {announceElapsedSec}s elapsed.
+        {announcement}
       </p>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <p className="text-xs text-muted">
