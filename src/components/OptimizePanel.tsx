@@ -163,9 +163,7 @@ function SearchProgressLine({ onCancel }: { onCancel: () => void }) {
       </p>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <p className="text-xs text-muted">
-          Searching —{' '}
-          <SearchCounts explored={explored} pruned={pruned} />{' '}
-          ·{' '}
+          Searching — <SearchCounts explored={explored} pruned={pruned} /> ·{' '}
           <span className="font-mono tabular-nums text-paper">
             {(elapsedMs / 1000).toFixed(1)}s
           </span>
@@ -258,10 +256,9 @@ export function OptimizePanel({
     // else and backed out.
     const hasMeta = (key: string) => key in META_TARGETS;
     const opts = chars.map((c) => {
-      const tags = [
-        owned(c.key) && 'Owned',
-        hasMeta(c.key) && 'Meta',
-      ].filter(Boolean);
+      const tags = [owned(c.key) && 'Owned', hasMeta(c.key) && 'Meta'].filter(
+        Boolean,
+      );
       return {
         value: c.key,
         label: tags.length ? `${c.name} (${tags.join(', ')})` : c.name,

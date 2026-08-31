@@ -48,7 +48,7 @@ export function Section({
         <div>
           <h2
             id={headingId}
-            className="font-display text-2xl font-bold tracking-tight text-paper text-pretty"
+            className="text-pretty font-display text-2xl font-bold tracking-tight text-paper"
           >
             {title}
           </h2>
@@ -65,7 +65,7 @@ export function Section({
 export function ThesisHero({ game }: { game: GameDescriptor }) {
   return (
     <>
-      <h1 className="font-display text-4xl font-bold leading-tight text-paper text-balance sm:text-5xl">
+      <h1 className="text-balance font-display text-4xl font-bold leading-tight text-paper sm:text-5xl">
         RPG Build Optimizer
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
@@ -82,7 +82,7 @@ export function ThesisHero({ game }: { game: GameDescriptor }) {
 export function SolvedHero({ hero }: { hero: HeroExample }) {
   return (
     <>
-      <h1 className="font-display text-4xl font-bold leading-tight text-paper text-balance sm:text-5xl">
+      <h1 className="text-balance font-display text-4xl font-bold leading-tight text-paper sm:text-5xl">
         RPG Build Optimizer
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">

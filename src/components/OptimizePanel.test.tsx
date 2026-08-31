@@ -205,7 +205,9 @@ describe('OptimizePanel meta prefill', () => {
     render(
       <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
     );
-    expect(screen.getByText(/4-piece Vermillion Hereafter/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/4-piece Vermillion Hereafter/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/ER target 120%/i)).toBeInTheDocument();
     expect(screen.getByText(/CRIT Rate 70%/i)).toBeInTheDocument();
     const sourceLinks = screen.getAllByRole('link', { name: /Source/i });

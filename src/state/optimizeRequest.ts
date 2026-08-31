@@ -151,7 +151,10 @@ export const useOptimizeRequest = create<OptimizeRequestState>((set, get) => ({
     if (!Number.isFinite(value) || value < 0) return;
     const prev = get().constraints;
     set({
-      constraints: { ...prev, minStats: { ...(prev.minStats ?? {}), [key]: value } },
+      constraints: {
+        ...prev,
+        minStats: { ...(prev.minStats ?? {}), [key]: value },
+      },
     });
   },
   setMinER: (v) => {

@@ -1,7 +1,7 @@
 # Web Interface Guidelines Audit
 
 Source: https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md
-Scope: index.html, src/index.css, tailwind.config.js, src/main.tsx, src/components/*.tsx, src/components/ui/*.tsx (excluding *.test.tsx)
+Scope: index.html, src/index.css, tailwind.config.js, src/main.tsx, src/components/_.tsx, src/components/ui/_.tsx (excluding *.test.tsx)
 
 Overall: this codebase is unusually disciplined about accessibility (focus-visible rings everywhere via `.focus-ring`, aria-live regions built persistent-first, aria-disabled instead of disabled to preserve focus, touch-target 44px baked into shared recipes, two-step destructive confirmation, keyboard-complete Combobox/Segmented). Findings below are the residue after that — mostly moderate/minor.
 

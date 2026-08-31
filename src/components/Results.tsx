@@ -247,8 +247,7 @@ export function Results({
       <Callout tone="error" role="status">
         <p className="font-semibold">No build satisfies all constraints.</p>
         <p className="mt-1 opacity-80">
-          {cause?.text ??
-            'Try relaxing the set requirement or a minimum stat.'}
+          {cause?.text ?? 'Try relaxing the set requirement or a minimum stat.'}
         </p>
         {relax && relaxTo != null && (
           <button

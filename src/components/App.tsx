@@ -320,251 +320,251 @@ export function App() {
       </header>
 
       <main>
-      {/* Shown from the first visit, not gated on a roster: a visitor who
+        {/* Shown from the first visit, not gated on a roster: a visitor who
           never imports still has two sections to move between, and the locked
           chips are how the page explains what importing unlocks. */}
-      {liveIds.length >= 2 && (
-        <nav
-          aria-label="Steps"
-          className="sticky top-0 z-20 -mx-5 mb-6 flex snap-x scroll-px-5 gap-2 overflow-x-auto border-b border-white/5 bg-surface-800/80 px-5 py-2 backdrop-blur-md [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]"
-        >
-          {STEPS.map((s) => {
-            if (!unlocked[s.id]) {
-              // Only the numbered steps ghost: they're what an import
-              // unlocks. Results isn't a step you can reach, so it simply
-              // isn't there until a run produces one.
-              if (!s.n) return null;
-              // A real button, not a styled span: `aria-disabled` on a <span>
-              // announces nothing useful, and the hint lived in `title` —
-              // unreachable by keyboard and invisible to a screen reader.
-              // `aria-disabled` + an early return rather than `disabled`: a
-              // button that goes disabled while it is the active element
-              // hands focus to <body>. Solid muted text rather than
-              // opacity-40, which took the label below 4.5:1 against the nav.
+        {liveIds.length >= 2 && (
+          <nav
+            aria-label="Steps"
+            className="sticky top-0 z-20 -mx-5 mb-6 flex snap-x scroll-px-5 gap-2 overflow-x-auto border-b border-white/5 bg-surface-800/80 px-5 py-2 backdrop-blur-md [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]"
+          >
+            {STEPS.map((s) => {
+              if (!unlocked[s.id]) {
+                // Only the numbered steps ghost: they're what an import
+                // unlocks. Results isn't a step you can reach, so it simply
+                // isn't there until a run produces one.
+                if (!s.n) return null;
+                // A real button, not a styled span: `aria-disabled` on a <span>
+                // announces nothing useful, and the hint lived in `title` —
+                // unreachable by keyboard and invisible to a screen reader.
+                // `aria-disabled` + an early return rather than `disabled`: a
+                // button that goes disabled while it is the active element
+                // hands focus to <body>. Solid muted text rather than
+                // opacity-40, which took the label below 4.5:1 against the nav.
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    aria-disabled="true"
+                    aria-describedby={lockedHintId}
+                    onClick={(e) => e.preventDefault()}
+                    className="chip touch-target flex-none cursor-not-allowed snap-start items-center whitespace-nowrap border-white/5 text-muted"
+                  >
+                    <span aria-hidden="true">🔒</span>
+                    <span className="font-mono">{s.n}</span>
+                    {s.label}
+                  </button>
+                );
+              }
+              const current = activeId === s.id;
               return (
-                <button
+                <a
                   key={s.id}
-                  type="button"
-                  aria-disabled="true"
-                  aria-describedby={lockedHintId}
-                  onClick={(e) => e.preventDefault()}
-                  className="chip touch-target flex-none cursor-not-allowed snap-start items-center whitespace-nowrap border-white/5 text-muted"
+                  href={`#${s.id}`}
+                  aria-current={current ? 'true' : undefined}
+                  className={cn(
+                    'chip touch-target flex-none snap-start items-center whitespace-nowrap transition-colors hover:border-accent/40 hover:text-paper',
+                    current && 'border-accent/60 bg-accent/10 text-paper',
+                  )}
                 >
-                  <span aria-hidden="true">🔒</span>
-                  <span className="font-mono">{s.n}</span>
+                  {s.n && (
+                    <span className="font-mono text-accent-bright">{s.n}</span>
+                  )}
                   {s.label}
-                </button>
+                </a>
               );
-            }
-            const current = activeId === s.id;
-            return (
-              <a
-                key={s.id}
-                href={`#${s.id}`}
-                aria-current={current ? 'true' : undefined}
-                className={cn(
-                  'chip touch-target flex-none snap-start items-center whitespace-nowrap transition-colors hover:border-accent/40 hover:text-paper',
-                  current && 'border-accent/60 bg-accent/10 text-paper',
-                )}
-              >
-                {s.n && (
-                  <span className="font-mono text-accent-bright">{s.n}</span>
-                )}
-                {s.label}
-              </a>
-            );
-          })}
-          {/* The right-edge mask fades the last chip; this spacer is what it
+            })}
+            {/* The right-edge mask fades the last chip; this spacer is what it
               fades, so chip 6 doesn't look cut off at the scroll end. */}
-          <span aria-hidden="true" className="w-3 flex-none snap-end" />
-          {/* One hint, referenced by every locked chip. */}
-          <span id={lockedHintId} className="sr-only">
-            {LOCKED_HINT}
-          </span>
-        </nav>
-      )}
+            <span aria-hidden="true" className="w-3 flex-none snap-end" />
+            {/* One hint, referenced by every locked chip. */}
+            <span id={lockedHintId} className="sr-only">
+              {LOCKED_HINT}
+            </span>
+          </nav>
+        )}
 
-      <div id="content" tabIndex={-1}>
-        {/* One persistent live region for the whole page. A region mounted in
+        <div id="content" tabIndex={-1}>
+          {/* One persistent live region for the whole page. A region mounted in
             the same commit as its text is not yet observed, so nothing is
             announced — hence this, and hence the Callouts below carry no
             role of their own. */}
-        <p className="sr-only" role="status">
-          {announcement && (
-            <span key={announcement.nonce}>{announcement.text}</span>
+          <p className="sr-only" role="status">
+            {announcement && (
+              <span key={announcement.nonce}>{announcement.text}</span>
+            )}
+          </p>
+          <p className="sr-only" role="alert">
+            {sharedError
+              ? 'This shared build couldn’t be read.'
+              : optimizeError
+                ? 'Optimisation failed.'
+                : ''}
+          </p>
+
+          {sharedError && (
+            <Callout
+              tone="error"
+              className="mb-8 flex animate-fade-up flex-wrap items-center justify-between gap-3"
+            >
+              <span>
+                This shared build couldn’t be read — it may be from a newer
+                version.
+              </span>
+              <button
+                type="button"
+                className="btn-ghost flex-none"
+                onClick={() => {
+                  setSharedError(false);
+                  window.history.pushState({}, '', '/');
+                }}
+              >
+                Start Fresh
+              </button>
+            </Callout>
           )}
-        </p>
-        <p className="sr-only" role="alert">
-          {sharedError
-            ? 'This shared build couldn’t be read.'
-            : optimizeError
-              ? 'Optimisation failed.'
-              : ''}
-        </p>
 
-        {sharedError && (
-          <Callout
-            tone="error"
-            className="mb-8 flex flex-wrap items-center justify-between gap-3 animate-fade-up"
-          >
-            <span>
-              This shared build couldn’t be read — it may be from a newer
-              version.
-            </span>
-            <button
-              type="button"
-              className="btn-ghost flex-none"
-              onClick={() => {
-                setSharedError(false);
-                window.history.pushState({}, '', '/');
-              }}
+          {optimizeError && (
+            <Callout
+              tone="error"
+              className="mb-8 flex animate-fade-up flex-wrap items-center justify-between gap-3"
             >
-              Start Fresh
-            </button>
-          </Callout>
-        )}
-
-        {optimizeError && (
-          <Callout
-            tone="error"
-            className="mb-8 flex flex-wrap items-center justify-between gap-3 animate-fade-up"
-          >
-            <span>
-              Optimisation failed
-              {optimizeErrorDetail ? ` — ${optimizeErrorDetail}` : ''}.
-            </span>
-            <button
-              type="button"
-              className="btn-ghost flex-none"
-              onClick={() => void runCurrent()}
-            >
-              Retry
-            </button>
-          </Callout>
-        )}
-
-        <div className="space-y-10">
-          {sampleMode && (
-            <div className="animate-fade-up">
-              <SampleGear onRun={runCurrent} running={running} />
-            </div>
+              <span>
+                Optimisation failed
+                {optimizeErrorDetail ? ` — ${optimizeErrorDetail}` : ''}.
+              </span>
+              <button
+                type="button"
+                className="btn-ghost flex-none"
+                onClick={() => void runCurrent()}
+              >
+                Retry
+              </button>
+            </Callout>
           )}
-          <Section
-            n={1}
-            id="step-load"
-            title="Load Your Artifacts"
-            hint="Import a full inventory, fetch from a UID, or add pieces by hand."
-            delay="0.05s"
-          >
-            <ImportPanel />
-            <Disclosure
-              className="mt-3"
-              size="md"
-              tone="flux"
-              label="Or Add One Manually"
-            >
-              <div className="mt-3">
-                <ArtifactForm />
+
+          <div className="space-y-10">
+            {sampleMode && (
+              <div className="animate-fade-up">
+                <SampleGear onRun={runCurrent} running={running} />
               </div>
-            </Disclosure>
-          </Section>
-
-          {hasRoster && (
+            )}
             <Section
-              n={2}
-              id="step-roster"
-              title="Your Roster"
-              hint="How built each owned character is, best first."
-              delay="0.08s"
+              n={1}
+              id="step-load"
+              title="Load Your Artifacts"
+              hint="Import a full inventory, fetch from a UID, or add pieces by hand."
+              delay="0.05s"
             >
-              <Suspense fallback={<PanelFallback />}>
-                <RosterView />
-              </Suspense>
+              <ImportPanel />
+              <Disclosure
+                className="mt-3"
+                size="md"
+                tone="flux"
+                label="Or Add One Manually"
+              >
+                <div className="mt-3">
+                  <ArtifactForm />
+                </div>
+              </Disclosure>
             </Section>
-          )}
 
-          {hasRoster && (
-            <Section
-              n={3}
-              id="step-teams"
-              title="Endgame Teams"
-              hint="Two Abyss halves that share no character, matched from your roster."
-              delay="0.09s"
-            >
-              <Suspense fallback={<PanelFallback />}>
-                <TeamsView />
-              </Suspense>
-            </Section>
-          )}
+            {hasRoster && (
+              <Section
+                n={2}
+                id="step-roster"
+                title="Your Roster"
+                hint="How built each owned character is, best first."
+                delay="0.08s"
+              >
+                <Suspense fallback={<PanelFallback />}>
+                  <RosterView />
+                </Suspense>
+              </Section>
+            )}
 
-          {hasRoster && (
+            {hasRoster && (
+              <Section
+                n={3}
+                id="step-teams"
+                title="Endgame Teams"
+                hint="Two Abyss halves that share no character, matched from your roster."
+                delay="0.09s"
+              >
+                <Suspense fallback={<PanelFallback />}>
+                  <TeamsView />
+                </Suspense>
+              </Section>
+            )}
+
+            {hasRoster && (
+              <Section
+                n={4}
+                id="step-plan"
+                title="Your Plan"
+                hint="An optimised build for all eight members, plus one farming list."
+                delay="0.1s"
+              >
+                <Suspense fallback={<PanelFallback />}>
+                  <PlanView />
+                </Suspense>
+              </Section>
+            )}
+
             <Section
-              n={4}
-              id="step-plan"
-              title="Your Plan"
-              hint="An optimised build for all eight members, plus one farming list."
+              n={5}
+              id="step-optimise"
+              title="Optimise"
+              hint="Choose a character, weapon, and what to maximise."
               delay="0.1s"
             >
-              <Suspense fallback={<PanelFallback />}>
-                <PlanView />
-              </Suspense>
+              <OptimizePanel
+                onRun={runCurrent}
+                running={running}
+                onCancel={cancelCurrent}
+              />
             </Section>
-          )}
 
-          <Section
-            n={5}
-            id="step-optimise"
-            title="Optimise"
-            hint="Choose a character, weapon, and what to maximise."
-            delay="0.1s"
-          >
-            <OptimizePanel
-              onRun={runCurrent}
-              running={running}
-              onCancel={cancelCurrent}
-            />
-          </Section>
-
-          {result && request && (
-            <div id="results-section" className="scroll-mt-20">
-              {/* Unnumbered on purpose: Results is what step 05 produces. */}
-              <Section title="Results" delay="0s">
-                {sharedArtifacts && <SharedBuildBanner request={request} />}
-                {/* A run in flight leaves the previous numbers on screen;
+            {result && request && (
+              <div id="results-section" className="scroll-mt-20">
+                {/* Unnumbered on purpose: Results is what step 05 produces. */}
+                <Section title="Results" delay="0s">
+                  {sharedArtifacts && <SharedBuildBanner request={request} />}
+                  {/* A run in flight leaves the previous numbers on screen;
                     dim them and mark the region busy so they aren't read as
                     the new ones. */}
-                <div
-                  aria-busy={running}
-                  className={cn(
-                    'transition-opacity',
-                    running && 'pointer-events-none opacity-40',
-                  )}
-                >
-                  <GapSection
-                    result={result}
-                    request={request}
-                    artifacts={artifacts}
-                    sharedArtifacts={sharedArtifacts}
-                  />
-                  <Results
-                    result={result}
-                    request={request}
-                    artifactsById={artifactsById}
-                    onRelax={(key, value) => {
-                      // "No build meets a stat floor of N" is only actionable
-                      // if the page can lower it, so the offer to relax is
-                      // wired to the store *and* to a fresh run — the reader
-                      // shouldn't have to press Optimise again.
-                      useOptimizeRequest.getState().relaxMinStat(key, value);
-                      void runCurrent();
-                    }}
-                  />
-                </div>
-              </Section>
-            </div>
-          )}
+                  <div
+                    aria-busy={running}
+                    className={cn(
+                      'transition-opacity',
+                      running && 'pointer-events-none opacity-40',
+                    )}
+                  >
+                    <GapSection
+                      result={result}
+                      request={request}
+                      artifacts={artifacts}
+                      sharedArtifacts={sharedArtifacts}
+                    />
+                    <Results
+                      result={result}
+                      request={request}
+                      artifactsById={artifactsById}
+                      onRelax={(key, value) => {
+                        // "No build meets a stat floor of N" is only actionable
+                        // if the page can lower it, so the offer to relax is
+                        // wired to the store *and* to a fresh run — the reader
+                        // shouldn't have to press Optimise again.
+                        useOptimizeRequest.getState().relaxMinStat(key, value);
+                        void runCurrent();
+                      }}
+                    />
+                  </div>
+                </Section>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
       </main>
 
       <footer className="mt-16 border-t border-white/5 pt-6 text-center text-xs text-muted">

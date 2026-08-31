@@ -3,7 +3,7 @@
 ## Root cause (traced, not assumed)
 
 `optimize.worker.ts` -> `protocol.ts` -> `optimizer/search.ts` -> `optimizer/diagnostics.ts`
-imported `setRequirementLabel` from `../labels` (the adapter-*having* half of
+imported `setRequirementLabel` from `../labels` (the adapter-_having_ half of
 the label module) just to render one binding-constraint string ("Set
 requirement: 4pc ..."). `labels.ts` imports `genshinAdapter`, which statically
 imports `data.generated.json` (~321 KB) — so that one import dragged the whole
@@ -29,12 +29,12 @@ with the adapter's data loading, only with this one label helper.
   over the new core functions, backed by a `SET_NAMES` map built once from
   `genshinAdapter.sets()`. No behavior change for existing (UI) callers.
 - `src/game/types.ts`: `OptimizeContext` gained an optional `setNames?:
-  Record<string, string>` field — populated once on the main thread.
+Record<string, string>` field — populated once on the main thread.
 - `src/optimizer/context.ts`: `buildContext()` now fills `setNames` in the
   same loop that already builds `setBonuses` from `genshinAdapter.sets()`.
 - `src/optimizer/diagnostics.ts`: now imports from `../labels-core` (not
   `../labels`) and calls `setRequirementLabelFrom(req.constraints.setRequirement,
-  ctx.setNames)`. This is the line that removes the worker's transitive path
+ctx.setNames)`. This is the line that removes the worker's transitive path
   to the adapter.
 
 Net effect: the worker still renders real set display names (via `ctx.setNames`,

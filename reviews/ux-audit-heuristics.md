@@ -4,12 +4,12 @@ Scope: `src/components/App.tsx`, `landing.tsx`, `ImportPanel.tsx`, `OptimizePane
 
 ## Summary (counts by severity)
 
-| Severity | Count |
-|---|---|
-| Critical | 0 |
-| Serious | 4 |
-| Moderate | 9 |
-| Minor | 6 |
+| Severity  | Count  |
+| --------- | ------ |
+| Critical  | 0      |
+| Serious   | 4      |
+| Moderate  | 9      |
+| Minor     | 6      |
 | **Total** | **19** |
 
 ## Strengths
@@ -27,7 +27,7 @@ Scope: `src/components/App.tsx`, `landing.tsx`, `ImportPanel.tsx`, `OptimizePane
 
 ### 1. Onboarding / empty states
 
-- **[minor] `landing.tsx:116-119` — Recognition over recall.** The sample hero explicitly says "not your gear, and not a result you asked for," which is good, but nothing on first paint tells a brand-new visitor *what to do next* (the three import options aren't previewed above the fold; they're one scroll away in `ImportPanel`). Fix: add a one-line CTA under the hero ("Import your gear below to get your own optimum") linking/scrolling to `#step-load`.
+- **[minor] `landing.tsx:116-119` — Recognition over recall.** The sample hero explicitly says "not your gear, and not a result you asked for," which is good, but nothing on first paint tells a brand-new visitor _what to do next_ (the three import options aren't previewed above the fold; they're one scroll away in `ImportPanel`). Fix: add a one-line CTA under the hero ("Import your gear below to get your own optimum") linking/scrolling to `#step-load`.
 - **[moderate] `ArtifactForm.tsx:183-190` — Recognition over recall / progressive disclosure.** The caveat that hand-added pieces carry no sub-stats (and therefore rank far below imported gear) is buried as body text below the form fields, easy to miss since users fill top-to-bottom and submit before reading down. Fix: move this caveat directly above/beside the "Add Artifact" submit button, or into the `Disclosure` label itself ("Or Add One Manually — no sub-stats, fills gaps only").
 
 ### 2. Feedback during long optimizer runs (Doherty threshold, cancelability)
@@ -43,7 +43,7 @@ Scope: `src/components/App.tsx`, `landing.tsx`, `ImportPanel.tsx`, `OptimizePane
 
 ### 4. Undo / reversibility
 
-- **[serious] `ImportPanel.tsx:59-72` — Error prevention (Nielsen #5), reversibility.** A GOOD-file import silently *replaces* the current inventory's sample artifacts and merges/dedupes against real ones with zero preview or confirmation step — a user who imports the wrong file (or re-imports a stale export) gets no "this will change N pieces, proceed?" gate, unlike Clear Inventory which does get a two-step confirm. Fix: at minimum, surface the diff (X added, Y already present) *before* committing rather than only in the post-hoc notice — or reuse the same confirm pattern used for Clear when the incoming file would remove/replace existing non-sample artifacts.
+- **[serious] `ImportPanel.tsx:59-72` — Error prevention (Nielsen #5), reversibility.** A GOOD-file import silently _replaces_ the current inventory's sample artifacts and merges/dedupes against real ones with zero preview or confirmation step — a user who imports the wrong file (or re-imports a stale export) gets no "this will change N pieces, proceed?" gate, unlike Clear Inventory which does get a two-step confirm. Fix: at minimum, surface the diff (X added, Y already present) _before_ committing rather than only in the post-hoc notice — or reuse the same confirm pattern used for Clear when the incoming file would remove/replace existing non-sample artifacts.
 - **[moderate] `ImportPanel.tsx:103-120` — Reversibility.** Clear Inventory's confirmation state (`confirmingClear`) has no timeout or cancel path other than clicking elsewhere — if the user's mouse slips, a second stray click anywhere on the same button executes the irreversible action with no visible warning countdown. Fix: auto-revert `confirmingClear` after ~5s of inactivity, and/or restyle the confirm state distinctly (e.g. red) rather than same-styled ghost button text swap alone.
 - Good: Optimize's own destructive-ish action (relaxing ER, `App.tsx:517-524`) is framed as an offer with an explicit button rather than an automatic mutation.
 
@@ -65,8 +65,8 @@ Scope: `src/components/App.tsx`, `landing.tsx`, `ImportPanel.tsx`, `OptimizePane
 
 ### 8. Discoverability of features (Hick's Law)
 
-- **[moderate] `App.tsx:424-433` — Discoverability.** Manual artifact entry (`ArtifactForm`) is nested inside a `Disclosure` labeled "Or Add One Manually" placed *after* the two primary import methods, which is reasonable progressive disclosure — but there's no visual cue (badge/count) showing it's a fully separate, lower-fidelity data path (see finding #1) until opened and read. This is a fine trade-off, not a serious problem, since Hick's Law is well-served by hiding a third, less-used path behind a click.
-- **[moderate] `OptimizePanel.tsx:392-410` — Discoverability.** "Use Meta Build" only appears when `meta` exists for the selected character (`META_TARGETS[characterKey]`), and there's no indication *before* picking a character whether it has a curated recipe — a user browsing the roster dropdown has no signal (e.g. a marker in `charOptions`) of which characters get this shortcut, only discovering it after selection. Fix: annotate meta-covered characters in the Combobox list (a small dot/hint similar to "(Owned)") so users can find fast-path characters without trial selection.
+- **[moderate] `App.tsx:424-433` — Discoverability.** Manual artifact entry (`ArtifactForm`) is nested inside a `Disclosure` labeled "Or Add One Manually" placed _after_ the two primary import methods, which is reasonable progressive disclosure — but there's no visual cue (badge/count) showing it's a fully separate, lower-fidelity data path (see finding #1) until opened and read. This is a fine trade-off, not a serious problem, since Hick's Law is well-served by hiding a third, less-used path behind a click.
+- **[moderate] `OptimizePanel.tsx:392-410` — Discoverability.** "Use Meta Build" only appears when `meta` exists for the selected character (`META_TARGETS[characterKey]`), and there's no indication _before_ picking a character whether it has a curated recipe — a user browsing the roster dropdown has no signal (e.g. a marker in `charOptions`) of which characters get this shortcut, only discovering it after selection. Fix: annotate meta-covered characters in the Combobox list (a small dot/hint similar to "(Owned)") so users can find fast-path characters without trial selection.
 - **[minor] `App.tsx:322-378` — Hick's Law.** The sticky step nav shows locked chips for Roster/Teams/Plan permanently until a roster import happens; for a session that never imports a GOOD file (UID-only or manual-only users), these three chips are permanently unreachable dead weight in the choice set. This is by design (explains what unlocks), but for manual-entry-only users who will never get a roster from that path, the locked chips add irreducible visual noise for the entire session. Not scored higher because the locked-hint affordance is well done.
 
 ### 9. Loading/progress affordances
@@ -86,4 +86,4 @@ Scope: `src/components/App.tsx`, `landing.tsx`, `ImportPanel.tsx`, `OptimizePane
 2. **[serious] Add a confirmation/preview step before a GOOD-file import replaces inventory** (`ImportPanel.tsx:59-72`) — currently the one truly silent, hard-to-reverse data mutation in the app; a "this will change N pieces" preview closes the gap with the far safer Clear Inventory flow.
 3. **[serious] Enlarge/space touch targets in the sticky step nav on mobile** (`App.tsx:338-368`) — a persistent, always-visible control with real mis-tap risk between adjacent locked/enabled chips deserves priority over one-off panel issues.
 4. **[serious] Add at least an optional glossary/definitions disclosure for core jargon** (CV, ER, EM, 4pc/2pc, topK) — currently a hard wall for any user outside the core expert audience; low-cost given the existing `Disclosure` component already does this pattern elsewhere.
-5. **[moderate] Give shared-link decode failures a concrete recovery action** (`App.tsx:398-402`) — a one-line "start fresh" link/button turns a dead-end error into a normal onboarding path, consistent with how `SharedBuildBanner` already offers a next action for the *successful* shared-link case.
+5. **[moderate] Give shared-link decode failures a concrete recovery action** (`App.tsx:398-402`) — a one-line "start fresh" link/button turns a dead-end error into a normal onboarding path, consistent with how `SharedBuildBanner` already offers a next action for the _successful_ shared-link case.
