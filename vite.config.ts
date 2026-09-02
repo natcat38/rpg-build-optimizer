@@ -3,6 +3,12 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    // Pin the dev server port so it doesn't collide with sibling repos
+    // checked out on the same machine. See #65.
+    port: 5199,
+    strictPort: true,
+  },
   test: {
     globals: true,
     environment: 'jsdom',
