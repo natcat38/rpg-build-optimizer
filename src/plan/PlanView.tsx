@@ -15,7 +15,11 @@ import {
 import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
 import { genshinAdapter } from '../game/genshin/adapter';
-import { rosterBuildScores } from '../roster/buildScore';
+import {
+  rosterBuildScores,
+  groupByLocation,
+  equippedGrade,
+} from '../roster/buildScore';
 import { recommendAbyss } from '../teams/recommend';
 import { archetypeName } from '../teams/comps';
 import { META_TARGETS } from '../meta/metaTargets';
@@ -50,9 +54,13 @@ function memberGrade(b: Plan['builds'][number]): Grade | null {
  *  mounted on first open and kept mounted after. */
 function SummaryRow({
   build,
+  currentGrade,
   children,
 }: {
   build: Plan['builds'][number];
+  /** What's currently equipped on this member, graded the same way — null
+   *  when there's nothing to compare (no recipe, or nothing equipped). */
+  currentGrade: Grade | null;
   children: ReactNode;
 }) {
   const name = genshinAdapter.characterName(build.characterKey);
@@ -87,7 +95,12 @@ function SummaryRow({
           ) : (
             <span className="text-xs text-muted">no build</span>
           )}
-          {grade && <GradeMarker grade={grade} />}
+          {currentGrade && (
+            <GradeMarker grade={currentGrade} subject="your current build" />
+          )}
+          {grade && (
+            <GradeMarker grade={grade} subject="the optimizer's best build" />
+          )}
           <span className="w-20 flex-none text-right text-2xs text-muted">
             {build.conflicts.length > 0
               ? `${build.conflicts.length} conflict${build.conflicts.length === 1 ? '' : 's'}`
@@ -191,6 +204,8 @@ export function PlanView({
     for (const a of artifacts) m[a.id] = a;
     return m;
   }, [artifacts]);
+
+  const equippedByChar = useMemo(() => groupByLocation(artifacts), [artifacts]);
 
   const { teams, advice } = useMemo(() => {
     const scores = rosterBuildScores(entries, artifacts);
@@ -324,7 +339,20 @@ export function PlanView({
                   {plan.builds
                     .filter((b) => members.has(b.characterKey))
                     .map((b) => (
-                      <SummaryRow key={b.characterKey} build={b}>
+                      <SummaryRow
+                        key={b.characterKey}
+                        build={b}
+                        currentGrade={
+                          entries[b.characterKey]?.weaponKey
+                            ? equippedGrade(
+                                b.characterKey,
+                                entries[b.characterKey].weaponKey as string,
+                                entries[b.characterKey]?.buildLevel ?? 90,
+                                equippedByChar[b.characterKey] ?? [],
+                              )
+                            : null
+                        }
+                      >
                         <MemberCard
                           {...b}
                           weaponKey={entries[b.characterKey]?.weaponKey ?? ''}

@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { computeBuildScore, band, bestBuiltCharacter } from './buildScore';
+import {
+  computeBuildScore,
+  band,
+  bestBuiltCharacter,
+  equippedGrade,
+} from './buildScore';
 import type { RosterEntry } from '../import/good';
-import type { Artifact, StatKey } from '../game/types';
+import type { Artifact, Slot, StatKey } from '../game/types';
 
 let n = 0;
 /** A piece contributing exactly `cr` crit rate and `cd` crit DMG. */
@@ -132,5 +137,53 @@ describe('bestBuiltCharacter', () => {
     const best = bestBuiltCharacter({ amber: { buildLevel: 90 } }, []);
     expect(best?.characterKey).toBe('amber');
     expect(best?.weaponKey).toBeUndefined();
+  });
+});
+
+describe('equippedGrade', () => {
+  /** An EM piece — nahida's curated statTargets is `{ em: 900 }`. */
+  function emPiece(slot: Slot, em: number): Artifact {
+    return {
+      id: `e${n++}`,
+      setKey: 'GildedDreams',
+      slot,
+      rarity: 5,
+      level: 20,
+      mainStat: 'em',
+      mainStatValue: em,
+      subStats: [],
+    };
+  }
+
+  it('grades a currently-equipped set the same way as the optimizer build', () => {
+    // 5 pieces well past 900 EM between them — should clear the S threshold.
+    const equipped: Artifact[] = [
+      emPiece('flower', 200),
+      emPiece('plume', 200),
+      emPiece('sands', 200),
+      emPiece('goblet', 200),
+      emPiece('circlet', 200),
+    ];
+    const grade = equippedGrade(
+      'nahida',
+      'a_thousand_floating_dreams',
+      90,
+      equipped,
+    );
+    expect(grade).toBe('S');
+  });
+
+  it('is null with nothing equipped', () => {
+    expect(
+      equippedGrade('nahida', 'a_thousand_floating_dreams', 90, []),
+    ).toBeNull();
+  });
+
+  it('is null for a character with no curated stat targets', () => {
+    expect(
+      equippedGrade('furina', 'splendor_of_tranquil_waters', 90, [
+        emPiece('flower', 200),
+      ]),
+    ).toBeNull();
   });
 });
