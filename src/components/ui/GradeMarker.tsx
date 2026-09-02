@@ -7,8 +7,17 @@ import { Marker } from './Marker';
  *  neither the name nor reachable without a mouse — so role="img" +
  *  aria-label carry the whole sentence, `title` stays the sighted reader's
  *  tooltip, and every view that shows a grade says the same thing. */
-export function GradeMarker({ grade }: { grade: Grade }) {
-  const label = `Grade ${grade} — how close this build is to endgame stat targets`;
+export function GradeMarker({
+  grade,
+  subject = 'this build',
+}: {
+  grade: Grade;
+  /** What's being graded, spliced into the aria-label — lets the same marker
+   *  read correctly for the optimizer's best build vs. what's currently
+   *  equipped, without duplicating the sentence at each call site. */
+  subject?: string;
+}) {
+  const label = `Grade ${grade} — how close ${subject} is to endgame stat targets`;
   return (
     <Marker
       tone={GRADE_TONE[grade]}

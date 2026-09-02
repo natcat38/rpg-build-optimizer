@@ -14,9 +14,16 @@
  * A missing field scores 0 for that component (an unimported talent triple is
  * indistinguishable from an unlevelled one — both mean "no evidence of work").
  */
-import type { Artifact } from '../game/types';
+import type { Artifact, BuildLevel } from '../game/types';
 import type { RosterEntry } from '../import/good';
-import { artifactContribution, objectiveValue } from '../optimizer/score';
+import {
+  artifactContribution,
+  objectiveValue,
+  totals,
+} from '../optimizer/score';
+import { buildContext } from '../optimizer/context';
+import { gradeBuild, type Grade } from '../meta/grade';
+import { META_TARGETS } from '../meta/metaTargets';
 
 export interface BuildScoreComponent {
   label: string;
@@ -112,6 +119,34 @@ export function bestBuiltCharacter(
   }
   if (bestKey === undefined) return undefined;
   return { characterKey: bestKey, weaponKey: entries[bestKey]?.weaponKey };
+}
+
+/**
+ * Grades what's *currently equipped* on a character against the same
+ * `statTargets` the optimizer's best build is graded on (issue #32) — lets
+ * the UI show "your current build: C, optimizer's best: S" side by side.
+ * `null` when there's no curated recipe to grade against or nothing is
+ * equipped, same contract as `gradeBuild` itself.
+ */
+export function equippedGrade(
+  characterKey: string,
+  weaponKey: string,
+  buildLevel: BuildLevel,
+  equipped: Artifact[],
+): Grade | null {
+  const targets = META_TARGETS[characterKey]?.statTargets;
+  if (!targets || equipped.length === 0) return null;
+  // Objective doesn't affect base stats or set bonuses for non-damage
+  // objectives, so any scalar objective is a safe stand-in here — grading
+  // doesn't optimise anything.
+  const ctx = buildContext({
+    characterKey,
+    weaponKey,
+    buildLevel,
+    constraints: {},
+    objective: 'crit_value',
+  });
+  return gradeBuild(totals(ctx, equipped), targets)?.grade ?? null;
 }
 
 /** Build-score totals for a whole roster — the shape `recommendAbyss` and the
