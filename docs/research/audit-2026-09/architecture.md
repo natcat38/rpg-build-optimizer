@@ -20,6 +20,7 @@ compound as more scoring surfaces get added.
 ## 1. Scattered concept: "how good is this?" has five parallel scoring modules
 
 **Files:**
+
 - `src/optimizer/score.ts` — `objectiveValue()`, `evaluateObjective()`, `critValue()`
 - `src/roster/buildScore.ts` — `computeBuildScore()`
 - `src/meta/grade.ts` — `gradeBuild()`
@@ -56,7 +57,7 @@ in this app" has to open four files and reconcile four numeric scales (a raw
 stat objective, a 0–100 composite, a letter grade, a tier-weighted mean) that
 share only informal naming. The **deletion test** on `pieceCritValue`: delete
 it, and the complexity doesn't vanish — it moves one line, to a direct call
-into `score.ts`. That's the signature of a module that *should* be composing
+into `score.ts`. That's the signature of a module that _should_ be composing
 with its sibling rather than restating it. There's no test asserting
 `pieceCritValue(a) === objectiveValue(artifactContribution(a), 'crit_value')`
 beyond the comment's promise; a future edit to `objectiveValue` could
@@ -66,7 +67,7 @@ silently desync the two.
 function" — CONTEXT.md's own glossary treats "Build score" (roster
 investment) and "Objective" (optimiser ranking) as legitimately distinct
 domain concepts, so collapsing them would blur real meaning. The deepening
-opportunity is narrower: give the *relationship* between these five a home —
+opportunity is narrower: give the _relationship_ between these five a home —
 e.g. a short module-level doc (or a `src/scoring/README`-style comment
 anchored in whichever file is most central) that states the hierarchy
 ("`objectiveValue` is the primitive; `buildScore`, `gradeBuild`, `teamScore`
@@ -119,7 +120,7 @@ They have since diverged. Example — Furina:
   teammates (Neuvillette, Bennett, Xingqiu, ...), each with a one-sentence
   `why`.
 - `comps.ts`'s `neuvillette-mono-hydro` archetype (line 23) structures Furina
-  as one *buffer*-role option (weight 1.0) among substitutes Yelan/Xingqiu
+  as one _buffer_-role option (weight 1.0) among substitutes Yelan/Xingqiu
   (weight 0.7) — a different role framing and different substitute set than
   `teammates.ts` implies.
 
@@ -149,10 +150,11 @@ intended endpoint; this finding is evidence the deferral has cost more than
 expected.
 
 **Benefits.** Locality: one edit updates both surfaces. Deletion test:
-deleting `teammates.ts` and deriving from `comps.ts` should *not* reintroduce
+deleting `teammates.ts` and deriving from `comps.ts` should _not_ reintroduce
 complexity elsewhere, because `comps.ts` is a strict superset of the
 information `teammates.ts` carries (role + weight + rationale vs. flat list
-+ rationale) — a good sign this was a duplicate, not two distinct needs.
+
+- rationale) — a good sign this was a duplicate, not two distinct needs.
 
 **Recommendation strength: Strong** — ADR-0017 already names this as the
 target state; this is executing a decision already made, not proposing a new
@@ -258,7 +260,7 @@ right next step before proposing a structural change.
   the codebase actually depends on.
 - `api`'s FILE-MAP purpose ("rate limiting by client IP via Upstash Redis")
   undersells ADR-0013's actual (and current-code-matching) design: a
-  **two-window** limiter — per-IP sliding window *and* a separate global
+  **two-window** limiter — per-IP sliding window _and_ a separate global
   hourly budget cap, consumed sequentially, plus an `Origin` allowlist ahead
   of both. This isn't wrong, just incomplete relative to what the amended
   ADR-0013 and `api/_ratelimit.ts` actually implement.
@@ -287,7 +289,7 @@ documentation fix, not a code change, and directly serves the
 CONTEXT.md defines **Build score** as the roster investment number
 (`roster/buildScore.ts`'s `computeBuildScore`), but `BuildResult.score`
 (the optimizer's own field name, `objectiveValue - critRatioPenalty` from
-`score.ts`) is *also* colloquially "a build's score" throughout comments and
+`score.ts`) is _also_ colloquially "a build's score" throughout comments and
 UI copy, and CONTEXT.md doesn't reserve the bare word "score" for either one
 specifically. This is the same fact as finding #1, restated from the
 glossary-fidelity angle: a reader arriving from CONTEXT.md's "Build score"
@@ -305,18 +307,18 @@ finding #1's hierarchy note lands in — e.g. explicitly stating "`score` on a
 
 Every ADR-documented constraint checked against the current code holds:
 
-| ADR | Constraint checked | Result |
-|---|---|---|
-| 0004 (amended 2026-08-21) | `objectiveContribution()` removed; single fold into `contributions`/`scalarValues`; k-th anti-clone-survivor prune threshold | Confirmed — zero occurrences of `objectiveContribution` repo-wide; `search.ts` matches the amendment exactly |
-| 0009 | `genshinAdapter.baseStats()` adds +100% ER, not the snapshot | Confirmed (`adapter.ts:191`) |
-| 0012 | No `GameAdapter` interface; no threaded `adapter` params | Confirmed — none found |
-| 0014 | `Artifact.element`; zeroing happens in `optimizeClient.ts`, not `search.ts` | Confirmed |
-| 0016 | `evaluateObjective()` is the single evaluator; vector-mode bound for `avg_damage` | Confirmed |
-| 0020 | 4pc bonuses via `setBonuses.ts`, applied in `buildContext`, `UNMODELLED_FOUR_PIECE` present | Confirmed |
-| 0017/0018 | `comps.ts` archetypes; `recommendAbyss` max-min pairing | Confirmed (data has drifted from `teammates.ts` — see finding #2 — but the *mechanism* ADR-0017/0018 describe is intact) |
-| 0019 | `composePlan` greedy allocation + farming list | Confirmed |
-| 0007 | Gap analysis Levels 1+2+light-3 | Confirmed |
-| 0010/0013 | `api/explain.ts` proxy, two-window rate limit, Origin allowlist | Confirmed |
+| ADR                       | Constraint checked                                                                                                           | Result                                                                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 0004 (amended 2026-08-21) | `objectiveContribution()` removed; single fold into `contributions`/`scalarValues`; k-th anti-clone-survivor prune threshold | Confirmed — zero occurrences of `objectiveContribution` repo-wide; `search.ts` matches the amendment exactly             |
+| 0009                      | `genshinAdapter.baseStats()` adds +100% ER, not the snapshot                                                                 | Confirmed (`adapter.ts:191`)                                                                                             |
+| 0012                      | No `GameAdapter` interface; no threaded `adapter` params                                                                     | Confirmed — none found                                                                                                   |
+| 0014                      | `Artifact.element`; zeroing happens in `optimizeClient.ts`, not `search.ts`                                                  | Confirmed                                                                                                                |
+| 0016                      | `evaluateObjective()` is the single evaluator; vector-mode bound for `avg_damage`                                            | Confirmed                                                                                                                |
+| 0020                      | 4pc bonuses via `setBonuses.ts`, applied in `buildContext`, `UNMODELLED_FOUR_PIECE` present                                  | Confirmed                                                                                                                |
+| 0017/0018                 | `comps.ts` archetypes; `recommendAbyss` max-min pairing                                                                      | Confirmed (data has drifted from `teammates.ts` — see finding #2 — but the _mechanism_ ADR-0017/0018 describe is intact) |
+| 0019                      | `composePlan` greedy allocation + farming list                                                                               | Confirmed                                                                                                                |
+| 0007                      | Gap analysis Levels 1+2+light-3                                                                                              | Confirmed                                                                                                                |
+| 0010/0013                 | `api/explain.ts` proxy, two-window rate limit, Origin allowlist                                                              | Confirmed                                                                                                                |
 
 No ADR needs updating for code drift. The one open item is ADR-0017's own
 deferred "Phase 4's Plan page is where the two converge" for
@@ -332,7 +334,7 @@ undocumented staleness.
 the only finding here where:
 
 - the target design is already decided (ADR-0017 names it explicitly),
-- the current duplication has *already* produced a real inconsistency (the
+- the current duplication has _already_ produced a real inconsistency (the
   Furina example), not just a hypothetical one, and
 - the fix shrinks the codebase (net deletion of ~700 lines of hand-curated
   content that becomes a derived view) rather than adding an abstraction —

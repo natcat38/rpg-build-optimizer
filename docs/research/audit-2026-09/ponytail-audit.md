@@ -9,7 +9,7 @@ This repo is unusually lean for its size. It already carries evidence of prior
 ponytail passes: ADR-0012 documents killing a `GameAdapter` interface for
 being YAGNI, `scripts/check-size.ts` has an inline `// ponytail:` comment
 noting a scoring heuristic instead of over-building a simulator, and most
-modules carry comments explaining *why* the simpler option was rejected
+modules carry comments explaining _why_ the simpler option was rejected
 (`safeStorage.ts`, `_ratelimit.ts`, `Drawer.tsx`). Almost every file read
 during this audit was tight, single-purpose, and already used the smallest
 mechanism that solves the stated problem (hand-rolled `cn()` instead of

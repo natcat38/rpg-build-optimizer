@@ -11,7 +11,7 @@ Scope: `src/components/**`, `src/roster/RosterView.tsx`, `App.tsx`,
 This is not a fresh AI-generated page — it's a mature, hand-documented design
 system (`docs/design-system.md`) with a named aesthetic ("instrument panel"),
 a locked accent seam, a documented tone record, and inline comments explaining
-*why* almost every non-obvious choice was made (see `SlotGlyph.tsx`'s own
+_why_ almost every non-obvious choice was made (see `SlotGlyph.tsx`'s own
 comment rejecting Unicode glyphs for exactly the reason this audit flags
 elsewhere). Most of the standard anti-slop gates already pass by construction:
 no purple gradients, no centred-everything hero, no 3-card feature grid, no
@@ -63,6 +63,7 @@ voice everywhere else.
 ### 2. Mismatched icon voice — hand-built SVG, Unicode glyphs, and OS emoji on the same page
 
 **Where:**
+
 - `src/roster/RosterView.tsx:75-88` — a real inline SVG chevron (correct)
 - `src/roster/RosterView.tsx:156` — `<span aria-hidden="true">▶</span>` (Unicode)
 - `src/components/Results.tsx:433` — `<span aria-hidden="true">▶</span>` (Unicode)
@@ -107,7 +108,7 @@ used by every numbered step — Load, Roster, Teams, Plan, Optimise):
 **Why it's a tell:** slop-test gate 54 bans any wrapper that puts an
 eyebrow/number/label element next to a heading element in the same row,
 regardless of class name — the fix is "heading directly underneath it, in the
-same column." This *is* a legitimately-ordinal sequence (steps 01–05 the user
+same column." This _is_ a legitimately-ordinal sequence (steps 01–05 the user
 actually walks through in order), which is the one case `anti-patterns.md`
 carves out for eyebrows at all — but the carve-out only exempts using a number
 in the first place, not the side-by-side layout. The current shape (small
@@ -142,7 +143,7 @@ maintainability, not a visible defect today.
 seven element hues as OKLCH triplets that reproduce the same visual colour,
 and keep them flowing through the same `rgb(var(--accent) / <alpha-value>)`
 mechanism (convert OKLCH → sRGB once, store the converted `r g b` numbers, as
-today — browsers' OKLCH support isn't the blocker here, the *authoring*
+today — browsers' OKLCH support isn't the blocker here, the _authoring_
 formula is). That turns "add a new accent tint" from freehand hex-picking
 into "same hue, walk L".
 
@@ -157,7 +158,7 @@ into "same hue, walk L".
 `fade-up`/`pulse-glow` keyframe animations in `tailwind.config.js:94-97`
 specify an explicit cubic-bezier, and it's inlined rather than named.
 
-**Why it's a tell:** `references/motion.md`'s discipline is three *named*
+**Why it's a tell:** `references/motion.md`'s discipline is three _named_
 easings (`--ease-out`/`--ease-in`/`--ease-in-out`) referenced everywhere,
 specifically so a project doesn't drift into inconsistent per-element timing
 over time. Low stakes today (every transition is short and reads fine), but
@@ -176,7 +177,7 @@ deliberate house choice — either closes the gap between "no policy" and
 via `.btn-primary` in `src/index.css:200`.
 
 **Why it's worth naming:** `anti-patterns.md` § "Shadow-glow on dark" flags a
-coloured halo shadow as a tell — but the pattern there is about *cards*
+coloured halo shadow as a tell — but the pattern there is about _cards_
 picking up an accidental glow. Here it's deliberately scoped to the one
 primary call-to-action, which is a much more restrained, defensible use (a
 lit instrument-panel button glowing is on-theme). Flagging only so a future
@@ -205,7 +206,7 @@ it's dead weight that `docs/design-system.md`'s "shadows: `panel`, `popover`,
 **1 critical · 3 major · 3 minor**
 
 **Verdict — close, fix the minors** (and the one critical). The structural
-bones are sound and mostly *not* AI-generated-looking: this audit found no
+bones are sound and mostly _not_ AI-generated-looking: this audit found no
 purple gradients, no centred hero, no 3-card feature grid, no card-in-card, no
 fabricated metrics, no `z-index: 9999`, no pure black/white, and a real,
 documented accent-and-tone system. The findings above are narrow and

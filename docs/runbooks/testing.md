@@ -15,14 +15,14 @@ Node ≥ 22 (`engines.node` in `package.json`), dependencies installed
 
 ## Everyday commands
 
-| Command | What it does | When to use it |
-|---|---|---|
-| `npm test` | Runs the full Vitest suite once (jsdom environment). | Before committing; what CI's `test` step runs. |
-| `npm run test:watch` | Vitest in watch mode, reruns on file save. | While writing or fixing a test. |
-| `npm run test:coverage` | Full suite with a coverage report (`coverage/coverage-summary.json` + HTML in `coverage/`). | Before touching a module with low coverage, or when asked "is X tested." |
-| `npm run typecheck` | `tsc -b` (strict, project references) plus separate checks for `tsconfig.api.json` and `tsconfig.scripts.json`. | Catches type errors `npm test` won't — the API (`api/`) and tooling (`scripts/`) projects aren't compiled by the app build. |
-| `npm run lint` | ESLint over the whole repo. | Same cadence as typecheck. |
-| `npm run docs:check` | ADR numbering/contiguity, dead internal links, knowledge-bundle freshness (`scripts/check-docs.ts`). | After editing anything in `docs/adr/`, `CONTEXT.md`, or `knowledge/`. |
+| Command                 | What it does                                                                                                    | When to use it                                                                                                              |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `npm test`              | Runs the full Vitest suite once (jsdom environment).                                                            | Before committing; what CI's `test` step runs.                                                                              |
+| `npm run test:watch`    | Vitest in watch mode, reruns on file save.                                                                      | While writing or fixing a test.                                                                                             |
+| `npm run test:coverage` | Full suite with a coverage report (`coverage/coverage-summary.json` + HTML in `coverage/`).                     | Before touching a module with low coverage, or when asked "is X tested."                                                    |
+| `npm run typecheck`     | `tsc -b` (strict, project references) plus separate checks for `tsconfig.api.json` and `tsconfig.scripts.json`. | Catches type errors `npm test` won't — the API (`api/`) and tooling (`scripts/`) projects aren't compiled by the app build. |
+| `npm run lint`          | ESLint over the whole repo.                                                                                     | Same cadence as typecheck.                                                                                                  |
+| `npm run docs:check`    | ADR numbering/contiguity, dead internal links, knowledge-bundle freshness (`scripts/check-docs.ts`).            | After editing anything in `docs/adr/`, `CONTEXT.md`, or `knowledge/`.                                                       |
 
 Run `npm test`, `npm run lint`, and `npm run typecheck` before every commit —
 this is the project-wide workflow rule in `CONTRIBUTING.md`, not specific to
@@ -51,9 +51,9 @@ they never discard a branch the oracle would have kept.
 
 ## The benchmark and `bench:check`
 
-| Command | What it does |
-|---|---|
-| `npm run bench` | Regenerates `docs/speed-report.md` by timing the optimiser (`scripts/benchmark.ts`) against realistic and worst-case inventories. |
+| Command               | What it does                                                                                                                                                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run bench`       | Regenerates `docs/speed-report.md` by timing the optimiser (`scripts/benchmark.ts`) against realistic and worst-case inventories.                                                                                                 |
 | `npm run bench:check` | `scripts/check-bench.ts` — fails if `src/optimizer/search.ts`, `score.ts`, `benchmark.ts`, `context.ts`, `src/damage/setBonuses.ts`, or `src/damage/profiles.ts` changed since the base commit but `docs/speed-report.md` didn't. |
 
 `bench:check` reads its base commit from `BENCH_BASE_SHA` (set by CI to the
@@ -78,7 +78,7 @@ edge cases, `meta/gap.ts`'s 2pc branches, `invest/advise.ts`'s
 `test.coverage` block has no `thresholds`, so a coverage regression is only
 visible in the report, never a red CI run (tracked as tech-debt TD-6 in
 `docs/research/audit-2026-09/tech-debt.md`). Until that threshold exists,
-treat a coverage *drop* on files you touch as a signal to add tests anyway,
+treat a coverage _drop_ on files you touch as a signal to add tests anyway,
 not just a number to note.
 
 The coverage badge in `README.md` is regenerated by
@@ -87,14 +87,14 @@ automation, not something to run locally.
 
 ## Where to look when a check fails
 
-| Failure | Likely cause | Where to look |
-|---|---|---|
-| `npm test` fails on `search.test.ts` | Optimiser no longer matches brute force | `src/optimizer/search.ts`, `score.ts` — treat as a correctness bug, not a test bug |
-| `npm test` fails elsewhere | A behavior change without a matching test update | The failing test's source file; check whether the change was intentional |
-| `npm run typecheck` fails only on the API or scripts project | A change under `api/` or `scripts/` broke a type the app build doesn't check | `tsconfig.api.json` / `tsconfig.scripts.json` scopes |
-| `npm run docs:check` fails | ADR numbering gap, a dead relative link in `CONTEXT.md`/an ADR, or a stale `knowledge/` bundle entry | The script's own error message names the file and line |
-| CI's `bench:check` fails but local `npm test` is green | `docs/speed-report.md` wasn't regenerated for a change to the files it gates | Run `npm run bench` (see above) and commit the result |
-| `format:check` is green in CI but fails locally | Windows/CRLF — `core.autocrlf` reformats line endings repo-wide | Format only the files you changed: `npx prettier --write path/to/file` (per `CONTRIBUTING.md`) |
+| Failure                                                      | Likely cause                                                                                         | Where to look                                                                                  |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `npm test` fails on `search.test.ts`                         | Optimiser no longer matches brute force                                                              | `src/optimizer/search.ts`, `score.ts` — treat as a correctness bug, not a test bug             |
+| `npm test` fails elsewhere                                   | A behavior change without a matching test update                                                     | The failing test's source file; check whether the change was intentional                       |
+| `npm run typecheck` fails only on the API or scripts project | A change under `api/` or `scripts/` broke a type the app build doesn't check                         | `tsconfig.api.json` / `tsconfig.scripts.json` scopes                                           |
+| `npm run docs:check` fails                                   | ADR numbering gap, a dead relative link in `CONTEXT.md`/an ADR, or a stale `knowledge/` bundle entry | The script's own error message names the file and line                                         |
+| CI's `bench:check` fails but local `npm test` is green       | `docs/speed-report.md` wasn't regenerated for a change to the files it gates                         | Run `npm run bench` (see above) and commit the result                                          |
+| `format:check` is green in CI but fails locally              | Windows/CRLF — `core.autocrlf` reformats line endings repo-wide                                      | Format only the files you changed: `npx prettier --write path/to/file` (per `CONTRIBUTING.md`) |
 
 ## Adding new tests
 

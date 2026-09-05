@@ -40,7 +40,7 @@ files pass cleanly.
 ## src/components/OptimizePanel.tsx
 
 - `src/components/OptimizePanel.tsx:408-419` — Minimum ER `<input
-  type="number">` has no `name` attribute. **Severity: low.** Fix: add
+type="number">` has no `name` attribute. **Severity: low.** Fix: add
   `name="minEnergyRecharge"`.
 - `src/components/OptimizePanel.tsx:413` and
   `src/components/ImportPanel.tsx:276` — Placeholders showing example values
@@ -70,7 +70,7 @@ files pass cleanly.
   data, character names, and copy are all English), so this is a latent
   i18n gap rather than an active bug. Fix if/when locale support is ever
   added: swap `toFixed` for `Intl.NumberFormat(locale, { minimumFractionDigits,
-  maximumFractionDigits })`.
+maximumFractionDigits })`.
 
 ## Navigation & State (cross-cutting, informational)
 
@@ -110,7 +110,7 @@ files pass cleanly.
   scroll-into-view, and mitigates its 235-option list with
   `content-visibility: auto` (the guideline's own suggested alternative to
   virtualization) rather than a virtualizer. `Drawer` sets `overscroll-behavior:
-  contain` and safe-area padding; `SourceLink` bakes in the new-tab
+contain` and safe-area padding; `SourceLink` bakes in the new-tab
   screen-reader warning at every call site. Clean.
 - `src/plan/PlanView.tsx`, `src/roster/CharacterDetail.tsx` (aside from the
   note above), `src/teams/TeamsView.tsx` — clean.

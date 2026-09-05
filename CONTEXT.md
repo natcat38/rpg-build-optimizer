@@ -73,13 +73,13 @@ CONTEXT.md's own vocabulary and the code both use "score"/"grade" for five
 different, non-interchangeable numbers. When writing an issue, test name, or
 comment, name the specific one rather than the bare word "score":
 
-| Term | Function | File | Scale | Answers |
-|---|---|---|---|---|
-| **Objective** value (`BuildResult.score`) | `objectiveValue()` / `evaluateObjective()` | `src/optimizer/score.ts` | Stat-dependent (raw stat, crit value, or avg damage) | "How good is this specific 5-piece build, by the objective I chose?" |
-| **Build score** | `computeBuildScore()` | `src/roster/buildScore.ts` | 0–100 | "How invested is this roster character overall (level/talents/weapon/artifacts)?" |
-| **Grade** | `gradeBuild()` | `src/meta/grade.ts` | Letter S–D | "How close is this build to the meta target's stat floors?" |
-| **Team score** | `teamScore()` | `src/teams/recommend.ts` | Tier-weighted mean of Build scores | "How strong is this instantiated team, for ranking candidate pairings?" |
-| **Investment advice ranking** | consumes `teamScore`'s `bestPossibleScore` | `src/invest/advise.ts` | Same scale as Team score | "Which pull/craft unlocks the most Team-score points?" |
+| Term                                      | Function                                   | File                       | Scale                                                | Answers                                                                           |
+| ----------------------------------------- | ------------------------------------------ | -------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **Objective** value (`BuildResult.score`) | `objectiveValue()` / `evaluateObjective()` | `src/optimizer/score.ts`   | Stat-dependent (raw stat, crit value, or avg damage) | "How good is this specific 5-piece build, by the objective I chose?"              |
+| **Build score**                           | `computeBuildScore()`                      | `src/roster/buildScore.ts` | 0–100                                                | "How invested is this roster character overall (level/talents/weapon/artifacts)?" |
+| **Grade**                                 | `gradeBuild()`                             | `src/meta/grade.ts`        | Letter S–D                                           | "How close is this build to the meta target's stat floors?"                       |
+| **Team score**                            | `teamScore()`                              | `src/teams/recommend.ts`   | Tier-weighted mean of Build scores                   | "How strong is this instantiated team, for ranking candidate pairings?"           |
+| **Investment advice ranking**             | consumes `teamScore`'s `bestPossibleScore` | `src/invest/advise.ts`     | Same scale as Team score                             | "Which pull/craft unlocks the most Team-score points?"                            |
 
 `objectiveValue` is the primitive of this hierarchy — `Build score` is a
 separate, independently-defined composite (not built from `objectiveValue`),
