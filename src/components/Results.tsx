@@ -251,6 +251,7 @@ export function Results({
         </p>
         {relax && relaxTo != null && (
           <button
+            type="button"
             className="btn-ghost mt-2"
             onClick={() => onRelax(relax.key, relaxTo)}
           >
@@ -429,7 +430,11 @@ export function Results({
       {/* Same reveal as the roster list: the podium is what the reader came
           for, and ten full cards pushed everything below the fold. */}
       {groups.length > COLLAPSED_GROUPS && !showAll && (
-        <button className="btn-ghost w-full" onClick={() => setShowAll(true)}>
+        <button
+          type="button"
+          className="btn-ghost w-full"
+          onClick={() => setShowAll(true)}
+        >
           <span aria-hidden="true">▶</span> Show All {groups.length} Builds
         </button>
       )}

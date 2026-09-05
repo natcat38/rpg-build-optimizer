@@ -67,7 +67,6 @@ export default {
         jade: '#6fd39a',
       },
       boxShadow: {
-        glow: '0 0 0 1px rgb(var(--accent) / 0.15), 0 18px 50px -20px rgba(0,0,0,0.8)',
         'glow-accent':
           '0 8px 30px -8px rgb(var(--accent) / 0.45), inset 0 1px 0 rgba(255,255,255,0.2)',
         panel: '0 24px 70px -30px rgba(0,0,0,0.9)',

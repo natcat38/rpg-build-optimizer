@@ -157,6 +157,7 @@ export function ArtifactForm() {
             ref={levelRef}
             className="field"
             type="number"
+            name="level"
             min={0}
             max={20}
             value={level}
