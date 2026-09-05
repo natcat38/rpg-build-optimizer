@@ -11,6 +11,7 @@ import { SLOTS } from '../game/types';
 import { BuildCard } from './BuildCard';
 import { encodeBuild } from '../share/url';
 import { Callout } from './ui/Callout';
+import { PlayGlyph } from './ui/Glyphs';
 import { Meter } from './ui/Meter';
 import { SearchCounts } from './ui/SearchCounts';
 import {
@@ -435,7 +436,7 @@ export function Results({
           className="btn-ghost w-full"
           onClick={() => setShowAll(true)}
         >
-          <span aria-hidden="true">▶</span> Show All {groups.length} Builds
+          <PlayGlyph /> Show All {groups.length} Builds
         </button>
       )}
       {/* One persistent live region for the share outcome. The Callouts above

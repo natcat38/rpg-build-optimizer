@@ -97,17 +97,11 @@ export function ExplainBuild({
         aria-busy={loading}
         aria-disabled={loading}
       >
-        {loading ? (
-          'Thinking…'
-        ) : explanation ? (
-          <>
-            <span aria-hidden="true">✨</span> Regenerate
-          </>
-        ) : (
-          <>
-            <span aria-hidden="true">✨</span> Explain This Build
-          </>
-        )}
+        {loading
+          ? 'Thinking…'
+          : explanation
+            ? 'Regenerate'
+            : 'Explain This Build'}
       </button>
       {error && (
         <Callout tone="error" className="mt-2">
