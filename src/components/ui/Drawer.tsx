@@ -4,7 +4,7 @@
  * *not* set `aria-modal` (measured: null on Vaul.Content), so this sets it.
  * @packageDocumentation
  */
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Drawer as Vaul } from 'vaul';
 
 const DESKTOP = '(min-width: 768px)';
@@ -34,6 +34,20 @@ export function AppDrawer({
   children: ReactNode;
 }) {
   const desktop = useIsDesktop();
+  // Vaul/Radix only restore focus to the triggering element on the escape
+  // key or an outside pointerdown — a close driven by our own onClose
+  // handler (the ✕ button) changes `open` via a plain prop update, which
+  // skips Radix's onCloseAutoFocus path and drops focus to <body>. Track
+  // the pre-open activeElement ourselves and restore it explicitly.
+  const triggerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) {
+      triggerRef.current = document.activeElement as HTMLElement | null;
+    } else if (triggerRef.current) {
+      triggerRef.current.focus();
+      triggerRef.current = null;
+    }
+  }, [open]);
   return (
     <Vaul.Root
       open={open}
