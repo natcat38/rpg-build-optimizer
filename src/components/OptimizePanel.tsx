@@ -408,6 +408,7 @@ export function OptimizePanel({
             <input
               className="field"
               type="number"
+              name="minEnergyRecharge"
               value={minER}
               onChange={(e) => setMinER(e.target.value)}
               placeholder="Optional — e.g. 200"

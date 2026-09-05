@@ -32,7 +32,11 @@ export class ErrorBoundary extends Component<
             The page hit an unexpected error. Reloading usually fixes it — your
             imported inventory is saved.
           </p>
-          <button className="btn-primary" onClick={() => location.reload()}>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => location.reload()}
+          >
             Reload
           </button>
         </Callout>

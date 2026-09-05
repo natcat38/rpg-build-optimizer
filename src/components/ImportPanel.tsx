@@ -274,7 +274,6 @@ export function ImportPanel() {
               value={uid}
               onChange={(e) => setUid(e.target.value)}
               placeholder="700000000"
-              aria-label="UID"
               aria-describedby={uidOk ? undefined : 'uid-hint'}
               inputMode="numeric"
               autoComplete="off"

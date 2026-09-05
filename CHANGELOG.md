@@ -4,6 +4,35 @@ All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [semver](https://semver.org/).
 
+## [Unreleased]
+
+Changes on `main` since the `v1.0.0` tag (#71–#89).
+
+### Features
+
+- Plan now grades the currently-equipped build alongside the optimizer's best, so a
+  player can see how much headroom their existing loadout has left (#89).
+
+### Fixed
+
+- UI/UX audit fixes: accessibility, error recovery, and clarity issues found in a
+  validated pass over the app (#84).
+- Vite dev server port pinned to avoid collisions with sibling repos (#88).
+
+### Changed
+
+- Repo presentation: package metadata, demo GIF, and README engineering highlights (#86).
+- Coverage badge now shown in the README (#79).
+- `reviews/` working files dropped from the repo (#85).
+
+### Infrastructure
+
+- CI bumped from Node 20 to Node 22, required by the `jsdom` 30 upgrade (#87).
+- `actions/setup-node` bumped from v6 to v7 (#71).
+- Dependency bumps: `jsdom` 29.1.1 → 30.0.1 (#54), `@vercel/node` 5.10.1 → 10.0.0 (#83),
+  `@vitejs/plugin-react` 5.2.0 → 6.1.0 (#74), `@types/node` 22.20.1 → 26.2.0 (#73), plus
+  two Dependabot minor-and-patch groups (#80, #81).
+
 ## [1.0.0] — 2026-08-29
 
 First tagged release. Summarises the shipped feature set plus the repo-quality work that

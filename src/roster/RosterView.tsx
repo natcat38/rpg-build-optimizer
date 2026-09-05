@@ -41,7 +41,8 @@ function Row({
   return (
     <li className="card transition-colors hover:border-accent/30 hover:bg-surface-700/70">
       <button
-        className="focus-ring flex w-full flex-col items-stretch gap-2 rounded-xl px-4 py-3 text-left transition-transform active:scale-[0.995] sm:flex-row sm:items-center sm:gap-3"
+        type="button"
+        className="focus-ring touch-target flex w-full flex-col items-stretch gap-2 rounded-xl px-4 py-3 text-left transition-transform active:scale-[0.995] sm:flex-row sm:items-center sm:gap-3"
         onClick={() => onOpen(characterKey)}
       >
         {/* No <h3>: a heading inside a button is stripped of its heading role
@@ -152,7 +153,11 @@ export function RosterView() {
         ))}
       </ul>
       {rows.length > COLLAPSED_COUNT && !showAll && (
-        <button className="btn-ghost w-full" onClick={() => setShowAll(true)}>
+        <button
+          type="button"
+          className="btn-ghost w-full"
+          onClick={() => setShowAll(true)}
+        >
           <span aria-hidden="true">▶</span> Show All {rows.length} Characters,
           Sorted by Score
         </button>
@@ -170,6 +175,7 @@ export function RosterView() {
             artifacts={byLocation[openKey] ?? []}
           />
           <button
+            type="button"
             className="btn-primary mt-4 w-full"
             onClick={() => {
               const s = useOptimizeRequest.getState();
