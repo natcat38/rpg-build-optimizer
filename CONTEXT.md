@@ -34,7 +34,7 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 - **Reference data** — the game "rulebook" (characters, weapons, sets, stat tables) from a frozen `genshin-db` snapshot. Never reads a player's account. See [ADR-0002](docs/adr/0002-frozen-bundled-reference-dataset.md).
 - **Constraint** — a hard requirement a build must satisfy (set requirement, minimum stats, per-slot main-stat lock). Infeasible constraints → `NO_FEASIBLE_BUILD`.
 - **Main-stat lock** — a constraint fixing a slot's main stat (e.g. sands = `atk_pct`).
-- **Objective** — what the optimiser maximises: a stat key, `crit_value`, or `avg_damage` (the v2 damage **target function**, available only for characters with a curated **damage profile**). See [ADR-0016](docs/adr/0016-damage-engine-objective.md).
+- **Objective** — what the optimiser maximises: a stat key, `crit_value`, or `avg_damage` (the v2 damage **target function**, available only for characters with a curated **damage profile**). Computed by `objectiveValue()`/`evaluateObjective()` in `src/optimizer/score.ts`. A `BuildResult.score` field is this objective value minus the crit-ratio soft-tiebreak penalty — it is **not** the same number as **Build score** below, despite the shared word; see "Five things called 'score'" at the end of this glossary. See [ADR-0016](docs/adr/0016-damage-engine-objective.md).
 - **Optimiser** — the exact branch-and-bound search returning the **top-K** valid builds by objective score. Always exact, never approximate. See [ADR-0004](docs/adr/0004-exact-branch-and-bound-optimisation.md).
 - **Diagnostics** — per-build data the optimiser emits: binding constraints, per-slot marginal contribution, explored/pruned counts.
 - **Anti-clone cap** — the v1.0 results rule preventing near-identical builds from filling the top-K.
@@ -55,11 +55,37 @@ A client-side web app that, given the artifacts a player owns, finds the best 5-
 - **Damage profile** — a weighted set of stand-in hits approximating a character's rotation (multipliers transcribed at talent lv9). The input to the `avg_damage` objective.
 - **Target function** — Σ weight × hit damage over a **damage profile**'s hits; the value the `avg_damage` **objective** maximises.
 - **Enemy config** — the assumptions damage is computed against (enemy level and RES); default level 100 / 10% RES.
-- **Build score** — a 0–100 composite of how built a roster character is (level, talents, weapon, artifact count, artifact quality), with explainable components.
+- **Build score** — a 0–100 composite of how built a roster character is (level, talents, weapon, artifact count, artifact quality), with explainable components. Computed by `computeBuildScore()` in `src/roster/buildScore.ts`. Distinct from the optimiser's **Objective**/`BuildResult.score` (a raw stat/crit/damage number, not 0–100) and from **Grade** below (a letter, not a number) — see "Five things called 'score'".
+- **Grade** — a build's fit against a **meta target**, expressed as a letter (S/A/B/C/D): the mean of each `statTargets` entry's capped ratio (owned ÷ target). Computed by `gradeBuild()` in `src/meta/grade.ts`. Answers "how close to the meta recipe is this specific build", a narrower question than **Build score**'s "how invested is this character overall."
 - **Comp archetype** — a curated 4-slot team recipe: one **role** per slot with ranked substitute characters.
 - **Role** — a slot's function in a **comp archetype**: `on-field-dps | off-field-dps | buffer | sustain | battery | applicator`.
 - **Team recommendation** — a **comp archetype** instantiated from the player's roster (real characters filling its slots).
+- **Team score** — `tierWeight × mean(optionWeight × Build score)` for one instantiated **team recommendation**, computed by `teamScore()` in `src/teams/recommend.ts`. Ranks candidate team pairings against each other; treats **Build score** as an opaque input rather than recomputing it.
 - **Endgame mode** — the endgame content a plan targets: `abyss | theater | stygian`. Spiral Abyss first.
 - **Plan** — the composed output: **team recommendations** → per-member optimised builds → **farming list**. See [ADR-0019](docs/adr/0019-plan-output.md).
 - **Farming list** — the deduped, name-prefixed feasibility and shortfall lines a **plan** aggregates from its members' gaps (`Plan.farming`). The UI calls it the "what to farm" list; never "shopping list".
-- **Investment advice** — the ranked pull-and-craft recommendations derived from the near-miss **comp archetypes** the recommender reports (`src/invest/advise.ts`): which characters to pull for and which weapons to craft, ranked by the **team-score** points each would unlock. Acquisition advice, not levelling advice.
+- **Investment advice** — the ranked pull-and-craft recommendations derived from the near-miss **comp archetypes** the recommender reports (`src/invest/advise.ts`): which characters to pull for and which weapons to craft, ranked by the **Team score** points (specifically, its `bestPossibleScore` output) each would unlock. Acquisition advice, not levelling advice.
+- **Teammates table (legacy)** — `TEAMMATES` in `src/meta/teammates.ts`: a flat, unweighted per-character list of suggested partners with a one-line rationale, predating **comp archetypes**. `comps.ts`'s header states it was "seeded by expanding every entry in `teammates.ts` into a full archetype," and [ADR-0017](docs/adr/0017-curated-comp-database.md) names `teammates.ts` as staying "for now" until the Plan page lets the two converge. That convergence has not happened: `teammates.ts` now drives only `OptimizePanel`'s per-character info panel, `comps.ts` drives `recommendAbyss()` and the Plan page, and their content has drifted apart (e.g. Furina's flat teammate list no longer matches her role/substitutes in the `neuvillette-mono-hydro` archetype). Treat `comps.ts` as the source of truth for "who teams with whom" when the two disagree; `teammates.ts` is tracked debt, not a second opinion.
+
+### Five things called "score"
+
+CONTEXT.md's own vocabulary and the code both use "score"/"grade" for five
+different, non-interchangeable numbers. When writing an issue, test name, or
+comment, name the specific one rather than the bare word "score":
+
+| Term | Function | File | Scale | Answers |
+|---|---|---|---|---|
+| **Objective** value (`BuildResult.score`) | `objectiveValue()` / `evaluateObjective()` | `src/optimizer/score.ts` | Stat-dependent (raw stat, crit value, or avg damage) | "How good is this specific 5-piece build, by the objective I chose?" |
+| **Build score** | `computeBuildScore()` | `src/roster/buildScore.ts` | 0–100 | "How invested is this roster character overall (level/talents/weapon/artifacts)?" |
+| **Grade** | `gradeBuild()` | `src/meta/grade.ts` | Letter S–D | "How close is this build to the meta target's stat floors?" |
+| **Team score** | `teamScore()` | `src/teams/recommend.ts` | Tier-weighted mean of Build scores | "How strong is this instantiated team, for ranking candidate pairings?" |
+| **Investment advice ranking** | consumes `teamScore`'s `bestPossibleScore` | `src/invest/advise.ts` | Same scale as Team score | "Which pull/craft unlocks the most Team-score points?" |
+
+`objectiveValue` is the primitive of this hierarchy — `Build score` is a
+separate, independently-defined composite (not built from `objectiveValue`),
+while `Grade`, `Team score`, and the investment ranking each build on the one
+before it. `src/roster/buildScore.ts`'s own `pieceCritValue()` helper
+reimplements the `crit_value` formula from `score.ts` locally rather than
+calling `objectiveValue()` directly — a documented-but-unenforced coupling
+(see the architecture audit, `docs/research/audit-2026-09/architecture.md`
+finding #1) worth closing if either formula is touched.
