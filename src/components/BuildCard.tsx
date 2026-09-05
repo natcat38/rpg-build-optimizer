@@ -227,7 +227,11 @@ export function BuildCard({
           {grade && <GradeMarker grade={grade.grade} />}
         </div>
         {onShare && (
-          <button className="btn-ghost" onClick={() => void onShare()}>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => void onShare()}
+          >
             Copy Share Link
           </button>
         )}

@@ -95,7 +95,7 @@ describe('ImportPanel', () => {
     );
     const user = userEvent.setup();
     render(<ImportPanel />);
-    await user.type(screen.getByLabelText('UID'), '700000000');
+    await user.type(screen.getByLabelText('Import by UID'), '700000000');
     await user.click(screen.getByRole('button', { name: /fetch/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
       /Couldn’t find that UID/i,
@@ -106,7 +106,7 @@ describe('ImportPanel', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
     const user = userEvent.setup();
     render(<ImportPanel />);
-    await user.type(screen.getByLabelText('UID'), '700000000');
+    await user.type(screen.getByLabelText('Import by UID'), '700000000');
     await user.click(screen.getByRole('button', { name: /fetch/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
       /couldn’t reach enka/i,
@@ -120,7 +120,7 @@ describe('ImportPanel', () => {
     );
     const user = userEvent.setup();
     render(<ImportPanel />);
-    await user.type(screen.getByLabelText('UID'), '700000000');
+    await user.type(screen.getByLabelText('Import by UID'), '700000000');
     await user.click(screen.getByRole('button', { name: /fetch/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
       /no artifacts on showcase/i,
@@ -134,7 +134,7 @@ describe('ImportPanel', () => {
     );
     const user = userEvent.setup();
     render(<ImportPanel />);
-    await user.type(screen.getByLabelText('UID'), '700000000');
+    await user.type(screen.getByLabelText('Import by UID'), '700000000');
     await user.click(screen.getByRole('button', { name: /fetch/i }));
     expect(await screen.findByRole('status')).toHaveTextContent(
       /Imported 1 artifact\b/i,
@@ -155,7 +155,7 @@ describe('ImportPanel', () => {
 
     // Start the UID fetch; it suspends on the still-pending stubbed fetch,
     // so onUid has not yet reached mergeDedupe.
-    await user.type(screen.getByLabelText('UID'), '700000000');
+    await user.type(screen.getByLabelText('Import by UID'), '700000000');
     await user.click(screen.getByRole('button', { name: /fetch/i }));
 
     // While that's in flight, a GOOD import of the *same* artifact lands.
@@ -275,14 +275,14 @@ describe('ImportPanel', () => {
     expect(
       screen.getByText(/enter your uid to enable fetch/i),
     ).toBeInTheDocument();
-    await user.type(screen.getByLabelText('UID'), '700000001');
+    await user.type(screen.getByLabelText('Import by UID'), '700000001');
     expect(screen.queryByText(/enter your uid/i)).not.toBeInTheDocument();
   });
 
   it('rejects a malformed UID before fetching', async () => {
     const user = userEvent.setup();
     render(<ImportPanel />);
-    await user.type(screen.getByLabelText('UID'), '123');
+    await user.type(screen.getByLabelText('Import by UID'), '123');
     expect(screen.getByText(/9–10 digits/)).toBeInTheDocument();
     // aria-disabled, not `disabled` — the button must keep focus across the
     // async fetch. `onUid` carries the matching early return.
@@ -290,7 +290,7 @@ describe('ImportPanel', () => {
       'aria-disabled',
       'true',
     );
-    await user.type(screen.getByLabelText('UID'), '456789');
+    await user.type(screen.getByLabelText('Import by UID'), '456789');
     expect(screen.getByRole('button', { name: /fetch/i })).toHaveAttribute(
       'aria-disabled',
       'false',
@@ -302,7 +302,7 @@ describe('ImportPanel', () => {
     vi.stubGlobal('fetch', fetchSpy);
     const user = userEvent.setup();
     render(<ImportPanel />);
-    await user.type(screen.getByLabelText('UID'), '123{Enter}');
+    await user.type(screen.getByLabelText('Import by UID'), '123{Enter}');
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
