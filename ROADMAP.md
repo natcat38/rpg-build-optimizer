@@ -1,7 +1,7 @@
 # Roadmap — RPG Build Optimizer
 
 **Current stage: Define**
-**Next up:** triage `docs/research/audit-2026-09` findings into issues, then Define next feature.
+**Next up:** pick the next feature to Define (audit findings are now filed as issues #90–#104; 15 issues addressing them can be worked independently of that choice).
 
 Lifecycle: Define → Plan → Build → Verify → Review → Ship.
 Agents: read this file at session start, state the current stage and next unchecked item before any other work, and update this file (checkboxes + Current stage + Next up) before ending. Product and design decisions belong to the user — elicit them with questions, never decide for them.
@@ -9,7 +9,7 @@ Agents: read this file at session start, state the current stage and next unchec
 ## History
 
 - **v1.0.0** (2026-08-29) — first tagged release: artifact build optimiser, roster/team/plan views, GOOD import, shareable links, generated dataset pipeline. Full cycle (Define → Ship) completed; see `CHANGELOG.md`.
-- **2026-09 repo audit** — mature-repo hygiene pass (this branch, `chore/repo-audit-2026-09`); findings captured under `docs/research/audit-2026-09/`, not yet triaged into issues.
+- **2026-09 repo audit** — mature-repo hygiene pass (this branch, `chore/repo-audit-2026-09`); findings captured under `docs/research/audit-2026-09/` and triaged into issues #90–#104 (see `docs/research/audit-2026-09/issues.md`).
 
 ## 1 · Define — why this exists (before any code)
 
@@ -42,7 +42,7 @@ Exit: no known broken flows. Skills: run, webapp-testing, diagnose.
 ## 5 · Review — quality gate before polish
 
 - [x] Prior review passes recorded in `CHANGELOG.md` (e.g. UI/UX audit fixes, #84).
-- [x] 2026-09 repo audit run; findings in `docs/research/audit-2026-09/` awaiting triage into issues.
+- [x] 2026-09 repo audit run; findings in `docs/research/audit-2026-09/` triaged into issues #90–#104 (mapping in `docs/research/audit-2026-09/issues.md`).
 
 Exit: findings addressed or explicitly waived. Skills: code-review, simplify, web-design-guidelines.
 
