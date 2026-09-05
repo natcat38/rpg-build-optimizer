@@ -1,6 +1,6 @@
 /**
- * Game-agnostic domain types (artifacts, slots, stat keys, build requests)
- * plus the game display registry, kept separate from `game/genshin/`.
+ * Game-agnostic domain types (artifacts, slots, stat keys, build requests),
+ * kept separate from `game/genshin/`.
  * @packageDocumentation
  */
 import type { DamageContext } from '../damage/types';
