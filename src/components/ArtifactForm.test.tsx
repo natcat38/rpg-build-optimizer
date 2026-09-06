@@ -86,4 +86,28 @@ describe('ArtifactForm', () => {
     const [artifact] = useInventory.getState().artifacts;
     expect(artifact.element).toBe('pyro');
   });
+
+  it('omits element when left at "Any (unknown)" even on a goblet/elemental_dmg piece', async () => {
+    const user = userEvent.setup();
+    render(<ArtifactForm />);
+    await user.selectOptions(screen.getByLabelText(/slot/i), 'goblet');
+    await user.selectOptions(
+      screen.getByLabelText(/main stat/i),
+      'elemental_dmg',
+    );
+    await user.click(screen.getByText(/add artifact/i));
+    const [artifact] = useInventory.getState().artifacts;
+    expect(artifact.element).toBeUndefined();
+  });
+
+  it('announces the added artifact via the success Callout and live region, then resets the form', async () => {
+    const user = userEvent.setup();
+    render(<ArtifactForm />);
+    await user.click(screen.getByText(/add artifact/i));
+    expect(
+      screen.getAllByText(/added:.*inventory now 1/i).length,
+    ).toBeGreaterThan(0);
+    // Fields reset to their defaults after a successful add.
+    expect(screen.getByLabelText(/slot/i)).toHaveValue('sands');
+  });
 });

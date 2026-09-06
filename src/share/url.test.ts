@@ -535,4 +535,80 @@ describe('a shared link must describe a build the app can re-run', () => {
     });
     expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
   });
+
+  it('rejects a build whose artifactIds is not an object', async () => {
+    const param = await encodeBuild({
+      request,
+      build: { ...build, artifactIds: 'flower' as never },
+      artifacts,
+    });
+    expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects diagnostics whose marginalBySlot is not an object', async () => {
+    const param = await encodeBuild({
+      request,
+      build: {
+        ...build,
+        diagnostics: { ...build.diagnostics, marginalBySlot: 'x' as never },
+      },
+      artifacts,
+    });
+    expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects an objectiveValue that overflows to Infinity', async () => {
+    // Same `1e400` trick as the artifact-rarity case above: `objectiveValue`
+    // is a `number` per JSON's grammar, but not a finite one — a shape
+    // `encodeBuild`'s own JSON.stringify could never produce.
+    const snapshot = { request, build, artifacts };
+    const json = JSON.stringify(snapshot).replace(
+      `"objectiveValue":${build.objectiveValue}`,
+      '"objectiveValue":1e400',
+    );
+    expect(await decodeBuild(toBase64UrlParam(json))).toEqual({
+      error: 'UNREADABLE',
+    });
+  });
+
+  it('rejects a snapshot carrying more artifacts than a build can reference (DoS guard)', async () => {
+    const circlet = artifacts.find((a) => a.slot === 'circlet')!;
+    const extra = Array.from({ length: 20 }, (_, i) => ({
+      ...circlet,
+      id: `extra-${i}`,
+    }));
+    const param = await encodeBuild({
+      request,
+      build,
+      artifacts: [...artifacts, ...extra],
+    });
+    expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
+  });
+});
+
+describe('decodeBuild tampered/malformed link decode path', () => {
+  it('returns UNREADABLE for a corrupted (non-deflate) payload segment', async () => {
+    // A share param whose base64url decodes fine but whose bytes are not a
+    // valid deflate stream at all (tampered/truncated in transit).
+    const good = await encodeBuild({ request, build, artifacts });
+    const tampered = good.slice(0, -6) + 'AAAAAA';
+    expect(await decodeBuild(tampered)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('returns UNREADABLE for a valid-shape payload with an out-of-range value', async () => {
+    // Same envelope, but the request references a slot key that doesn't
+    // exist in the game's SLOTS enum.
+    const param = await encodeBuild({
+      request: {
+        ...request,
+        constraints: {
+          ...request.constraints,
+          mainStatLocks: { flower: 'hp', unknown_slot: 'atk' } as never,
+        },
+      },
+      build,
+      artifacts,
+    });
+    expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
+  });
 });
