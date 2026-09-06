@@ -30,7 +30,7 @@ import {
   metaToConstraints,
   type MetaTarget,
 } from '../meta/metaTargets';
-import { TEAMMATES, type TeammateRec } from '../meta/teammates';
+import { teammatesFor, type DerivedTeammate } from '../teams/comps';
 import { getDamageProfile } from '../damage/profiles';
 
 // Every objective a curated meta recipe can recommend has to be offerable,
@@ -114,7 +114,7 @@ function MetaTargetSummary({ meta }: { meta: MetaTarget }) {
 function TeammatesSummary({
   entry,
 }: {
-  entry: { recs: TeammateRec[]; source: string };
+  entry: { recs: DerivedTeammate[]; source: string };
 }) {
   return (
     <InfoPanel href={entry.source}>
@@ -298,7 +298,7 @@ export function OptimizePanel({
   const shownObjective = objectives.includes(objective)
     ? objective
     : 'crit_value';
-  const teammates = TEAMMATES[characterKey];
+  const teammates = teammatesFor(characterKey);
   // A character can't be de-leveled, so a rostered character's build level
   // is a floor, not just a suggestion — levels below it aren't achievable.
   const rosterBuildLevel = rosterEntries[characterKey]?.buildLevel;

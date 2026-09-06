@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { COMP_ARCHETYPES } from './comps';
+import { COMP_ARCHETYPES, teammatesFor } from './comps';
 import { META_TARGETS } from '../meta/metaTargets';
 import { genshinAdapter } from '../game/genshin/adapter';
 
@@ -73,5 +73,27 @@ describe('COMP_ARCHETYPES', () => {
       expect(new Set(ideal).size, a.id).toBe(ideal.length);
       expect(ideal.length, `${a.id} needs one ideal per slot`).toBe(4);
     }
+  });
+});
+
+describe('teammatesFor (OptimizePanel "Works well with" derivation, issue #90)', () => {
+  it('derives recs from the archetype where the character has its highest weight', () => {
+    const entry = teammatesFor('xiao');
+    expect(entry).toBeDefined();
+    expect(entry!.source).toBe('https://keqingmains.com/xiao/');
+    const keys = entry!.recs.map((r) => r.characterKey);
+    expect(keys).toContain('faruzan');
+    expect(keys).not.toContain('xiao');
+    expect(entry!.recs).toHaveLength(3);
+    for (const r of entry!.recs) {
+      expect(r.role.length).toBeGreaterThan(0);
+      expect(r.why).toBe(
+        'Anemo RES shred plus plunge buffs; Xiao burns his own HP for uptime.',
+      );
+    }
+  });
+
+  it('returns undefined for a character in no archetype', () => {
+    expect(teammatesFor('zzz_not_meta')).toBeUndefined();
   });
 });

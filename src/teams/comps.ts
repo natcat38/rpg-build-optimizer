@@ -14,7 +14,7 @@
  * archetype, plus the current Abyss floor-12 staples from the research report
  * (`docs/research/2026-08-20-endgame-meta-and-team-recs.md`).
  */
-import type { CompArchetype } from './types';
+import type { CompArchetype, Role } from './types';
 
 const ABYSS_ONLY: CompArchetype['modes'] = ['abyss'];
 
@@ -1094,4 +1094,43 @@ export function archetypeName(id: string): string {
 /** Every archetype this character appears in, at any slot or substitute rank. */
 export function archetypesFor(characterKey: string): CompArchetype[] {
   return BY_CHARACTER.get(characterKey) ?? [];
+}
+
+/** A derived "works well with" entry for `OptimizePanel`'s info panel
+ *  (issue #90): replaces the old, hand-curated `TEAMMATES` table with a view
+ *  over `COMP_ARCHETYPES` so the two can't drift apart again. */
+export interface DerivedTeammate {
+  characterKey: string;
+  role: Role;
+  why: string;
+}
+
+/** Picks the archetype where this character has its highest substitution
+ *  weight (its best-fit slot) and lists the ideal pick of every other slot
+ *  as a teammate, with the archetype's own note as the shared rationale. */
+export function teammatesFor(
+  characterKey: string,
+): { recs: DerivedTeammate[]; source: string } | undefined {
+  let best: CompArchetype | undefined;
+  let bestSlotIndex = -1;
+  let bestWeight = -1;
+  for (const a of archetypesFor(characterKey)) {
+    a.slots.forEach((slot, i) => {
+      const opt = slot.options.find((o) => o.characterKey === characterKey);
+      if (opt && opt.weight > bestWeight) {
+        bestWeight = opt.weight;
+        best = a;
+        bestSlotIndex = i;
+      }
+    });
+  }
+  if (!best) return undefined;
+  const recs = best.slots
+    .filter((_, i) => i !== bestSlotIndex)
+    .map((slot) => ({
+      characterKey: slot.options[0].characterKey,
+      role: slot.role,
+      why: best!.notes,
+    }));
+  return { recs, source: best.source };
 }

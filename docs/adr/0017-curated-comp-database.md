@@ -1,6 +1,6 @@
 # 0017. Curated comp-archetype database
 
-- Status: Accepted
+- Status: Accepted; converged 2026-09-06 (issue #90) — see addendum below
 - Date: 2026-08-20
 
 ## Context
@@ -50,3 +50,15 @@ run?"). Phase 4's Plan page is where the two converge.
   rather than someone who reads TypeScript.
 - The database cannot invent a comp the curator did not know about — a
   deliberate trade against the rules-based option's confident nonsense.
+
+## Addendum (2026-09-06, issue #90)
+
+`TEAMMATES` did not stay "for now" long enough to converge gracefully — by
+the 2026-09 architecture audit it had already drifted from `comps.ts` (e.g.
+Furina's flat teammate list no longer matched her role/substitutes in
+`neuvillette-mono-hydro`). `src/meta/teammates.ts` and its test are deleted.
+`OptimizePanel`'s "Works well with" panel is now `teammatesFor()` in
+`comps.ts`: it picks the archetype where the character has its highest
+substitution weight and lists the ideal pick of every other slot, using the
+archetype's `notes` as the shared rationale. `comps.ts` is the single source
+of truth for "who teams with whom."
