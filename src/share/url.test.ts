@@ -535,4 +535,52 @@ describe('a shared link must describe a build the app can re-run', () => {
     });
     expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
   });
+
+  it('rejects a build whose artifactIds is not an object', async () => {
+    const param = await encodeBuild({
+      request,
+      build: { ...build, artifactIds: 'flower' as never },
+      artifacts,
+    });
+    expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('rejects diagnostics whose marginalBySlot is not an object', async () => {
+    const param = await encodeBuild({
+      request,
+      build: {
+        ...build,
+        diagnostics: { ...build.diagnostics, marginalBySlot: 'x' as never },
+      },
+      artifacts,
+    });
+    expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
+  });
+});
+
+describe('decodeBuild tampered/malformed link decode path', () => {
+  it('returns UNREADABLE for a corrupted (non-deflate) payload segment', async () => {
+    // A share param whose base64url decodes fine but whose bytes are not a
+    // valid deflate stream at all (tampered/truncated in transit).
+    const good = await encodeBuild({ request, build, artifacts });
+    const tampered = good.slice(0, -6) + 'AAAAAA';
+    expect(await decodeBuild(tampered)).toEqual({ error: 'UNREADABLE' });
+  });
+
+  it('returns UNREADABLE for a valid-shape payload with an out-of-range value', async () => {
+    // Same envelope, but the request references a slot key that doesn't
+    // exist in the game's SLOTS enum.
+    const param = await encodeBuild({
+      request: {
+        ...request,
+        constraints: {
+          ...request.constraints,
+          mainStatLocks: { flower: 'hp', unknown_slot: 'atk' } as never,
+        },
+      },
+      build,
+      artifacts,
+    });
+    expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
+  });
 });

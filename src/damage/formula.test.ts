@@ -5,6 +5,7 @@ import {
   defMult,
   resMult,
   ampMult,
+  additiveBase,
   computeHitDamage,
 } from './formula';
 import { DEFAULT_ENEMY, type DamageContext, type DamageHit } from './types';
@@ -60,6 +61,26 @@ describe('formula pieces', () => {
     );
     expect(ampMult('none', 100)).toBe(1);
     expect(ampMult('aggravate', 100)).toBe(1); // additive, not amplifying
+  });
+});
+
+describe('levelMult at non-default levels (via additiveBase)', () => {
+  // additiveBase = k * levelMult(charLevel) * (1 + 5*em/(1200+em)); em=0
+  // collapses the reaction-scaling term to 1, isolating levelMult's lookup.
+  it('exact hit at a tabulated level other than the default 90', () => {
+    // aggravate k=1.15, levelMult(60) = 492.8849 (tabulated exactly)
+    expect(additiveBase('aggravate', 0, 60)).toBeCloseTo(1.15 * 492.8849, 5);
+  });
+  it('nearest-match between two tabulated entries', () => {
+    // 45 is equidistant from 40 and 50; the table lookup keeps the first
+    // (lower) candidate found, so it resolves to level 40's entry.
+    expect(additiveBase('aggravate', 0, 45)).toBeCloseTo(1.15 * 207.38205, 5);
+  });
+  it('below the table minimum snaps to level 1', () => {
+    expect(additiveBase('aggravate', 0, 0)).toBeCloseTo(1.15 * 17.165606, 5);
+  });
+  it('above the table maximum snaps to level 90', () => {
+    expect(additiveBase('aggravate', 0, 200)).toBeCloseTo(1.15 * 1446.8535, 5);
   });
 });
 

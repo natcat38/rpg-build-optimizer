@@ -190,4 +190,56 @@ describe('composePlan', () => {
       ),
     ).toBe(true);
   });
+
+  it('defaults roster/objective/constraints for a character with no meta target or profile, dedupes a repeated character across teams, and covers a 2+2 setRequirement', async () => {
+    // amber and klee have neither a META_TARGETS entry nor a damage profile
+    // (amber) or a 2+2 setRequirement (klee) — exercising the branches the
+    // rest of the suite's meta/profiled roster never reaches: the `?? {}`
+    // roster fallback, the `?? 'crit_value'` objective fallback, the
+    // `meta ? ... : {}` constraints fallback, the `?? 90` buildLevel default,
+    // the no-conflicts (empty `wanted`) path, and the `meta ? gap : null`
+    // skip. `diluc` (also unprofiled/off-meta) appears on both teams and is
+    // missing from `roster` entirely, so its "no weapon" farming line is
+    // added twice — exercising the seenFarming dedup's true branch.
+    const twoTeams: [TeamInstance, TeamInstance] = [
+      {
+        archetypeId: 'a',
+        score: 90,
+        members: [
+          member('diluc', 'on-field-dps'),
+          member('amber', 'off-field-dps'),
+        ],
+      },
+      {
+        archetypeId: 'b',
+        score: 80,
+        members: [member('diluc', 'sustain'), member('klee', 'on-field-dps')],
+      },
+    ];
+    const partialRoster: Record<string, RosterEntry> = {
+      // No buildLevel: exercises the `entry.buildLevel ?? 90` default.
+      amber: { weaponKey: 'alley_hunter' },
+      klee: { buildLevel: 90, weaponKey: 'a_thousand_floating_dreams' },
+      // diluc intentionally absent.
+    };
+    const plan = await composePlan(twoTeams, partialRoster, inventory(6), run);
+    const amberBuild = plan.builds.find((b) => b.characterKey === 'amber')!;
+    expect(amberBuild.objective).toBe('crit_value');
+    expect(amberBuild.conflicts).toEqual([]);
+
+    const dilucBuilds = plan.builds.filter((b) => b.characterKey === 'diluc');
+    expect(dilucBuilds).toHaveLength(2);
+    expect(dilucBuilds.every((b) => b.result.status === 'infeasible')).toBe(
+      true,
+    );
+    const dilucFarming = plan.farming.filter((l) => /^Diluc:/.test(l));
+    expect(dilucFarming).toHaveLength(1); // deduped, not one per occurrence
+
+    // klee's meta recipe is a 2+2 setRequirement the shared inventory (only
+    // Emblem/Marechaussee pieces) can't satisfy — the point here is just that
+    // composing a plan around a 2+2 recipe doesn't throw, not that it finds a
+    // feasible build.
+    const klee = plan.builds.find((b) => b.characterKey === 'klee')!;
+    expect(['ok', 'infeasible']).toContain(klee.result.status);
+  });
 });
