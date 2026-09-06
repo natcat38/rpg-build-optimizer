@@ -20,6 +20,18 @@ export default defineConfig({
       provider: 'v8',
       // json-summary feeds the coverage-badge workflow.
       reporter: ['text', 'html', 'json-summary'],
+      // Floors set ~1pt under the whole-repo numbers as of 2026-09 (95.2%
+      // statements / 88.6% branches / 96.1% functions / 96.7% lines — see
+      // docs/runbooks/testing.md and tech-debt TD-6/TD-7) so a real
+      // regression fails CI, but normal noise (a line or two shifting as
+      // code changes) doesn't. Raise these as coverage improves; never lower
+      // them to make a PR pass.
+      thresholds: {
+        statements: 94,
+        branches: 87,
+        functions: 95,
+        lines: 95,
+      },
     },
   },
 });
