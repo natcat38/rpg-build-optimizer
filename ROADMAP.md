@@ -1,7 +1,7 @@
 # Roadmap — RPG Build Optimizer
 
 **Current stage: Define**
-**Next up:** pick the next feature to Define. Audit P1/P2 issues #90–#99 are merged (PRs #105–#114); #100 (OKLCH palette) awaits an owner decision and P3 batches #101–#104 await triage.
+**Next up:** pick the next feature to Define. All audit issues #90–#104 are merged except #100 (OKLCH palette), which awaits an owner decision.
 
 Lifecycle: Define → Plan → Build → Verify → Review → Ship.
 Agents: read this file at session start, state the current stage and next unchecked item before any other work, and update this file (checkboxes + Current stage + Next up) before ending. Product and design decisions belong to the user — elicit them with questions, never decide for them.
@@ -44,7 +44,8 @@ Exit: no known broken flows. Skills: run, webapp-testing, diagnose.
 - [x] Prior review passes recorded in `CHANGELOG.md` (e.g. UI/UX audit fixes, #84).
 - [x] 2026-09 repo audit run; findings in `docs/research/audit-2026-09/` triaged into issues #90–#104 (mapping in `docs/research/audit-2026-09/issues.md`).
 - [x] Audit P1/P2 issues (#90–#99) addressed and merged.
-- [ ] Owner decision on #100 (OKLCH palette); triage P3 batches #101–#104.
+- [x] P3 batches #101–#104 triaged and merged (PRs #116–#119).
+- [ ] Owner decision on #100 (OKLCH palette).
 
 Exit: findings addressed or explicitly waived. Skills: code-review, simplify, web-design-guidelines.
 
