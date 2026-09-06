@@ -7,7 +7,6 @@
 
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { genshinAdapter } from '../game/genshin/adapter';
-import type { GameDescriptor } from '../game/registry';
 import type { HeroExample } from '../sample/heroExample';
 import { scrollToId } from '../ui/scroll';
 import { formatCount, formatScore, objectiveHint } from '../labels';
@@ -62,15 +61,15 @@ export function Section({
 
 /** Thesis-only hero: shown while the solved demo is computing, or once the user
  *  has their own gear loaded. */
-export function ThesisHero({ game }: { game: GameDescriptor }) {
+export function ThesisHero({ tagline }: { tagline: string }) {
   return (
     <>
       <h1 className="text-balance font-display text-4xl font-bold leading-tight text-paper sm:text-5xl">
         RPG Build Optimizer
       </h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
-        {game.tagline} Exact branch-and-bound search over your inventory —
-        computed entirely in your browser, no account required.
+        {tagline} Exact branch-and-bound search over your inventory — computed
+        entirely in your browser, no account required.
       </p>
     </>
   );

@@ -41,3 +41,7 @@ threaded `adapter` parameters are gone. The `CharacterMeta` / `WeaponMeta` /
 - Adding a second game later is no longer a drop-in: it would mean
   re-introducing an abstraction over `genshinAdapter`. That is an explicit,
   deferred cost — paid only if a second game is actually built, not before.
+
+**Update (2026-09-06):** the same seam had re-grown at the display-copy layer
+as `src/game/registry.ts` (a `GameId`/`GAMES` registry with exactly one
+member). Removed per this ADR's own precedent — see issue #98.

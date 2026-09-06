@@ -30,7 +30,7 @@ import {
   isDefaultSelection,
 } from '../state/optimizeRequest';
 import { bestBuiltCharacter } from '../roster/buildScore';
-import { getGame } from '../game/registry';
+import { PATCH } from '../game/genshin/adapter';
 import {
   optimizeRun,
   isOptimizeCancelled,
@@ -71,9 +71,13 @@ function PanelFallback() {
   return <p className="text-sm text-muted">Loading…</p>;
 }
 
-export function App() {
-  const game = getGame('genshin');
+// Display-only vocabulary for the one game this app supports. Re-introduce a
+// per-game registry only if a second game is actually built (ADR-0012).
+const GAME_TAGLINE =
+  'Find the mathematically optimal artifact build for any character.';
+const GAME_SOURCE = 'genshin-db';
 
+export function App() {
   const artifacts = useInventory((s) => s.artifacts);
   const rosterEntries = useRoster((s) => s.entries);
   const sampleMode =
@@ -309,13 +313,13 @@ export function App() {
           <p className="eyebrow">Exact search · proven optimal</p>
           <span className="chip">
             <span className="h-1.5 w-1.5 rounded-full bg-jade" />
-            {game.source} · patch {game.patch}
+            {GAME_SOURCE} · patch {PATCH}
           </span>
         </div>
         {showSolvedHero ? (
           <SolvedHero hero={hero} />
         ) : (
-          <ThesisHero game={game} />
+          <ThesisHero tagline={GAME_TAGLINE} />
         )}
       </header>
 
@@ -569,7 +573,7 @@ export function App() {
 
       <footer className="mt-16 border-t border-white/5 pt-6 text-center text-xs text-muted">
         Built with branch-and-bound optimization in a Web Worker · Data from{' '}
-        {game.source} (patch {game.patch}) · Not affiliated with the game’s
+        {GAME_SOURCE} (patch {PATCH}) · Not affiliated with the game’s
         publisher.
       </footer>
     </div>
