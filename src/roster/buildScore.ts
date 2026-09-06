@@ -38,12 +38,6 @@ export interface BuildScore {
 
 export type Band = 'built' | 'partial' | 'unbuilt';
 
-/** Crit value a piece contributes on its own — main stat plus sub-stats. The
- *  optimiser's own fold, so a roster score and a search score can't diverge. */
-function pieceCritValue(a: Artifact): number {
-  return objectiveValue(artifactContribution(a), 'crit_value');
-}
-
 /** 180 CV across five pieces is roughly a finished set — good enough as the
  *  "fully invested" mark, and the same order of magnitude the grade badge uses. */
 const FULL_CV = 180;
@@ -61,7 +55,13 @@ export function computeBuildScore(
   equipped: Artifact[],
 ): BuildScore {
   const t = entry.talents;
-  const equippedCV = equipped.reduce((sum, a) => sum + pieceCritValue(a), 0);
+  // Crit value a piece contributes on its own (main stat plus sub-stats),
+  // via optimizer/score.ts's own objectiveValue — the one place the formula
+  // lives, so a roster score and a search score can't diverge.
+  const equippedCV = equipped.reduce(
+    (sum, a) => sum + objectiveValue(artifactContribution(a), 'crit_value'),
+    0,
+  );
   const components = [
     component('Character level', (entry.buildLevel ?? 0) / 90, 25),
     component('Talents', t ? (t.auto + t.skill + t.burst) / 27 : 0, 20),

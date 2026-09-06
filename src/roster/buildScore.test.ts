@@ -5,6 +5,7 @@ import {
   bestBuiltCharacter,
   equippedGrade,
 } from './buildScore';
+import { artifactContribution, objectiveValue } from '../optimizer/score';
 import type { RosterEntry } from '../import/good';
 import type { Artifact, Slot, StatKey } from '../game/types';
 
@@ -105,6 +106,31 @@ describe('computeBuildScore', () => {
     expect(
       computeBuildScore(base, [...equipped, piece(5, 10)]).total,
     ).toBeGreaterThanOrEqual(start);
+  });
+});
+
+describe('Artifact quality component vs. optimizer/score.ts', () => {
+  it('derives from objectiveValue(artifactContribution(a), "crit_value") — the two surfaces cannot diverge', () => {
+    // FULL_CV is 180 across five pieces; fixtures below sit at 0, one third,
+    // and full CV so the "Artifact quality" points can be checked directly
+    // against a value computed only via score.ts's own exports.
+    const fixtures: Artifact[][] = [
+      [piece(0, 0)],
+      [piece(8, 20), piece(8, 20)],
+      Array.from({ length: 5 }, () => piece(8, 20)),
+    ];
+    for (const equipped of fixtures) {
+      const expectedCV = equipped.reduce(
+        (sum, a) => sum + objectiveValue(artifactContribution(a), 'crit_value'),
+        0,
+      );
+      const s = computeBuildScore(maxed, equipped);
+      const points = Object.fromEntries(
+        s.components.map((c) => [c.label, c.points]),
+      );
+      const expectedPoints = Math.min(Math.max(expectedCV / 180, 0), 1) * 30;
+      expect(points['Artifact quality']).toBeCloseTo(expectedPoints, 6);
+    }
   });
 });
 
