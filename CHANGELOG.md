@@ -6,7 +6,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 
 ## [Unreleased]
 
-Changes on `main` since the `v1.0.0` tag (#71–#114).
+Changes on `main` since the `v1.0.0` tag (#71–#119).
 
 ### Features
 
@@ -26,6 +26,11 @@ Changes on `main` since the `v1.0.0` tag (#71–#114).
 
 ### Changed
 
+- Audit P3 batches: placeholder contrast raised to AA, `aria-invalid`/`aria-describedby` on
+  form inputs, list markers via CSS (#118); `Intl.NumberFormat` for stat labels, placeholder
+  copy convention, easing policy documented (#116); run-lifecycle logic extracted to a
+  `useOptimizeRun` hook, worker and rate-limit tests hardened, landing module split (#119);
+  patch/minor dependency bumps and `npm audit` fixes (#117).
 - 2026-09 repo audit: eight reports under `docs/research/audit-2026-09/`, mechanical
   a11y/docs fixes, `ROADMAP.md`, testing runbook, CONTEXT glossary (#105).
 - Single-member game registry removed per ADR-0012 precedent (#106).
