@@ -240,6 +240,15 @@ describe('fourPieceAssumptions', () => {
     expect(line).toContain('Elemental DMG');
   });
 
+  it('silently skips a set key that is neither modelled nor curated as unmodelled', () => {
+    // Exercises the `if (reason)` false branch (setBonuses.ts:386): a set key
+    // absent from both FOUR_PIECE_BONUSES and UNMODELLED_FOUR_PIECE — e.g. one
+    // with no 4pc effect at all — must not surface a line.
+    expect(
+      fourPieceAssumptions(['NotACuratedSetAtAll'], { hasDamage: true }),
+    ).toEqual([]);
+  });
+
   it('renders the caller-supplied display name', () => {
     const [line] = fourPieceAssumptions(
       ['BlizzardStrayer'],
@@ -268,6 +277,69 @@ describe('weightedHitKindShares', () => {
     // Reaction-carrying hits scale with EM, so the two sheets do not agree —
     // which is the whole reason buildContext stopped passing the bare base.
     expect(endgame).not.toEqual(bare);
+  });
+
+  it('skips a physical-bonus hit rather than folding it into the elemental sum', () => {
+    // No curated profile has a physical hit today, so this exercises the
+    // `hit.bonus !== 'elemental'` skip (setBonuses.ts:341) directly: a profile
+    // mixing one physical and one elemental hit must attribute the whole
+    // elemental total to the elemental hit alone.
+    const d: DamageContext = {
+      profile: {
+        characterKey: 'synthetic',
+        source: 'test',
+        hits: [
+          {
+            name: 'Physical Hit',
+            kind: 'normal',
+            scaling: 'atk',
+            multiplier: 200,
+            bonus: 'physical',
+            reaction: 'none',
+            weight: 1,
+          },
+          {
+            name: 'Elemental Hit',
+            kind: 'skill',
+            scaling: 'atk',
+            multiplier: 200,
+            bonus: 'elemental',
+            reaction: 'none',
+            weight: 1,
+          },
+        ],
+      },
+      enemy: DEFAULT_ENEMY,
+      charLevel: 90,
+    };
+    const shares = weightedHitKindShares(base, d);
+    expect(shares.normal).toBeUndefined();
+    expect(shares.skill).toBeCloseTo(1, 10);
+  });
+
+  it('returns no shares at all for an entirely physical profile', () => {
+    // Exercises the `elemental <= 0` early return (setBonuses.ts:348-350):
+    // with nothing in the elemental bucket, there is nothing to weight.
+    const d: DamageContext = {
+      profile: {
+        characterKey: 'synthetic',
+        source: 'test',
+        hits: [
+          {
+            name: 'Physical Hit',
+            kind: 'normal',
+            scaling: 'atk',
+            multiplier: 200,
+            bonus: 'physical',
+            reaction: 'none',
+            weight: 1,
+          },
+        ],
+      },
+      enemy: DEFAULT_ENEMY,
+      charLevel: 90,
+    };
+    expect(weightedHitKindShares(base, d)).toEqual({});
   });
 });
 

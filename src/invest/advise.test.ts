@@ -75,6 +75,30 @@ describe('adviseInvestments', () => {
     );
   });
 
+  it('gives no weapon advice when no craftable option exists for the equipped type (craftableFor falls through)', () => {
+    // craftableFor is not exported; exercise its `return undefined` branch
+    // (line 42) by temporarily demoting every curated entry off "craftable"
+    // so no entry can ever match the equipped weapon's type, then confirm
+    // the weapon-advice loop `continue`s rather than pushing a bogus
+    // recommendation. Restored in `finally` since the table is a shared
+    // module-level object other tests (and files) read.
+    const originalTiers = Object.entries(WEAPON_OBTAINABILITY).map(
+      ([key, entry]) => [key, entry.tier] as const,
+    );
+    try {
+      for (const entry of Object.values(WEAPON_OBTAINABILITY))
+        entry.tier = 'event';
+      const roster: Record<string, RosterEntry> = {
+        zhongli: { weaponKey: "beginner's_protector" },
+      };
+      const out = adviseInvestments([gap()], roster, { zhongli: 90 });
+      expect(out.some((a) => a.kind === 'weapon')).toBe(false);
+    } finally {
+      for (const [key, tier] of originalTiers)
+        WEAPON_OBTAINABILITY[key].tier = tier;
+    }
+  });
+
   it('caps at ten entries, sorted by upside', () => {
     const gaps = Array.from({ length: 20 }, (_, i) =>
       gap({
