@@ -17,7 +17,6 @@ import {
 import { ImportPanel } from './ImportPanel';
 import { ArtifactForm } from './ArtifactForm';
 import { OptimizePanel } from './OptimizePanel';
-import { searchProgressStore } from './searchProgress';
 import { Results } from './Results';
 import { SampleGear } from './SampleGear';
 import { GapSection } from './GapSection';
@@ -27,31 +26,20 @@ import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
 import {
   useOptimizeRequest,
-  currentRequest,
   isDefaultSelection,
 } from '../state/optimizeRequest';
 import { bestBuiltCharacter } from '../roster/buildScore';
 import { PATCH } from '../game/genshin/adapter';
-import {
-  optimizeRun,
-  isOptimizeCancelled,
-  type OptimizeHandle,
-} from '../workers/optimizeClient';
+import { useOptimizeRun } from '../hooks/useOptimizeRun';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
 import { scrollToId } from '../ui/scroll';
 import { Callout } from './ui/Callout';
 import { Disclosure } from './ui/Disclosure';
 import { cn } from './ui/cn';
 import type { Artifact, OptimizeRequest, OptimizeResult } from '../game/types';
-import {
-  Section,
-  ThesisHero,
-  SolvedHero,
-  STEPS,
-  LOCKED_HINT,
-  useScrollSpy,
-  SharedBuildBanner,
-} from './landing';
+import { Section, ThesisHero, SolvedHero, SharedBuildBanner } from './landing';
+import { STEPS, LOCKED_HINT } from './landingSteps';
+import { useScrollSpy } from './useScrollSpy';
 
 // Not needed for first paint — App renders these only once a roster exists,
 // well after the initial view has settled — so each is its own chunk rather
@@ -90,8 +78,6 @@ export function App() {
     null,
   );
   const [sharedError, setSharedError] = useState(false);
-  const [optimizeError, setOptimizeError] = useState(false);
-  const [optimizeErrorDetail, setOptimizeErrorDetail] = useState('');
 
   // The hero's demo solve is independent of the user's own inventory/state and
   // reasonably cheap (~tens of ms — see heroExample.ts), so it's computed in an
@@ -164,100 +150,26 @@ export function App() {
     return m;
   }, [sharedArtifacts, artifacts]);
 
-  const [running, setRunning] = useState(false);
   // Progress counters and the elapsed clock live in `searchProgressStore`,
   // not in this component's state: they change several times a second, and
   // held here every tick re-rendered the whole page instead of one line.
-
-  // One persistent announcement for the whole page. Written by the run itself
-  // rather than by an effect on `result`, so a shared ?b= hydration (which is
-  // not an optimisation) never claims one finished.
-  const [announcement, setAnnouncement] = useState<{
-    nonce: number;
-    text: string;
-  } | null>(null);
-  // A live region only speaks when its content *changes*, so two runs that
-  // finish with the same sentence used to announce once. The nonce keys the
-  // text below, making every announcement a distinct node.
-  const announceNonce = useRef(0);
-  function announce(text: string) {
-    setAnnouncement(text ? { nonce: ++announceNonce.current, text } : null);
-  }
-
-  // Guards against a stale run's result clobbering a newer one: OptimizePanel
-  // and SampleGear share `running` (below) so their controls disable
-  // together, but a same-tick double-trigger can still start two runs before
-  // either's disable reaches the DOM — this token makes only the most
-  // recently started run allowed to commit its outcome or clear `running`.
-  const runToken = useRef(0);
-  // The run in flight, so it can be stopped — by Cancel, or by the next run
-  // superseding it. Without this a superseded search kept burning a core to
-  // produce an answer nobody was allowed to commit.
-  const currentRun = useRef<OptimizeHandle | null>(null);
-
-  function cancelCurrent() {
-    // Deliberately does *not* advance runToken: the in-flight run's own
-    // rejection handler is what clears `running` and announces, and it only
-    // does that while its token is still current.
-    currentRun.current?.cancel();
-  }
-
-  async function runCurrent() {
-    const req = currentRequest(useOptimizeRequest.getState());
-    const inv = useInventory.getState().artifacts;
-    if (inv.length === 0 || !req.characterKey) return;
-    const token = ++runToken.current;
-    // Token first, then stop the old worker: the superseded run's rejection
-    // now sees a stale token and bows out silently.
-    const superseded = currentRun.current;
-    superseded?.cancel();
-    setRunning(true);
-    // Restarts the clock as well as clearing the counters, so a superseding
-    // run doesn't inherit the elapsed time of the one it replaced.
-    searchProgressStore.start();
-    setOptimizeError(false);
-    setOptimizeErrorDetail('');
+  const {
+    running,
+    optimizeError,
+    optimizeErrorDetail,
+    announcement,
+    runCurrent,
+    cancelCurrent,
+  } = useOptimizeRun({
     // A fresh run replaces whatever Results was showing, so the banner about
     // the shared build that couldn't be read no longer describes anything.
-    setSharedError(false);
-    try {
-      const run = optimizeRun(req, inv, (p) => {
-        if (runToken.current === token) searchProgressStore.report(p);
-      });
-      currentRun.current = run;
-      const r = await run.result;
-      if (runToken.current !== token) return; // superseded by a newer run
+    onRunStart: () => setSharedError(false),
+    onSuccess: (r, req) => {
       setSharedArtifacts(null);
       setResult(r);
       setRequest(req);
-      announce(
-        r.status === 'ok'
-          ? `Optimisation complete — ${r.builds.length} ${r.builds.length === 1 ? 'build' : 'builds'}.`
-          : 'Optimisation complete — no build satisfies all constraints.',
-      );
-    } catch (err) {
-      if (runToken.current !== token) return;
-      // The user stopped it on purpose: no error banner, and the results
-      // region simply un-dims with whatever it was already showing.
-      if (isOptimizeCancelled(err)) {
-        announce('Optimisation cancelled.');
-        return;
-      }
-      // A worker/protocol rejection (or bad game data) must not vanish
-      // silently — surface it instead of dropping back to idle with no cue.
-      console.error('Optimize failed', err);
-      // The failure is announced by the assertive region below, not here.
-      setOptimizeError(true);
-      setOptimizeErrorDetail(err instanceof Error ? err.message : '');
-      announce('');
-    } finally {
-      if (runToken.current === token) {
-        currentRun.current = null;
-        setRunning(false);
-        searchProgressStore.stop();
-      }
-    }
-  }
+    },
+  });
 
   const lastScrolled = useRef<OptimizeResult | null>(null);
   useEffect(() => {

@@ -22,13 +22,20 @@ vi.mock('@upstash/redis', () => ({
   }),
 }));
 
-import { checkRateLimit } from './_ratelimit';
-
 const ORIGINAL_ENV = process.env;
-beforeEach(() => {
+
+// `_ratelimit.ts` keeps module-level state (the cached limiters, and the
+// "warned once" latch) that earlier tests' behaviour would otherwise leak
+// into later ones — order-dependent in a way `--sequence.shuffle` exposes.
+// Resetting the module registry and re-importing fresh in every test gives
+// each one its own untouched module state, regardless of run order.
+let checkRateLimit: (typeof import('./_ratelimit'))['checkRateLimit'];
+beforeEach(async () => {
   limit.mockReset();
   RatelimitCtor.mockReset();
   slidingWindow.mockReset();
+  vi.resetModules();
+  ({ checkRateLimit } = await import('./_ratelimit'));
 });
 afterEach(() => {
   process.env = ORIGINAL_ENV;
@@ -85,23 +92,20 @@ describe('checkRateLimit', () => {
   });
 
   it('logs the production misconfiguration before refusing (fresh module, fresh latch)', async () => {
-    // The warn/error latch is module-level and already spent by the tests
-    // above, so reset the module registry to observe the first log again.
-    vi.resetModules();
+    // Every test gets its own fresh module (see beforeEach), so the
+    // "warned once" latch is untouched here regardless of run order.
     process.env = { ...ORIGINAL_ENV, VERCEL_ENV: 'production' };
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const fresh = await import('./_ratelimit');
-    const result = await fresh.checkRateLimit('1.2.3.4');
+    const result = await checkRateLimit('1.2.3.4');
 
     expect(result).toEqual({ success: false, reason: 'not-configured' });
     // A silent fail-closed is unoperable: the log has to happen even though
     // the function returns unsuccessfully.
     expect(error).toHaveBeenCalledOnce();
     error.mockRestore();
-    vi.resetModules();
   });
 
   it('allows the request through when the configured limiter reports under the limit', async () => {

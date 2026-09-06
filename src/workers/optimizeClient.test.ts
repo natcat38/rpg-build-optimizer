@@ -89,6 +89,21 @@ describe('optimize (deep entry, sync fallback)', () => {
     await expect(run.result).rejects.toSatisfy(isOptimizeCancelled);
   });
 
+  it('cancelling the fallback after it has already resolved is a harmless no-op', async () => {
+    const req: OptimizeRequest = {
+      characterKey: genshinAdapter.characters()[0].key,
+      weaponKey: genshinAdapter.weapons()[0].key,
+      buildLevel: 90,
+      constraints: {},
+      objective: 'crit_value',
+      topK: 3,
+    };
+    const run = optimizeRun(req, inv);
+    const r = await run.result;
+    run.cancel();
+    await expect(run.result).resolves.toEqual(r);
+  });
+
   it('rejects (rather than hanging) when the fallback returns an error envelope', async () => {
     // Regression: the error envelope's throw used to escape *after* the
     // promise was marked settled, so nothing could ever resolve or reject it
@@ -233,6 +248,19 @@ describe('optimize (real Worker path)', () => {
     const run = optimizeRun(req, inv, (p) => seen.push(p));
     await expect(run.result).resolves.toEqual(result);
     expect(seen).toEqual([{ type: 'progress', explored: 5, pruned: 2 }]);
+  });
+
+  it('cancel called synchronously, before the worker has posted anything, still terminates it', async () => {
+    let worker!: FakeWorker;
+    stubWorker((w) => {
+      worker = w; // never responds: only cancel can end this run
+    });
+    const run = optimizeRun(req, inv);
+    // No await here: the worker is created synchronously inside dispatch, but
+    // its postMessage microtask hasn't had a turn yet — cancel must still win.
+    run.cancel();
+    await expect(run.result).rejects.toSatisfy(isOptimizeCancelled);
+    expect(worker.terminated).toBe(true);
   });
 
   it('cancel terminates the worker and rejects with a cancellation', async () => {
