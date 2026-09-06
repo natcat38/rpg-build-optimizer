@@ -163,3 +163,12 @@ accent already is, invert them under a `[data-theme]` selector, replace the
 `white/N` alpha fills (which assume a dark ground) with a token, and re-check
 the `TONE` record's `/10` fills for contrast. The accent seam is already in the
 right shape; the chassis is not.
+
+## Motion / easing
+
+Transitions use Tailwind's default timing functions (`ease-in`, `ease-out`,
+`ease-in-out`, and the default `transition` curve) with no custom easing
+tokens in `tailwind.config.js`. That is a decision, not an omission: the UI's
+transitions are short, incidental (hover, focus, panel open/close) rather than
+brand-defining, so Tailwind's defaults already read as natural and adding
+`--ease-*` tokens would be ceremony without a matching design need.

@@ -411,7 +411,7 @@ export function OptimizePanel({
               name="minEnergyRecharge"
               value={minER}
               onChange={(e) => setMinER(e.target.value)}
-              placeholder="Optional — e.g. 200"
+              placeholder="e.g. 200…"
               aria-describedby={`${uid}-er-hint`}
             />
             <p id={`${uid}-er-hint`} className="mt-1.5 text-xs text-muted">
