@@ -101,13 +101,33 @@ export function objectiveHint(o: Objective): string {
 }
 
 /**
+ * `Number.toFixed()` hardcodes en-US-style digit shapes; `Intl.NumberFormat`
+ * is the i18n-correct way to render a fixed-precision number even when the
+ * app is English/US-only today. One formatter per precision, module-level so
+ * `formatScore`'s hot path doesn't construct one per call.
+ */
+const scoreFormatters = new Map<number, Intl.NumberFormat>();
+function scoreFormatter(digits: number): Intl.NumberFormat {
+  let f = scoreFormatters.get(digits);
+  if (!f) {
+    f = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+      useGrouping: false,
+    });
+    scoreFormatters.set(digits, f);
+  }
+  return f;
+}
+
+/**
  * Every number the results UI shows goes through here. The damage formula is
  * pure arithmetic over user-supplied stats, so a pathological build can hand
  * the UI a NaN or an Infinity — guarding at the display seam keeps the maths
  * honest and still never renders the literal word "NaN".
  */
 export function formatScore(n: number, digits = 1): string {
-  return Number.isFinite(n) ? n.toFixed(digits) : '—';
+  return Number.isFinite(n) ? scoreFormatter(digits).format(n) : '—';
 }
 
 /**
@@ -162,7 +182,7 @@ export function setRequirementLabelFrom(
 /** Crit-ratio targets are stored as CRIT Rate's share of CR+CD; players read
  *  them as "1:N". Callers must exclude a zero target — 1:∞ is theirs to word. */
 export function formatCritRatio(target: number): string {
-  return ((1 - target) / target).toFixed(1);
+  return scoreFormatter(1).format((1 - target) / target);
 }
 
 /** A count of things the search touched, grouped for reading. One helper so
