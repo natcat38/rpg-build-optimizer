@@ -176,7 +176,9 @@
     @apply micro-label mb-1.5 block font-semibold;
   }
   .field {
-    @apply focus-ring touch-target w-full rounded-lg border border-white/10 bg-surface-900/70 px-3 py-2 text-sm text-paper transition-colors placeholder:text-muted/60 focus-visible:border-accent/60;
+    /* placeholder:text-muted/85 — /80 measures ~4.34:1 on surface-900, just
+       under the 4.5:1 AA floor; /85 clears it (~4.77:1). See issue #101. */
+    @apply focus-ring touch-target w-full rounded-lg border border-white/10 bg-surface-900/70 px-3 py-2 text-sm text-paper transition-colors placeholder:text-muted/85 focus-visible:border-accent/60;
   }
   /* A CSS background-image can't read a custom property, so the chevron's
      stroke is the accent hex written out rather than themed by --accent like

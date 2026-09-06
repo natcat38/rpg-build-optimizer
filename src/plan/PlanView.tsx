@@ -164,9 +164,9 @@ function MemberCard({
         </p>
       )}
       {conflicts.length > 0 && (
-        <ul className="space-y-1 text-xs text-muted">
+        <ul className="list-disc space-y-1 pl-4 text-xs text-muted marker:text-muted">
           {conflicts.slice(0, 3).map((c, i) => (
-            <li key={i}>• {c}</li>
+            <li key={i}>{c}</li>
           ))}
         </ul>
       )}
@@ -371,9 +371,9 @@ export function PlanView({
               <h3 className="font-display text-base font-bold text-paper">
                 What to Farm
               </h3>
-              <ul className="space-y-1 text-sm text-paper/90">
+              <ul className="list-disc space-y-1 pl-4 text-sm text-paper/90 marker:text-muted">
                 {plan.farming.map((line, i) => (
-                  <li key={i}>• {line}</li>
+                  <li key={i}>{line}</li>
                 ))}
               </ul>
             </div>

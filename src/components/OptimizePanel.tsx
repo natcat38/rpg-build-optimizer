@@ -215,6 +215,25 @@ export function OptimizePanel({
   const objective = useOptimizeRequest((s) => s.objective);
   const erFloor = useOptimizeRequest((s) => s.constraints.minStats?.er_pct);
   const minER = erFloor != null ? String(erFloor) : '';
+  // `setMinER` silently drops anything that isn't a usable floor (see
+  // optimizeRequest.ts), which would otherwise erase invalid keystrokes from
+  // the controlled input before the user can see what they typed. Track the
+  // raw text locally so a non-numeric or negative entry stays visible with an
+  // inline error, and resync when the floor changes from outside this input
+  // (preset apply, character switch).
+  const [minERInput, setMinERInput] = useState(minER);
+  // "Adjusting state during rendering" (react.dev) rather than an effect: an
+  // effect's setState here would cause an extra commit after every external
+  // change (preset apply, character switch) instead of resyncing in the same
+  // render that received the new floor.
+  const [prevMinER, setPrevMinER] = useState(minER);
+  if (minER !== prevMinER) {
+    setPrevMinER(minER);
+    setMinERInput(minER);
+  }
+  const minERInvalid =
+    minERInput.trim() !== '' &&
+    (!Number.isFinite(Number(minERInput)) || Number(minERInput) < 0);
   const setCharacterKey = useOptimizeRequest((s) => s.setCharacterKey);
   const setWeaponKey = useOptimizeRequest((s) => s.setWeaponKey);
   const setBuildLevel = useOptimizeRequest((s) => s.setBuildLevel);
@@ -409,14 +428,30 @@ export function OptimizePanel({
               className="field"
               type="number"
               name="minEnergyRecharge"
-              value={minER}
-              onChange={(e) => setMinER(e.target.value)}
+              value={minERInput}
+              onChange={(e) => {
+                setMinERInput(e.target.value);
+                setMinER(e.target.value);
+              }}
               placeholder="e.g. 200…"
-              aria-describedby={`${uid}-er-hint`}
+              aria-invalid={minERInvalid || undefined}
+              aria-describedby={
+                minERInvalid ? `${uid}-er-error` : `${uid}-er-hint`
+              }
             />
-            <p id={`${uid}-er-hint`} className="mt-1.5 text-xs text-muted">
-              Leave blank to search without an Energy Recharge floor.
-            </p>
+            {minERInvalid ? (
+              <p
+                id={`${uid}-er-error`}
+                role="alert"
+                className="mt-1.5 text-xs text-rose"
+              >
+                Enter a positive number, or leave blank for no floor.
+              </p>
+            ) : (
+              <p id={`${uid}-er-hint`} className="mt-1.5 text-xs text-muted">
+                Leave blank to search without an Energy Recharge floor.
+              </p>
+            )}
           </label>
         </div>
       </div>

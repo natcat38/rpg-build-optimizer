@@ -20,9 +20,12 @@ export function GapReport({ report }: { report: GapReportData }) {
           {report.feasibility.length > 0 && (
             <div>
               <p className="field-label">What’s missing</p>
-              <ul className="space-y-1 text-sm text-paper/90">
+              {/* Native `list-disc` marker instead of a literal "•" — a
+                  screen reader already announces list membership, so a typed
+                  bullet is redundant noise (some read it aloud as "bullet"). */}
+              <ul className="list-disc space-y-1 pl-4 text-sm text-paper/90 marker:text-muted">
                 {report.feasibility.map((f, i) => (
-                  <li key={i}>• {f}</li>
+                  <li key={i}>{f}</li>
                 ))}
               </ul>
             </div>
@@ -31,9 +34,9 @@ export function GapReport({ report }: { report: GapReportData }) {
           {report.shortfalls.length > 0 && (
             <div>
               <p className="field-label">Shortfall</p>
-              <ul className="space-y-1 text-sm text-paper/90">
+              <ul className="list-disc space-y-1 pl-4 text-sm text-paper/90 marker:text-muted">
                 {report.shortfalls.map((s, i) => (
-                  <li key={i}>• {s}</li>
+                  <li key={i}>{s}</li>
                 ))}
               </ul>
             </div>

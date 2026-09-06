@@ -258,6 +258,9 @@ export function Combobox({
             </li>
           ) : (
             filtered.map((opt, i) => (
+              // Row is ~34-36px tall, under the 44px .touch-target floor used
+              // elsewhere — deliberate density trade-off for a 235-option
+              // list; see issue #101 (informational AAA finding, not AA).
               <li
                 key={opt.value}
                 id={optionId(i)}

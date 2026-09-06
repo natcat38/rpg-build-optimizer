@@ -13,6 +13,13 @@ describe('ArtifactForm', () => {
     expect(useInventory.getState().artifacts.length).toBe(1);
   });
 
+  it('ties the sub-stat caveat to the Main stat field via aria-describedby', () => {
+    render(<ArtifactForm />);
+    const mainStat = screen.getByLabelText(/main stat/i);
+    const caveat = screen.getByText(/carry no sub-stats yet/i);
+    expect(mainStat).toHaveAttribute('aria-describedby', caveat.id);
+  });
+
   it('shows an error for level out of range', async () => {
     render(<ArtifactForm />);
     const level = screen.getByLabelText(/Level/i);
