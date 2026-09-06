@@ -1,11 +1,13 @@
 /**
  * Landing/hero pieces for the top-level `App` shell: the numbered `Section`
- * wrapper, the two hero variants, the sticky-nav scroll spy, and the banner
- * shown when a shared build link is opened.
+ * wrapper, the two hero variants, and the banner shown when a shared build
+ * link is opened. The step-nav vocabulary lives in `landingSteps.ts` and the
+ * scroll-spy hook in `useScrollSpy.ts` — split out so this file only exports
+ * components (react-refresh/only-export-components).
  * @packageDocumentation
  */
 
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { genshinAdapter } from '../game/genshin/adapter';
 import type { HeroExample } from '../sample/heroExample';
 import { scrollToId } from '../ui/scroll';
@@ -121,71 +123,6 @@ export function SolvedHero({ hero }: { hero: HeroExample }) {
       </a>
     </>
   );
-}
-
-/** Step chips for the sticky nav — ids match the Section ids in App.tsx.
- *  Results carries no number: it's what the sequence produces, not a step in
- *  it. */
-export const STEPS: { id: string; n?: string; label: string }[] = [
-  { id: 'step-load', n: '01', label: 'Load' },
-  { id: 'step-roster', n: '02', label: 'Roster' },
-  { id: 'step-teams', n: '03', label: 'Teams' },
-  { id: 'step-plan', n: '04', label: 'Plan' },
-  { id: 'step-optimise', n: '05', label: 'Optimise' },
-  { id: 'results-section', label: 'Results' },
-];
-
-export const LOCKED_HINT = 'Import a roster to unlock this step';
-
-/**
- * Which nav chip the reader is looking at. `aria-current` needs a single
- * answer, so the topmost intersecting section wins. Guarded rather than
- * polyfilled: the highlight is an enhancement, and jsdom has no
- * IntersectionObserver.
- */
-export function useScrollSpy(ids: string[]): string | null {
-  const [active, setActive] = useState<string | null>(null);
-  // The id set changed, so the previous answer describes a nav that no longer
-  // exists: clear it and let the observer's first callback decide. Done in the
-  // render pass, not an effect — React re-runs this pass before painting, so
-  // `aria-current` never lands on a chip that is gone.
-  const [spiedIds, setSpiedIds] = useState(ids);
-  if (spiedIds !== ids) {
-    setSpiedIds(ids);
-    setActive(null);
-  }
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') return;
-    const order = ids;
-    const els = order
-      .map((id) => document.getElementById(id))
-      .filter((e): e is HTMLElement => e !== null);
-    if (els.length === 0) return;
-    const seen = new Set<string>();
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) seen.add(e.target.id);
-          else seen.delete(e.target.id);
-        }
-        const first = order.find((id) => seen.has(id));
-        // Deliberately keep the last answer when nothing is intersecting:
-        // between two sections (or scrolled past the last one) `first` is
-        // undefined, and blanking `aria-current` there makes the highlight
-        // flicker off mid-scroll. The reader is still "at" the section they
-        // last passed, so it stays lit until another one wins.
-        if (first) setActive(first);
-      },
-      // Top band only: a section counts as "current" once its heading has
-      // cleared the sticky nav and before it has left the upper third.
-      { rootMargin: '-72px 0px -60% 0px' },
-    );
-    for (const el of els) io.observe(el);
-    return () => io.disconnect();
-    // `ids` is a memoised array from the caller: a fresh array every render
-    // would tear down and rebuild the observer on every render.
-  }, [ids]);
-  return active;
 }
 
 /** A shared ?b= link opens on someone else's build. Say whose, and offer the
