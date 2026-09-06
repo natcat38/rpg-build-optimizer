@@ -22,6 +22,7 @@ import { countSets } from '../optimizer/score';
 import { fourPieceAssumptions } from '../damage/setBonuses';
 import { genshinAdapter } from '../game/genshin/adapter';
 import { SlotGlyph } from './SlotGlyph';
+import { CheckGlyph } from './ui/Glyphs';
 import { cn } from './ui/cn';
 import { Meter } from './ui/Meter';
 import { GradeMarker } from './ui/GradeMarker';
@@ -261,7 +262,11 @@ export function BuildCard({
                   <p>
                     {/* Glyph, not hue alone: the bar below is decorative, so
                         "met" has to survive a colour-blind read of the text. */}
-                    {met && <span className="text-jade">✓ </span>}
+                    {met && (
+                      <>
+                        <CheckGlyph className="text-jade" />{' '}
+                      </>
+                    )}
                     {statLabel(s.key)} {formatScore(s.have, 0)}
                     {unit}/{formatScore(s.target, 0)}
                     {unit}{' '}

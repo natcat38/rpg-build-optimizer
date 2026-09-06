@@ -7,6 +7,7 @@ import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest } from '../state/optimizeRequest';
 import { genshinAdapter } from '../game/genshin/adapter';
+import { PlayGlyph } from '../components/ui/Glyphs';
 import { computeBuildScore, band, groupByLocation } from './buildScore';
 import { AppDrawer } from '../components/ui/Drawer';
 import { CharacterDetail } from './CharacterDetail';
@@ -158,8 +159,7 @@ export function RosterView() {
           className="btn-ghost w-full"
           onClick={() => setShowAll(true)}
         >
-          <span aria-hidden="true">▶</span> Show All {rows.length} Characters,
-          Sorted by Score
+          <PlayGlyph /> Show All {rows.length} Characters, Sorted by Score
         </button>
       )}
 

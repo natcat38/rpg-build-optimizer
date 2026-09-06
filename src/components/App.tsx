@@ -21,6 +21,7 @@ import { searchProgressStore } from './searchProgress';
 import { Results } from './Results';
 import { SampleGear } from './SampleGear';
 import { GapSection } from './GapSection';
+import { LockGlyph } from './ui/Glyphs';
 import { decodeBuild } from '../share/url';
 import { useInventory } from '../state/inventory';
 import { useRoster } from '../state/roster';
@@ -354,7 +355,7 @@ export function App() {
                     onClick={(e) => e.preventDefault()}
                     className="chip touch-target flex-none cursor-not-allowed snap-start items-center whitespace-nowrap border-white/5 text-muted"
                   >
-                    <span aria-hidden="true">🔒</span>
+                    <LockGlyph />
                     <span className="font-mono">{s.n}</span>
                     {s.label}
                   </button>
