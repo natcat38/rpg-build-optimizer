@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { computeGapReport } from './gap';
+import { computeGapReport, setRequirementGap } from './gap';
 import type { MetaTarget } from './metaTargets';
-import type { Artifact, BuildResult, Slot, StatKey } from '../game/types';
+import type {
+  Artifact,
+  BuildResult,
+  SetRequirement,
+  Slot,
+  StatKey,
+} from '../game/types';
 
 const meta: MetaTarget = {
   characterKey: 'furina',
@@ -53,6 +59,58 @@ function build(
     },
   };
 }
+
+describe('setRequirementGap', () => {
+  it('is satisfied when a 2pc requirement is already met', () => {
+    const req: SetRequirement = { kind: '2pc', setKey: 'GoldenTroupe' };
+    const inv = [
+      art('flower', 'GoldenTroupe', 'hp'),
+      art('plume', 'GoldenTroupe', 'atk'),
+    ];
+    expect(setRequirementGap(req, inv)).toBeNull();
+  });
+
+  it('reports a 2pc requirement short by one piece', () => {
+    const req: SetRequirement = { kind: '2pc', setKey: 'GoldenTroupe' };
+    const inv = [art('flower', 'GoldenTroupe', 'hp')];
+    expect(setRequirementGap(req, inv)).toEqual({
+      setKey: 'GoldenTroupe',
+      have: 1,
+      need: 2,
+    });
+  });
+
+  it('for a 2+2 requirement, finds the gap on the second setKey when the first is already met', () => {
+    const req: SetRequirement = {
+      kind: '2+2',
+      setKeys: ['GoldenTroupe', 'EmblemOfSeveredFate'],
+    };
+    const inv = [
+      art('flower', 'GoldenTroupe', 'hp'),
+      art('plume', 'GoldenTroupe', 'atk'),
+      art('sands', 'EmblemOfSeveredFate', 'hp_pct'),
+    ];
+    expect(setRequirementGap(req, inv)).toEqual({
+      setKey: 'EmblemOfSeveredFate',
+      have: 1,
+      need: 2,
+    });
+  });
+
+  it('is satisfied when both 2+2 setKeys are met', () => {
+    const req: SetRequirement = {
+      kind: '2+2',
+      setKeys: ['GoldenTroupe', 'EmblemOfSeveredFate'],
+    };
+    const inv = [
+      art('flower', 'GoldenTroupe', 'hp'),
+      art('plume', 'GoldenTroupe', 'atk'),
+      art('sands', 'EmblemOfSeveredFate', 'hp_pct'),
+      art('goblet', 'EmblemOfSeveredFate', 'elemental_dmg'),
+    ];
+    expect(setRequirementGap(req, inv)).toBeNull();
+  });
+});
 
 describe('computeGapReport', () => {
   it('flags a set feasibility gap and makes farming it the action', () => {

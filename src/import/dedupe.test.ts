@@ -23,6 +23,31 @@ describe('artifactHash', () => {
       artifactHash({ ...base, subStats: [{ key: 'crit_dmg', value: 15 }] }),
     );
   });
+
+  it('is identical regardless of the order sub-stats were recorded in', () => {
+    // Exercises the sort comparator (dedupe.ts:13), which never runs a real
+    // comparison when a piece has 0-1 substats — GOOD exports and hand-built
+    // fixtures elsewhere in the suite happen to only use one. A real 4-line
+    // piece must hash the same no matter what order Enka/GOOD emitted its
+    // substats in, or re-importing the same piece would wrongly look new.
+    const multiA: Artifact = {
+      ...base,
+      subStats: [
+        { key: 'crit_dmg', value: 14 },
+        { key: 'atk_pct', value: 5.8 },
+        { key: 'crit_rate', value: 3.5 },
+      ],
+    };
+    const multiB: Artifact = {
+      ...base,
+      subStats: [
+        { key: 'crit_rate', value: 3.5 },
+        { key: 'crit_dmg', value: 14 },
+        { key: 'atk_pct', value: 5.8 },
+      ],
+    };
+    expect(artifactHash(multiA)).toBe(artifactHash(multiB));
+  });
 });
 
 describe('mergeNew', () => {
