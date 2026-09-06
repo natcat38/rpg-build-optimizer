@@ -37,7 +37,6 @@ tables underneath it are not.
      Re-verify each entry against its `source` wiki page, and re-check
      `UNMODELLED_FOUR_PIECE`: a new patch's sets need an entry one side or the
      other, and a reworked set can move between them.
-   - `src/meta/teammates.ts` — teammate suggestions.
 
 4. **Add entries for new characters.** Every character who is a weight-1.0 "ideal" pick
    in any archetype needs a `META_TARGETS` recipe — the coverage test in
