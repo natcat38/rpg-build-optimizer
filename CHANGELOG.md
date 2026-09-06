@@ -6,7 +6,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 
 ## [Unreleased]
 
-Changes on `main` since the `v1.0.0` tag (#71–#89).
+Changes on `main` since the `v1.0.0` tag (#71–#114).
 
 ### Features
 
@@ -15,12 +15,23 @@ Changes on `main` since the `v1.0.0` tag (#71–#89).
 
 ### Fixed
 
+- Focus now returns to the triggering row button after the roster drawer closes (#108).
+- Teammate blurb in the optimizer is derived from the curated comp database instead of a
+  second, drifted table; 751-line `teammates.ts` deleted (#109).
+- Emoji and bare Unicode glyphs replaced with inline SVG marks matching the icon system (#107).
+- Landing section numbers folded into headings instead of a side-by-side badge (#110).
 - UI/UX audit fixes: accessibility, error recovery, and clarity issues found in a
   validated pass over the app (#84).
 - Vite dev server port pinned to avoid collisions with sibling repos (#88).
 
 ### Changed
 
+- 2026-09 repo audit: eight reports under `docs/research/audit-2026-09/`, mechanical
+  a11y/docs fixes, `ROADMAP.md`, testing runbook, CONTEXT glossary (#105).
+- Single-member game registry removed per ADR-0012 precedent (#106).
+- Roster build score calls the optimizer's objective directly; locking test added (#111).
+- Coverage thresholds enforced in CI (94/87/95/95) after filling branch gaps; 37 new tests
+  across curated data, share links, damage formula, worker, and an e2e golden path (#112, #113, #114).
 - Repo presentation: package metadata, demo GIF, and README engineering highlights (#86).
 - Coverage badge now shown in the README (#79).
 - `reviews/` working files dropped from the repo (#85).

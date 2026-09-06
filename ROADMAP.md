@@ -1,7 +1,7 @@
 # Roadmap — RPG Build Optimizer
 
 **Current stage: Define**
-**Next up:** pick the next feature to Define (audit findings are now filed as issues #90–#104; 15 issues addressing them can be worked independently of that choice).
+**Next up:** pick the next feature to Define. Audit P1/P2 issues #90–#99 are merged (PRs #105–#114); #100 (OKLCH palette) awaits an owner decision and P3 batches #101–#104 await triage.
 
 Lifecycle: Define → Plan → Build → Verify → Review → Ship.
 Agents: read this file at session start, state the current stage and next unchecked item before any other work, and update this file (checkboxes + Current stage + Next up) before ending. Product and design decisions belong to the user — elicit them with questions, never decide for them.
@@ -9,12 +9,12 @@ Agents: read this file at session start, state the current stage and next unchec
 ## History
 
 - **v1.0.0** (2026-08-29) — first tagged release: artifact build optimiser, roster/team/plan views, GOOD import, shareable links, generated dataset pipeline. Full cycle (Define → Ship) completed; see `CHANGELOG.md`.
-- **2026-09 repo audit** — mature-repo hygiene pass (this branch, `chore/repo-audit-2026-09`); findings captured under `docs/research/audit-2026-09/` and triaged into issues #90–#104 (see `docs/research/audit-2026-09/issues.md`).
+- **2026-09 repo audit** — mature-repo hygiene pass (this branch, `chore/repo-audit-2026-09`); findings captured under `docs/research/audit-2026-09/` and triaged into issues #90–#104 (see `docs/research/audit-2026-09/issues.md`); P1/P2 items shipped in PRs #105–#114 on 2026-09-06.
 
 ## 1 · Define — why this exists (before any code)
 
 - [x] Problem, audience, and scope captured in `README.md` and `docs/adr/0001-client-side-only-architecture.md` (v1.0.0).
-- [ ] <!-- TODO: owner decision --> Next feature to Define is not yet chosen — pick after triaging the 2026-09 audit findings.
+- [ ] <!-- TODO: owner decision --> Next feature to Define is not yet chosen.
 
 Exit: user has signed off the product scope. Skills: superpowers:brainstorming, grill-with-docs, feature-scope-docs.
 
@@ -43,6 +43,8 @@ Exit: no known broken flows. Skills: run, webapp-testing, diagnose.
 
 - [x] Prior review passes recorded in `CHANGELOG.md` (e.g. UI/UX audit fixes, #84).
 - [x] 2026-09 repo audit run; findings in `docs/research/audit-2026-09/` triaged into issues #90–#104 (mapping in `docs/research/audit-2026-09/issues.md`).
+- [x] Audit P1/P2 issues (#90–#99) addressed and merged.
+- [ ] Owner decision on #100 (OKLCH palette); triage P3 batches #101–#104.
 
 Exit: findings addressed or explicitly waived. Skills: code-review, simplify, web-design-guidelines.
 
