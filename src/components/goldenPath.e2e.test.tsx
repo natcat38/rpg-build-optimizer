@@ -9,7 +9,7 @@
  * worker (App.test.tsx).
  * @packageDocumentation
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from './App';
@@ -25,6 +25,10 @@ describe('golden path: import -> optimize -> share -> decode', () => {
     useRoster.getState().clear();
     useOptimizeRequest.getState().reset();
     window.history.pushState({}, '', '/');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it(

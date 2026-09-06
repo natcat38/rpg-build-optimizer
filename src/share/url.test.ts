@@ -556,6 +556,34 @@ describe('a shared link must describe a build the app can re-run', () => {
     });
     expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
   });
+
+  it('rejects an objectiveValue that overflows to Infinity', async () => {
+    // Same `1e400` trick as the artifact-rarity case above: `objectiveValue`
+    // is a `number` per JSON's grammar, but not a finite one — a shape
+    // `encodeBuild`'s own JSON.stringify could never produce.
+    const snapshot = { request, build, artifacts };
+    const json = JSON.stringify(snapshot).replace(
+      `"objectiveValue":${build.objectiveValue}`,
+      '"objectiveValue":1e400',
+    );
+    expect(await decodeBuild(toBase64UrlParam(json))).toEqual({
+      error: 'UNREADABLE',
+    });
+  });
+
+  it('rejects a snapshot carrying more artifacts than a build can reference (DoS guard)', async () => {
+    const circlet = artifacts.find((a) => a.slot === 'circlet')!;
+    const extra = Array.from({ length: 20 }, (_, i) => ({
+      ...circlet,
+      id: `extra-${i}`,
+    }));
+    const param = await encodeBuild({
+      request,
+      build,
+      artifacts: [...artifacts, ...extra],
+    });
+    expect(await decodeBuild(param)).toEqual({ error: 'UNREADABLE' });
+  });
 });
 
 describe('decodeBuild tampered/malformed link decode path', () => {
