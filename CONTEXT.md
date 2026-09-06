@@ -84,8 +84,8 @@ comment, name the specific one rather than the bare word "score":
 `objectiveValue` is the primitive of this hierarchy — `Build score` is a
 separate, independently-defined composite (not built from `objectiveValue`),
 while `Grade`, `Team score`, and the investment ranking each build on the one
-before it. `src/roster/buildScore.ts`'s own `pieceCritValue()` helper
-reimplements the `crit_value` formula from `score.ts` locally rather than
-calling `objectiveValue()` directly — a documented-but-unenforced coupling
-(see the architecture audit, `docs/research/audit-2026-09/architecture.md`
-finding #1) worth closing if either formula is touched.
+before it. `src/roster/buildScore.ts`'s "Artifact quality" component calls
+`objectiveValue(artifactContribution(a), 'crit_value')` directly per piece
+rather than reimplementing the `crit_value` formula, so the two surfaces
+cannot silently diverge (closed by issue #97; see the architecture audit,
+`docs/research/audit-2026-09/architecture.md` finding #1).
