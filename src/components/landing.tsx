@@ -40,19 +40,19 @@ export function Section({
       className="animate-fade-up scroll-mt-20"
       style={{ animationDelay: delay }}
     >
-      <div className="mb-3 flex items-center gap-3">
-        {n != null && (
-          <span className="section-badge">{String(n).padStart(2, '0')}</span>
-        )}
-        <div>
-          <h2
-            id={headingId}
-            className="text-pretty font-display text-2xl font-bold tracking-tight text-paper"
-          >
-            {title}
-          </h2>
-          {hint && <p className="text-xs text-muted">{hint}</p>}
-        </div>
+      <div className="mb-3">
+        <h2
+          id={headingId}
+          className="text-pretty font-display text-2xl font-bold tracking-tight text-paper"
+        >
+          {n != null && (
+            <span className="section-badge mr-3 align-middle">
+              {String(n).padStart(2, '0')}
+            </span>
+          )}
+          {title}
+        </h2>
+        {hint && <p className="text-xs text-muted">{hint}</p>}
       </div>
       {children}
     </section>
