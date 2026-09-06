@@ -124,6 +124,7 @@ export function ArtifactForm() {
           <select
             className="field"
             value={mainStat}
+            aria-describedby={`${uid}-substat-caveat`}
             onChange={(e) => setMainStat(e.target.value as StatKey)}
           >
             {STAT_OPTIONS.map((k) => (
@@ -185,7 +186,7 @@ export function ArtifactForm() {
           optimiser ranks almost entirely on sub-stats — so say what a
           hand-added piece can and can't do rather than letting the section
           hint imply it's an equal path to importing. */}
-      <p className="text-xs text-muted">
+      <p id={`${uid}-substat-caveat`} className="text-xs text-muted">
         Hand-added pieces carry no sub-stats yet, so they rank below imported
         gear in a search. Use them to fill a gap, not to compare builds.
       </p>

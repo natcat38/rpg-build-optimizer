@@ -556,4 +556,33 @@ describe('OptimizePanel objective coverage', () => {
       ).toContain(meta.objective);
     }
   });
+
+  it('flags a negative minimum ER with aria-invalid and an inline message', async () => {
+    const user = userEvent.setup();
+    render(
+      <OptimizePanel onRun={vi.fn()} running={false} onCancel={vi.fn()} />,
+    );
+    const minER = screen.getByLabelText(/minimum energy recharge/i);
+    await user.clear(minER);
+    await user.type(minER, '-5');
+    expect(minER).toHaveAttribute('aria-invalid', 'true');
+    const err = screen.getByRole('alert');
+    expect(err).toHaveTextContent(/positive number/i);
+    expect(minER).toHaveAttribute('aria-describedby', err.id);
+  });
+
+  it('clears the minimum ER error once the value is valid again', async () => {
+    const user = userEvent.setup();
+    render(
+      <OptimizePanel onRun={vi.fn()} running={false} onCancel={vi.fn()} />,
+    );
+    const minER = screen.getByLabelText(/minimum energy recharge/i);
+    await user.clear(minER);
+    await user.type(minER, '-5');
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    await user.clear(minER);
+    await user.type(minER, '200');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(minER).not.toHaveAttribute('aria-invalid');
+  });
 });
