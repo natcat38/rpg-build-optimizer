@@ -30,4 +30,7 @@ jobs:
           printf '{"schemaVersion":1,"label":"coverage","message":"%s%%","color":"%s"}\n' "$PCT" "$COLOR" > coverage.json
           git add coverage.json
           git commit -m "coverage badge: $PCT%"
+          # Force-push is safe here: `badges` is a disposable orphan branch with a single
+          # generated file and no other consumers/branch protection, so overwriting its
+          # history each run is intentional and can't clobber real work.
           git push --force origin badges-new:badges
