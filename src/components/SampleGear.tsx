@@ -34,7 +34,12 @@ export function SampleGear({
   return (
     <div className="panel panel-md space-y-3">
       <div>
-        <h2 className="text-pretty font-display text-lg font-bold tracking-wide text-paper">
+        <div className="mb-1 flex items-center gap-2">
+          {/* Non-numeric, so this reads as parallel to Step 1 rather than an
+              unlabelled step 0 in front of it. */}
+          <span className="chip">Shortcut</span>
+        </div>
+        <h2 className="text-pretty font-display text-base font-bold tracking-wide text-paper">
           No Gear Handy? Try a Sample Build
         </h2>
         <p className="text-xs text-muted">

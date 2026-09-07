@@ -35,8 +35,8 @@ describe('GapSection', () => {
     expect(screen.getByText('Gap vs Meta Build')).toBeInTheDocument();
   });
 
-  it('renders nothing for a non-meta character', () => {
-    const { container } = render(
+  it('renders a fallback note for a non-meta character', () => {
+    render(
       <GapSection
         result={emptyResult}
         request={makeRequest('definitely-not-a-character')}
@@ -44,7 +44,9 @@ describe('GapSection', () => {
         sharedArtifacts={null}
       />,
     );
-    expect(container).toBeEmptyDOMElement();
+    expect(
+      screen.getByText('No curated recipe for this character yet.'),
+    ).toBeInTheDocument();
   });
 
   it('renders nothing when viewing a shared build', () => {

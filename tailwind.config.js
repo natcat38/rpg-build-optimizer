@@ -65,6 +65,12 @@ export default {
         muted: '#8d93a3',
         rose: '#e88b7d',
         jade: '#6fd39a',
+        // Warning/caution signal — amber, distinct from `accent` (game-swapped
+        // brand gold) and `element.geo` (an elemental hue, not a semantic
+        // one). Measured as text on both dark surfaces per WCAG 2.1 relative
+        // luminance: 10.15:1 on surface-900 (#0f1116), 8.94:1 on surface-700
+        // (#1b1e27) — both clear the 4.5:1 AA floor with headroom.
+        amber: '#f0b432',
       },
       boxShadow: {
         'glow-accent':

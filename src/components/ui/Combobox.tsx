@@ -6,6 +6,7 @@
  */
 
 import { useId, useState, useRef, useEffect } from 'react';
+import { ChevronGlyph } from './Glyphs';
 
 /** Hoisted out of the render: 235 <li>s each allocating an identical style
  *  object is 235 allocations per keystroke, and the object never varies.
@@ -222,20 +223,7 @@ export function Combobox({
           }}
         >
           <span className="min-w-0 truncate">{selectedLabel}</span>
-          <svg
-            className="flex-none text-accent"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+          <ChevronGlyph className="rotate-90 text-accent" />
         </button>
       )}
       {open && (
