@@ -289,9 +289,21 @@ export function PlanView({
         </button>
       </div>
 
+      {/* Persistent regions for both notices below: a role mounted in the
+          same commit as its text (a fresh `role="status"`/`role="alert"`
+          node) isn't reliably announced — see App.tsx's live region — so
+          these always-mounted twins carry the announcement and the visible
+          progress/Callout below stay purely visual. */}
+      <p className="sr-only" role="status">
+        {running ? `Optimising member ${progress[0]} of ${progress[1]}…` : ''}
+      </p>
+      <p className="sr-only" role="alert">
+        {failed ? 'Building the plan failed — please try again.' : ''}
+      </p>
+
       {running && (
-        <div role="status" aria-live="polite" className="space-y-1">
-          <p className="text-xs text-muted">
+        <div className="space-y-1">
+          <p className="text-xs text-muted" data-testid="progress-text">
             Optimising member {progress[0]} of {progress[1]}…
           </p>
           <div
@@ -307,7 +319,7 @@ export function PlanView({
       )}
 
       {failed && (
-        <Callout tone="error" role="alert">
+        <Callout tone="error">
           Building the plan failed — please try again.
         </Callout>
       )}

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Results } from './Results';
 import type {
@@ -35,8 +35,13 @@ describe('Results', () => {
         artifactsById={{}}
       />,
     );
+    // The same text also lives in a persistent sr-only announcement region
+    // (see Finding 1 fix) — scope to the visible Callout to avoid matching
+    // both.
     expect(
-      screen.getByText(/No build satisfies all constraints/i),
+      within(screen.getByTestId('infeasible-callout')).getByText(
+        /No build satisfies all constraints/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -485,8 +490,11 @@ describe('Results — infeasible cause', () => {
         artifactsById={{}}
       />,
     );
+    // The same text also lives in a persistent sr-only announcement region
+    // (see Finding 1 fix) — scope to the visible Callout to avoid matching
+    // both.
     expect(
-      screen.getByText(
+      within(screen.getByTestId('infeasible-callout')).getByText(
         /Even the optimistic ceiling for Energy Recharge is .* your floor is 500/i,
       ),
     ).toBeInTheDocument();
@@ -520,7 +528,9 @@ describe('Results — infeasible cause', () => {
       />,
     );
     expect(
-      screen.getByText(/You own no circlet with a CRIT Rate main stat/i),
+      within(screen.getByTestId('infeasible-callout')).getByText(
+        /You own no circlet with a CRIT Rate main stat/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -542,7 +552,7 @@ describe('Results — infeasible cause', () => {
       />,
     );
     expect(
-      screen.getByText(
+      within(screen.getByTestId('infeasible-callout')).getByText(
         /You own 1 Emblem of Severed Fate piece across slots — need 4/i,
       ),
     ).toBeInTheDocument();
@@ -563,7 +573,9 @@ describe('Results — infeasible cause', () => {
       />,
     );
     expect(
-      screen.getByText(/Try relaxing the set requirement/i),
+      within(screen.getByTestId('infeasible-callout')).getByText(
+        /Try relaxing the set requirement/i,
+      ),
     ).toBeInTheDocument();
   });
 });

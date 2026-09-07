@@ -254,14 +254,18 @@ describe('PlanView', () => {
     await user.click(
       screen.getByRole('button', { name: /Build my Abyss plan/i }),
     );
-    expect(await screen.findByText(/Optimising member/i)).toBeInTheDocument();
+    // The same text also lives in a persistent sr-only announcement region
+    // (see Finding 1 fix), so scope to the visible progress node.
+    expect(await screen.findByTestId('progress-text')).toHaveTextContent(
+      /Optimising member/i,
+    );
 
     // Re-importing replaces the inventory: the run still in flight is now
     // solving over gear the user no longer has.
     await act(async () => {
       useInventory.getState().clear();
     });
-    expect(screen.queryByText(/Optimising member/i)).toBeNull();
+    expect(screen.queryByTestId('progress-text')).toBeNull();
 
     await act(async () => {
       release();
@@ -270,7 +274,9 @@ describe('PlanView', () => {
     // The superseded run commits nothing: no plan, no progress, no error.
     expect(screen.queryByText('What to Farm')).toBeNull();
     expect(screen.queryByText(/Optimising member/i)).toBeNull();
-    expect(screen.queryByRole('alert')).toBeNull();
+    // The alert region is persistent (see Finding 1 fix), so it stays
+    // mounted with empty text rather than disappearing.
+    expect(screen.getByRole('alert')).toHaveTextContent('');
   });
 
   it('renders no advice heading when there is nothing to advise', async () => {

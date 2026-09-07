@@ -172,7 +172,7 @@ export function ArtifactForm() {
             }
           />
           {levelError ? (
-            <p id="level-error" role="alert" className="mt-1 text-xs text-rose">
+            <p id="level-error" className="mt-1 text-xs text-rose">
               {levelError}
             </p>
           ) : (
@@ -180,6 +180,12 @@ export function ArtifactForm() {
               0 to 20.
             </p>
           )}
+          {/* A role="alert" node created in the same commit as its text
+              announces nothing — see the panel-level region in App.tsx —
+              so this persistent twin carries the announcement instead. */}
+          <p className="sr-only" role="alert">
+            {levelError ?? ''}
+          </p>
         </label>
       </div>
       {/* Sub-stat entry is hard-coded empty (see `subStats` above), and the
@@ -192,16 +198,16 @@ export function ArtifactForm() {
       </p>
 
       {/* The level field states its own error inline; don't say it twice. */}
-      {error && error !== levelError && (
-        <Callout tone="error" role="alert">
-          {error}
-        </Callout>
-      )}
+      {error && error !== levelError && <Callout tone="error">{error}</Callout>}
       {/* The status lives in a persistent region — a role="status" node
           created in the same commit as its text announces nothing — so the
           Callout below is the visual half only. */}
       <p className="sr-only" role="status">
         {added && <span key={added.nonce}>{added.text}</span>}
+      </p>
+      {/* Same reasoning, for the submit-time error banner above. */}
+      <p className="sr-only" role="alert">
+        {error && error !== levelError ? error : ''}
       </p>
       {added && <Callout tone="success">{added.text}</Callout>}
       <button type="submit" className="btn-primary">
