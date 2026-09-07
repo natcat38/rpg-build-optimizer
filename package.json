@@ -40,7 +40,7 @@
     "size:update": "tsx scripts/check-size.ts --update"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.122.0",
+    "@anthropic-ai/sdk": "^0.123.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.3",
     "react": "^19.2.8",
