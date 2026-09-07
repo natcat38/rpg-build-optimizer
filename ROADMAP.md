@@ -45,6 +45,7 @@ Exit: no known broken flows. Skills: run, webapp-testing, diagnose.
 - [x] 2026-09 repo audit run; findings in `docs/research/audit-2026-09/` triaged into issues #90–#104 (mapping in `docs/research/audit-2026-09/issues.md`).
 - [x] Audit P1/P2 issues (#90–#99) addressed and merged.
 - [x] P3 batches #101–#104 triaged and merged (PRs #116–#119).
+- [x] 2026-09-08 design-critique + a11y review of all pages (reports in `docs/research/`); fixes merged in PRs #126–#127.
 - [ ] Owner decision on #100 (OKLCH palette).
 
 Exit: findings addressed or explicitly waived. Skills: code-review, simplify, web-design-guidelines.
