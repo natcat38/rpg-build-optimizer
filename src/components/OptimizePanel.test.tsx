@@ -566,9 +566,15 @@ describe('OptimizePanel objective coverage', () => {
     await user.clear(minER);
     await user.type(minER, '-5');
     expect(minER).toHaveAttribute('aria-invalid', 'true');
-    const err = screen.getByRole('alert');
-    expect(err).toHaveTextContent(/positive number/i);
-    expect(minER).toHaveAttribute('aria-describedby', err.id);
+    // The visible hint swaps to the error message and is what
+    // aria-describedby points at; the role="alert" announcement lives in a
+    // separate persistent region (see the sr-only twin in OptimizePanel.tsx)
+    // so it isn't the node the field describes.
+    const describedbyId = minER.getAttribute('aria-describedby');
+    expect(document.getElementById(describedbyId!)).toHaveTextContent(
+      /positive number/i,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent(/positive number/i);
   });
 
   it('clears the minimum ER error once the value is valid again', async () => {
@@ -579,10 +585,12 @@ describe('OptimizePanel objective coverage', () => {
     const minER = screen.getByLabelText(/minimum energy recharge/i);
     await user.clear(minER);
     await user.type(minER, '-5');
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(/positive number/i);
     await user.clear(minER);
     await user.type(minER, '200');
-    expect(screen.queryByRole('alert')).toBeNull();
+    // The alert region is persistent (see Finding 1 fix), so it stays
+    // mounted with empty text rather than disappearing.
+    expect(screen.getByRole('alert')).toHaveTextContent('');
     expect(minER).not.toHaveAttribute('aria-invalid');
   });
 });

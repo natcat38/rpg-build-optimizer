@@ -26,9 +26,12 @@ describe('ArtifactForm', () => {
     await userEvent.clear(level);
     await userEvent.type(level, '25');
     await userEvent.click(screen.getByText(/add artifact/i));
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'Level must be between 0 and 20.',
-    );
+    // Two persistent alert regions exist (level + submit banner, see Finding
+    // 1 fix) — this path collapses to the level message on both.
+    const alerts = screen.getAllByRole('alert');
+    expect(
+      alerts.some((a) => a.textContent === 'Level must be between 0 and 20.'),
+    ).toBe(true);
   });
 
   it('flags an out-of-range level on blur and links the message to the field', async () => {
@@ -38,9 +41,16 @@ describe('ArtifactForm', () => {
     await user.clear(level);
     await user.type(level, '25');
     await user.tab();
-    const err = await screen.findByRole('alert');
-    expect(err).toHaveTextContent(/between 0 and 20/i);
-    expect(level).toHaveAttribute('aria-describedby', err.id);
+    // The visible message (id="level-error") is what aria-describedby
+    // points at; the announcement itself lives in a separate persistent
+    // sr-only region (see Finding 1 fix), so it carries no id to compare.
+    expect(level).toHaveAttribute('aria-describedby', 'level-error');
+    const visibleError = document.getElementById('level-error');
+    expect(visibleError).toHaveTextContent(/between 0 and 20/i);
+    const alerts = await screen.findAllByRole('alert');
+    expect(
+      alerts.some((a) => /between 0 and 20/i.test(a.textContent ?? '')),
+    ).toBe(true);
   });
 
   it('shows both the inline field error and the submit banner when the level field was never blurred', async () => {
@@ -57,10 +67,14 @@ describe('ArtifactForm', () => {
     // does not — the one path where the banner and inline message disagree.
     fireEvent.submit(container.querySelector('form')!);
     // The inline hint (no error role) stays put since `levelError` is still
-    // null, while the submit-time banner appears as the sole alert — the
-    // `error !== levelError` banner path this test targets.
-    const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent(/between 0 and 20/i);
+    // null, while the submit-time banner is the one that gains text — the
+    // `error !== levelError` banner path this test targets. Both persistent
+    // alert regions exist throughout (see Finding 1 fix); only the banner's
+    // gains this text.
+    const alerts = await screen.findAllByRole('alert');
+    expect(
+      alerts.some((a) => /between 0 and 20/i.test(a.textContent ?? '')),
+    ).toBe(true);
     expect(screen.getByText(/0 to 20\./i)).toBeInTheDocument();
     expect(useInventory.getState().artifacts.length).toBe(0);
   });

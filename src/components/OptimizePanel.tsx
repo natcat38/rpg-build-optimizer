@@ -440,11 +440,7 @@ export function OptimizePanel({
               }
             />
             {minERInvalid ? (
-              <p
-                id={`${uid}-er-error`}
-                role="alert"
-                className="mt-1.5 text-xs text-rose"
-              >
+              <p id={`${uid}-er-error`} className="mt-1.5 text-xs text-rose">
                 Enter a positive number, or leave blank for no floor.
               </p>
             ) : (
@@ -452,6 +448,14 @@ export function OptimizePanel({
                 Leave blank to search without an Energy Recharge floor.
               </p>
             )}
+            {/* A role="alert" node created in the same commit as its text
+                announces nothing — see App.tsx's persistent region — so this
+                always-mounted twin carries the announcement instead. */}
+            <p className="sr-only" role="alert">
+              {minERInvalid
+                ? 'Enter a positive number, or leave blank for no floor.'
+                : ''}
+            </p>
           </label>
         </div>
       </div>

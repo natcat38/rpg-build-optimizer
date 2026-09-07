@@ -244,22 +244,33 @@ export function Results({
     // not just Energy Recharge, which used to be the only one wired up.
     const relax = cause?.relax;
     const relaxTo = relax ? Math.floor(relax.best) : null;
+    const cannotBuildText =
+      cause?.text ?? 'Try relaxing the set requirement or a minimum stat.';
     return (
-      <Callout tone="error" role="status">
-        <p className="font-semibold">No build satisfies all constraints.</p>
-        <p className="mt-1 opacity-80">
-          {cause?.text ?? 'Try relaxing the set requirement or a minimum stat.'}
+      <div className="space-y-4">
+        {/* This component only unmounts when the run itself is torn down
+            (App.tsx keeps it mounted across every status change), so this
+            paragraph already existed the moment the run went infeasible —
+            unlike a `role="status"` Callout, which is a fresh node in the
+            same commit as its text and announces nothing. Its own region:
+            the share outcome below never fires for an infeasible run. */}
+        <p className="sr-only" role="status">
+          No build satisfies all constraints. {cannotBuildText}
         </p>
-        {relax && relaxTo != null && (
-          <button
-            type="button"
-            className="btn-ghost mt-2"
-            onClick={() => onRelax(relax.key, relaxTo)}
-          >
-            Relax {statLabel(relax.key)} to {formatStat(relax.key, relaxTo)}
-          </button>
-        )}
-      </Callout>
+        <Callout tone="error" data-testid="infeasible-callout">
+          <p className="font-semibold">No build satisfies all constraints.</p>
+          <p className="mt-1 opacity-80">{cannotBuildText}</p>
+          {relax && relaxTo != null && (
+            <button
+              type="button"
+              className="btn-ghost mt-2"
+              onClick={() => onRelax(relax.key, relaxTo)}
+            >
+              Relax {statLabel(relax.key)} to {formatStat(relax.key, relaxTo)}
+            </button>
+          )}
+        </Callout>
+      </div>
     );
   }
 
@@ -293,6 +304,10 @@ export function Results({
 
   return (
     <div className="space-y-4">
+      {/* Empty twin of the infeasible region above, in the same slot, so the
+          node already exists — rather than being freshly mounted — if this
+          run later comes back infeasible. */}
+      <p className="sr-only" role="status" />
       {searched && (
         <div className="panel space-y-2 px-4 py-3">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs">
