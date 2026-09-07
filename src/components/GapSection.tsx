@@ -34,7 +34,18 @@ export function GapSection({
 
   // Only for meta characters on freshly-optimised (non-shared) builds. After
   // the hooks above: a bail-out before them would change the hook order.
-  if (sharedArtifacts || !meta || !report) return null;
+  if (sharedArtifacts) return null;
+
+  if (!meta || !report) {
+    // Mirrors PlanView's MemberCard wording for the same "no curated recipe"
+    // case, so a non-meta character reads as an intentional gap, not a
+    // silently broken results section.
+    return (
+      <p className="mb-4 text-xs text-muted">
+        No curated recipe for this character yet.
+      </p>
+    );
+  }
 
   return (
     <div className="mb-4">

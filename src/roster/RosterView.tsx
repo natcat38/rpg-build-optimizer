@@ -7,7 +7,7 @@ import { useRoster } from '../state/roster';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest } from '../state/optimizeRequest';
 import { genshinAdapter } from '../game/genshin/adapter';
-import { PlayGlyph } from '../components/ui/Glyphs';
+import { PlayGlyph, ChevronGlyph } from '../components/ui/Glyphs';
 import { computeBuildScore, band, groupByLocation } from './buildScore';
 import { AppDrawer } from '../components/ui/Drawer';
 import { CharacterDetail } from './CharacterDetail';
@@ -56,7 +56,7 @@ function Row({
             <CharacterLine element={element} weaponName={weaponName} />
           </span>
           {equippedCount === 0 && (
-            <span className="block text-xs text-flux-bright">
+            <span className="block text-xs text-amber">
               No equipped gear found — {UNSCORED_WITHOUT_GEAR} pts unscored
             </span>
           )}
@@ -74,20 +74,7 @@ function Row({
             <Meter value={total} className="mt-0.5 hidden w-12 sm:block" />
           </div>
           <Badge tone={BAND_TONE[b]}>{bandLabel(b)}</Badge>
-          <svg
-            className="ml-auto flex-none text-muted sm:ml-0"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+          <ChevronGlyph className="ml-auto text-muted sm:ml-0" />
         </div>
       </button>
     </li>

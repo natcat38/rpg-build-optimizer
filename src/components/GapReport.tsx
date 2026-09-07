@@ -11,10 +11,10 @@ export function GapReport({ report }: { report: GapReportData }) {
       </h3>
 
       {allMet ? (
-        <p className="text-sm text-jade">
+        <Callout tone="success">
           Your gear can already build the meta — nice.
           {report.action ? ` To push further: ${report.action}` : ''}
-        </p>
+        </Callout>
       ) : (
         <>
           {report.feasibility.length > 0 && (

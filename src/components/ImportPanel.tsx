@@ -209,11 +209,7 @@ export function ImportPanel() {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                className={
-                  confirmingClear
-                    ? 'btn-ghost border border-rose text-rose hover:bg-rose/10'
-                    : 'btn-ghost'
-                }
+                className={confirmingClear ? 'btn-danger' : 'btn-ghost'}
                 onClick={onClear}
               >
                 {confirmingClear ? 'Confirm Clear' : 'Clear Inventory'}

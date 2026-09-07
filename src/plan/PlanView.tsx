@@ -141,7 +141,7 @@ function MemberCard({
           ten cards share one objective, but eight plan members do not. */}
       <p className="text-xs text-muted">{objectiveHint(objective)}</p>
       {!META_TARGETS[characterKey] && (
-        <p className="text-xs text-muted">
+        <p className="text-xs text-amber">
           No curated recipe for {name} yet — this is the highest raw{' '}
           {objectiveLabel(objective)} from the remaining pieces, ignoring set
           bonuses. Treat it as a stat-stick draft, not a real build.
