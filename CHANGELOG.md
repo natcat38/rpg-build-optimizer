@@ -15,6 +15,13 @@ Changes on `main` since the `v1.0.0` tag (#71–#119).
 
 ### Fixed
 
+- Inline field errors, the infeasible-search notice, and plan-build failure/progress
+  messages are announced through persistent screen-reader live regions instead of
+  freshly-mounted `role="alert"` nodes, which many browser/AT combinations skip (#127).
+- Shared `warning` tone (contrast-measured amber), success callout on the gap report's
+  "all met" message, a `.btn-danger` recipe for Clear Inventory, a shared chevron glyph,
+  an external-link glyph on source links, a "no curated recipe" fallback in gap analysis,
+  and a "Shortcut" chip on the sample-gear heading (#126).
 - Focus now returns to the triggering row button after the roster drawer closes (#108).
 - Teammate blurb in the optimizer is derived from the curated comp database instead of a
   second, drifted table; 751-line `teammates.ts` deleted (#109).
