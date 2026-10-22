@@ -8,12 +8,17 @@
  * function (measured: 6.6 KB → 321 KB). `src/labels-core.test.ts` is the
  * tripwire that keeps it that way.
  *
+ * Everything `api/explain.ts` reaches at runtime is loaded by Node as ESM, so
+ * relative imports in this file and its dependencies (`game/types`,
+ * `state/artifactValidation`, `ai/explainShared`) carry explicit `.js`
+ * extensions. `npm run api:check` fails CI if one is dropped.
+ *
  * `src/labels.ts` re-exports everything here, so UI code keeps importing
  * `../labels` and never needs to know this split exists.
  * @packageDocumentation
  */
 
-import type { Objective, SetRequirement, Slot, StatKey } from './game/types';
+import type { Objective, SetRequirement, Slot, StatKey } from './game/types.js';
 
 /** Human-friendly display names for stat keys. */
 export const STAT_LABELS: Record<StatKey, string> = {

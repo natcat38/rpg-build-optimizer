@@ -1,8 +1,7 @@
-import type { Objective, StatKey, StatVec } from '../game/types';
-import { isStatKey, isObjective } from '../game/types';
-import { objectiveLabel, statLabel } from '../labels-core';
-import { MAX_KEY_LEN } from '../state/artifactValidation';
-import type { GapReport } from '../meta/gap';
+import type { Objective, StatKey, StatVec } from '../game/types.js';
+import { isStatKey, isObjective } from '../game/types.js';
+import { objectiveLabel, statLabel } from '../labels-core.js';
+import { MAX_KEY_LEN } from '../state/artifactValidation.js';
 
 // ---------------------------------------------------------------------------
 // ExplainPayload — the validated request shape sent to the AI proxy
@@ -150,7 +149,9 @@ export function buildExplainPrompt(p: ExplainPayload): {
 // ---------------------------------------------------------------------------
 
 /**
- * Assemble the AI payload from a build + its gap report. Single source of truth
+ * Assemble the AI payload from a build + its gap report (a `GapReport` from
+ * `meta/gap.ts`; typed structurally so this file, which `api/explain.ts`
+ * imports, doesn't drag the app's label/dataset graph into the function). Single source of truth
  * for the shape, so ExplainBuild no longer hand-mirrors GapReport fields
  * (which silently drifts when GapReport gains one).
  *
@@ -162,7 +163,7 @@ export function toExplainPayload(
   characterKey: string,
   objective: Objective,
   totals: StatVec,
-  report: GapReport,
+  report: ExplainPayload['gap'],
 ): ExplainPayload {
   return {
     characterKey,

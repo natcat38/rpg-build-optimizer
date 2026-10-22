@@ -5,8 +5,8 @@
  * @packageDocumentation
  */
 
-import type { Artifact, StatKey, SubStat } from '../game/types';
-import { ELEMENTS, isStatKey, SLOTS } from '../game/types';
+import type { Artifact, StatKey, SubStat } from '../game/types.js';
+import { ELEMENTS, isStatKey, SLOTS } from '../game/types.js';
 
 export interface ArtifactDraft {
   mainStat: StatKey;

@@ -3,8 +3,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import {
   parseExplainPayload,
   buildExplainPrompt,
-} from '../src/ai/explainShared';
-import { checkRateLimit } from './_ratelimit';
+} from '../src/ai/explainShared.js';
+import { checkRateLimit } from './_ratelimit.js';
 
 function clientIp(req: VercelRequest): string {
   // Prefer x-real-ip: Vercel's edge sets it to the true connecting IP, which a

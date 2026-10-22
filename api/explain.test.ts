@@ -14,9 +14,9 @@ vi.mock('@anthropic-ai/sdk', () => ({
 // is tested independent of real Upstash wiring, which _ratelimit.test.ts
 // already covers.
 const { checkRateLimit } = vi.hoisted(() => ({ checkRateLimit: vi.fn() }));
-vi.mock('./_ratelimit', () => ({ checkRateLimit }));
+vi.mock('./_ratelimit.js', () => ({ checkRateLimit }));
 
-import handler from './explain';
+import handler from './explain.js';
 
 function makeRes() {
   return {
