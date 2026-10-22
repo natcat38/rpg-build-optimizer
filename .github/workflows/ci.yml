@@ -21,6 +21,8 @@ jobs:
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
       - run: npm run typecheck
+      # Compiles api/ as Node ESM, imports the handler, expects GET -> 405.
+      - run: npm run api:check
       - run: npm run lint
       - run: npm run docs:check
       # Generated speed report must be refreshed when the search changes.

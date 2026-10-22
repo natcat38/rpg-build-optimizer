@@ -70,3 +70,5 @@ The button calls `api/explain.ts`, a Vercel serverless function that proxies Cla
 `.env.example` at the repo root lists all five names with no values — copy it to `.env.local` and fill it in.
 
 Run `vercel dev` (not `npm run dev`) locally to serve the `/api` function.
+
+Vercel loads `api/*.ts` as plain Node ESM, which only resolves relative imports that carry a `.js` extension (`import { x } from './_ratelimit.js'`). `tsconfig.api.json` uses `NodeNext` so `npm run typecheck` rejects an extensionless import anywhere `api/` reaches, and `npm run api:check` (also in CI) compiles `api/`, imports the handler under Node, and expects a `GET` to answer 405.

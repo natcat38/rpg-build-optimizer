@@ -15,6 +15,7 @@ Changes on `main` since the `v1.0.0` tag (#71–#119).
 
 ### Fixed
 
+- `/api/explain` returned a 500 (`FUNCTION_INVOCATION_FAILED`) on every request in production: its relative imports had no `.js` extension, which Node ESM cannot resolve. Imports reachable from `api/` now carry `.js`, `tsconfig.api.json` uses `NodeNext` so typecheck rejects a regression, and `npm run api:check` loads the compiled handler under Node in CI.
 - Inline field errors, the infeasible-search notice, and plan-build failure/progress
   messages are announced through persistent screen-reader live regions instead of
   freshly-mounted `role="alert"` nodes, which many browser/AT combinations skip (#127).

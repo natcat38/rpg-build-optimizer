@@ -3,7 +3,7 @@
  * kept separate from `game/genshin/`.
  * @packageDocumentation
  */
-import type { DamageContext } from '../damage/types';
+import type { DamageContext } from '../damage/types.js';
 
 export type Slot = 'flower' | 'plume' | 'sands' | 'goblet' | 'circlet';
 export const SLOTS: Slot[] = ['flower', 'plume', 'sands', 'goblet', 'circlet'];

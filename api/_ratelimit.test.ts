@@ -29,13 +29,13 @@ const ORIGINAL_ENV = process.env;
 // into later ones — order-dependent in a way `--sequence.shuffle` exposes.
 // Resetting the module registry and re-importing fresh in every test gives
 // each one its own untouched module state, regardless of run order.
-let checkRateLimit: (typeof import('./_ratelimit'))['checkRateLimit'];
+let checkRateLimit: (typeof import('./_ratelimit.js'))['checkRateLimit'];
 beforeEach(async () => {
   limit.mockReset();
   RatelimitCtor.mockReset();
   slidingWindow.mockReset();
   vi.resetModules();
-  ({ checkRateLimit } = await import('./_ratelimit'));
+  ({ checkRateLimit } = await import('./_ratelimit.js'));
 });
 afterEach(() => {
   process.env = ORIGINAL_ENV;
