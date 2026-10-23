@@ -78,14 +78,20 @@ function SummaryRow({
           if (e.currentTarget.open) setMounted(true);
         }}
       >
-        <summary className="focus-ring touch-target flex w-full cursor-pointer select-none items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-white/5">
+        <summary className="focus-ring touch-target flex w-full cursor-pointer select-none flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-3 py-2 text-left transition-colors hover:bg-white/5">
           <span
             aria-hidden="true"
             className="w-3 flex-none text-2xs text-muted transition group-open:rotate-90"
           >
             ▶
           </span>
-          <span className="min-w-0 flex-1 truncate text-sm text-paper">
+          {/* Below sm the row wraps: caret + name on line 1 (never less than
+              9rem, so a name can't collapse to "Y…"), score, grades and
+              conflicts on line 2. From sm everything shares one line. */}
+          <span
+            title={name}
+            className="min-w-[9rem] flex-1 truncate text-sm text-paper sm:min-w-0"
+          >
             {name}
           </span>
           {value !== null ? (
@@ -101,7 +107,12 @@ function SummaryRow({
           {grade && (
             <GradeMarker grade={grade} subject="the optimizer's best build" />
           )}
-          <span className="w-20 flex-none text-right text-2xs text-muted">
+          {/* Only reserves its column from sm up, where the row is one line
+              and the numbers should align; on a phone it takes no space
+              unless there is a conflict to report. */}
+          <span
+            className={`flex-none text-right text-2xs text-muted sm:block sm:w-20 ${build.conflicts.length > 0 ? '' : 'hidden'}`}
+          >
             {build.conflicts.length > 0
               ? `${build.conflicts.length} conflict${build.conflicts.length === 1 ? '' : 's'}`
               : ''}

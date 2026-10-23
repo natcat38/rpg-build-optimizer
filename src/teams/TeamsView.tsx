@@ -26,7 +26,7 @@ const COMING_SOON: string[] = ['Imaginarium Theater', 'Stygian Onslaught'];
 function TeamCard({ title, team }: { title: string; team: TeamInstance }) {
   const arch = getArchetype(team.archetypeId);
   return (
-    <div data-testid="team-card" className="card p-4">
+    <div data-testid="team-card" className="card min-w-0 p-4">
       <p className="micro-label">{title}</p>
       <h3 className="font-display text-base font-bold text-paper">
         {archetypeName(team.archetypeId)}
@@ -97,7 +97,7 @@ export function TeamsView() {
       </p>
 
       {rec.teams ? (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <TeamCard title="First half" team={rec.teams[0]} />
           <TeamCard title="Second half" team={rec.teams[1]} />
         </div>

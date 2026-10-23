@@ -192,12 +192,12 @@ export function ImportPanel() {
 
   return (
     <div className="panel panel-md space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="micro-label">Inventory</span>
         {/* Two explicit element children, not an element plus a bare text
             node: JSX drops the newline between them, so the spacing was left
             to .chip's flex gap and read as "70artifacts loaded". */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="chip">
             {/* Tabular digits: the count changes under the reader's eyes on
                 every import, and a proportional font shifted the word beside
@@ -206,7 +206,7 @@ export function ImportPanel() {
             <span>{plural(count, 'artifact')} loaded</span>
           </span>
           {count > 0 && (
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               <button
                 type="button"
                 className={confirmingClear ? 'btn-danger' : 'btn-ghost'}

@@ -170,7 +170,7 @@ export function CharacterDetail({
                 </p>
               )}
               <SourceLink
-                className="text-xs text-flux-bright underline"
+                className="inline-flex min-h-6 items-center text-xs text-flux-bright underline [@media(pointer:coarse)]:min-h-11"
                 href={meta.source}
               >
                 Source guide (KQM)
@@ -181,7 +181,7 @@ export function CharacterDetail({
               {profile && profile.source !== meta.source && (
                 <p>
                   <SourceLink
-                    className="text-xs text-muted underline"
+                    className="inline-flex min-h-6 items-center text-xs text-muted underline [@media(pointer:coarse)]:min-h-11"
                     href={profile.source}
                   >
                     Damage Profile Source
