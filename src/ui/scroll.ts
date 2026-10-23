@@ -13,3 +13,20 @@ export function scrollToId(id: string) {
       : 'smooth',
   });
 }
+
+/** Scroll a horizontally scrolling strip (the step nav) so `child` sits in its
+ *  middle. Sets the strip's own `scrollLeft`: `scrollIntoView` would also move
+ *  the page. Reads `offsetLeft`, so `container` must be the child's offset
+ *  parent (positioned). */
+export function centerInScroller(container: HTMLElement, child: HTMLElement) {
+  const max = container.scrollWidth - container.clientWidth;
+  if (max <= 0) return;
+  const left =
+    child.offsetLeft - (container.clientWidth - child.offsetWidth) / 2;
+  container.scrollTo({
+    left: Math.min(max, Math.max(0, left)),
+    behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      ? 'auto'
+      : 'smooth',
+  });
+}

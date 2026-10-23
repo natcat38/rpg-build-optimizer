@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, act, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { App } from './App';
 import { useInventory } from '../state/inventory';
 import { useOptimizeRequest } from '../state/optimizeRequest';
@@ -298,52 +299,109 @@ describe('App — step nav', () => {
     expect(within(nav).queryByText('06')).toBeNull();
   });
 
-  it('marks the section in view with aria-current, topmost first', () => {
-    // jsdom has no IntersectionObserver, and a real browser only runs one on
-    // a visible page — so drive the callback directly.
-    type Cb = (entries: Partial<IntersectionObserverEntry>[]) => void;
-    const callbacks: Cb[] = [];
-    vi.stubGlobal(
-      'IntersectionObserver',
-      class {
-        constructor(cb: Cb) {
-          callbacks.push(cb);
-        }
-        observe() {}
-        disconnect() {}
-      },
-    );
-    // Restored in afterEach below rather than at the end of the test body: an
-    // assertion failure above would otherwise leave the stub installed for
-    // every later test in the file.
+  it('marks the last section scrolled past with aria-current', async () => {
     useRoster.getState().setRoster({ amber: { level: 90 } });
     render(<App />);
     const nav = screen.getByRole('navigation', { name: /steps/i });
-    const fire = (...entries: Partial<IntersectionObserverEntry>[]) =>
-      act(() => callbacks[callbacks.length - 1](entries));
+    // jsdom has no layout, so say where each heading is on screen. The line a
+    // section must cross is 40% of the window height (about 307 px here).
+    const place = (tops: Record<string, number>) => {
+      for (const [id, top] of Object.entries(tops)) {
+        document.getElementById(id)!.getBoundingClientRect = () =>
+          ({ top }) as DOMRect;
+      }
+    };
+    const scroll = async () => {
+      await act(async () => {
+        window.dispatchEvent(new Event('scroll'));
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+      });
+    };
 
-    fire({
-      isIntersecting: true,
-      target: document.getElementById('step-teams')!,
+    // Teams is the last heading above the line; Plan is still below it.
+    place({
+      'step-load': -900,
+      'step-roster': -500,
+      'step-teams': 100,
+      'step-plan': 600,
+      'step-optimise': 1200,
     });
+    await scroll();
     expect(within(nav).getByRole('link', { name: /teams/i })).toHaveAttribute(
       'aria-current',
       'true',
     );
 
-    // Two sections straddling the band: the earlier one in page order wins,
-    // because aria-current needs exactly one answer.
-    fire({
-      isIntersecting: true,
-      target: document.getElementById('step-roster')!,
-    });
-    expect(within(nav).getByRole('link', { name: /roster/i })).toHaveAttribute(
+    // Plan's heading has climbed into the upper half while Teams' long body is
+    // still on screen: Plan wins, not the earlier, taller section.
+    place({ 'step-teams': -200, 'step-plan': 250 });
+    await scroll();
+    expect(within(nav).getByRole('link', { name: /plan/i })).toHaveAttribute(
       'aria-current',
       'true',
     );
     expect(
       within(nav).getByRole('link', { name: /teams/i }),
     ).not.toHaveAttribute('aria-current');
+  });
+});
+
+describe('App — layout', () => {
+  beforeEach(() => {
+    useInventory.getState().clear();
+    useRoster.getState().clear();
+  });
+  afterEach(() => {
+    useRoster.getState().clear();
+    vi.unstubAllGlobals();
+  });
+
+  it('says why a locked step is locked when its chip is tapped', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const nav = screen.getByRole('navigation', { name: /steps/i });
+    // The visible hint is a second copy of the sr-only description; before the
+    // tap only the description exists.
+    expect(screen.getAllByText(/unlock this step/i)).toHaveLength(1);
+    await user.click(within(nav).getByRole('button', { name: /roster/i }));
+    expect(screen.getAllByText(/unlock this step/i)).toHaveLength(2);
+  });
+
+  it('folds Teams and Plan on a phone, and the nav opens the one it jumps to', async () => {
+    const user = userEvent.setup();
+    useRoster.getState().setRoster({ amber: { level: 90 } });
+    render(<App />);
+    const open = (id: string) =>
+      document.getElementById(id)!.querySelector('details')!.open;
+    expect(open('step-roster')).toBe(true);
+    expect(open('step-teams')).toBe(false);
+    expect(open('step-plan')).toBe(false);
+
+    const nav = screen.getByRole('navigation', { name: /steps/i });
+    await user.click(within(nav).getByRole('link', { name: /teams/i }));
+    expect(open('step-teams')).toBe(true);
+    expect(open('step-plan')).toBe(false);
+  });
+
+  it('from lg keeps Load and Optimise in a left pane and shows every section open', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('1024px'),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    useRoster.getState().setRoster({ amber: { level: 90 } });
+    render(<App />);
+    const left = document.getElementById('step-load')!.parentElement!;
+    expect(left).toContainElement(document.getElementById('step-optimise'));
+    expect(left).not.toContainElement(document.getElementById('step-roster'));
+    const right = document.getElementById('step-roster')!.parentElement!;
+    expect(right).toContainElement(document.getElementById('step-teams'));
+    expect(right).toContainElement(document.getElementById('step-plan'));
+    // Folding is a phone affordance: no <details> wraps a pane section.
+    expect(
+      document.getElementById('step-teams')!.querySelector('details'),
+    ).toBeNull();
   });
 });
 

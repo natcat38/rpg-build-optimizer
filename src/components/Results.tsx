@@ -340,9 +340,10 @@ export function Results({
       )}
       {/* Two-up from md so the podium can be compared side by side; rank 1
           keeps the full width, since it's the answer and the runners-up are
-          the alternatives to it. One column below md — the card's own
+          the alternatives to it. One column below md, and again at lg (the right
+          pane is narrow there until xl) — the card's own
           sm:grid-cols-2 internals need the room. */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
         {visible.map((g, i) => {
           const b = g.build;
           const arts = artifactsFor(b);
@@ -351,7 +352,7 @@ export function Results({
               key={i}
               className={
                 g.rank === 1
-                  ? 'animate-fade-up md:col-span-2'
+                  ? 'animate-fade-up md:col-span-2 lg:col-span-1 xl:col-span-2'
                   : 'animate-fade-up'
               }
               style={{ animationDelay: `${i * 0.04}s` }}

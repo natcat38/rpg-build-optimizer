@@ -1,7 +1,7 @@
 # Roadmap — RPG Build Optimizer
 
 **Current stage: Define**
-**Next up:** pick the next feature to Define. (2026-10-23: UX polish batch "Phone and reflow quick wins" — RPG-UX-7, 8, 10, 11, 12 — shipped between features; no stage change.) All audit issues #90–#104 are merged except #100 (OKLCH palette), which awaits an owner decision.
+**Next up:** pick the next feature to Define. (2026-10-23: UX polish batches "Phone and reflow quick wins" — RPG-UX-7, 8, 10, 11, 12 — and "Two-pane layout and navigation" — RPG-UX-1, 3, 5, 6, 9, 16 — shipped between features; no stage change.) All audit issues #90–#104 are merged except #100 (OKLCH palette), which awaits an owner decision.
 
 Lifecycle: Define → Plan → Build → Verify → Review → Ship.
 Agents: read this file at session start, state the current stage and next unchecked item before any other work, and update this file (checkboxes + Current stage + Next up) before ending. Product and design decisions belong to the user — elicit them with questions, never decide for them.
