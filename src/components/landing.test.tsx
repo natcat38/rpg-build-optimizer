@@ -45,14 +45,25 @@ describe('SolvedHero', () => {
   it('keeps the demo block in the layout but hides it from sight and from screen readers while the demo is still solving', () => {
     render(<SolvedHero hero={null} />);
     const caption = screen.getByText(/solved on load from a fixed/i);
-    expect(caption).toHaveAttribute('aria-hidden', 'true');
-    expect(caption).toHaveClass('invisible');
+    const block = caption.closest('[aria-hidden="true"]');
+    expect(block).not.toBeNull();
+    expect(block).toHaveClass('invisible');
     // The heading and the action are real from the first paint.
     expect(
       screen.getByRole('heading', { name: /rpg build optimizer/i }),
     ).toBeInTheDocument();
+    // The two actions come straight after the claim, ahead of the demo block.
+    const load = screen.getByRole('link', { name: /load your gear/i });
+    const sample = screen.getByRole('link', { name: /try a sample/i });
+    expect(load).toHaveAttribute('href', '#step-load');
+    expect(sample).toHaveAttribute('href', '#sample-gear');
     expect(
-      screen.getByRole('link', { name: /load your gear/i }),
-    ).toBeInTheDocument();
+      load.compareDocumentPosition(block as Node) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      sample.compareDocumentPosition(block as Node) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });

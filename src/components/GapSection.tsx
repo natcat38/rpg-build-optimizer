@@ -41,14 +41,14 @@ export function GapSection({
     // case, so a non-meta character reads as an intentional gap, not a
     // silently broken results section.
     return (
-      <p className="mb-4 text-xs text-muted">
+      <p className="text-xs text-muted">
         No curated recipe for this character yet.
       </p>
     );
   }
 
   return (
-    <div className="mb-4">
+    <div>
       <GapReport report={report} />
       <ExplainBuild
         characterKey={request.characterKey}

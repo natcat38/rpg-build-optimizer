@@ -291,7 +291,7 @@ export function App() {
   }, [activeId, liveIds]);
 
   const sampleNode = sampleMode && (
-    <div className="animate-fade-up">
+    <div id="sample-gear" className="animate-fade-up scroll-mt-20">
       <SampleGear onRun={runCurrent} running={running} />
     </div>
   );
@@ -389,16 +389,18 @@ export function App() {
               running && 'pointer-events-none opacity-40',
             )}
           >
-            <GapSection
-              result={result}
-              request={request}
-              artifacts={artifacts}
-              sharedArtifacts={sharedArtifacts}
-            />
             <Results
               result={result}
               request={request}
               artifactsById={artifactsById}
+              afterBest={
+                <GapSection
+                  result={result}
+                  request={request}
+                  artifacts={artifacts}
+                  sharedArtifacts={sharedArtifacts}
+                />
+              }
               onRelax={(key, value) => {
                 // "No build meets a stat floor of N" is only actionable
                 // if the page can lower it, so the offer to relax is
@@ -421,7 +423,7 @@ export function App() {
       >
         Skip to Content
       </a>
-      <header className="mb-10 animate-fade-up">
+      <header className="mb-6 animate-fade-up sm:mb-10">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           {/* Not the h1 again a line above the h1 — the eyebrow's job is to
               say what kind of thing this is. */}

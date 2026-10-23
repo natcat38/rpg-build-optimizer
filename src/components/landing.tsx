@@ -91,14 +91,29 @@ export function Section({
   );
 }
 
-/** Thesis-only hero: shown while the solved demo is computing, or once the user
- *  has their own gear loaded. */
+/** The app's name, set as the page's one h1: the existing gold crosshair (the
+ *  favicon) as a small mark, then the name in the display face. The mark is
+ *  decoration, so it carries no alt text. */
+function Wordmark() {
+  return (
+    <h1 className="flex items-center gap-3 font-display text-4xl font-bold leading-tight text-paper sm:text-5xl">
+      <img
+        src="/favicon.svg"
+        alt=""
+        width={40}
+        height={40}
+        className="h-9 w-9 flex-none rounded-lg sm:h-10 sm:w-10"
+      />
+      <span className="text-balance">RPG Build Optimizer</span>
+    </h1>
+  );
+}
+
+/** Thesis-only hero: shown once the user has their own gear loaded. */
 export function ThesisHero({ tagline }: { tagline: string }) {
   return (
     <>
-      <h1 className="text-balance font-display text-4xl font-bold leading-tight text-paper sm:text-5xl">
-        RPG Build Optimizer
-      </h1>
+      <Wordmark />
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
         {tagline} Exact branch-and-bound search over your inventory — computed
         entirely in your browser, no account required.
@@ -107,9 +122,11 @@ export function ThesisHero({ tagline }: { tagline: string }) {
   );
 }
 
-/** The hero leads with a real solve, not an empty form: one genuine build from
- *  a seeded synthetic inventory (see src/sample/heroExample.ts), plus the exact
- *  search proof — the thing this tool actually does. */
+/** The first screen is for the two things a visitor can do — load their gear
+ *  or try a sample — so they come straight after the name and the claim. The
+ *  real solve this tool does (one genuine build from a seeded synthetic
+ *  inventory, see src/sample/heroExample.ts, plus the exact search proof)
+ *  follows as supporting evidence, sized as a caption rather than a headline. */
 export function SolvedHero({ hero }: { hero: HeroExample | null }) {
   // `null` while the demo is still solving: the block is laid out with
   // stand-in digits but hidden, so the header keeps its final height.
@@ -120,52 +137,54 @@ export function SolvedHero({ hero }: { hero: HeroExample | null }) {
   const pruned = solving ? 36 : hero.pruned;
   return (
     <>
-      <h1 className="text-balance font-display text-4xl font-bold leading-tight text-paper sm:text-5xl">
-        RPG Build Optimizer
-      </h1>
+      <Wordmark />
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
         Find the mathematically optimal gear build for any character. Exact
         branch-and-bound search over your inventory — computed entirely in your
         browser, no account required.
       </p>
+      <div className="mt-5 flex flex-wrap gap-3">
+        <a href="#step-load" className="btn-ghost">
+          Load your gear
+        </a>
+        <a href="#sample-gear" className="btn-ghost">
+          Try a sample
+        </a>
+      </div>
       <div
         aria-hidden={solving || undefined}
         className={cn(
-          'mt-6 flex flex-wrap items-end gap-x-8 gap-y-4',
+          'mt-6 border-t border-white/5 pt-4',
           solving && 'invisible',
         )}
       >
-        <div>
-          <p className="micro-label">Crit Value · fixed demo inventory</p>
-          <p className="font-mono text-5xl font-bold leading-none text-accent-bright">
-            {formatScore(score, 1)}
-          </p>
-          <p className="mt-1 max-w-xs text-2xs text-muted">
-            {objectiveHint('crit_value')}
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+          <div>
+            <p className="micro-label">Crit Value · fixed demo inventory</p>
+            <p className="font-mono text-3xl font-bold leading-none text-accent-bright">
+              {formatScore(score, 1)}
+            </p>
+          </div>
+          {/* The big number is the *space*, not the work: branch-and-bound never
+              visits 100,000 builds, and saying "searched 100,000" claimed
+              brute force. Sentence in the body face, numerals in mono. */}
+          <p className="max-w-sm text-xs leading-relaxed text-muted">
+            Search space:{' '}
+            <span className="font-mono tabular-nums text-paper">
+              {formatCount(naive)}
+            </span>{' '}
+            combinations · <SearchCounts explored={explored} pruned={pruned} />{' '}
+            — optimum proven.
           </p>
         </div>
-        {/* The big number is the *space*, not the work: branch-and-bound never
-            visits 100,000 builds, and saying "searched 100,000" claimed
-            brute force. Sentence in the body face, numerals in mono. */}
-        <p className="max-w-sm text-xs leading-relaxed text-muted">
-          Search space:{' '}
-          <span className="font-mono tabular-nums text-paper">
-            {formatCount(naive)}
-          </span>{' '}
-          combinations · <SearchCounts explored={explored} pruned={pruned} /> —
-          optimum proven.
+        <p className="mt-2 max-w-xs text-2xs text-muted">
+          {objectiveHint('crit_value')}
+        </p>
+        <p className="mt-1 text-2xs text-muted">
+          Solved on load from a fixed 50-piece demo inventory — not your gear,
+          and not a result you asked for.
         </p>
       </div>
-      <p
-        aria-hidden={solving || undefined}
-        className={cn('mt-3 text-2xs text-muted', solving && 'invisible')}
-      >
-        Solved on load from a fixed 50-piece demo inventory — not your gear, and
-        not a result you asked for.
-      </p>
-      <a href="#step-load" className="btn-ghost mt-4 inline-flex">
-        Load your gear
-      </a>
     </>
   );
 }

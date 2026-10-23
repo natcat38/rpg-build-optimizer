@@ -111,6 +111,21 @@ describe('PlanView', () => {
     expect(screen.queryAllByTestId('plan-member')).toHaveLength(0);
   });
 
+  it('says on the row why a member has no build, not only inside the card', async () => {
+    const user = userEvent.setup();
+    seed();
+    const none: RunOptimize = () =>
+      Promise.resolve({ status: 'infeasible', explored: 0, pruned: 0 });
+    render(<PlanView runOptimize={none} />);
+    await user.click(
+      screen.getByRole('button', { name: /Build my Abyss plan/i }),
+    );
+    const rows = await screen.findAllByTestId('plan-summary-row');
+    expect(rows).toHaveLength(8);
+    for (const row of rows)
+      expect(row).toHaveTextContent(/no build: recommended loadout not met/i);
+  });
+
   it('expands one member’s full card from its summary row', async () => {
     const user = userEvent.setup();
     seed();

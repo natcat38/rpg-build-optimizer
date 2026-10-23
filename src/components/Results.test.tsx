@@ -581,7 +581,7 @@ describe('Results — infeasible cause', () => {
 });
 
 describe('Results — desktop comparison grid', () => {
-  it('lays the cards out two-up from md with rank 1 spanning both columns', () => {
+  it('lays the runners-up out two-up from md, below the best build', () => {
     const r: OptimizeResult = {
       status: 'ok',
       explored: 100,
@@ -599,7 +599,38 @@ describe('Results — desktop comparison grid', () => {
     const grid = container.querySelector('[class~="md:grid-cols-2"]');
     expect(grid).not.toBeNull();
     expect(grid).toHaveClass('grid');
-    expect(grid!.firstElementChild).toHaveClass('md:col-span-2');
-    expect(grid!.children).toHaveLength(2);
+    // Rank 1 sits above the grid, full width; the grid holds only the rest.
+    expect(grid!.children).toHaveLength(1);
+    const cards = container.querySelectorAll('[class~="animate-fade-up"]');
+    expect(cards).toHaveLength(2);
+    expect(grid).not.toContainElement(cards[0] as HTMLElement);
+    expect(grid).toContainElement(cards[1] as HTMLElement);
+  });
+
+  it('puts the best build first, then the search proof, then the slot, then the runners-up', () => {
+    const r: OptimizeResult = {
+      status: 'ok',
+      explored: 100,
+      pruned: 50,
+      builds: [scored(240, 'c1'), scored(230, 'c2')],
+    };
+    const { container } = render(
+      <Results
+        onRelax={() => {}}
+        result={r}
+        request={req}
+        artifactsById={circletsById}
+        afterBest={<p>gap slot</p>}
+      />,
+    );
+    const best = container.querySelector('[class~="animate-fade-up"]')!;
+    const proof = screen.getByText('Exact search');
+    const slot = screen.getByText('gap slot');
+    const grid = container.querySelector('[class~="md:grid-cols-2"]')!;
+    const before = (a: Node, b: Node) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(before(best, proof)).toBe(true);
+    expect(before(proof, slot)).toBe(true);
+    expect(before(slot, grid)).toBe(true);
   });
 });

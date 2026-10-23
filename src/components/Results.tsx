@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import type {
   Artifact,
   BuildResult,
@@ -196,10 +196,15 @@ export function Results({
   request,
   artifactsById,
   onRelax,
+  afterBest,
 }: {
   result: OptimizeResult;
   request: OptimizeRequest;
   artifactsById: Record<string, Artifact>;
+  /** Rendered under the best build and the search proof, above the runners-up
+   *  (and under the "no build" notice when infeasible): context for the answer,
+   *  not the answer itself. */
+  afterBest?: ReactNode;
   /** Lower the `key` minStat floor to `value`. Owned by the panel that holds
    *  the request, so the relax button here stays a pure callback. */
   onRelax: (key: StatKey, value: number) => void;
@@ -270,6 +275,7 @@ export function Results({
             </button>
           )}
         </Callout>
+        {afterBest}
       </div>
     );
   }
@@ -302,12 +308,108 @@ export function Results({
   const requestedK = request.topK ?? 10;
   const shortList = searched && groups.length > 0 && groups.length < requestedK;
 
+  const renderCard = (g: BuildGroup, i: number) => {
+    const b = g.build;
+    const arts = artifactsFor(b);
+    return (
+      <div
+        key={i}
+        className="animate-fade-up"
+        style={{ animationDelay: `${i * 0.04}s` }}
+      >
+        <BuildCard
+          build={b}
+          request={request}
+          artifacts={arts}
+          rank={g.rank}
+          compact={g.rank > 1}
+          delta={
+            g.rank > 1 && topScore != null ? b.score - topScore : undefined
+          }
+          variants={
+            g.ties.length > 0
+              ? {
+                  count: g.ties.length,
+                  differs: describeTies(g, artifactsById),
+                }
+              : undefined
+          }
+          onShare={async () => {
+            let url: string;
+            try {
+              const param = await encodeBuild({
+                request,
+                build: b,
+                artifacts: arts,
+              });
+              url = `${location.origin}${location.pathname}?b=${param}`;
+            } catch {
+              // encodeBuild (CompressionStream) rejected — there is no link
+              // to offer, so say that rather than showing an empty field.
+              setShare({
+                nonce: ++shareNonce.current,
+                index: i,
+                status: 'failed',
+              });
+              return;
+            }
+            try {
+              await navigator.clipboard.writeText(url);
+              setShare({
+                nonce: ++shareNonce.current,
+                index: i,
+                status: 'copied',
+              });
+            } catch {
+              // The clipboard can reject (permission, insecure context).
+              // The link was never in the address bar, so hand it over to
+              // be copied by hand instead of pointing there.
+              setShare({
+                nonce: ++shareNonce.current,
+                index: i,
+                status: 'manual',
+                url,
+              });
+            }
+          }}
+        />
+        {share?.index === i && share.status === 'copied' && (
+          <Callout tone="success" className="mt-2">
+            Share link copied.
+          </Callout>
+        )}
+        {share?.index === i && share.status === 'manual' && (
+          <Callout tone="error" className="mt-2">
+            <p>Couldn’t copy automatically — copy it from here:</p>
+            <input
+              className="field mt-2"
+              readOnly
+              value={share.url}
+              aria-label="Share link"
+              onFocus={(e) => e.currentTarget.select()}
+            />
+          </Callout>
+        )}
+        {share?.index === i && share.status === 'failed' && (
+          <Callout tone="error" className="mt-2">
+            <p>
+              Couldn’t build a share link in this browser — try a different one.
+            </p>
+          </Callout>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* Empty twin of the infeasible region above, in the same slot, so the
           node already exists — rather than being freshly mounted — if this
           run later comes back infeasible. */}
       <p className="sr-only" role="status" />
+      {/* The answer first: the rest of this section is evidence and
+          alternatives for it. */}
+      {visible[0] && renderCard(visible[0], 0)}
       {searched && (
         <div className="panel space-y-2 px-4 py-3">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs">
@@ -338,112 +440,15 @@ export function Results({
           are filtered.
         </p>
       )}
-      {/* Two-up from md so the podium can be compared side by side; rank 1
-          keeps the full width, since it's the answer and the runners-up are
-          the alternatives to it. One column below md, and again at lg (the right
-          pane is narrow there until xl) — the card's own
-          sm:grid-cols-2 internals need the room. */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-        {visible.map((g, i) => {
-          const b = g.build;
-          const arts = artifactsFor(b);
-          return (
-            <div
-              key={i}
-              className={
-                g.rank === 1
-                  ? 'animate-fade-up md:col-span-2 lg:col-span-1 xl:col-span-2'
-                  : 'animate-fade-up'
-              }
-              style={{ animationDelay: `${i * 0.04}s` }}
-            >
-              <BuildCard
-                build={b}
-                request={request}
-                artifacts={arts}
-                rank={g.rank}
-                compact={g.rank > 1}
-                delta={
-                  g.rank > 1 && topScore != null
-                    ? b.score - topScore
-                    : undefined
-                }
-                variants={
-                  g.ties.length > 0
-                    ? {
-                        count: g.ties.length,
-                        differs: describeTies(g, artifactsById),
-                      }
-                    : undefined
-                }
-                onShare={async () => {
-                  let url: string;
-                  try {
-                    const param = await encodeBuild({
-                      request,
-                      build: b,
-                      artifacts: arts,
-                    });
-                    url = `${location.origin}${location.pathname}?b=${param}`;
-                  } catch {
-                    // encodeBuild (CompressionStream) rejected — there is no link
-                    // to offer, so say that rather than showing an empty field.
-                    setShare({
-                      nonce: ++shareNonce.current,
-                      index: i,
-                      status: 'failed',
-                    });
-                    return;
-                  }
-                  try {
-                    await navigator.clipboard.writeText(url);
-                    setShare({
-                      nonce: ++shareNonce.current,
-                      index: i,
-                      status: 'copied',
-                    });
-                  } catch {
-                    // The clipboard can reject (permission, insecure context).
-                    // The link was never in the address bar, so hand it over to
-                    // be copied by hand instead of pointing there.
-                    setShare({
-                      nonce: ++shareNonce.current,
-                      index: i,
-                      status: 'manual',
-                      url,
-                    });
-                  }
-                }}
-              />
-              {share?.index === i && share.status === 'copied' && (
-                <Callout tone="success" className="mt-2">
-                  Share link copied.
-                </Callout>
-              )}
-              {share?.index === i && share.status === 'manual' && (
-                <Callout tone="error" className="mt-2">
-                  <p>Couldn’t copy automatically — copy it from here:</p>
-                  <input
-                    className="field mt-2"
-                    readOnly
-                    value={share.url}
-                    aria-label="Share link"
-                    onFocus={(e) => e.currentTarget.select()}
-                  />
-                </Callout>
-              )}
-              {share?.index === i && share.status === 'failed' && (
-                <Callout tone="error" className="mt-2">
-                  <p>
-                    Couldn’t build a share link in this browser — try a
-                    different one.
-                  </p>
-                </Callout>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {afterBest}
+      {/* Runners-up: two-up from md so they can be compared side by side. One
+          column below md, and again at lg (the right pane is narrow there
+          until xl) — the card's own sm:grid-cols-2 internals need the room. */}
+      {visible.length > 1 && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          {visible.slice(1).map((g, j) => renderCard(g, j + 1))}
+        </div>
+      )}
       {/* Same reveal as the roster list: the podium is what the reader came
           for, and ten full cards pushed everything below the fold. */}
       {groups.length > COLLAPSED_GROUPS && !showAll && (

@@ -218,6 +218,23 @@ describe('OptimizePanel meta prefill', () => {
     ).toBe(true);
   });
 
+  it('keeps the Optimise button above the meta recipe, which is folded away', () => {
+    addFlower();
+    useOptimizeRequest.getState().setCharacterKey('xiao');
+    render(
+      <OptimizePanel onRun={() => {}} running={false} onCancel={vi.fn()} />,
+    );
+    const button = screen.getByRole('button', { name: /^optimise$/i });
+    const recipe = screen.getByText(/4-piece Vermillion Hereafter/i);
+    const fold = recipe.closest('details');
+    expect(fold).not.toBeNull();
+    expect(fold).toHaveTextContent('Meta Recipe and Teammates');
+    expect(fold!.open).toBe(false);
+    expect(
+      button.compareDocumentPosition(fold!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it('omits the summary for a character without a meta recipe', () => {
     useOptimizeRequest.getState().setCharacterKey('zzz_not_meta');
     render(
