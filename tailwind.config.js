@@ -17,10 +17,12 @@ export default {
         sans: ['"Spline Sans"', 'system-ui', 'sans-serif'],
         mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
-      // One step below text-xs, for the uppercase micro-labels; `label` and
+      // The micro-label size. 12px, the floor for text that carries
+      // information on a phone (it was 11.2px); it stays a separate step
+      // from `text-xs` so the labels can move on their own later. `label` and
       // `eyebrow` are the only two tracking values the display idiom uses.
       fontSize: {
-        '2xs': ['0.7rem', { lineHeight: '1rem' }],
+        '2xs': ['0.75rem', { lineHeight: '1rem' }],
       },
       letterSpacing: {
         label: '0.18em',

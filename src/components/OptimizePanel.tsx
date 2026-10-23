@@ -22,6 +22,7 @@ import {
 } from '../labels';
 import { cn } from './ui/cn';
 import { Combobox } from './ui/Combobox';
+import { Disclosure } from './ui/Disclosure';
 import { SearchCounts } from './ui/SearchCounts';
 import { SourceLink } from './ui/SourceLink';
 import { searchProgressStore } from './searchProgress';
@@ -460,9 +461,6 @@ export function OptimizePanel({
         </div>
       </div>
 
-      {meta && <MetaTargetSummary meta={meta} />}
-      {teammates && <TeammatesSummary entry={teammates} />}
-
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
         {hint ? (
           <p className="text-sm text-muted">{hint}</p>
@@ -512,6 +510,17 @@ export function OptimizePanel({
       </div>
 
       {showProgress && <SearchProgressLine onCancel={onCancel} />}
+
+      {/* Read-only background, not controls: folded under the action row so
+          the primary button sits directly beneath the fields it runs. */}
+      {(meta || teammates) && (
+        <Disclosure label="Meta Recipe and Teammates">
+          <div className="mt-2 space-y-3">
+            {meta && <MetaTargetSummary meta={meta} />}
+            {teammates && <TeammatesSummary entry={teammates} />}
+          </div>
+        </Disclosure>
+      )}
     </div>
   );
 }

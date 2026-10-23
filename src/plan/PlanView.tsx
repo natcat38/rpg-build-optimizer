@@ -99,7 +99,16 @@ function SummaryRow({
               {value}
             </span>
           ) : (
-            <span className="text-xs text-muted">no build</span>
+            <span className="text-xs text-muted">
+              {/* The card says why at length; the row has to say it at a
+                  glance, or four "no build" rows in a row read as a bug.
+                  Conflicts exist only where an earlier member took pieces of
+                  this member's own set, so they are what tells "gear taken"
+                  from "recipe not met". */}
+              {build.conflicts.length > 0
+                ? 'no build: gear used by earlier members'
+                : 'no build: recommended loadout not met'}
+            </span>
           )}
           {currentGrade && (
             <GradeMarker grade={currentGrade} subject="your current build" />

@@ -15,6 +15,7 @@ Changes on `main` since the `v1.0.0` tag (#71–#119).
 
 ### Fixed
 
+- Results and Optimise ordering: the best build is the first thing under "Results" (it was below the gap card and two caption paragraphs), followed by the search proof, the gap card and the runners-up. The Optimise button now sits directly under the Maximise and Energy Recharge fields, with the meta recipe and teammates folded under it. Plan rows with no build say why on the row. `text-2xs` is 12px (was 11.2px), so no text on the page is under 12px.
 - Two-pane layout and navigation: from `lg` the page is two panes (Load, the sample shortcut and Optimise in a sticky left column; Results, Roster, Teams and Plan on the right), so a fresh desktop load is 1.7 screens instead of 2.5 and a sample run 3.0 instead of 4.8. On phones Teams and Plan fold behind their headings. The step nav scrolls to keep the active chip in view, hides the locked chips on phones and explains them on tap elsewhere, and marks the last section scrolled past rather than the first one still on screen. The jump to Results waits for the page to stop growing (the demo hero now holds its height while it solves, so desktop layout shift is 0 instead of 0.068) and lands with the heading visible.
 - Phone and reflow quick wins: form fields are 16px below `sm` so iOS Safari no longer zooms on focus; the Optimise panel and roster "Source" links have a 24px hit area (44px on touch); Plan rows wrap instead of collapsing names to "Y…"; runner-up build cards wrap artifact names instead of truncating them; and nothing scrolls sideways at 320px (Inventory header, Teams cards).
 - `/api/explain` returned a 500 (`FUNCTION_INVOCATION_FAILED`) on every request in production: its relative imports had no `.js` extension, which Node ESM cannot resolve. Imports reachable from `api/` now carry `.js`, `tsconfig.api.json` uses `NodeNext` so typecheck rejects a regression, and `npm run api:check` loads the compiled handler under Node in CI.
@@ -36,6 +37,8 @@ Changes on `main` since the `v1.0.0` tag (#71–#119).
 
 ### Changed
 
+- Branding: the existing gold crosshair is now the small mark beside the "RPG Build Optimizer" name in the header, and the site has Open Graph and Twitter tags with a generated 1200x630 card (`public/og.png`, source `docs/brand/og-card.html`), an apple-touch-icon, PNG icons and a `site.webmanifest`. No new art: palette and type are the app's own.
+- First screen: the hero now leads with the name, the claim and two actions ("Load your gear", "Try a sample"); the fixed 219.4 demo is a smaller caption beneath them. Wording unchanged.
 - Audit P3 batches: placeholder contrast raised to AA, `aria-invalid`/`aria-describedby` on
   form inputs, list markers via CSS (#118); `Intl.NumberFormat` for stat labels, placeholder
   copy convention, easing policy documented (#116); run-lifecycle logic extracted to a

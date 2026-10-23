@@ -8,7 +8,7 @@ exists so a new component reaches for a name instead of inventing a value.
 
 **Primitives** live in [`tailwind.config.js`](../tailwind.config.js) — the
 surface/paper/muted greys, the `flux` constraint blue, `rose`/`jade`, the type
-scale (`text-2xs` = 0.7rem), the two tracking values (`tracking-label` 0.18em,
+scale (`text-2xs` = 0.75rem, 12px: the floor for informational text on a phone), the two tracking values (`tracking-label` 0.18em,
 `tracking-eyebrow` 0.4em), and the shadows (`panel`, `popover`, `glow*`). The
 weight scale is **replaced**, not extended: only `normal`/`medium`/`semibold`/
 `bold` compile, because those are the only weights `index.html` fetches. Ask
@@ -172,3 +172,23 @@ tokens in `tailwind.config.js`. That is a decision, not an omission: the UI's
 transitions are short, incidental (hover, focus, panel open/close) rather than
 brand-defining, so Tailwind's defaults already read as natural and adding
 `--ease-*` tokens would be ceremony without a matching design need.
+
+## Brand assets
+
+Identity is the name in the display face (Space Grotesk 700) beside the gold
+crosshair, on the graphite chassis. There is no separate logo: the mark is
+`public/favicon.svg`, reused as the small header mark in `landing.tsx`
+(`Wordmark`). Everything else is derived from it and from the palette above.
+
+| File                                  | What it is                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------------- |
+| `public/favicon.svg`                  | The crosshair mark (rounded). Source of the rest.                               |
+| `public/apple-touch-icon.png` (180)   | The same mark, square and full-bleed; iOS rounds it.                            |
+| `public/icon-192.png`, `icon-512.png` | Same square mark for `site.webmanifest`. Not maskable: the arms reach the edge. |
+| `public/og.png` (1200x630)            | Link-preview card for the Open Graph and Twitter tags in `index.html`.          |
+| `docs/brand/og-card.html`             | Source of `og.png`.                                                             |
+
+To regenerate `og.png`: open `docs/brand/og-card.html` in a browser with a
+1200x630 viewport (fonts load from Google Fonts) and screenshot the page. The
+PNG icons are `favicon.svg` rendered with the rounded-corner `rect` replaced by a
+full-bleed one. Change the mark or the palette and all of these need redoing.

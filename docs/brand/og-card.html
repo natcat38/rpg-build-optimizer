@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>RPG Build Optimizer — social card</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=IBM+Plex+Mono:wght@500&family=Spline+Sans:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Source of public/og.png. Render at exactly 1200x630 — see
+         docs/design-system.md, "Brand assets". Palette and type are the app's
+         own (tailwind.config.js); nothing here is new art. */
+      :root {
+        --surface: #0f1116;
+        --paper: #e9e7e0;
+        --muted: #8d93a3;
+        --accent: #f2b64c;
+        --accent-bright: #ffcf76;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        background-color: var(--surface);
+        background-image:
+          radial-gradient(
+            ellipse 70% 60% at 50% -10%,
+            rgba(242, 182, 76, 0.16),
+            transparent 60%
+          ),
+          linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+          linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.025) 1px,
+            transparent 1px
+          );
+        background-size:
+          100% 100%,
+          32px 32px,
+          32px 32px;
+        color: var(--paper);
+        font-family: 'Spline Sans', system-ui, sans-serif;
+      }
+      main {
+        height: 100%;
+        padding: 88px 96px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 36px;
+      }
+      .eyebrow {
+        font:
+          500 22px 'IBM Plex Mono',
+          ui-monospace,
+          monospace;
+        letter-spacing: 0.4em;
+        text-transform: uppercase;
+        color: var(--accent);
+        opacity: 0.85;
+      }
+      .name {
+        display: flex;
+        align-items: center;
+        gap: 36px;
+        font:
+          700 108px/1.05 'Space Grotesk',
+          system-ui,
+          sans-serif;
+        letter-spacing: -0.01em;
+      }
+      .name svg {
+        flex: none;
+        width: 112px;
+        height: 112px;
+        border-radius: 22px;
+      }
+      p {
+        max-width: 900px;
+        font-size: 32px;
+        line-height: 1.45;
+        color: var(--muted);
+      }
+      .url {
+        font:
+          500 22px 'IBM Plex Mono',
+          ui-monospace,
+          monospace;
+        color: var(--accent-bright);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">Exact search · proven optimal</div>
+      <div class="name">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+          <rect width="32" height="32" rx="6" fill="#14161d" />
+          <circle
+            cx="16"
+            cy="16"
+            r="9"
+            fill="none"
+            stroke="#f2b64c"
+            stroke-width="2"
+          />
+          <path
+            d="M16 3v6M16 23v6M3 16h6M23 16h6"
+            stroke="#f2b64c"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <span>RPG Build Optimizer</span>
+      </div>
+      <p>
+        Exact branch-and-bound gear build optimizer for gacha RPGs — computed
+        entirely in your browser.
+      </p>
+      <div class="url">rpg-build-optimizer.vercel.app</div>
+    </main>
+  </body>
+</html>
