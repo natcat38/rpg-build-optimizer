@@ -57,7 +57,7 @@ function InfoPanel({ href, children }: { href: string; children: ReactNode }) {
     <div className="well p-3 text-xs text-muted">
       {children}
       <SourceLink
-        className="mt-1.5 inline-block text-accent hover:underline"
+        className="mt-1.5 inline-flex min-h-6 items-center text-accent hover:underline [@media(pointer:coarse)]:min-h-11"
         href={href}
       >
         Source

@@ -325,9 +325,12 @@ export function BuildCard({
                 </span>
                 {a ? (
                   <>
-                    {/* Wraps below sm; truncation only once there's room for
-                        a single line to be the honest reading. */}
-                    <span className="min-w-0 flex-1 sm:truncate">
+                    {/* Always wraps, never truncates: the runner-up cards are
+                        ~350px wide and one-line truncation cut set names
+                        ("Crimson Witch o…") with no way to read them. A
+                        clamp would still hide the main-stat value on a 320px
+                        phone, so the row simply grows. */}
+                    <span className="min-w-0 flex-1 break-words">
                       <span className="font-medium">
                         {formatSetName(a.setKey)}
                       </span>
