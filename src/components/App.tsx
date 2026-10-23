@@ -13,6 +13,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from 'react';
 import { ImportPanel } from './ImportPanel';
 import { ArtifactForm } from './ArtifactForm';
@@ -32,7 +33,8 @@ import { bestBuiltCharacter } from '../roster/buildScore';
 import { PATCH } from '../game/genshin/adapter';
 import { useOptimizeRun } from '../hooks/useOptimizeRun';
 import { buildHeroExample, type HeroExample } from '../sample/heroExample';
-import { scrollToId } from '../ui/scroll';
+import { centerInScroller, scrollToId } from '../ui/scroll';
+import { useMediaQuery } from '../ui/useMediaQuery';
 import { Callout } from './ui/Callout';
 import { Disclosure } from './ui/Disclosure';
 import { cn } from './ui/cn';
@@ -66,6 +68,19 @@ const GAME_TAGLINE =
   'Find the mathematically optimal artifact build for any character.';
 const GAME_SOURCE = 'genshin-db';
 
+/** Sections that live in the sticky left pane from `lg`. */
+const LEFT_PANE = new Set(['step-load', 'step-optimise']);
+
+/** Two-pane only: the right pane would otherwise be an empty half-screen until
+ *  the first run. Hidden below `lg`, where there is no right pane. */
+function ResultsPlaceholder() {
+  return (
+    <div className="well hidden px-5 py-8 text-sm text-muted lg:block">
+      Results appear here after you run Optimise.
+    </div>
+  );
+}
+
 export function App() {
   const artifacts = useInventory((s) => s.artifacts);
   const rosterEntries = useRoster((s) => s.entries);
@@ -83,15 +98,21 @@ export function App() {
   // reasonably cheap (~tens of ms — see heroExample.ts), so it's computed in an
   // effect (after first paint) rather than blocking initial render.
   const [hero, setHero] = useState<HeroExample | null>(null);
+  // `buildHeroExample` can come back null, so "no hero" does not mean "still
+  // solving": this is what tells the two apart.
+  const [heroTried, setHeroTried] = useState(false);
   useEffect(() => {
-    // Guarded by `hero` itself (not just omitted from deps): once computed,
+    // Guarded by `heroTried` (not just omitted from deps): once computed,
     // keep showing it even if the user's inventory state changes shape
     // afterward, but still compute it the first time sampleMode turns true
     // (e.g. a returning user who starts with real gear already loaded).
-    if (hero || !sampleMode) return;
-    const id = setTimeout(() => setHero(buildHeroExample()), 0);
+    if (heroTried || !sampleMode) return;
+    const id = setTimeout(() => {
+      setHero(buildHeroExample());
+      setHeroTried(true);
+    }, 0);
     return () => clearTimeout(id);
-  }, [sampleMode, hero]);
+  }, [sampleMode, heroTried]);
 
   // Once a roster exists the app's curated opening pair is no longer the most
   // useful one — the reader's own best-built character is. Only while the
@@ -171,15 +192,31 @@ export function App() {
     },
   });
 
+  // While the demo solves, the solved hero is laid out with its numbers
+  // hidden, so it keeps its height instead of growing ~270 px when they land.
+  const showSolvedHero = sampleMode && (hero !== null || !heroTried);
+
+  // Jump to Results only once the page has stopped growing. The demo hero
+  // mounts a moment after first paint and adds ~270 px above everything; a
+  // smooth scroll started before that is aimed at a position that no longer
+  // exists, so it landed with the heading under the nav (or 270 px short on a
+  // shared link). Wait for the hero, then two frames so layout has settled.
+  const heroPending = sampleMode && !heroTried;
   const lastScrolled = useRef<OptimizeResult | null>(null);
   useEffect(() => {
-    if (result && result !== lastScrolled.current) {
-      lastScrolled.current = result;
-      scrollToId('results-section');
-    }
-  }, [result]);
-
-  const showSolvedHero = sampleMode && hero;
+    if (!result || result === lastScrolled.current || heroPending) return;
+    let second = 0;
+    const first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(() => {
+        lastScrolled.current = result;
+        scrollToId('results-section');
+      });
+    });
+    return () => {
+      cancelAnimationFrame(first);
+      cancelAnimationFrame(second);
+    };
+  }, [result, heroPending]);
 
   // The roster sections only exist once a GOOD import has produced one. Their
   // numbers are fixed anyway: a step that renumbers itself as the page grows
@@ -208,11 +245,176 @@ export function App() {
       ).map((s) => s.id),
     [hasRoster, hasResults],
   );
-  const activeId = useScrollSpy(liveIds);
+  // From `lg` the page is two panes: Load, the sample shortcut and Optimise
+  // stay in a sticky left column, so only the right pane scrolls past the
+  // reader. Spying on the left pane's sections would pin the highlight there.
+  const twoPane = useMediaQuery('(min-width: 1024px)');
+  const spyIds = useMemo(
+    () => (twoPane ? liveIds.filter((id) => !LEFT_PANE.has(id)) : liveIds),
+    [twoPane, liveIds],
+  );
+  const activeId = useScrollSpy(spyIds);
   const lockedHintId = useId();
 
+  // Phone only: Teams and Plan fold behind their headings (Roster starts
+  // open, since it is what an import just produced). Two panes show all of it.
+  const [folds, setFolds] = useState({
+    'step-roster': true,
+    'step-teams': false,
+    'step-plan': false,
+  });
+  type FoldId = keyof typeof folds;
+  const collapse = (id: FoldId) =>
+    twoPane
+      ? undefined
+      : {
+          open: folds[id],
+          onOpenChange: (open: boolean) =>
+            setFolds((f) => (f[id] === open ? f : { ...f, [id]: open })),
+        };
+
+  // A tap on a locked chip used to do nothing and say nothing; the reason
+  // lived in screen-reader text only. Show it, briefly.
+  const [lockedHintShown, setLockedHintShown] = useState(false);
+  useEffect(() => {
+    if (!lockedHintShown) return;
+    const id = setTimeout(() => setLockedHintShown(false), 4000);
+    return () => clearTimeout(id);
+  }, [lockedHintShown]);
+
+  // The strip scrolls sideways on a phone; keep the active chip in view.
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const nav = navRef.current;
+    const chip = nav?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (nav && chip) centerInScroller(nav, chip);
+  }, [activeId, liveIds]);
+
+  const sampleNode = sampleMode && (
+    <div className="animate-fade-up">
+      <SampleGear onRun={runCurrent} running={running} />
+    </div>
+  );
+  const loadNode = (
+    <Section
+      n={1}
+      id="step-load"
+      title="Load Your Artifacts"
+      hint="Import a full inventory, fetch from a UID, or add pieces by hand."
+      delay="0.05s"
+    >
+      <ImportPanel />
+      <Disclosure
+        className="mt-3"
+        size="md"
+        tone="flux"
+        label="Or Add One Manually"
+      >
+        <div className="mt-3">
+          <ArtifactForm />
+        </div>
+      </Disclosure>
+    </Section>
+  );
+  const rosterNode = hasRoster && (
+    <Section
+      n={2}
+      id="step-roster"
+      title="Your Roster"
+      hint="How built each owned character is, best first."
+      delay="0.08s"
+      collapse={collapse('step-roster')}
+    >
+      <Suspense fallback={<PanelFallback />}>
+        <RosterView />
+      </Suspense>
+    </Section>
+  );
+  const teamsNode = hasRoster && (
+    <Section
+      n={3}
+      id="step-teams"
+      title="Endgame Teams"
+      hint="Two Abyss halves that share no character, matched from your roster."
+      delay="0.09s"
+      collapse={collapse('step-teams')}
+    >
+      <Suspense fallback={<PanelFallback />}>
+        <TeamsView />
+      </Suspense>
+    </Section>
+  );
+  const planNode = hasRoster && (
+    <Section
+      n={4}
+      id="step-plan"
+      title="Your Plan"
+      hint="An optimised build for all eight members, plus one farming list."
+      delay="0.1s"
+      collapse={collapse('step-plan')}
+    >
+      <Suspense fallback={<PanelFallback />}>
+        <PlanView />
+      </Suspense>
+    </Section>
+  );
+  const optimiseNode = (
+    <Section
+      n={5}
+      id="step-optimise"
+      title="Optimise"
+      hint="Choose a character, weapon, and what to maximise."
+      delay="0.1s"
+    >
+      <OptimizePanel
+        onRun={runCurrent}
+        running={running}
+        onCancel={cancelCurrent}
+      />
+    </Section>
+  );
+  const resultsNode: ReactNode =
+    result && request ? (
+      <div id="results-section" className="scroll-mt-20">
+        {/* Unnumbered on purpose: Results is what step 05 produces. */}
+        <Section title="Results" delay="0s">
+          {sharedArtifacts && <SharedBuildBanner request={request} />}
+          {/* A run in flight leaves the previous numbers on screen;
+            dim them and mark the region busy so they aren't read as
+            the new ones. */}
+          <div
+            aria-busy={running}
+            className={cn(
+              'transition-opacity',
+              running && 'pointer-events-none opacity-40',
+            )}
+          >
+            <GapSection
+              result={result}
+              request={request}
+              artifacts={artifacts}
+              sharedArtifacts={sharedArtifacts}
+            />
+            <Results
+              result={result}
+              request={request}
+              artifactsById={artifactsById}
+              onRelax={(key, value) => {
+                // "No build meets a stat floor of N" is only actionable
+                // if the page can lower it, so the offer to relax is
+                // wired to the store *and* to a fresh run — the reader
+                // shouldn't have to press Optimise again.
+                useOptimizeRequest.getState().relaxMinStat(key, value);
+                void runCurrent();
+              }}
+            />
+          </div>
+        </Section>
+      </div>
+    ) : null;
+
   return (
-    <div className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16">
+    <div className="relative z-10 mx-auto max-w-3xl px-5 py-12 sm:py-16 lg:max-w-7xl">
       <a
         href="#content"
         className="focus-ring sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface-700 focus:px-4 focus:py-2 focus:text-paper"
@@ -241,64 +443,87 @@ export function App() {
           never imports still has two sections to move between, and the locked
           chips are how the page explains what importing unlocks. */}
         {liveIds.length >= 2 && (
-          <nav
-            aria-label="Steps"
-            className="sticky top-0 z-20 -mx-5 mb-6 flex snap-x scroll-px-5 gap-2 overflow-x-auto border-b border-white/5 bg-surface-800/80 px-5 py-2 backdrop-blur-md [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]"
-          >
-            {STEPS.map((s) => {
-              if (!unlocked[s.id]) {
-                // Only the numbered steps ghost: they're what an import
-                // unlocks. Results isn't a step you can reach, so it simply
-                // isn't there until a run produces one.
-                if (!s.n) return null;
-                // A real button, not a styled span: `aria-disabled` on a <span>
-                // announces nothing useful, and the hint lived in `title` —
-                // unreachable by keyboard and invisible to a screen reader.
-                // `aria-disabled` + an early return rather than `disabled`: a
-                // button that goes disabled while it is the active element
-                // hands focus to <body>. Solid muted text rather than
-                // opacity-40, which took the label below 4.5:1 against the nav.
+          <div className="sticky top-0 z-20 -mx-5 mb-6">
+            <nav
+              ref={navRef}
+              aria-label="Steps"
+              className="relative flex snap-x scroll-px-5 gap-2 overflow-x-auto border-b border-white/5 bg-surface-800/80 px-5 py-2 backdrop-blur-md [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]"
+            >
+              {STEPS.map((s) => {
+                if (!unlocked[s.id]) {
+                  // Only the numbered steps ghost: they're what an import
+                  // unlocks. Results isn't a step you can reach, so it simply
+                  // isn't there until a run produces one.
+                  if (!s.n) return null;
+                  // A real button, not a styled span: `aria-disabled` on a <span>
+                  // announces nothing useful, and the hint lived in `title` —
+                  // unreachable by keyboard and invisible to a screen reader.
+                  // `aria-disabled` + an early return rather than `disabled`: a
+                  // button that goes disabled while it is the active element
+                  // hands focus to <body>. Solid muted text rather than
+                  // opacity-40, which took the label below 4.5:1 against the nav.
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      aria-disabled="true"
+                      aria-describedby={lockedHintId}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setLockedHintShown(true);
+                      }}
+                      className="chip touch-target hidden flex-none cursor-not-allowed snap-start items-center whitespace-nowrap border-white/5 text-muted sm:inline-flex"
+                    >
+                      <LockGlyph />
+                      <span className="font-mono">{s.n}</span>
+                      {s.label}
+                    </button>
+                  );
+                }
+                const current = activeId === s.id;
                 return (
-                  <button
+                  <a
                     key={s.id}
-                    type="button"
-                    aria-disabled="true"
-                    aria-describedby={lockedHintId}
-                    onClick={(e) => e.preventDefault()}
-                    className="chip touch-target flex-none cursor-not-allowed snap-start items-center whitespace-nowrap border-white/5 text-muted"
+                    href={`#${s.id}`}
+                    aria-current={current ? 'true' : undefined}
+                    onClick={() => {
+                      // A folded section would otherwise be a jump to a heading
+                      // with nothing under it.
+                      if (s.id in folds) {
+                        setFolds((f) => ({ ...f, [s.id as FoldId]: true }));
+                      }
+                    }}
+                    className={cn(
+                      'chip touch-target flex-none snap-start items-center whitespace-nowrap transition-colors hover:border-accent/40 hover:text-paper',
+                      current && 'border-accent/60 bg-accent/10 text-paper',
+                    )}
                   >
-                    <LockGlyph />
-                    <span className="font-mono">{s.n}</span>
+                    {s.n && (
+                      <span className="font-mono text-accent-bright">
+                        {s.n}
+                      </span>
+                    )}
                     {s.label}
-                  </button>
+                  </a>
                 );
-              }
-              const current = activeId === s.id;
-              return (
-                <a
-                  key={s.id}
-                  href={`#${s.id}`}
-                  aria-current={current ? 'true' : undefined}
-                  className={cn(
-                    'chip touch-target flex-none snap-start items-center whitespace-nowrap transition-colors hover:border-accent/40 hover:text-paper',
-                    current && 'border-accent/60 bg-accent/10 text-paper',
-                  )}
-                >
-                  {s.n && (
-                    <span className="font-mono text-accent-bright">{s.n}</span>
-                  )}
-                  {s.label}
-                </a>
-              );
-            })}
-            {/* The right-edge mask fades the last chip; this spacer is what it
+              })}
+              {/* The right-edge mask fades the last chip; this spacer is what it
               fades, so chip 6 doesn't look cut off at the scroll end. */}
-            <span aria-hidden="true" className="w-3 flex-none snap-end" />
-            {/* One hint, referenced by every locked chip. */}
-            <span id={lockedHintId} className="sr-only">
-              {LOCKED_HINT}
-            </span>
-          </nav>
+              <span aria-hidden="true" className="w-3 flex-none snap-end" />
+              {/* One hint, referenced by every locked chip. */}
+              <span id={lockedHintId} className="sr-only">
+                {LOCKED_HINT}
+              </span>
+            </nav>
+            {lockedHintShown && (
+              <p
+                aria-hidden="true"
+                className="absolute left-5 top-full mt-2 rounded-lg border border-white/10 bg-surface-700 px-3 py-2 text-xs text-paper shadow-panel"
+              >
+                {LOCKED_HINT}
+              </p>
+            )}
+          </div>
         )}
 
         <div id="content" tabIndex={-1}>
@@ -360,125 +585,39 @@ export function App() {
             </Callout>
           )}
 
-          <div className="space-y-10">
-            {sampleMode && (
-              <div className="animate-fade-up">
-                <SampleGear onRun={runCurrent} running={running} />
-              </div>
+          <div
+            className={cn(
+              'space-y-10',
+              'lg:grid lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:items-start lg:gap-x-8 lg:space-y-0',
             )}
-            <Section
-              n={1}
-              id="step-load"
-              title="Load Your Artifacts"
-              hint="Import a full inventory, fetch from a UID, or add pieces by hand."
-              delay="0.05s"
-            >
-              <ImportPanel />
-              <Disclosure
-                className="mt-3"
-                size="md"
-                tone="flux"
-                label="Or Add One Manually"
-              >
-                <div className="mt-3">
-                  <ArtifactForm />
+          >
+            {twoPane ? (
+              <>
+                {/* Sticky, and scrolls on its own when it is taller than the
+                    screen (Load plus Optimise is). The -m-1/p-1 pair keeps
+                    focus rings from being clipped by that scroll box. */}
+                <div className="sticky top-[4.5rem] -m-1 max-h-[calc(100dvh-5.5rem)] space-y-10 overflow-y-auto p-1">
+                  {sampleNode}
+                  {loadNode}
+                  {optimiseNode}
                 </div>
-              </Disclosure>
-            </Section>
-
-            {hasRoster && (
-              <Section
-                n={2}
-                id="step-roster"
-                title="Your Roster"
-                hint="How built each owned character is, best first."
-                delay="0.08s"
-              >
-                <Suspense fallback={<PanelFallback />}>
-                  <RosterView />
-                </Suspense>
-              </Section>
-            )}
-
-            {hasRoster && (
-              <Section
-                n={3}
-                id="step-teams"
-                title="Endgame Teams"
-                hint="Two Abyss halves that share no character, matched from your roster."
-                delay="0.09s"
-              >
-                <Suspense fallback={<PanelFallback />}>
-                  <TeamsView />
-                </Suspense>
-              </Section>
-            )}
-
-            {hasRoster && (
-              <Section
-                n={4}
-                id="step-plan"
-                title="Your Plan"
-                hint="An optimised build for all eight members, plus one farming list."
-                delay="0.1s"
-              >
-                <Suspense fallback={<PanelFallback />}>
-                  <PlanView />
-                </Suspense>
-              </Section>
-            )}
-
-            <Section
-              n={5}
-              id="step-optimise"
-              title="Optimise"
-              hint="Choose a character, weapon, and what to maximise."
-              delay="0.1s"
-            >
-              <OptimizePanel
-                onRun={runCurrent}
-                running={running}
-                onCancel={cancelCurrent}
-              />
-            </Section>
-
-            {result && request && (
-              <div id="results-section" className="scroll-mt-20">
-                {/* Unnumbered on purpose: Results is what step 05 produces. */}
-                <Section title="Results" delay="0s">
-                  {sharedArtifacts && <SharedBuildBanner request={request} />}
-                  {/* A run in flight leaves the previous numbers on screen;
-                    dim them and mark the region busy so they aren't read as
-                    the new ones. */}
-                  <div
-                    aria-busy={running}
-                    className={cn(
-                      'transition-opacity',
-                      running && 'pointer-events-none opacity-40',
-                    )}
-                  >
-                    <GapSection
-                      result={result}
-                      request={request}
-                      artifacts={artifacts}
-                      sharedArtifacts={sharedArtifacts}
-                    />
-                    <Results
-                      result={result}
-                      request={request}
-                      artifactsById={artifactsById}
-                      onRelax={(key, value) => {
-                        // "No build meets a stat floor of N" is only actionable
-                        // if the page can lower it, so the offer to relax is
-                        // wired to the store *and* to a fresh run — the reader
-                        // shouldn't have to press Optimise again.
-                        useOptimizeRequest.getState().relaxMinStat(key, value);
-                        void runCurrent();
-                      }}
-                    />
-                  </div>
-                </Section>
-              </div>
+                <div className="min-w-0 space-y-10">
+                  {resultsNode ?? (!hasRoster && <ResultsPlaceholder />)}
+                  {rosterNode}
+                  {teamsNode}
+                  {planNode}
+                </div>
+              </>
+            ) : (
+              <>
+                {sampleNode}
+                {loadNode}
+                {rosterNode}
+                {teamsNode}
+                {planNode}
+                {optimiseNode}
+                {resultsNode}
+              </>
             )}
           </div>
         </div>

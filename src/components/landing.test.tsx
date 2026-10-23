@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SharedBuildBanner } from './landing';
+import { SharedBuildBanner, SolvedHero } from './landing';
 import type { OptimizeRequest } from '../game/types';
 
 describe('SharedBuildBanner', () => {
@@ -38,5 +38,21 @@ describe('SharedBuildBanner', () => {
     };
     render(<SharedBuildBanner request={req} />);
     expect(screen.getByText(/not_a_real_weapon/)).toBeInTheDocument();
+  });
+});
+
+describe('SolvedHero', () => {
+  it('keeps the demo block in the layout but hides it from sight and from screen readers while the demo is still solving', () => {
+    render(<SolvedHero hero={null} />);
+    const caption = screen.getByText(/solved on load from a fixed/i);
+    expect(caption).toHaveAttribute('aria-hidden', 'true');
+    expect(caption).toHaveClass('invisible');
+    // The heading and the action are real from the first paint.
+    expect(
+      screen.getByRole('heading', { name: /rpg build optimizer/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /load your gear/i }),
+    ).toBeInTheDocument();
   });
 });
