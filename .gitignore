@@ -44,3 +44,6 @@ coverage/
 # Local scanner tool + its exports (not repo content)
 inventory_kamera/
 genshinData_GOOD_*.json
+
+# Claude Code worktrees
+.claude/worktrees/

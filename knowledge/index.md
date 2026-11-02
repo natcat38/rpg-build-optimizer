@@ -50,6 +50,7 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0019 — the Plan page](../docs/adr/0019-plan-output.md)
 - [ADR-0020 — 4-piece set bonuses at full uptime](../docs/adr/0020-four-piece-set-bonuses-at-full-uptime.md) _(amends ADR-0003)_
 - [ADR-0021 — two-pane layout from `lg` and an actions-first hero](../docs/adr/0021-two-pane-layout-and-actions-first-hero.md)
+- [ADR-0022 — `@vercel/node` majors on CI alone (type-only import)](../docs/adr/0022-vercel-node-major-bump-type-only.md)
 
 ## v2 (shipped)
 
