@@ -1,3 +1,94 @@
+import plugin from 'tailwindcss/plugin.js';
+
+/*
+ * The coloured palette is authored in OKLCH and shipped as sRGB.
+ *
+ * OKLCH is a perceptual space: L is lightness (0 black to 1 white), C is
+ * chroma (colourfulness) and H is hue in degrees. Two colours with the same L
+ * look equally light whatever their hue, which hex and rgb() cannot promise.
+ *
+ * ONE LIGHTNESS FORMULA. Every accent and element colour is
+ *
+ *     oklch(L_RUNG, chroma, hue)
+ *
+ * where L_RUNG is one of four named lightness steps, shared by all ten
+ * colours. A new hue needs two numbers, not a hex:
+ *
+ *   1. hue:    pick a degree on the OKLCH wheel (0 red, 90 yellow, 150 green,
+ *              210 cyan, 270 blue, 330 magenta).
+ *   2. rung:   `base` (0.78) is the default text weight on the graphite
+ *              chassis; `mid` (0.825) and `bright` (0.88) for hues that
+ *              read dim at base (yellows, pale cyans); `deep` (0.65) for a
+ *              fill or border darker than text. A same-family accent step is
+ *              the same hue on a different rung ("same hue, walk L").
+ *   3. chroma: 0.08 pale to 0.18 vivid. toRgb() throws at config load if the
+ *              triple does not fit inside sRGB, so an impossible colour fails
+ *              the build instead of silently clipping.
+ *
+ * As text on surface-900, `base` and lighter measure 8.9:1 or better and
+ * `deep` 5.75:1, so any new hue on a rung clears the 4.5:1 AA floor.
+ * Tailwind needs a hex-equivalent at build time, so toRgb() converts once and
+ * emits the "r g b" triplet that the `<alpha-value>` and `rgb(var(--x) / a)`
+ * forms below already consume. The browser never sees oklch(), so there is no
+ * browser-support requirement beyond rgb().
+ *
+ * See docs/adr/0023-palette-as-oklch-triplets.md for the drift and contrast
+ * measurements against the previous hand-picked hex values.
+ */
+const L_RUNG = Object.freeze({
+  deep: 0.65,
+  base: 0.78,
+  mid: 0.825,
+  bright: 0.88,
+});
+
+/** OKLCH to an sRGB "r g b" triplet (0-255 integers). Throws when out of gamut. */
+function toRgb(rung, chroma, hue) {
+  const L = L_RUNG[rung];
+  if (L === undefined) throw new Error(`Unknown lightness rung "${rung}"`);
+  const h = (hue * Math.PI) / 180;
+  const a = chroma * Math.cos(h);
+  const b = chroma * Math.sin(h);
+  // OKLab to LMS (cubed) to linear sRGB (Ottosson's published matrices).
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  const linear = [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ];
+  if (linear.some((v) => v < -0.0005 || v > 1.0005)) {
+    throw new Error(`oklch(${L} ${chroma} ${hue}) is outside the sRGB gamut`);
+  }
+  return linear
+    .map((v) => {
+      const c = Math.min(1, Math.max(0, v));
+      const g = c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055;
+      return Math.round(g * 255);
+    })
+    .join(' ');
+}
+
+// The accent is one hue walked along the lightness rungs.
+const ACCENT_HUE = 79;
+const ACCENT = {
+  DEFAULT: toRgb('mid', 0.138, ACCENT_HUE),
+  bright: toRgb('bright', 0.111, ACCENT_HUE),
+  deep: toRgb('deep', 0.122, ACCENT_HUE),
+};
+
+// Elemental hues: [rung, chroma, hue].
+const ELEMENT = {
+  pyro: toRgb('base', 0.129, 41),
+  hydro: toRgb('base', 0.118, 229),
+  electro: toRgb('base', 0.138, 310),
+  cryo: toRgb('bright', 0.084, 209),
+  anemo: toRgb('mid', 0.107, 173),
+  geo: toRgb('bright', 0.143, 88),
+  dendro: toRgb('mid', 0.178, 128),
+};
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -40,6 +131,8 @@ export default {
           400: '#3a4152',
         },
         // The reading signal — swapped per game via CSS vars (see index.css).
+        // The three `--accent*` properties are written onto :root by the plugin
+        // at the bottom of this file, from ACCENT above.
         accent: {
           DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
           bright: 'rgb(var(--accent-bright) / <alpha-value>)',
@@ -51,18 +144,16 @@ export default {
           bright: '#9dc0ff',
         },
         // Elemental hues — constant across the app (not game-swapped like
-        // `accent`). rgb triplets so `/alpha` modifiers work; every one clears
-        // 4.5:1 as text on surface-900. Colour is never the only channel: the
-        // element name is always written next to it.
-        element: {
-          pyro: 'rgb(255 155 118 / <alpha-value>)',
-          hydro: 'rgb(95 200 245 / <alpha-value>)',
-          electro: 'rgb(207 155 245 / <alpha-value>)',
-          cryo: 'rgb(143 227 240 / <alpha-value>)',
-          anemo: 'rgb(116 223 192 / <alpha-value>)',
-          geo: 'rgb(255 212 94 / <alpha-value>)',
-          dendro: 'rgb(168 222 84 / <alpha-value>)',
-        },
+        // `accent`). Authored as OKLCH in ELEMENT above, emitted as rgb
+        // triplets so `/alpha` modifiers work; every one clears 4.5:1 as text
+        // on surface-900. Colour is never the only channel: the element name
+        // is always written next to it.
+        element: Object.fromEntries(
+          Object.entries(ELEMENT).map(([name, rgb]) => [
+            name,
+            `rgb(${rgb} / <alpha-value>)`,
+          ]),
+        ),
         paper: '#e9e7e0',
         muted: '#8d93a3',
         rose: '#e88b7d',
@@ -104,5 +195,21 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // The accent seam: a second game overrides these three properties under a
+    // [data-game] selector (see docs/design-system.md). The defaults come from
+    // the OKLCH formula above rather than being retyped in index.css.
+    plugin(({ addBase }) => {
+      addBase({
+        ':root': {
+          '--accent': ACCENT.DEFAULT,
+          '--accent-bright': ACCENT.bright,
+          '--accent-deep': ACCENT.deep,
+        },
+      });
+    }),
+  ],
 };
+
+// Exported for src/palette.test.ts; Tailwind only reads the default export.
+export { ACCENT, ELEMENT };
