@@ -49,12 +49,11 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0018 — mode-aware team recommendation](../docs/adr/0018-mode-aware-team-recommendation.md)
 - [ADR-0019 — the Plan page](../docs/adr/0019-plan-output.md)
 - [ADR-0020 — 4-piece set bonuses at full uptime](../docs/adr/0020-four-piece-set-bonuses-at-full-uptime.md) _(amends ADR-0003)_
+- [ADR-0021 — two-pane layout from `lg` and an actions-first hero](../docs/adr/0021-two-pane-layout-and-actions-first-hero.md)
 
 ## v2 (shipped)
 
 The v2 Endgame Planner turned the single-character optimiser into an account-level
 planner; its decisions are ADR-0016 (damage objective) through ADR-0019 (the Plan),
-linked above. Those terms are defined once in [`CONTEXT.md`](../CONTEXT.md), not
-duplicated here.
-Team and meta data are hand-curated per patch — the refresh checklist is
-[`docs/runbooks/patch-refresh.md`](../docs/runbooks/patch-refresh.md).
+linked above. Those terms are defined once in [`CONTEXT.md`](../CONTEXT.md), not duplicated here.
+Team and meta data are hand-curated per patch — the refresh checklist is [`docs/runbooks/patch-refresh.md`](../docs/runbooks/patch-refresh.md).
