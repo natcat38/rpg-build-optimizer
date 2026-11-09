@@ -106,8 +106,8 @@ function SummaryRow({
                   this member's own set, so they are what tells "gear taken"
                   from "recipe not met". */}
               {build.conflicts.length > 0
-                ? 'no build: gear used by earlier members'
-                : 'no build: recommended loadout not met'}
+                ? 'no build: gear used by earlier members · see What to Farm'
+                : 'no build: recommended loadout not met · see What to Farm'}
             </span>
           )}
           {currentGrade && (

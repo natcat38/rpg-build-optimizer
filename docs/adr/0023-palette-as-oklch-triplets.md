@@ -55,7 +55,9 @@ accent-bright, cryo, dendro) moved intentionally to land on a shared rung. `acce
 to clip. Computed colours read from the running page with `getComputedStyle` equal the config output for all ten.
 
 The `select.field` chevron moved to the new accent hex. `public/favicon.svg` and `docs/brand/og-card.html` still use
-`#f2b64c`, a 1.13 deltaE difference in static brand assets, left unchanged.
+`#f2b64c`, a 1.13 deltaE difference in static brand assets, left unchanged at first. Update 2026-11-09
+(owner decision): both now use `#f5ba51` (and `#ffcf80` for the bright step), and `og.png`,
+`apple-touch-icon.png`, `icon-192.png` and `icon-512.png` were re-rendered from them.
 
 ## Contrast
 
