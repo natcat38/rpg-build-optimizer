@@ -314,6 +314,17 @@ describe('api/explain handler', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  it('400s on an invalid payload without spending rate-limit budget', async () => {
+    const res = makeRes();
+    await handler(
+      makeReq({ body: { nope: true } }),
+      res as unknown as VercelResponse,
+    );
+    expect(res.statusCode).toBe(400);
+    expect(checkRateLimit).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('200s with the concatenated text blocks (thinking blocks ignored)', async () => {
     create.mockResolvedValue({
       content: [

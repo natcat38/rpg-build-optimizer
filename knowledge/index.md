@@ -1,9 +1,10 @@
 # RPG Build Optimizer — Knowledge
 
-A client-side web app that, given the artifacts a player owns, finds the best
+A static web app that, given the artifacts a player owns, finds the best
 5-piece build for a character under chosen constraints, and (v1.1) tells them what
-to farm to reach a meta target. No backend, no accounts; sharing is via
-self-contained links.
+to farm to reach a meta target. The optimiser runs in the browser; no accounts, and
+sharing is via self-contained links. The one server piece is an optional serverless
+function for AI explain, off on the public demo.
 
 This bundle is the agent- and reviewer-readable knowledge map. The canonical
 glossary is [`CONTEXT.md`](../CONTEXT.md); decisions live in [`docs/adr/`](../docs/adr/).
@@ -29,7 +30,7 @@ glossary is [`CONTEXT.md`](../CONTEXT.md); decisions live in [`docs/adr/`](../do
 
 The full decision record is in [`docs/adr/`](../docs/adr/):
 
-- [ADR-0001 — client-side-only architecture](../docs/adr/0001-client-side-only-architecture.md)
+- [ADR-0001 — client-side-only architecture](../docs/adr/0001-client-side-only-architecture.md) _(superseded by ADR-0025)_
 - [ADR-0002 — frozen bundled reference dataset](../docs/adr/0002-frozen-bundled-reference-dataset.md)
 - [ADR-0003 — stat-only model, no damage engine](../docs/adr/0003-stat-only-model-no-damage-engine.md) _(superseded by ADR-0016, amended by ADR-0020)_
 - [ADR-0004 — exact branch-and-bound optimisation](../docs/adr/0004-exact-branch-and-bound-optimisation.md)
@@ -52,6 +53,7 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0021 — two-pane layout from `lg` and an actions-first hero](../docs/adr/0021-two-pane-layout-and-actions-first-hero.md)
 - Vercel ops: [ADR-0022 — `@vercel/node` majors on CI alone](../docs/adr/0022-vercel-node-major-bump-type-only.md) · [ADR-0024 — GitHub Actions owns deploys](../docs/adr/0024-actions-owns-vercel-deploys.md)
 - [ADR-0023 — palette authored as OKLCH triplets on shared lightness rungs](../docs/adr/0023-palette-as-oklch-triplets.md)
+- [ADR-0025 — static app plus one optional serverless function](../docs/adr/0025-static-app-plus-one-serverless-function.md) _(supersedes ADR-0001)_
 
 ## v2 (shipped)
 

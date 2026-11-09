@@ -90,8 +90,15 @@ export default async function handler(
     return;
   }
 
-  // Per-IP cost/abuse guard ahead of the parse/key checks (ADR-0013) —
-  // cheapest rejection first.
+  // Validate before spending rate-limit budget: a malformed request is the
+  // caller's error and must not use up their (or the global) allowance.
+  const payload = parseExplainPayload(req.body);
+  if (!payload) {
+    res.status(400).json({ error: 'invalid payload' });
+    return;
+  }
+
+  // Per-IP cost/abuse guard ahead of the key check and the paid call (ADR-0013).
   let success: boolean;
   let reason: string | undefined;
   try {
@@ -116,12 +123,6 @@ export default async function handler(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     res.status(500).json({ error: 'unavailable' });
-    return;
-  }
-
-  const payload = parseExplainPayload(req.body);
-  if (!payload) {
-    res.status(400).json({ error: 'invalid payload' });
     return;
   }
 
