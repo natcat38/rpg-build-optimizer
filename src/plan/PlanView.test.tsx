@@ -123,7 +123,9 @@ describe('PlanView', () => {
     const rows = await screen.findAllByTestId('plan-summary-row');
     expect(rows).toHaveLength(8);
     for (const row of rows)
-      expect(row).toHaveTextContent(/no build: recommended loadout not met/i);
+      expect(row).toHaveTextContent(
+        /no build: recommended loadout not met · see What to Farm/i,
+      );
   });
 
   it('expands one member’s full card from its summary row', async () => {
