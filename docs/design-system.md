@@ -15,8 +15,9 @@ weight scale is **replaced**, not extended: only `normal`/`medium`/`semibold`/
 for `font-black` and you get nothing — deliberately.
 
 **The accent is a seam, not a primitive.** `--accent`, `--accent-bright` and
-`--accent-deep` are `"r g b"` triplets on `:root` in
-[`src/index.css`](../src/index.css); Tailwind reads them through
+`--accent-deep` are `"r g b"` triplets on `:root`, written by a plugin in
+[`tailwind.config.js`](../tailwind.config.js) from the OKLCH lightness formula
+documented there (see [ADR-0023](adr/0023-palette-as-oklch-triplets.md)); Tailwind reads them through
 `rgb(var(--accent) / <alpha-value>)` so opacity modifiers still work. A second
 game overrides those three custom properties under a `[data-game]` selector and
 inherits every accent-tinted rule for free — see `src/game/registry.ts`. Two
@@ -26,8 +27,9 @@ scrollbar greys.
 
 **Element hues are a token set, not a seam.** `element.pyro`/`hydro`/`electro`/
 `cryo`/`anemo`/`geo`/`dendro` in [`tailwind.config.js`](../tailwind.config.js)
-are the seven canonical game hues, brightened for this chassis: each is stored
-as an `rgb(r g b / <alpha-value>)` triplet like the accent, so `/alpha`
+are the seven canonical game hues, brightened for this chassis: each is authored
+as OKLCH on the same four lightness rungs as the accent and emitted as an
+`rgb(r g b / <alpha-value>)` triplet like the accent, so `/alpha`
 modifiers work, and each clears 4.5:1 as **text** on `surface-900` (the darkest
 ground the app paints). Unlike the accent they are constant — an element is a
 fact about the dataset, not a per-game reading. Domain code never writes these

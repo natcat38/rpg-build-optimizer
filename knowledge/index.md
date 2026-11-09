@@ -51,10 +51,10 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0020 — 4-piece set bonuses at full uptime](../docs/adr/0020-four-piece-set-bonuses-at-full-uptime.md) _(amends ADR-0003)_
 - [ADR-0021 — two-pane layout from `lg` and an actions-first hero](../docs/adr/0021-two-pane-layout-and-actions-first-hero.md)
 - [ADR-0022 — `@vercel/node` majors on CI alone (type-only import)](../docs/adr/0022-vercel-node-major-bump-type-only.md)
+- [ADR-0023 — palette authored as OKLCH triplets on shared lightness rungs](../docs/adr/0023-palette-as-oklch-triplets.md)
 
 ## v2 (shipped)
 
-The v2 Endgame Planner turned the single-character optimiser into an account-level
-planner; its decisions are ADR-0016 (damage objective) through ADR-0019 (the Plan),
-linked above. Those terms are defined once in [`CONTEXT.md`](../CONTEXT.md), not duplicated here.
+The v2 Endgame Planner made the optimiser an account-level planner: ADR-0016 through ADR-0019
+above. Its terms are defined once in [`CONTEXT.md`](../CONTEXT.md), not duplicated here.
 Team and meta data are hand-curated per patch — the refresh checklist is [`docs/runbooks/patch-refresh.md`](../docs/runbooks/patch-refresh.md).

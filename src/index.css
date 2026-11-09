@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 @layer base {
-  /* Reading signal for the one live game. Values are "r g b" triplets so
-     Tailwind's rgb(var(--x) / <alpha-value>) color functions can apply opacity.
-     A second game would layer a [data-game] override over these defaults —
+  /* Reading signal for the one live game. `--accent`, `--accent-bright` and
+     `--accent-deep` are "r g b" triplets so Tailwind's
+     rgb(var(--x) / <alpha-value>) color functions can apply opacity. Their
+     defaults are written onto :root by the plugin in tailwind.config.js, which
+     derives them from the OKLCH lightness formula documented there. A second
+     game would layer a [data-game] override over those defaults —
      src/game/registry.ts documents that seam. */
   :root {
     color-scheme: dark;
-    --accent: 242 182 76;
-    --accent-bright: 255 207 118;
-    --accent-deep: 185 133 38;
   }
 
   html {
@@ -184,12 +184,13 @@
   }
   /* A CSS background-image can't read a custom property, so the chevron's
      stroke is the accent hex written out rather than themed by --accent like
-     everything else. A second game would override this rule alongside the
-     accent triplet above. */
+     everything else. It must equal tailwind.config.js ACCENT.DEFAULT (a unit
+     test in src/palette.test.ts enforces that). A second game would override
+     this rule alongside its accent triplet. */
   select.field {
     @apply cursor-pointer appearance-none bg-no-repeat pr-9;
     background-position: right 0.75rem center;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f2b64c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f5ba51' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   }
   select.field option {
     background-color: theme('colors.surface.700');
