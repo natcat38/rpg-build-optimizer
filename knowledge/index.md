@@ -55,7 +55,6 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 
 ## v2 (shipped)
 
-The v2 Endgame Planner turned the single-character optimiser into an account-level
-planner; its decisions are ADR-0016 (damage objective) through ADR-0019 (the Plan),
-linked above. Those terms are defined once in [`CONTEXT.md`](../CONTEXT.md), not duplicated here.
+The v2 Endgame Planner made the optimiser an account-level planner: ADR-0016 through ADR-0019
+above. Its terms are defined once in [`CONTEXT.md`](../CONTEXT.md), not duplicated here.
 Team and meta data are hand-curated per patch — the refresh checklist is [`docs/runbooks/patch-refresh.md`](../docs/runbooks/patch-refresh.md).
