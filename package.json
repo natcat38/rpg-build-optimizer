@@ -2,7 +2,7 @@
   "name": "rpg-build-optimizer",
   "private": true,
   "version": "0.0.0",
-  "description": "Exact branch-and-bound artifact optimizer for Genshin Impact — find the provably best five-piece build from the gear you own, 100% client-side, shareable as a single link.",
+  "description": "Exact branch-and-bound artifact optimizer for Genshin Impact — find the provably best five-piece build from the gear you own, optimiser runs in the browser (static app, one optional serverless function), shareable as a single link.",
   "homepage": "https://rpg-build-optimizer.vercel.app",
   "repository": {
     "type": "git",

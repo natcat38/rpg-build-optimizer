@@ -1,6 +1,6 @@
 # RPG Build Optimizer
 
-Find the **best five-piece artifact build** for a Genshin Impact character from the gear you actually own — then share it with a single link. Fast, focused, and 100% client-side.
+Find the **best five-piece artifact build** for a Genshin Impact character from the gear you actually own — then share it with a single link. Fast, focused, and static: the optimiser runs entirely in your browser.
 
 [![CI](https://github.com/natcat38/rpg-build-optimizer/actions/workflows/ci.yml/badge.svg)](https://github.com/natcat38/rpg-build-optimizer/actions/workflows/ci.yml)
 [![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fnatcat38%2Frpg-build-optimizer%2Fbadges%2Fcoverage.json)](https://github.com/natcat38/rpg-build-optimizer/actions/workflows/coverage-badge.yml)
@@ -52,10 +52,10 @@ Every architectural decision and its rationale lives in [`docs/adr/`](./docs/adr
 ## Engineering highlights
 
 - **Exact optimisation, proven by test** — the branch-and-bound search is verified against a brute-force oracle: the returned top-K must match exhaustive enumeration, so "provably optimal" is a tested claim, not a slogan ([docs/speed-report.md](docs/speed-report.md)).
-- **Zero backend** — imports, the optimiser, roster scoring, and share links all run in the browser; builds encode into self-contained URLs via the native `CompressionStream` API ([ADR-0001](docs/adr/0001-client-side-only-architecture.md)).
+- **Static app, one optional function** — imports, the optimiser, roster scoring, and share links all run in the browser; builds encode into self-contained URLs via the native `CompressionStream` API. The only server code is the optional AI-explain endpoint, which is off on the public demo ([ADR-0025](docs/adr/0025-static-app-plus-one-serverless-function.md)).
 - **Off the main thread** — the search runs in a Web Worker with live progress, cancellation, and run-superseding, so the UI never freezes mid-search.
-- **CI as a quality gate** — typecheck, lint, format, tests with coverage, a bundle-size budget, and Lighthouse checks all run on every PR to a branch-protected `main`.
-- **Decisions are documented** — 20 ADRs record what was built, what was rejected, and why — including complexity that was deliberately removed ([ADR-0012](docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md)).
+- **CI as a quality gate** — typecheck, lint, format, tests with coverage, and a bundle-size budget run on every PR to a branch-protected `main`. Lighthouse is a report-only run against production on every push to `main` and weekly (`.github/workflows/lighthouse.yml`).
+- **Decisions are documented** — 25 ADRs record what was built, what was rejected, and why — including complexity that was deliberately removed ([ADR-0012](docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md)).
 
 ## Tech stack
 
@@ -68,7 +68,7 @@ An optional Claude-powered plain-English explanation of the optimised build, ser
 ## Non-goals
 
 - **Full rotation damage simulation** (energy, cooldowns, buff uptime) — the damage objective ranks a character's own artifacts via a closed-form target function, not a rotation sim; that's gcsim's job ([ADR-0016](docs/adr/0016-damage-engine-objective.md)).
-- **Public leaderboards or accounts** — the app is 100% client-side with no backend and nothing stored server-side; a build gallery would require introducing one ([ADR-0001](docs/adr/0001-client-side-only-architecture.md)).
+- **Public leaderboards or accounts** — the app stores nothing server-side and has no accounts; a build gallery would require introducing a real backend ([ADR-0025](docs/adr/0025-static-app-plus-one-serverless-function.md)).
 - **i18n** — all copy is curated, hand-written English content (labels, meta targets, comp archetypes); translating it is out of scope for a single-maintainer portfolio project.
 - **Multi-game support** — the speculative `GameAdapter` seam for a second game was removed as unearned complexity; `genshinAdapter` is now a concrete, Genshin-specific object ([ADR-0012](docs/adr/0012-collapse-gameadapter-seam-to-concrete-adapter.md)).
 

@@ -1,6 +1,6 @@
 # 0001. Client-side-only architecture, no backend
 
-- Status: Accepted
+- Status: Superseded by [ADR-0025](0025-static-app-plus-one-serverless-function.md)
 - Date: 2026-06-06
 
 ## Context

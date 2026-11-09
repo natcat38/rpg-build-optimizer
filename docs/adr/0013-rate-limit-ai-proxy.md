@@ -1,6 +1,6 @@
 # 0013. Per-IP rate limiting on the AI explain proxy
 
-- Status: Accepted
+- Status: Accepted (check order amended by [ADR-0025](0025-static-app-plus-one-serverless-function.md): payload validation now runs before the limiter)
 - Date: 2026-07-03
 
 ## Context

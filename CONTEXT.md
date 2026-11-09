@@ -4,7 +4,7 @@ Single-context project. This file is the canonical glossary; use these exact ter
 
 ## What this project is
 
-A client-side web app that, given the artifacts a player owns, finds the best 5-piece build for a character under chosen constraints, and (v1.1) tells them what to farm to reach a meta target. No backend, no accounts; sharing is via self-contained links. See [ADR-0001](docs/adr/0001-client-side-only-architecture.md).
+A client-side web app that, given the artifacts a player owns, finds the best 5-piece build for a character under chosen constraints, and (v1.1) tells them what to farm to reach a meta target. No accounts and nothing stored server-side; sharing is via self-contained links. The only server code is one optional serverless function for the AI explain feature. See [ADR-0025](docs/adr/0025-static-app-plus-one-serverless-function.md).
 
 ## Glossary
 
