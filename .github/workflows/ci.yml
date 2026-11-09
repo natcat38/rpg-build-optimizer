@@ -39,3 +39,39 @@ jobs:
       # Generated dataset must stay in sync with its build script + genshin-db.
       - run: npm run build:data
       - run: git diff --exit-code src/game/genshin/data.generated.json
+
+  # ADR-0024: GitHub Actions owns every deploy, so a failed build turns this job
+  # red (and GitHub emails the owner) instead of failing silently inside Vercel.
+  # Vercel's own git builds are off (vercel.json). Production on a push to main,
+  # a preview on a same-repo pull request; Dependabot and fork PRs get no
+  # secrets, so they skip the preview rather than fail on a missing token.
+  deploy:
+    needs: verify
+    if: >-
+      github.event_name == 'push' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       github.actor != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # Production on main, preview everywhere else.
+      TARGET: ${{ github.event_name == 'push' && 'production' || 'preview' }}
+    steps:
+      - uses: actions/checkout@v7
+      # The Vercel project builds on Node 24; match it so a build that works
+      # here works there.
+      - uses: actions/setup-node@v7
+        with: { node-version: '24', cache: 'npm' }
+      - name: Fail loudly if the Vercel secrets are missing
+        run: |
+          for v in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            if [ -z "${!v}" ]; then echo "::error::Repository secret $v is not set (see ADR-0024)"; exit 1; fi
+          done
+      - run: npx --yes vercel@65.2.0 pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"
+      - run: npx --yes vercel@65.2.0 build ${{ github.event_name == 'push' && '--prod' || '' }} --token="$VERCEL_TOKEN"
+      - name: Deploy
+        run: |
+          url=$(npx --yes vercel@65.2.0 deploy --prebuilt ${{ github.event_name == 'push' && '--prod' || '' }} --token="$VERCEL_TOKEN")
+          echo "Deployed ($TARGET): $url" >> "$GITHUB_STEP_SUMMARY"

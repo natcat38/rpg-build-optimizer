@@ -52,6 +52,7 @@ The full decision record is in [`docs/adr/`](../docs/adr/):
 - [ADR-0021 — two-pane layout from `lg` and an actions-first hero](../docs/adr/0021-two-pane-layout-and-actions-first-hero.md)
 - [ADR-0022 — `@vercel/node` majors on CI alone (type-only import)](../docs/adr/0022-vercel-node-major-bump-type-only.md)
 - [ADR-0023 — palette authored as OKLCH triplets on shared lightness rungs](../docs/adr/0023-palette-as-oklch-triplets.md)
+- [ADR-0024 — GitHub Actions owns Vercel deploys](../docs/adr/0024-actions-owns-vercel-deploys.md)
 
 ## v2 (shipped)
 

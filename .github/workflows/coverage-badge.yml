@@ -28,7 +28,11 @@ jobs:
           git checkout --orphan badges-new
           git rm -rf --quiet . || true
           printf '{"schemaVersion":1,"label":"coverage","message":"%s%%","color":"%s"}\n' "$PCT" "$COLOR" > coverage.json
-          git add coverage.json
+          # Vercel reads vercel.json from the pushed commit, and this orphan branch
+          # has no app to build: without this every badge push was a failed
+          # Vercel preview that nothing reported (ADR-0024).
+          printf '{"git":{"deploymentEnabled":false}}\n' > vercel.json
+          git add coverage.json vercel.json
           git commit -m "coverage badge: $PCT%"
           # Force-push is safe here: `badges` is a disposable orphan branch with a single
           # generated file and no other consumers/branch protection, so overwriting its
