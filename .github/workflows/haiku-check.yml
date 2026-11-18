@@ -1,0 +1,62 @@
+# Opens an issue when Anthropic publishes a Haiku model newer than the one
+# api/explain.ts pins (ADR-0026). It never changes the model: a swap changes
+# the explanation text, so a person reads sample outputs first.
+name: Newer Haiku check
+
+on:
+  schedule:
+    - cron: '0 1 * * 1' # Mondays 01:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compare the pinned model with the newest Haiku
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ANTHROPIC_API_KEY}" ]; then
+            echo "::notice::ANTHROPIC_API_KEY repo secret is not set; skipping the check."
+            exit 0
+          fi
+
+          pinned=$(sed -nE "s/^export const DEFAULT_EXPLAIN_MODEL = '([^']+)';/\1/p" api/explain.ts)
+          if [ -z "$pinned" ]; then
+            echo "::error::Could not read DEFAULT_EXPLAIN_MODEL from api/explain.ts"
+            exit 1
+          fi
+
+          # The Models API lists newest first; one page of 1000 covers every model.
+          newest=$(curl -fsS "https://api.anthropic.com/v1/models?limit=1000" \
+              -H "x-api-key: ${ANTHROPIC_API_KEY}" \
+              -H "anthropic-version: 2023-06-01" \
+            | jq -r '[.data[] | select(.id | startswith("claude-haiku-"))]
+                     | sort_by(.created_at) | last | .id // empty')
+          if [ -z "$newest" ]; then
+            echo "::error::No claude-haiku-* model in the Models API response"
+            exit 1
+          fi
+
+          echo "Pinned: $pinned. Newest Haiku: $newest."
+          if [ "$newest" = "$pinned" ]; then
+            exit 0
+          fi
+
+          title="Newer Haiku available: $newest"
+          if [ -n "$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')" ]; then
+            echo "An open issue already tracks $newest."
+            exit 0
+          fi
+
+          gh issue create --title "$title" --body "Anthropic lists \`$newest\`, newer than the pinned \`$pinned\` in \`api/explain.ts\`.
+
+          To try it: set \`EXPLAIN_MODEL=$newest\` in the Vercel project env, read 5 to 10 sample explanations, and check the model's migration notes for changes to thinking, \`max_tokens\` and parameters. If it holds, update \`DEFAULT_EXPLAIN_MODEL\`, CONTRIBUTING.md and ADR-0026 in one PR. See ADR-0026."

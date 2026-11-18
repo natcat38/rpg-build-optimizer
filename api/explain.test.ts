@@ -16,7 +16,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
 const { checkRateLimit } = vi.hoisted(() => ({ checkRateLimit: vi.fn() }));
 vi.mock('./_ratelimit.js', () => ({ checkRateLimit }));
 
-import handler from './explain.js';
+import handler, { DEFAULT_EXPLAIN_MODEL } from './explain.js';
 
 function makeRes() {
   return {
@@ -339,6 +339,56 @@ describe('api/explain handler', () => {
     expect(res.payload).toEqual({
       explanation: 'Strong crit build. Farm Golden Troupe.',
     });
+  });
+
+  it('calls the pinned default model at low effort with room for thinking', async () => {
+    delete process.env.EXPLAIN_MODEL;
+    create.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] });
+    await handler(makeReq(), makeRes() as unknown as VercelResponse);
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: DEFAULT_EXPLAIN_MODEL,
+        max_tokens: 1024,
+        output_config: { effort: 'low' },
+      }),
+    );
+    expect(DEFAULT_EXPLAIN_MODEL).toBe('claude-haiku-5-5');
+  });
+
+  it('uses EXPLAIN_MODEL when it is set', async () => {
+    process.env.EXPLAIN_MODEL = 'claude-haiku-9-9';
+    create.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] });
+    await handler(makeReq(), makeRes() as unknown as VercelResponse);
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ model: 'claude-haiku-9-9' }),
+    );
+  });
+
+  // Haiku 5.5's thinking counts toward max_tokens: a reply cut at the cap, a
+  // safety refusal, or one with only thinking blocks must not reach the user
+  // as a 200 with a half sentence or an empty string.
+  it.each([
+    [
+      'cut off at max_tokens',
+      {
+        stop_reason: 'max_tokens',
+        content: [{ type: 'text', text: 'Half a' }],
+      },
+    ],
+    ['refused', { stop_reason: 'refusal', content: [] }],
+    [
+      'all thinking, no text',
+      {
+        stop_reason: 'end_turn',
+        content: [{ type: 'thinking', thinking: '' }],
+      },
+    ],
+  ])('502s (unavailable) when the reply is %s', async (_label, reply) => {
+    create.mockResolvedValue(reply);
+    const res = makeRes();
+    await handler(makeReq(), res as unknown as VercelResponse);
+    expect(res.statusCode).toBe(502);
+    expect(res.payload).toEqual({ error: 'unavailable' });
   });
 
   it('500s without leaking upstream detail when the API throws', async () => {
