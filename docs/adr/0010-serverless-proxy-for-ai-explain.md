@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-06-17
+- Amended by: [ADR-0026](0026-explain-model-haiku-5-5-and-env-override.md) (model, `max_tokens`, env override)
 
 ## Context
 
@@ -19,9 +20,9 @@ bundle by Vite, which would leak the key to every visitor.
 - Keep the function thin; all logic (validation, prompt building) lives in pure,
   unit-tested modules under `src/ai/` shared with the client contract.
 - Model: `claude-haiku-4-5` — cheapest and fast, sufficient for a 2–3 sentence
-  grounded summary.
+  grounded summary. _(Now `claude-haiku-5-5` with an `EXPLAIN_MODEL` override: ADR-0026.)_
 - Cost/abuse guard ("Lightweight"): strict `parseExplainPayload` validation +
-  `max_tokens: 200` + a spend cap set manually in the Anthropic console. No KV /
+  `max_tokens: 200` (now 1024, ADR-0026) + a spend cap set manually in the Anthropic console. No KV /
   rate-limiting infrastructure.
 - No PII is sent: only character key, objective, the build's stat totals, and the
   gap-report strings. No UID, inventory, or share data.

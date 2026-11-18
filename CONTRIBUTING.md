@@ -59,15 +59,17 @@ Issues and PRDs are tracked as GitHub issues via the `gh` CLI — conventions in
 
 ## AI "Explain this build" — local setup
 
-The button calls `api/explain.ts`, a Vercel serverless function that proxies Claude (`claude-haiku-4-5`) so the Anthropic key never reaches the browser bundle ([ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md)).
+The button calls `api/explain.ts`, a Vercel serverless function that proxies Claude (`claude-haiku-5-5`) so the Anthropic key never reaches the browser bundle ([ADR-0010](docs/adr/0010-serverless-proxy-for-ai-explain.md), [ADR-0026](docs/adr/0026-explain-model-haiku-5-5-and-env-override.md)).
 
 - `ANTHROPIC_API_KEY` — server-side Vercel project env var.
+- `EXPLAIN_MODEL` — optional. Overrides the pinned model (`DEFAULT_EXPLAIN_MODEL` in `api/explain.ts`) without a deploy. Read 5–10 sample explanations before switching production. Haiku 4.5 and older reject the `effort` setting, so the override only moves forward.
+- `ANTHROPIC_API_KEY` **GitHub repository secret** — optional. Lets the weekly [`haiku-check.yml`](.github/workflows/haiku-check.yml) workflow list models and open an issue when a newer Haiku ships. Without it the workflow skips with a notice.
 - `VITE_AI_ENABLED=true` — build-time flag that renders the button. Keep it off until the key is deployed. It stays off on the public demo: the deployed proxy runs against a personal Anthropic account, so the feature is a local/self-hosted opt-in.
 - `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — from an [Upstash](https://upstash.com) Redis database, enabling per-IP rate limiting (10 requests/60s) plus a global budget cap (500 requests/1h, [ADR-0013](docs/adr/0013-rate-limit-ai-proxy.md)). **Required in production**: the gate keys on `VERCEL_ENV === 'production'`, and with the vars unset there the endpoint fails closed — every request is rejected with `503 { error: 'unavailable' }`. Outside production they are optional: the limiter is a no-op that logs one warning, so `vercel dev` and CI run unthrottled.
 - `PUBLIC_ORIGIN` — optional. The function already accepts its own deployment origin (from `VERCEL_URL` / the request host), so set this only when the app is served from a custom domain. A present-but-unlisted `Origin` gets a 403; an absent one is allowed through to the rate limiter.
 - Set a spend cap in the Anthropic console — it is the feature's hard cost ceiling.
 
-`.env.example` at the repo root lists all five names with no values — copy it to `.env.local` and fill it in.
+`.env.example` at the repo root lists all six names with no values — copy it to `.env.local` and fill it in.
 
 Run `vercel dev` (not `npm run dev`) locally to serve the `/api` function.
 

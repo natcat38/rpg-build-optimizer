@@ -20,6 +20,11 @@ function clientIp(req: VercelRequest): string {
 
 const MAX_BODY_BYTES = 16_000;
 
+// The pinned model (ADR-0026). EXPLAIN_MODEL overrides it from the Vercel
+// project env, so a model swap is a setting change plus a look at sample
+// outputs, not a deploy. The newer-model check workflow reads this line.
+export const DEFAULT_EXPLAIN_MODEL = 'claude-haiku-5-5';
+
 function headerValue(v: string | string[] | undefined): string | undefined {
   const first = Array.isArray(v) ? v[0] : v;
   return first?.split(',')[0]?.trim() || undefined;
@@ -130,8 +135,12 @@ export default async function handler(
     const { system, user } = buildExplainPrompt(payload);
     const client = new Anthropic({ apiKey });
     const msg = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 200, // caps cost/output at the ~2-3 sentences buildExplainPrompt asks for
+      model: process.env.EXPLAIN_MODEL || DEFAULT_EXPLAIN_MODEL,
+      // Haiku 5.5 thinks by default and thinking counts toward max_tokens, so
+      // the cap leaves room for it on top of the ~2-3 sentence answer. Low
+      // effort keeps that thinking short; the prompt still bounds the answer.
+      max_tokens: 1024,
+      output_config: { effort: 'low' },
       system,
       messages: [{ role: 'user', content: user }],
     });
@@ -140,6 +149,17 @@ export default async function handler(
       .map((b) => b.text)
       .join('')
       .trim();
+    // A reply cut off at the cap, a safety refusal, or a reply with no text
+    // (all thinking) is not an explanation. Report it as an upstream failure
+    // rather than shipping a half sentence or an empty string with a 200.
+    if (
+      msg.stop_reason === 'max_tokens' ||
+      msg.stop_reason === 'refusal' ||
+      !explanation
+    ) {
+      res.status(502).json({ error: 'unavailable' });
+      return;
+    }
     res.status(200).json({ explanation });
   } catch {
     // Never leak upstream error details or key material.
